@@ -1,27 +1,25 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, FlatList } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { TheoryStackParamList } from '../../App'; // Імпортуємо типи
-import questionsDatabase from '../data/questionsDb.json'; // Шлях до бази питань
+import { TheoryStackParamList } from '../../App';
+import questionsDatabase from '../data/questionsDb.json';
+import RachunkiMemoryBlock from '../Components/RachunkiMemoryBlock'; // ✅ Убедись, что "Components" с английской C
 
-// Тип для одного елемента теоретичного контенту
 type TheoryContentItem = {
     type: "paragraph" | "subHeader" | "listItem" | "example";
     text: string;
 };
 
-// Тип для даних підтеми, що містить теорію
 type SubTopicTheoryData = {
     theoryTitle?: string;
     theoryContent?: TheoryContentItem[];
-    questions?: any[]; // Питання тут не потрібні для відображення теорії
+    questions?: any[];
 };
 
-// Тип для questionsDb.json
 type QuestionsDatabaseType = {
-    [grade: string]: { // Клас
-        [topic: string]: { // Розділ
-            [subTopic: string]: SubTopicTheoryData; // Підтема - це об'єкт
+    [grade: string]: {
+        [topic: string]: {
+            [subTopic: string]: SubTopicTheoryData;
         };
     };
 };
@@ -34,15 +32,21 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
 
     const theoryData = db[grade]?.[topic]?.[subTopic];
 
-    if (!theoryData || !theoryData.theoryContent || theoryData.theoryContent.length === 0) {
+    const isMemoryTrickTopic =
+        grade === "4" &&
+        topic === "LICZBY I DZIAŁANIA" &&
+        subTopic === "Rachunki pamięciowe - dodawanie i odejmowanie";
+
+    if (
+        subTopic === 'Rachunki pamięciowe - dodawanie i odejmowanie' &&
+        (!theoryData?.theoryContent || theoryData.theoryContent.length === 0)
+    ) {
         return (
-            <View style={styles.container}>
-                <Text style={styles.title}>{theoryData?.theoryTitle || subTopic}</Text>
-                <Text style={styles.emptyText}>Materiały teoretyczne dla tej podtemy są w przygotowaniu!</Text>
-            </View>
+            <ScrollView style={styles.scrollContainer}>
+                <RachunkiMemoryBlock />
+            </ScrollView>
         );
     }
-
     const renderTheoryItem = ({ item }: { item: TheoryContentItem }) => {
         switch (item.type) {
             case 'paragraph':
@@ -50,7 +54,6 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
             case 'subHeader':
                 return <Text style={styles.subHeader}>{item.text}</Text>;
             case 'listItem':
-                // Додаємо маркер списку (наприклад, крапку або тире)
                 return <Text style={styles.listItem}>• {item.text}</Text>;
             case 'example':
                 return (
@@ -60,7 +63,6 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
                     </View>
                 );
             default:
-                // Якщо тип невідомий, можемо просто вивести текст
                 return <Text style={styles.paragraph}>{item.text}</Text>;
         }
     };
@@ -70,13 +72,18 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
             {theoryData.theoryTitle && (
                 <Text style={styles.mainTitle}>{theoryData.theoryTitle}</Text>
             )}
-            <FlatList
-                data={theoryData.theoryContent}
-                renderItem={renderTheoryItem}
-                keyExtractor={(item, index) => `${item.type}_${index}`} // Більш надійний ключ
-                scrollEnabled={false} // Зовнішній ScrollView вже є
-                ItemSeparatorComponent={() => <View style={{ height: 10 }} />} // Невеликий відступ між елементами
-            />
+
+            {isMemoryTrickTopic ? (
+                <RachunkiMemoryBlock />
+            ) : (
+                <FlatList
+                    data={theoryData.theoryContent}
+                    renderItem={renderTheoryItem}
+                    keyExtractor={(item, index) => `${item.type}_${index}`}
+                    scrollEnabled={false}
+                    ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+                />
+            )}
         </ScrollView>
     );
 }
@@ -84,13 +91,13 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
 const styles = StyleSheet.create({
     scrollContainer: {
         flex: 1,
-        backgroundColor: '#fff', // Білий фон для контенту
+        backgroundColor: '#fff',
     },
     contentContainer: {
         paddingVertical: 20,
         paddingHorizontal: 15,
     },
-    container: { // Для випадку, коли немає контенту
+    container: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
@@ -99,38 +106,38 @@ const styles = StyleSheet.create({
     mainTitle: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#00796B', // Темний бірюзовий
+        color: '#00796B',
         marginBottom: 20,
         textAlign: 'center',
     },
     paragraph: {
-        fontSize: 17, // Збільшив шрифт для кращої читабельності
-        lineHeight: 26, // Збільшив міжрядковий інтервал
+        fontSize: 17,
+        lineHeight: 26,
         color: '#333',
         marginBottom: 15,
-        textAlign: 'justify', // Вирівнювання по ширині для абзаців
+        textAlign: 'justify',
     },
     subHeader: {
-        fontSize: 20, // Збільшив шрифт
+        fontSize: 20,
         fontWeight: 'bold',
-        color: '#00BCD4', // Основний бірюзовий
+        color: '#00BCD4',
         marginTop: 18,
         marginBottom: 12,
     },
     listItem: {
         fontSize: 17,
         lineHeight: 26,
-        color: '#455A64', // Темно-сіро-синій
-        marginLeft: 10, // Відступ для маркерів списку
+        color: '#455A64',
+        marginLeft: 10,
         marginBottom: 8,
     },
-    exampleContainer: { // Контейнер для прикладів
-        backgroundColor: '#E0F7FA', // Дуже світлий бірюзовий
+    exampleContainer: {
+        backgroundColor: '#E0F7FA',
         padding: 15,
         borderRadius: 8,
         marginBottom: 15,
         borderLeftWidth: 4,
-        borderLeftColor: '#00BCD4', // Акцентна лінія
+        borderLeftColor: '#00BCD4',
     },
     exampleLabel: {
         fontSize: 16,
@@ -142,15 +149,15 @@ const styles = StyleSheet.create({
         fontSize: 16,
         lineHeight: 24,
         color: '#37474F',
-        fontStyle: 'italic', // Курсив для прикладів
+        fontStyle: 'italic',
     },
     emptyText: {
         textAlign: 'center',
-        marginTop: 20, // Менший відступ, якщо є заголовок
+        marginTop: 20,
         fontSize: 16,
         color: '#777',
     },
-    title: { // Стиль для заголовка, якщо немає контенту
+    title: {
         fontSize: 22,
         fontWeight: 'bold',
         color: '#444',
