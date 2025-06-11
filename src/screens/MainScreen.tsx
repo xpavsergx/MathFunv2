@@ -1,19 +1,18 @@
+// src/screens/MainScreen.tsx
+
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
 import auth from '@react-native-firebase/auth';
-import Ionicons from '@expo/vector-icons/Ionicons'; // Імпорт для іконок
-
-// Типи для навігації
+import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { MainAppStackParamList } from '../../App'; // Припускаємо, що типи для цього стеку в App.tsx
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { AppTabParamList } from '../../App'; // Типи для табів
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import { MainAppStackParamList, AppTabParamList } from '@/App';
 
-// Поєднуємо типи навігації
-// Navigation prop for MainScreen, which is part of HomeStackNavigator (a NativeStack)
-// and can also navigate to other tabs (part of AppTabParamList)
-type MainScreenNavigationProp = NativeStackScreenProps<MainAppStackParamList, 'Main'>['navigation'] &
-    BottomTabNavigationProp<AppTabParamList>;
+type MainScreenNavigationProp = CompositeNavigationProp<
+    BottomTabNavigationProp<AppTabParamList, 'HomeStack'>,
+    NativeStackScreenProps<MainAppStackParamList>['navigation']
+>;
 
 type MainScreenProps = {
     navigation: MainScreenNavigationProp;
@@ -25,7 +24,6 @@ function MainScreen({ navigation }: MainScreenProps) {
     };
 
     const handleExploreTheory = () => {
-        // Переходимо на стек Теорії, і на його початковий екран (вибір класу)
         navigation.navigate('TeoriaStack', { screen: 'TheoryGradeSelection' });
     };
 
@@ -35,7 +33,7 @@ function MainScreen({ navigation }: MainScreenProps) {
         <ScrollView contentContainerStyle={styles.scrollViewContainer}>
             <View style={styles.container}>
                 <Image
-                    source={require('../assets/images/logo.png')} // Переконайся, що шлях правильний
+                    source={require('../assets/images/logo.png')}
                     style={styles.logo}
                     resizeMode="contain"
                 />
@@ -43,7 +41,7 @@ function MainScreen({ navigation }: MainScreenProps) {
                 <Text style={styles.welcomeTitle}>Witaj w MathFun!</Text>
                 {currentUser && (
                     <Text style={styles.userInfoText}>
-                        Gotowy na nową przygodę, {currentUser.email}?
+                        Gotowy na nową przygodę, {currentUser.displayName || currentUser.email}?
                     </Text>
                 )}
                 <Text style={styles.encouragementText}>
@@ -63,7 +61,6 @@ function MainScreen({ navigation }: MainScreenProps) {
                         <Text style={styles.cardSubtitle}>Zasady i wyjaśnienia</Text>
                     </TouchableOpacity>
                 </View>
-                {/* Кнопку Wyloguj się прибрали, бо вона є на вкладці Profil */}
             </View>
         </ScrollView>
     );
@@ -80,12 +77,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         padding: 20,
-        paddingTop: 30, // Зменшив трохи верхній відступ, якщо лого велике
+        paddingTop: 30,
         paddingBottom: 30,
-        backgroundColor: '#E0F7FA', // Світло-бірюзовий фон
+        backgroundColor: '#E0F7FA',
     },
     logo: {
-        width: windowWidth * 0.45, // Зробив лого трохи меншим
+        width: windowWidth * 0.45,
         height: windowWidth * 0.45,
         marginBottom: 15,
     },
@@ -97,13 +94,13 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     userInfoText: {
-        fontSize: 15, // Трохи менший
+        fontSize: 15,
         color: '#004D40',
         marginBottom: 15,
         textAlign: 'center',
     },
     encouragementText: {
-        fontSize: 16, // Трохи менший
+        fontSize: 16,
         color: '#37474F',
         textAlign: 'center',
         marginBottom: 25,
@@ -111,25 +108,25 @@ const styles = StyleSheet.create({
         lineHeight: 22,
     },
     actionCardsContainer: {
-        width: '95%', // Трохи ширше
+        width: '95%',
     },
     actionCard: {
-        paddingVertical: 25, // Більший вертикальний padding
+        paddingVertical: 25,
         paddingHorizontal: 20,
-        borderRadius: 18, // Більш округлі кути
+        borderRadius: 18,
         marginBottom: 18,
         alignItems: 'center',
-        elevation: 4, // Трохи більша тінь
+        elevation: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.23,
         shadowRadius: 2.62,
     },
     adventureCard: {
-        backgroundColor: '#FFC107', // Жовтий/Золотий
+        backgroundColor: '#FFC107',
     },
     theoryCard: {
-        backgroundColor: '#4CAF50', // Зелений
+        backgroundColor: '#4CAF50',
     },
     cardIcon: {
         marginBottom: 10,
@@ -143,6 +140,8 @@ const styles = StyleSheet.create({
         color: '#F5F5F5',
         fontSize: 14,
         marginTop: 5,
+        textAlign: 'center',
+        paddingHorizontal: 10,
     }
 });
 

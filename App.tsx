@@ -1,14 +1,15 @@
+// App.tsx
+
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { ActivityIndicator, View, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import Toast from 'react-native-toast-message';
 
-// Firebase
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
-// Імпортуємо компоненти екранів
 import MainScreen from './src/screens/MainScreen';
 import GradeSelectionScreen from './src/screens/GradeSelectionScreen';
 import TopicListScreen from './src/screens/TopicListScreen';
@@ -18,24 +19,19 @@ import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
-
 import TheoryGradeSelectionScreen from './src/screens/TheoryGradeSelectionScreen';
-import TheoryScreen from './src/screens/TheoryScreen'; // Це TheoryTopicList
+import TheoryScreen from './src/screens/TheoryScreen';
 import TheorySubTopicListScreen from './src/screens/TheorySubTopicListScreen';
-import TheoryDetailScreen from './src/screens/TheoryDetailScreen'; // <--- РОЗКОМЕНТОВАНО
+import TheoryDetailScreen from './src/screens/TheoryDetailScreen';
+import ActivityScreen from './src/screens/ActivityScreen';
+import FriendsScreen from './src/screens/FriendsScreen';
+import DuelSetupScreen from './src/screens/DuelSetupScreen';
 
-
-/**
- * Типи для Stack Navigator (аутентифікація)
- */
 export type AuthStackParamList = {
     Login: undefined;
     Register: undefined;
 };
 
-/**
- * Типи для Stack Navigator (основний потік в додатку всередині вкладки "Główna")
- */
 export type MainAppStackParamList = {
     Main: undefined;
     GradeSelection: undefined;
@@ -45,8 +41,9 @@ export type MainAppStackParamList = {
         grade: number;
         topic: string;
         subTopic?: string;
-        mode?: 'learn' | 'assess';
+        mode?: 'learn' | 'assess' | 'duel';
         testType?: 'subTopic' | 'mainTopic' | 'gradeRandom' | 'gradeAssessment';
+        duelId?: string;
     };
     Results: {
         score: number;
@@ -55,9 +52,6 @@ export type MainAppStackParamList = {
     };
 };
 
-/**
- * Типи для Stack Navigator всередині вкладки "Teoria"
- */
 export type TheoryStackParamList = {
     TheoryGradeSelection: undefined;
     TheoryTopicList: { grade: string };
@@ -65,21 +59,29 @@ export type TheoryStackParamList = {
     TheoryDetail: { grade: string; topic: string; subTopic: string };
 };
 
-/**
- * Типи для Bottom Tab Navigator
- */
+export type ActivityStackParamList = {
+    Activity: undefined;
+};
+export type FriendsStackParamList = {
+    Friends: undefined;
+    DuelSetup: { friendId: string; friendEmail: string };
+};
+
 export type AppTabParamList = {
-    HomeStack: MainAppStackParamList;
-    TeoriaStack: TheoryStackParamList;
+    HomeStack: undefined;
+    TeoriaStack: undefined;
+    FriendsStack: undefined;
+    ActivityStack: undefined;
     Profil: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainAppStackParamList>();
 const TheoryStackNav = createNativeStackNavigator<TheoryStackParamList>();
+const ActivityStackNav = createNativeStackNavigator<ActivityStackParamList>();
+const FriendsStackNav = createNativeStackNavigator<FriendsStackParamList>();
 const Tab = createBottomTabNavigator<AppTabParamList>();
 
-// Стек для вкладки "Główna"
 function HomeStackNavigator() {
     return (
         <MainStack.Navigator initialRouteName="Main">
@@ -98,51 +100,45 @@ function HomeStackNavigator() {
     );
 }
 
-// TheoryStackNavigator тепер включає всі екрани стеку теорії
 function TheoryStackNavigator() {
-    console.log("Rendering TheoryStackNavigator with ALL screens");
     return (
         <TheoryStackNav.Navigator initialRouteName="TheoryGradeSelection">
-            <TheoryStackNav.Screen
-                name="TheoryGradeSelection"
-                component={TheoryGradeSelectionScreen}
-                options={{ title: 'Teoria - Wybierz Klasę' }}
-            />
-            <TheoryStackNav.Screen
-                name="TheoryTopicList"
-                component={TheoryScreen} // Твій файл src/screens/TheoryScreen.tsx (список розділів)
-                options={({ route }) => ({ title: `Działy (Klasa ${route.params.grade})` })}
-            />
-            <TheoryStackNav.Screen
-                name="TheorySubTopicList"
-                component={TheorySubTopicListScreen} // Твій файл src/screens/TheorySubTopicListScreen.tsx
-                options={({ route }) => ({ title: route.params.topic })}
-            />
-            <TheoryStackNav.Screen // <--- РОЗКОМЕНТОВАНО
-                name="TheoryDetail"
-                component={TheoryDetailScreen} // Твій файл src/screens/TheoryDetailScreen.tsx
-                options={({ route }) => ({ title: route.params.subTopic })}
-            />
+            <TheoryStackNav.Screen name="TheoryGradeSelection" component={TheoryGradeSelectionScreen} options={{ title: 'Teoria - Wybierz Klasę' }} />
+            <TheoryStackNav.Screen name="TheoryTopicList" component={TheoryScreen} options={({ route }) => ({ title: `Działy (Klasa ${route.params.grade})` })} />
+            <TheoryStackNav.Screen name="TheorySubTopicList" component={TheorySubTopicListScreen} options={({ route }) => ({ title: route.params.topic })} />
+            <TheoryStackNav.Screen name="TheoryDetail" component={TheoryDetailScreen} options={({ route }) => ({ title: route.params.subTopic })} />
         </TheoryStackNav.Navigator>
     );
 }
 
-// Головний навігатор з вкладками (для залогіненого користувача)
+function ActivityStackNavigator() {
+    return (
+        <ActivityStackNav.Navigator>
+            <ActivityStackNav.Screen name="Activity" component={ActivityScreen} options={{ title: 'Aktywność i Powiadomienia' }} />
+        </ActivityStackNav.Navigator>
+    );
+}
+
+function FriendsStackNavigator() {
+    return (
+        <FriendsStackNav.Navigator>
+            <FriendsStackNav.Screen name="Friends" component={FriendsScreen} options={{ title: 'Znajomi' }} />
+            <FriendsStackNav.Screen name="DuelSetup" component={DuelSetupScreen} options={{ title: 'Ustawienia pojedynku' }} />
+        </FriendsStackNav.Navigator>
+    );
+}
+
 function MainAppTabNavigator() {
-    console.log("Rendering MainAppTabNavigator");
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
                 tabBarIcon: ({ focused, color, size }) => {
                     let iconName: keyof typeof Ionicons.glyphMap = 'help-circle';
-
-                    if (route.name === 'HomeStack') {
-                        iconName = focused ? 'home' : 'home-outline';
-                    } else if (route.name === 'TeoriaStack') {
-                        iconName = focused ? 'book' : 'book-outline';
-                    } else if (route.name === 'Profil') {
-                        iconName = focused ? 'person-circle' : 'person-circle-outline';
-                    }
+                    if (route.name === 'HomeStack') iconName = focused ? 'home' : 'home-outline';
+                    else if (route.name === 'TeoriaStack') iconName = focused ? 'book' : 'book-outline';
+                    else if (route.name === 'FriendsStack') iconName = focused ? 'people' : 'people-outline';
+                    else if (route.name === 'ActivityStack') iconName = focused ? 'notifications' : 'notifications-outline';
+                    else if (route.name === 'Profil') iconName = focused ? 'person-circle' : 'person-circle-outline';
                     return <Ionicons name={iconName} size={size} color={color} />;
                 },
                 tabBarActiveTintColor: '#00BCD4',
@@ -150,28 +146,16 @@ function MainAppTabNavigator() {
                 headerShown: false,
             })}
         >
-            <Tab.Screen
-                name="HomeStack"
-                component={HomeStackNavigator}
-                options={{ title: 'Główna' }}
-            />
-            <Tab.Screen
-                name="TeoriaStack"
-                component={TheoryStackNavigator}
-                options={{ title: 'Teoria' }}
-            />
-            <Tab.Screen
-                name="Profil"
-                component={ProfileScreen}
-                options={{ title: 'Profil', headerShown: true }}
-            />
+            <Tab.Screen name="HomeStack" component={HomeStackNavigator} options={{ title: 'Główna' }} />
+            <Tab.Screen name="TeoriaStack" component={TheoryStackNavigator} options={{ title: 'Teoria' }} />
+            <Tab.Screen name="FriendsStack" component={FriendsStackNavigator} options={{ title: 'Znajomi' }} />
+            <Tab.Screen name="ActivityStack" component={ActivityStackNavigator} options={{ title: 'Aktywność' }} />
+            <Tab.Screen name="Profil" component={ProfileScreen} options={{ title: 'Profil', headerShown: true }} />
         </Tab.Navigator>
     );
 }
 
-// Навігатор для аутентифікації
 function AuthNavigator() {
-    console.log("Rendering AuthNavigator");
     return (
         <AuthStack.Navigator>
             <AuthStack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
@@ -185,11 +169,8 @@ function App(): React.JSX.Element {
     const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
 
     function onAuthStateChanged(userAuth: FirebaseAuthTypes.User | null) {
-        console.log('[AUTH STATE CHANGED] User:', userAuth ? userAuth.uid : null);
         setUser(userAuth);
-        if (initializing) {
-            setInitializing(false);
-        }
+        if (initializing) setInitializing(false);
     }
 
     useEffect(() => {
@@ -198,7 +179,6 @@ function App(): React.JSX.Element {
     }, []);
 
     if (initializing) {
-        console.log('[APP RENDERING] Status: Initializing');
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#007bff" />
@@ -206,12 +186,13 @@ function App(): React.JSX.Element {
         );
     }
 
-    console.log('[APP RENDERING] Status: Initialized. User:', user ? user.uid : null);
-
     return (
-        <NavigationContainer>
-            {user ? <MainAppTabNavigator /> : <AuthNavigator />}
-        </NavigationContainer>
+        <>
+            <NavigationContainer>
+                {user ? <MainAppTabNavigator /> : <AuthNavigator />}
+            </NavigationContainer>
+            <Toast />
+        </>
     );
 }
 
