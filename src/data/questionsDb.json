@@ -3,6 +3,20 @@
     "LICZBY I DZIAŁANIA": {
       "Rachunki pamięciowe - dodawanie i odejmowanie": {
         "theoryTitle": "Sprytne dodawanie i odejmowanie w pamięci",
+        "theoryContent": [
+          { "type": "paragraph", "text": "Cześć! Czy wiesz, że dodawanie i odejmowanie w pamięci może być jak ciekawa gra? Chodzi o to, żeby znaleźć najłatwiejszy sposób na policzenie!" },
+          { "type": "subHeader", "text": "Jak dodawać większe liczby?" },
+          { "type": "paragraph", "text": "Gdy dodajesz liczby, na przykład 250 + 130, możesz robić to po kawałku:" },
+          { "type": "listItem", "text": "Najpierw dodaj setki: 200 + 100 = 300." },
+          { "type": "listItem", "text": "Potem dodaj dziesiątki: 50 + 30 = 80." },
+          { "type": "listItem", "text": "Na koniec połącz wyniki: 300 + 80 = 380. Proste, prawda?" },
+          { "type": "subHeader", "text": "A jak sprytnie odejmować?" },
+          { "type": "paragraph", "text": "Podobnie przy odejmowaniu, na przykład 760 - 240:" },
+          { "type": "listItem", "text": "Odejmij setki: 700 - 200 = 500." },
+          { "type": "listItem", "text": "Odejmij dziesiątki: 60 - 40 = 20." },
+          { "type": "listItem", "text": "Wynik to 500 + 20 = 520." },
+          { "type": "paragraph", "text": "Pamiętaj, praktyka czyni mistrza! Im więcej ćwiczysz, tym łatwiejsze stają się rachunki w pamięci." }
+        ],
         "questions": [
           { "id": "rp_add_sub_4_q1", "type": "practice", "difficulty": "łatwe", "questionText": "Ile to jest 250 + 130?", "options": ["360", "380", "370", "390"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Świetnie! Wyobraź sobie, że masz 250 cukierków i dostajesz jeszcze 130. Najpierw dodajmy setki: 200 + 100 to 300. Potem dziesiątki: 50 + 30 to 80. Razem masz 300 + 80, czyli 380 cukierków! Mniam!", "theorySnippet": "Gdy dodajesz liczby, możesz liczyć osobno setki, osobno dziesiątki, a na końcu wszystko połączyć. Tak jak budujesz wieżę z klocków!" },
           { "id": "rp_add_sub_4_q2", "type": "practice", "difficulty": "łatwe", "questionText": "Od liczby 760 odejmij 240. Jaki będzie wynik?", "options": ["520", "530", "510", "500"], "correctAnswerIndex": 0, "correctAnswerExplanation": "Doskonale! Jeśli masz 760 naklejek i oddajesz 240, to najpierw odejmij setki: 700 - 200 = 500. Potem dziesiątki: 60 - 40 = 20. Zostało Ci 500 + 20, czyli 520 naklejek!", "theorySnippet": "Odejmowanie jest jak zabieranie. Możesz odejmować po kawałku: najpierw większe części (setki), potem mniejsze (dziesiątki)." },
