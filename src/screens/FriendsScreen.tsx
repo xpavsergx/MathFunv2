@@ -7,7 +7,7 @@ import firestore from '@react-native-firebase/firestore';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { sendFriendRequest } from '../services/friendService';
-import { FriendsStackParamList } from '../App';
+import { FriendsStackParamList } from '../../App';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 interface Friend {

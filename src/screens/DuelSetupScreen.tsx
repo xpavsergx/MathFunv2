@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { FriendsStackParamList } from '../App';
+import { FriendsStackParamList } from '../../App';
 import { sendDuelRequest } from '../services/friendService';
 import questionsDatabase from '../data/questionsDb.json';
 

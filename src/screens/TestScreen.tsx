@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainAppStackParamList } from '@/App';
-import questionsDatabase from '@/data/questionsDb.json';
+import questionsDatabase from '../data/questionsDb.json';
 
 // ... (інтерфейси Question, SubTopicData, QuestionsDatabase) ...
 interface Question {

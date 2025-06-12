@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../App'; // Перевір шлях! Можливо, '../App'
+import { AuthStackParamList } from '../../App'; // Перевір шлях! Можливо, '../App'
 
 import auth from '@react-native-firebase/auth';
 
@@ -14,14 +14,28 @@ type RegisterScreenProps = {
 };
 
 function RegisterScreen({ navigation }: RegisterScreenProps) {
+    const [firstName, setFirstName] = useState('');   // <-- Imię
+    const [lastName, setLastName] = useState('');     // <-- Nazwisko
+    const [className, setClassName] = useState('');   // <-- Klasa
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState(''); // Додаткове поле для підтвердження пароля
     const [loading, setLoading] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
 
     const handleRegister = async () => {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        setSuccessMessage('');
+        if (!firstName.trim() || !lastName.trim() || !className.trim()) {
+            Alert.alert('Błąd', 'Proszę wypełnić Imię, Nazwisko i Klasę.');
+            return;
+        }
         if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
             Alert.alert('Błąd', 'Proszę wypełnić wszystkie pola.'); // Помилка (польськ.)
+            return;
+        }
+        if (!emailRegex.test(email)) {
+            Alert.alert('Błąd', 'Wprowadź poprawny adres email.');
             return;
         }
         if (password !== confirmPassword) {
@@ -38,6 +52,7 @@ function RegisterScreen({ navigation }: RegisterScreenProps) {
         try {
             await auth().createUserWithEmailAndPassword(email, password);
             console.log('Użytkownik zarejestrowany pomyślnie!', email);
+            setSuccessMessage('Rejestracja zakończona pomyślnie!');
             // Firebase автоматично залогінить користувача після успішної реєстрації.
             // Слухач onAuthStateChanged в App.tsx подбає про навігацію на головний екран.
             // Можна додати повідомлення про успішну реєстрацію, але користувач і так буде перенаправлений.
@@ -62,7 +77,33 @@ function RegisterScreen({ navigation }: RegisterScreenProps) {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Rejestracja</Text> {/* Реєстрація (польськ.) */}
+            <Text style={styles.title}>Rejestracja</Text>
+            {successMessage ? (
+                <Text style={styles.successText}>{successMessage}</Text>
+            ) : null}
+            <TextInput
+                style={styles.input}
+                placeholder="Imię"
+                value={firstName}
+                onChangeText={setFirstName}
+                autoCapitalize="words"
+            />
+
+            <TextInput
+                style={styles.input}
+                placeholder="Nazwisko"
+                value={lastName}
+                onChangeText={setLastName}
+                autoCapitalize="words"
+            />
+
+            <TextInput
+                style={styles.input}
+                placeholder="Klasa"
+                value={className}
+                onChangeText={setClassName}
+                autoCapitalize="characters"
+            />
 
             <TextInput
                 style={styles.input}
@@ -143,6 +184,12 @@ const styles = StyleSheet.create({
     loginButtonText: {
         color: '#007bff',
         fontSize: 16,
+    },
+    successText: {
+        color: 'green',
+        fontSize: 16,
+        marginBottom: 20,
+        textAlign: 'center',
     },
 });
 
