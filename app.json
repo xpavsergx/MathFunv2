@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "MathFan2",
+    "slug": "MathFan2",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.VDStop.mathfan",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+      // Для iOS шлях до GoogleService-Info.plist зазвичай підхоплюється автоматично,
+      // якщо він у корені, або його можна вказати через ios.googleServicesFile,
+      // але плагін для Android вимагає цього явно.
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.VDStop.mathfan",
+      "googleServicesFile": "./google-services.json" // <--- ДОДАЙ ЦЕЙ РЯДОК
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "8f54c7d6-5f98-4a23-8b34-088089ff14e0"
+      }
+    },
+    "plugins": [
+      "@react-native-firebase/app"
+    ]
+  }
+}

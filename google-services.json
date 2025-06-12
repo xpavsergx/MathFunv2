@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "986883849006",
+    "project_id": "mathfun-8a7af",
+    "storage_bucket": "mathfun-8a7af.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:986883849006:android:281dbb0847a5fa1f4758bf",
+        "android_client_info": {
+          "package_name": "com.VDStop.mathfan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOBRaU-IvUOp57yJv-sAFLf3dc0cvwPtM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
