@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback, ScrollView, Platform } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../App'; // Перевір шлях! Можливо, '../App'
 
+
 import auth from '@react-native-firebase/auth';
+
+
 
 // Тип для props цього екрану (поки що припускаємо, що він буде в AuthNavigator)
 // Якщо RegisterScreen буде в RootStackParamList, потрібно буде його туди додати
@@ -78,8 +81,17 @@ function RegisterScreen({ navigation }: RegisterScreenProps) {
     };
 
     return (
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 20}
+        >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <ScrollView
+                    contentContainerStyle={styles.scrollContainer}
+                    keyboardShouldPersistTaps="handled"
+                >
         <View style={styles.container}>
-            <Text style={styles.title}>Rejestracja</Text>
             {successMessage ? (
                 <Text style={styles.successText}>{successMessage}</Text>
             ) : null}
@@ -157,11 +169,21 @@ function RegisterScreen({ navigation }: RegisterScreenProps) {
                     Masz już konto? Zaloguj się {/* Маєте акаунт? Увійти (польськ.) */}
                 </Text>
             </TouchableOpacity>
-        </View>
+                    </View>
+                </ScrollView>
+            </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
+    scrollContainer: {
+        flexGrow: 1,
+        justifyContent: 'flex-start',
+        backgroundColor: '#f0f8ff',
+        padding: 20,
+        paddingBottom: 100,
+    },
     container: {
         flex: 1,
         justifyContent: 'center',

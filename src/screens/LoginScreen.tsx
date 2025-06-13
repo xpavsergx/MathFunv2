@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../App';// Переконайся, що шлях правильний
+import Feather from 'react-native-vector-icons/Feather'; // ✅ NOWE
 
 
 
@@ -13,6 +14,8 @@ function LoginScreen({ navigation }: LoginScreenProps) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false); // ✅ NOWE
+
 
 
 
@@ -90,13 +93,23 @@ function LoginScreen({ navigation }: LoginScreenProps) {
                 autoCorrect={false}
             />
 
-            <TextInput
-                style={styles.input}
-                placeholder="Hasło"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
+            <View style={styles.passwordWrapper}> {/* 🔄 ZMIANA */}
+                <TextInput
+                    style={styles.passwordInput} // 🔄 ZMIANA
+                    placeholder="Hasło"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword} // ✅ NOWE
+                    autoCapitalize="none"
                 />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}> {/* ✅ NOWE */}
+                    <Feather
+                        name={showPassword ? 'eye' : 'eye-off'} // ✅ NOWE
+                        size={22}
+                        color="#007bff"
+                    />
+                </TouchableOpacity>
+            </View>
 
             {loading ? (
                 <ActivityIndicator size="large" color="#007bff" style={styles.loader} />
@@ -150,6 +163,22 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         fontSize: 16,
     },
+    passwordWrapper: {
+        width: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        paddingHorizontal: 15,
+        marginBottom: 15,
+        height: 50,
+    }, // ✅ NOWE
+    passwordInput: {
+        flex: 1,
+        fontSize: 16,
+    }, // ✅ NOWE
     buttonWrapper: {
         width: '100%',
         marginBottom: 10,
