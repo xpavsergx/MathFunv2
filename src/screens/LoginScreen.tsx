@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../../App'; // Переконайся, що шлях правильний
+import { AuthStackParamList } from '../../App';// Переконайся, що шлях правильний
+
+
 
 import auth from '@react-native-firebase/auth';
 
@@ -11,6 +13,8 @@ function LoginScreen({ navigation }: LoginScreenProps) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+
+
 
     const handleLogin = async () => {
         if (!email.trim() || !password.trim()) {
@@ -92,7 +96,7 @@ function LoginScreen({ navigation }: LoginScreenProps) {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
-            />
+                />
 
             {loading ? (
                 <ActivityIndicator size="large" color="#007bff" style={styles.loader} />

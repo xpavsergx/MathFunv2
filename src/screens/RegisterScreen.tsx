@@ -22,6 +22,8 @@ function RegisterScreen({ navigation }: RegisterScreenProps) {
     const [confirmPassword, setConfirmPassword] = useState(''); // Додаткове поле для підтвердження пароля
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handleRegister = async () => {
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -115,21 +117,31 @@ function RegisterScreen({ navigation }: RegisterScreenProps) {
                 autoCorrect={false}
             />
 
-            <TextInput
-                style={styles.input}
-                placeholder="Hasło" // Пароль (польськ.)
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-            />
+            <View style={styles.passwordWrapper}>
+                <TextInput
+                    style={styles.passwordInput}
+                    placeholder="Hasło"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    <Text style={styles.toggleText}>{showPassword ? 'Ukryj' : 'Pokaż'}</Text>
+                </TouchableOpacity>
+            </View>
 
-            <TextInput
-                style={styles.input}
-                placeholder="Potwierdź hasło" // Підтвердіть пароль (польськ.)
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-            />
+            <View style={styles.passwordWrapper}>
+                <TextInput
+                    style={styles.passwordInput}
+                    placeholder="Potwierdź hasło"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry={!showConfirmPassword}
+                />
+                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                    <Text style={styles.toggleText}>{showConfirmPassword ? 'Ukryj' : 'Pokaż'}</Text>
+                </TouchableOpacity>
+            </View>
 
             {loading ? (
                 <ActivityIndicator size="large" color="#007bff" style={styles.loader} />
@@ -173,6 +185,27 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         marginBottom: 15,
         fontSize: 16,
+    },
+    passwordWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '100%',
+        height: 50,
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        marginBottom: 15,
+    },
+    passwordInput: {
+        flex: 1,
+        fontSize: 16,
+    },
+    toggleText: {
+        color: '#007bff',
+        fontSize: 14,
+        paddingHorizontal: 10,
     },
     loader: {
         marginVertical: 10,

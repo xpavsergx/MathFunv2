@@ -149,7 +149,7 @@ function ProfileScreen() {
                                         spacing={30}
                                         barBorderRadius={4}
                                         yAxisTextStyle={{color: 'gray'}}
-                                        xAxisTextStyle={{color: 'gray', fontSize: 10, transform: [{ rotate: '-20deg' }], marginLeft: 15}}
+                                        xAxisLabelTextStyle={{color: 'gray', fontSize: 10, transform: [{ rotate: '-20deg' }], marginLeft: 15}}
                                         noOfSections={5}
                                         maxValue={100}
                                         yAxisLabelSuffix="%"

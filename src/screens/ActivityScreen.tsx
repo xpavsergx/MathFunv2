@@ -10,6 +10,8 @@ import { pl } from 'date-fns/locale';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { acceptFriendRequest, rejectFriendRequest } from '../services/friendService';
 import { findWeakestTopic, WeakTopicInfo } from '../services/userStatsService';
+import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+
 
 export interface Notification {
     id: string;
@@ -17,7 +19,7 @@ export interface Notification {
     title: string;
     body: string;
     icon: keyof typeof Ionicons.glyphMap;
-    createdAt: firestore.Timestamp;
+    createdAt: FirebaseFirestoreTypes.Timestamp;
     read: boolean;
     fromUserId?: string;
     fromUserEmail?: string;
