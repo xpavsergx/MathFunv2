@@ -3,12 +3,12 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../App'; // Перевірте шлях
+import { MainAppStackParamList } from '../../App'; // Перевірте шлях
 import questionsDatabase from '../data/questionsDb.json';
 // Імпортуємо константи теми
 import { COLORS, FONT_SIZES, PADDING, MARGIN } from '../styles/theme';
 
-type TopicListProps = NativeStackScreenProps<RootStackParamList, 'TopicList'>;
+type TopicListProps = NativeStackScreenProps<MainAppStackParamList, 'TopicList'>;
 
 type QuestionsDatabase = {
     [grade: string]: { [topic: string]: { [subTopic: string]: any[] } };

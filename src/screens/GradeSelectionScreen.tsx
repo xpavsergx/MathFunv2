@@ -2,11 +2,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../App';
+import { MainAppStackParamList } from '../../App';
 // Імпортуємо стилі теми
 import { COLORS, FONT_SIZES, PADDING, MARGIN } from '../styles/theme';
 
-type GradeSelectionProps = NativeStackScreenProps<RootStackParamList, 'GradeSelection'>;
+type GradeSelectionProps = NativeStackScreenProps<MainAppStackParamList, 'GradeSelection'>;
 const GRADES = [4, 5, 6, 7];
 
 function GradeSelectionScreen({ navigation }: GradeSelectionProps) {

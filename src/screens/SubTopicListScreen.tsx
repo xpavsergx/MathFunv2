@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Button } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../App'; // Припускаємо, що це MainAppStackParamList або об'єднаний тип
+import { MainAppStackParamList } from '../../App'; // Припускаємо, що це MainAppStackParamList або об'єднаний тип
 import questionsDatabase from '../data/questionsDb.json';
 
 type SubTopicDataForTest = {
@@ -17,7 +17,7 @@ type QuestionsDatabaseType = {
   };
 };
 
-type SubTopicListProps = NativeStackScreenProps<RootStackParamList, 'SubTopicList'>; // Перевір тип RootStackParamList
+type SubTopicListProps = NativeStackScreenProps<MainAppStackParamList, 'SubTopicList'>; // Перевір тип RootStackParamList
 
 function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
   const { grade, topic } = route.params;
