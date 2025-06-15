@@ -1,174 +1,168 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback, ScrollView, Platform } from 'react-native';
+import {
+    View,
+    Text,
+    TextInput,
+    Button,
+    StyleSheet,
+    TouchableOpacity,
+    Alert,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    ScrollView,
+    TouchableWithoutFeedback,
+    Keyboard,
+    Platform
+} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../../App'; // Перевір шлях! Можливо, '../App'
-
+import { AuthStackParamList } from '../../App'; // Перевірте, чи правильний шлях до App.tsx
 
 import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore'; // Важливо: імпорт Firestore
 
-
-
-// Тип для props цього екрану (поки що припускаємо, що він буде в AuthNavigator)
-// Якщо RegisterScreen буде в RootStackParamList, потрібно буде його туди додати
-// type RegisterScreenProps = NativeStackScreenProps<RootStackParamList, 'Register'>;
-// Для простоти поки що можемо використовувати any для navigation, або створити окремий AuthStackParamList
-type RegisterScreenProps = {
-    navigation: any; // Тимчасово, для спрощення
-};
+// Типізація для props екрану
+type RegisterScreenProps = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 function RegisterScreen({ navigation }: RegisterScreenProps) {
-    const [firstName, setFirstName] = useState('');   // <-- Imię
-    const [lastName, setLastName] = useState('');     // <-- Nazwisko
-    const [className, setClassName] = useState('');   // <-- Klasa
+    const [nickname, setNickname] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState(''); // Додаткове поле для підтвердження пароля
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handleRegister = async () => {
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        setSuccessMessage('');
-        if (!firstName.trim() || !lastName.trim() || !className.trim()) {
-            Alert.alert('Błąd', 'Proszę wypełnić Imię, Nazwisko i Klasę.');
-            return;
-        }
-        if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
-            Alert.alert('Błąd', 'Proszę wypełnić wszystkie pola.'); // Помилка (польськ.)
-            return;
-        }
-        if (!emailRegex.test(email)) {
-            Alert.alert('Błąd', 'Wprowadź poprawny adres email.');
+        // 1. Валідація введених даних
+        if (!nickname.trim() || !email.trim() || !password.trim()) {
+            Alert.alert('Błąd', 'Proszę wypełnić wszystkie pola.');
             return;
         }
         if (password !== confirmPassword) {
-            Alert.alert('Błąd', 'Hasła nie są identyczne.'); // Паролі не співпадають (польськ.)
+            Alert.alert('Błąd', 'Hasła nie są identyczne.');
             return;
         }
-        // TODO: Додати перевірку складності пароля, якщо потрібно (мінімум 6 символів для Firebase)
         if (password.length < 6) {
-            Alert.alert('Błąd', 'Hasło musi mieć co najmniej 6 znaków.'); // Пароль має містити щонайменше 6 символів (польськ.)
+            Alert.alert('Błąd', 'Hasło musi mieć co najmniej 6 znaków.');
             return;
         }
 
         setLoading(true);
+
         try {
-            await auth().createUserWithEmailAndPassword(email, password);
-            console.log('Użytkownik zarejestrowany pomyślnie!', email);
-            setSuccessMessage('Rejestracja zakończona pomyślnie!');
-            // Firebase автоматично залогінить користувача після успішної реєстрації.
-            // Слухач onAuthStateChanged в App.tsx подбає про навігацію на головний екран.
-            // Можна додати повідомлення про успішну реєстрацію, але користувач і так буде перенаправлений.
-        } catch (error: any) {
-            let errorMessage = 'Nie udało się zarejestrować. Spróbuj ponownie.'; // Не вдалося зареєструватися. Спробуйте ще раз. (польськ.)
-            if (error.code === 'auth/email-already-in-use') {
-                errorMessage = 'Ten adres email jest już zajęty.'; // Цей емейл вже використовується (польськ.)
-            } else if (error.code === 'auth/invalid-email') {
-                errorMessage = 'Niepoprawny format adresu email.'; // Неправильний формат емейлу (польськ.)
-            } else if (error.code === 'auth/weak-password') {
-                errorMessage = 'Hasło jest za słabe. Proszę wybrać mocniejsze hasło.'; // Пароль занадто слабкий (польськ.)
+            // 2. Створення користувача в Authentication
+            const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+
+            if (user) {
+                // 3. Створення документа для користувача в Firestore Database
+                // Цей крок вирішує проблему з пошуком друзів
+                await firestore().collection('users').doc(user.uid).set({
+                    email: user.email?.toLowerCase(), // Зберігаємо email в нижньому регістрі
+                    nickname: nickname.trim(),       // Зберігаємо нікнейм
+                    createdAt: firestore.FieldValue.serverTimestamp(),
+                    friends: [], // Початковий порожній масив друзів
+                });
+
+                // 4. Оновлення профілю в самій Authentication (додаємо displayName)
+                await user.updateProfile({
+                    displayName: nickname.trim()
+                });
+
+                // 5. Надсилання листа для верифікації email
+                await user.sendEmailVerification();
+                Alert.alert(
+                    "Rejestracja udana!",
+                    "Sprawdź swoją skrzynkę pocztową (również folder spam), aby potwierdzić swój adres email."
+                );
+
+                // Після успішної реєстрації Firebase автоматично логінить користувача,
+                // а слухач onAuthStateChanged в App.tsx перенаправить на головний екран.
             }
-            console.error('Błąd rejestracji:', error.code, error.message);
-            Alert.alert('Błąd rejestracji', errorMessage); // Помилка реєстрації (польськ.)
+        } catch (error: any) {
+            if (error.code === 'auth/email-already-in-use') {
+                Alert.alert('Błąd', 'Ten adres email jest już zajęty!');
+            } else if (error.code === 'auth/invalid-email') {
+                Alert.alert('Błąd', 'Adres email jest nieprawidłowy!');
+            } else {
+                console.error("Błąd реєстрації: ", error);
+                Alert.alert('Błąd', 'Wystąpił błąd podczas rejestracji.');
+            }
         }
+
         setLoading(false);
     };
 
     const handleNavigateToLogin = () => {
-        navigation.goBack(); // Повертаємось на попередній екран (має бути LoginScreen)
+        navigation.goBack();
     };
 
     return (
         <KeyboardAvoidingView
             style={{ flex: 1 }}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 20}
         >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContainer}
                     keyboardShouldPersistTaps="handled"
                 >
-        <View style={styles.container}>
-            {successMessage ? (
-                <Text style={styles.successText}>{successMessage}</Text>
-            ) : null}
-            <TextInput
-                style={styles.input}
-                placeholder="Imię"
-                value={firstName}
-                onChangeText={setFirstName}
-                autoCapitalize="words"
-            />
+                    <View style={styles.container}>
+                        <Text style={styles.title}>Stwórz konto</Text>
 
-            <TextInput
-                style={styles.input}
-                placeholder="Nazwisko"
-                value={lastName}
-                onChangeText={setLastName}
-                autoCapitalize="words"
-            />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Twój unikalny nick"
+                            value={nickname}
+                            onChangeText={setNickname}
+                            autoCapitalize="none"
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Adres email"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                        />
+                        <View style={styles.passwordWrapper}>
+                            <TextInput
+                                style={styles.passwordInput}
+                                placeholder="Hasło"
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry={!showPassword}
+                            />
+                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                <Text style={styles.toggleText}>{showPassword ? 'Ukryj' : 'Pokaż'}</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.passwordWrapper}>
+                            <TextInput
+                                style={styles.passwordInput}
+                                placeholder="Potwierdź hasło"
+                                value={confirmPassword}
+                                onChangeText={setConfirmPassword}
+                                secureTextEntry={!showConfirmPassword}
+                            />
+                            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                                <Text style={styles.toggleText}>{showConfirmPassword ? 'Ukryj' : 'Pokaż'}</Text>
+                            </TouchableOpacity>
+                        </View>
 
-            <TextInput
-                style={styles.input}
-                placeholder="Klasa"
-                value={className}
-                onChangeText={setClassName}
-                autoCapitalize="characters"
-            />
+                        {loading ? (
+                            <ActivityIndicator size="large" color="#007bff" style={styles.loader} />
+                        ) : (
+                            <View style={styles.buttonWrapper}>
+                                <Button title="Zarejestruj się" onPress={handleRegister} />
+                            </View>
+                        )}
 
-            <TextInput
-                style={styles.input}
-                placeholder="Adres email" // Електронна пошта (польськ.)
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-            />
-
-            <View style={styles.passwordWrapper}>
-                <TextInput
-                    style={styles.passwordInput}
-                    placeholder="Hasło"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    <Text style={styles.toggleText}>{showPassword ? 'Ukryj' : 'Pokaż'}</Text>
-                </TouchableOpacity>
-            </View>
-
-            <View style={styles.passwordWrapper}>
-                <TextInput
-                    style={styles.passwordInput}
-                    placeholder="Potwierdź hasło"
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry={!showConfirmPassword}
-                />
-                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                    <Text style={styles.toggleText}>{showConfirmPassword ? 'Ukryj' : 'Pokaż'}</Text>
-                </TouchableOpacity>
-            </View>
-
-            {loading ? (
-                <ActivityIndicator size="large" color="#007bff" style={styles.loader} />
-            ) : (
-                <Button
-                    title="Zarejestruj się" // Зареєструватися (польськ.)
-                    onPress={handleRegister}
-                />
-            )}
-
-            <TouchableOpacity onPress={handleNavigateToLogin} style={styles.loginButton} disabled={loading}>
-                <Text style={styles.loginButtonText}>
-                    Masz już konto? Zaloguj się {/* Маєте акаунт? Увійти (польськ.) */}
-                </Text>
-            </TouchableOpacity>
+                        <TouchableOpacity onPress={handleNavigateToLogin} style={styles.loginButton} disabled={loading}>
+                            <Text style={styles.loginButtonText}>
+                                Masz już konto? Zaloguj się
+                            </Text>
+                        </TouchableOpacity>
                     </View>
                 </ScrollView>
             </TouchableWithoutFeedback>
@@ -179,13 +173,9 @@ function RegisterScreen({ navigation }: RegisterScreenProps) {
 const styles = StyleSheet.create({
     scrollContainer: {
         flexGrow: 1,
-        justifyContent: 'flex-start',
-        backgroundColor: '#f0f8ff',
-        padding: 20,
-        paddingBottom: 100,
+        justifyContent: 'center',
     },
     container: {
-        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
@@ -217,11 +207,12 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#ddd',
         borderRadius: 8,
-        paddingHorizontal: 10,
         marginBottom: 15,
     },
     passwordInput: {
         flex: 1,
+        height: '100%',
+        paddingHorizontal: 15,
         fontSize: 16,
     },
     toggleText: {
@@ -229,9 +220,12 @@ const styles = StyleSheet.create({
         fontSize: 14,
         paddingHorizontal: 10,
     },
+    buttonWrapper: {
+        width: '100%',
+    },
     loader: {
         marginVertical: 10,
-        height: 40
+        height: 40,
     },
     loginButton: {
         marginTop: 20,
@@ -239,12 +233,6 @@ const styles = StyleSheet.create({
     loginButtonText: {
         color: '#007bff',
         fontSize: 16,
-    },
-    successText: {
-        color: 'green',
-        fontSize: 16,
-        marginBottom: 20,
-        textAlign: 'center',
     },
 });
 

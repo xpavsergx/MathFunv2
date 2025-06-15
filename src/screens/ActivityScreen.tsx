@@ -12,7 +12,7 @@ import { acceptFriendRequest, rejectFriendRequest } from '../services/friendServ
 import { findWeakestTopic, WeakTopicInfo } from '../services/userStatsService';
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
-
+// Оновлюємо інтерфейс сповіщення, додаючи поля для дуелі
 export interface Notification {
     id: string;
     type: 'achievement' | 'friend_request' | 'friend_accepted' | 'duel_request';
@@ -22,8 +22,11 @@ export interface Notification {
     createdAt: FirebaseFirestoreTypes.Timestamp;
     read: boolean;
     fromUserId?: string;
-    fromUserEmail?: string;
+    fromUserNickname?: string;
+    // Дані для дуелі
     duelId?: string;
+    grade?: number;
+    topic?: string;
 }
 
 function ActivityScreen() {
@@ -70,12 +73,12 @@ function ActivityScreen() {
         return () => subscriber();
     }, [currentUser]);
 
-    const handleAccept = async (notification: Notification) => {
-        if (!notification.fromUserId || !notification.fromUserEmail) return;
-        await acceptFriendRequest(notification.fromUserId, notification.fromUserEmail, notification.id);
+    const handleAcceptFriend = async (notification: Notification) => {
+        if (!notification.fromUserId || !notification.fromUserNickname) return;
+        await acceptFriendRequest(notification.fromUserId, notification.fromUserNickname, notification.id);
     };
 
-    const handleReject = async (notification: Notification) => {
+    const handleRejectFriend = async (notification: Notification) => {
         if (!currentUser || !notification.id) return;
         await rejectFriendRequest(notification.id);
     };
@@ -95,13 +98,30 @@ function ActivityScreen() {
         }
     };
 
-    const handleStartDuel = (duelId: string) => {
-        Alert.alert("Pojedynek!", `Przyjęto wyzwanie do pojedynku o ID: ${duelId}. Logika testu w przygotowaniu.`);
+    // Нова логіка для прийняття виклику на дуель
+    const handleStartDuel = (notification: Notification) => {
+        if (!notification.duelId || !notification.grade || !notification.topic) {
+            Alert.alert("Błąd", "Brak pełnych informacji o pojedynku. Spróbuj ponownie.");
+            return;
+        }
+        // Переходимо на екран тестування в режимі дуелі
+        navigation.navigate('HomeStack', {
+            screen: 'Test',
+            params: {
+                mode: 'duel',
+                testType: 'duel', // Новий тип тесту спеціально для дуелей
+                duelId: notification.duelId,
+                grade: notification.grade,
+                topic: notification.topic,
+            }
+        });
     };
 
     const renderItem = ({ item }: { item: Notification }) => (
         <TouchableOpacity
-            onPress={() => item.type === 'duel_request' && item.duelId ? handleStartDuel(item.duelId) : null}
+            // Робимо картку клікабельною тільки для дуелей
+            onPress={() => item.type === 'duel_request' ? handleStartDuel(item) : null}
+            disabled={item.type !== 'duel_request'}
             style={[styles.notificationCard, !item.read && styles.unreadCard]}
         >
             <Ionicons name={item.icon} size={30} color={item.type === 'achievement' ? '#FFC107' : (item.type === 'duel_request' ? '#F44336' : '#00BCD4')} style={styles.icon} />
@@ -114,10 +134,10 @@ function ActivityScreen() {
             </View>
             {item.type === 'friend_request' && (
                 <View style={styles.buttonGroup}>
-                    <TouchableOpacity style={styles.actionButton} onPress={() => handleAccept(item)}>
+                    <TouchableOpacity style={styles.actionButton} onPress={() => handleAcceptFriend(item)}>
                         <Ionicons name="checkmark-circle-outline" size={30} color="#4CAF50" />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionButton} onPress={() => handleReject(item)}>
+                    <TouchableOpacity style={styles.actionButton} onPress={() => handleRejectFriend(item)}>
                         <Ionicons name="close-circle-outline" size={30} color="#F44336" />
                     </TouchableOpacity>
                 </View>

@@ -1,118 +1,193 @@
-// src/screens/RegisterScreen.tsx
-
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '@/App'; // Використовуємо абсолютний шлях
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore'; // Імпорт Firestore
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { MainAppStackParamList } from '../../App'; // Переконайтесь, що шлях правильний
+import { saveTestResult } from '../services/userStatsService';
+import { checkAchievementsOnTestComplete } from '../services/achievementService';
 
-type RegisterScreenProps = NativeStackScreenProps<AuthStackParamList, 'Register'>;
+// Типізація для props цього екрану
+type ResultsScreenProps = NativeStackScreenProps<MainAppStackParamList, 'Results'>;
 
-function RegisterScreen({ navigation }: RegisterScreenProps) {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [loading, setLoading] = useState(false);
+function ResultsScreen({ route, navigation }: ResultsScreenProps) {
+    const { score, total, originalTestParams } = route.params;
 
-    const handleRegister = async () => {
-        if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
-            Alert.alert('Błąd', 'Proszę wypełnić wszystkie pola.');
-            return;
-        }
-        if (password !== confirmPassword) {
-            Alert.alert('Błąd', 'Hasła nie są identyczne.');
-            return;
-        }
-        if (password.length < 6) {
-            Alert.alert('Błąd', 'Hasło musi mieć co najmniej 6 znaków.');
-            return;
-        }
+    // Використовуємо useMemo, щоб уникнути перерахунків при кожному рендері
+    const percentage = useMemo(() => {
+        return total > 0 ? Math.round((score / total) * 100) : 0;
+    }, [score, total]);
 
-        setLoading(true);
-        try {
-            const userCredential = await auth().createUserWithEmailAndPassword(email, password);
-            if (userCredential.user) {
-                // Створюємо документ для користувача в Firestore
-                await firestore().collection('users').doc(userCredential.user.uid).set({
-                    email: userCredential.user.email,
-                    createdAt: firestore.FieldValue.serverTimestamp(),
-                    friends: [] // Початковий порожній масив друзів
-                });
-            }
-            console.log('Użytkownik zarejestrowany pomyślnie!', email);
-        } catch (error: any) {
-            let errorMessage = 'Nie udało się zarejestrować. Spróbuj ponownie.';
-            if (error.code === 'auth/email-already-in-use') {
-                errorMessage = 'Ten adres email jest już zajęty.';
-            } else if (error.code === 'auth/invalid-email') {
-                errorMessage = 'Niepoprawny format adresu email.';
-            } else if (error.code === 'auth/weak-password') {
-                errorMessage = 'Hasło jest za słabe. Proszę wybrać mocniejsze hasło.';
-            }
-            console.error('Błąd rejestracji:', error.code, error.message);
-            Alert.alert('Błąd rejestracji', errorMessage);
+    // useEffect спрацює один раз, коли екран завантажиться.
+    // Тут ми викликаємо сервіси, щоб зберегти результат і перевірити досягнення.
+    useEffect(() => {
+        console.log('[ResultsScreen] Saving result and checking achievements...');
+        // Зберігаємо результат тесту в базі даних
+        saveTestResult(originalTestParams, score, total);
+        // Перевіряємо, чи користувач не отримав нові досягнення
+        checkAchievementsOnTestComplete(score, total, originalTestParams.topic);
+    }, []); // Порожній масив залежностей означає, що ефект виконається лише раз
+
+    // Функція для отримання повідомлення в залежності від результату
+    const getFeedback = () => {
+        if (percentage === 100) {
+            return {
+                message: 'Genialnie! Jesteś mistrzem!',
+                icon: 'ribbon',
+                color: '#FFC107',
+            };
         }
-        setLoading(false);
+        if (percentage >= 80) {
+            return {
+                message: 'Świetna robota! Tak trzymać!',
+                icon: 'thumbs-up',
+                color: '#4CAF50',
+            };
+        }
+        if (percentage >= 50) {
+            return {
+                message: 'Dobrze Ci idzie! Poćwicz jeszcze trochę.',
+                icon: 'rocket',
+                color: '#00BCD4',
+            };
+        }
+        return {
+            message: 'Nie martw się, praktyka czyni mistrza!',
+            icon: 'barbell',
+            color: '#F44336',
+        };
     };
 
-    const handleNavigateToLogin = () => {
-        navigation.goBack();
+    const feedback = getFeedback();
+
+    const handleRetry = () => {
+        // Замінюємо поточний екран на новий екран тесту, щоб не можна було повернутись "назад" до результатів
+        navigation.replace('Test', originalTestParams);
+    };
+
+    const handleFinish = () => {
+        // Повертаємо користувача на самий початок стеку навігації (на головний екран)
+        navigation.popToTop();
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Rejestracja</Text>
-            <TextInput
-                style={styles.input}
-                placeholder="Adres email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Hasło"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Potwierdź hasło"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-            />
-            {loading ? (
-                <ActivityIndicator size="large" color="#007bff" style={styles.loader} />
-            ) : (
-                <View style={styles.buttonWrapper}>
-                    <Button
-                        title="Zarejestruj się"
-                        onPress={handleRegister}
-                    />
+        <SafeAreaView style={styles.safeArea}>
+            <ScrollView contentContainerStyle={styles.container}>
+                <View style={styles.header}>
+                    <Text style={styles.headerTitle}>Wyniki Testu</Text>
                 </View>
-            )}
-            <TouchableOpacity onPress={handleNavigateToLogin} style={styles.loginButton} disabled={loading}>
-                <Text style={styles.loginButtonText}>
-                    Masz już konto? Zaloguj się
-                </Text>
-            </TouchableOpacity>
-        </View>
+
+                <View style={styles.card}>
+                    <Ionicons name={feedback.icon as any} size={80} color={feedback.color} />
+                    <Text style={[styles.feedbackMessage, { color: feedback.color }]}>
+                        {feedback.message}
+                    </Text>
+                    <Text style={styles.scoreText}>
+                        Twój wynik to:
+                    </Text>
+                    <Text style={styles.scoreValue}>
+                        {score} / {total}
+                    </Text>
+                    <Text style={styles.percentageText}>
+                        ({percentage}%)
+                    </Text>
+                </View>
+
+                <TouchableOpacity style={styles.buttonRetry} onPress={handleRetry}>
+                    <Ionicons name="refresh-outline" size={24} color="#FFFFFF" />
+                    <Text style={styles.buttonText}>Spróbuj jeszcze raz</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.buttonFinish} onPress={handleFinish}>
+                    <Ionicons name="home-outline" size={24} color="#00796B" />
+                    <Text style={[styles.buttonText, { color: '#00796B' }]}>Zakończ</Text>
+                </TouchableOpacity>
+
+            </ScrollView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: '#f0f8ff' },
-    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 30, color: '#333' },
-    input: { width: '100%', height: 50, backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 15, marginBottom: 15, fontSize: 16 },
-    buttonWrapper: { width: '100%' },
-    loader: { marginVertical: 10, height: 44 },
-    loginButton: { marginTop: 20 },
-    loginButtonText: { color: '#007bff', fontSize: 16 },
+    safeArea: {
+        flex: 1,
+        backgroundColor: '#F0F4F8',
+    },
+    container: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    header: {
+        marginBottom: 30,
+    },
+    headerTitle: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#263238',
+    },
+    card: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        padding: 30,
+        alignItems: 'center',
+        width: '100%',
+        marginBottom: 40,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+    },
+    feedbackMessage: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginTop: 15,
+        marginBottom: 25,
+    },
+    scoreText: {
+        fontSize: 18,
+        color: '#546E7A',
+    },
+    scoreValue: {
+        fontSize: 52,
+        fontWeight: 'bold',
+        color: '#37474F',
+        marginVertical: 5,
+    },
+    percentageText: {
+        fontSize: 20,
+        color: '#78909C',
+    },
+    buttonRetry: {
+        flexDirection: 'row',
+        backgroundColor: '#00BCD4',
+        paddingVertical: 15,
+        paddingHorizontal: 30,
+        borderRadius: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '90%',
+        marginBottom: 15,
+        elevation: 3,
+    },
+    buttonFinish: {
+        flexDirection: 'row',
+        backgroundColor: '#B2EBF2',
+        paddingVertical: 15,
+        paddingHorizontal: 30,
+        borderRadius: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '90%',
+    },
+    buttonText: {
+        color: '#FFFFFF',
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginLeft: 10,
+    },
 });
 
-export default RegisterScreen;
+export default ResultsScreen;

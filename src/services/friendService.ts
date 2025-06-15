@@ -6,24 +6,24 @@ import { Alert } from 'react-native';
 import { createNotification } from './notificationService';
 import questionsDatabase from '../data/questionsDb.json';
 
-export const sendFriendRequest = async (friendEmail: string) => {
+export const sendFriendRequest = async (friendNickname: string) => {
     const currentUser = auth().currentUser;
-    if (!currentUser) {
-        Alert.alert("Błąd", "Musisz być zalogowany, aby dodać znajomych.");
+    if (!currentUser || !currentUser.displayName) {
+        Alert.alert("Błąd", "Wystąpił błąd z Twoim kontem. Spróbuj zalogować się ponownie.");
         return;
     }
 
-    if (currentUser.email === friendEmail) {
+    if (currentUser.displayName.toLowerCase() === friendNickname.toLowerCase()) {
         Alert.alert("Błąd", "Nie możesz dodać samego siebie do znajomych.");
         return;
     }
 
     try {
         const usersRef = firestore().collection('users');
-        const querySnapshot = await usersRef.where('email', '==', friendEmail).limit(1).get();
+        const querySnapshot = await usersRef.where('nickname', '==', friendNickname).limit(1).get();
 
         if (querySnapshot.empty) {
-            Alert.alert("Nie znaleziono", `Użytkownik z adresem email ${friendEmail} nie został znaleziony.`);
+            Alert.alert("Nie znaleziono", `Użytkownik o nicku ${friendNickname} nie został znaleziony.`);
             return;
         }
 
@@ -38,25 +38,23 @@ export const sendFriendRequest = async (friendEmail: string) => {
 
         await createNotification(friendId, {
             type: 'friend_request',
-            title: 'Nowe zaproszenie do znajomych',
-            body: `Użytkownik ${currentUser.email} chce Cię dodać do znajomych.`,
+            title: 'Nowe zaproszenie do znajomych!',
+            body: `Użytkownik ${currentUser.displayName} chce Cię dodać do znajomych.`,
             icon: 'person-add-outline',
             fromUserId: currentUser.uid,
-            fromUserEmail: currentUser.email
+            fromUserNickname: currentUser.displayName,
         });
 
-        Alert.alert("Wysłano!", `Wysłano zaproszenie do znajomych do ${friendEmail}.`);
+        Alert.alert("Wysłano!", `Wysłano zaproszenie do znajomych do ${friendNickname}.`);
     } catch (error) {
         console.error("Error sending friend request:", error);
         Alert.alert("Błąd", "Wystąpił problem podczas wysyłania zaproszenia.");
     }
 };
 
-export const acceptFriendRequest = async (friendId: string, friendEmail: string, notificationId: string) => {
+export const acceptFriendRequest = async (friendId: string, fromUserNickname: string, notificationId: string) => {
     const currentUser = auth().currentUser;
-    if (!currentUser) return;
-
-    console.log(`[Friends] ${currentUser.uid} accepts request from ${friendId}`);
+    if (!currentUser || !currentUser.displayName) return;
 
     const currentUserRef = firestore().collection('users').doc(currentUser.uid);
     const friendRef = firestore().collection('users').doc(friendId);
@@ -71,11 +69,11 @@ export const acceptFriendRequest = async (friendId: string, friendEmail: string,
         await createNotification(friendId, {
             type: 'friend_accepted',
             title: 'Zaproszenie przyjęte',
-            body: `${currentUser.email} przyjął/przyjęła Twoje zaproszenie do znajomych.`,
+            body: `${currentUser.displayName} przyjął/przyjęła Twoje zaproszenie.`,
             icon: 'checkmark-done-outline'
         });
 
-        Alert.alert("Sukces", `Dodałeś ${friendEmail} do znajomych!`);
+        Alert.alert("Sukces", `Dodałeś ${fromUserNickname} do znajomych!`);
     } catch (error) {
         console.error("Error accepting friend request:", error);
         Alert.alert("Błąd", "Nie udało się zaakceptować zaproszenia.");
@@ -85,9 +83,6 @@ export const acceptFriendRequest = async (friendId: string, friendEmail: string,
 export const rejectFriendRequest = async (notificationId: string) => {
     const currentUser = auth().currentUser;
     if (!currentUser) return;
-
-    console.log(`[Friends] ${currentUser.uid} rejects notification ${notificationId}`);
-
     try {
         await firestore().collection('users').doc(currentUser.uid).collection('notifications').doc(notificationId).delete();
     } catch (error) {
@@ -97,7 +92,7 @@ export const rejectFriendRequest = async (notificationId: string) => {
 
 export const sendDuelRequest = async (friendId: string, grade: number, topic: string) => {
     const currentUser = auth().currentUser;
-    if (!currentUser) return;
+    if (!currentUser || !currentUser.displayName) return;
 
     try {
         const gradeData = (questionsDatabase as any)[String(grade)];
@@ -120,23 +115,29 @@ export const sendDuelRequest = async (friendId: string, grade: number, topic: st
             status: 'pending',
             players: [currentUser.uid, friendId],
             challengerId: currentUser.uid,
+            challengerNickname: currentUser.displayName,
             topic: topic,
             grade: grade,
             questionIds: questionIds,
             results: {
-                [currentUser.uid]: { score: null, time: null },
+                [currentUser.uid]: { score: null, time: null, nickname: currentUser.displayName },
                 [friendId]: { score: null, time: null },
             },
             createdAt: firestore.FieldValue.serverTimestamp(),
         });
 
+        // Додаємо в сповіщення всю необхідну інформацію для старту тесту
         await createNotification(friendId, {
             type: 'duel_request',
             title: 'Wyzwanie na pojedynek!',
-            body: `${currentUser.email} rzuca Ci wyzwanie na pojedynek z tematu: ${topic}.`,
+            body: `${currentUser.displayName} rzuca Ci wyzwanie z tematu: ${topic}.`,
             icon: 'flame-outline',
-            duelId: duelRef.id
+            duelId: duelRef.id,
+            grade: grade,
+            topic: topic,
         });
+
+        Alert.alert("Wysłano wyzwanie!", `Zaproszenie do pojedynku zostało wysłane.`);
 
     } catch (error) {
         console.error("Error sending duel request:", error);

@@ -123,9 +123,21 @@ function ProfileScreen() {
                         <Ionicons name="person-circle-outline" size={28} color="#00796B" style={styles.sectionIcon} />
                         <Text style={styles.sectionTitle}>Dane użytkownika</Text>
                     </View>
+                    {/* --- ЗМІНА ТУТ --- */}
+                    <Text style={styles.userInfoText}>
+                        Nick: {currentUser?.displayName || 'Brak'}
+                    </Text>
                     <Text style={styles.userInfoText}>
                         Email: {currentUser?.email || 'Brak danych'}
                     </Text>
+                    {currentUser && !currentUser.emailVerified && (
+                        <View style={styles.verificationWarning}>
+                            <Ionicons name="alert-circle-outline" size={24} color="#D84315" />
+                            <Text style={styles.verificationText}>
+                                Twój email nie został potwierdzony.
+                            </Text>
+                        </View>
+                    )}
                 </View>
 
                 <View style={styles.sectionContainer}>
@@ -191,10 +203,10 @@ const styles = StyleSheet.create({
     container: { flex: 1, alignItems: 'center', padding: 20 },
     headerTitle: { fontSize: 26, fontWeight: 'bold', color: '#263238', marginTop: 20, marginBottom: 30 },
     sectionContainer: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 20, width: '100%', marginBottom: 25, elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
-    sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0', paddingBottom: 10},
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 15, borderBottomWidth: 1, borderBottomColor: '#f0f0f0', paddingBottom: 10},
     sectionIcon: { marginRight: 10 },
     sectionTitle: { fontSize: 18, fontWeight: '600', color: '#37474F' },
-    userInfoText: { fontSize: 16, color: '#455A64', paddingLeft: 5 },
+    userInfoText: { fontSize: 16, color: '#455A64', paddingLeft: 5, marginBottom: 5 },
     placeholderText: { fontSize: 15, color: '#546E7A', textAlign: 'center', padding: 10, lineHeight: 22 },
     logoutButton: { flexDirection: 'row', backgroundColor: '#d9534f', paddingVertical: 12, paddingHorizontal: 30, borderRadius: 25, alignItems: 'center', justifyContent: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2, marginTop: 20 },
     logoutButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold', marginLeft: 10 },
@@ -204,7 +216,20 @@ const styles = StyleSheet.create({
     achievementDescription: { fontSize: 14, color: '#666', marginTop: 2 },
     statsSummary: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 15 },
     statsText: { fontSize: 16, color: '#455A64' },
-    chartTitle: { fontSize: 16, fontWeight: '600', color: '#37474F', marginTop: 15, marginBottom: 10, textAlign: 'center' }
+    chartTitle: { fontSize: 16, fontWeight: '600', color: '#37474F', marginTop: 15, marginBottom: 10, textAlign: 'center' },
+    verificationWarning: {
+        backgroundColor: '#FFE0B2',
+        padding: 10,
+        borderRadius: 8,
+        marginTop: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    verificationText: {
+        color: '#BF360C',
+        marginLeft: 10,
+        flex: 1,
+    },
 });
 
 export default ProfileScreen;
