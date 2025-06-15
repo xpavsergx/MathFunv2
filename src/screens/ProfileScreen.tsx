@@ -1,5 +1,3 @@
-// src/screens/ProfileScreen.tsx
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, FlatList, ActivityIndicator } from 'react-native';
 import auth from '@react-native-firebase/auth';
@@ -8,17 +6,19 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { BarChart } from "react-native-gifted-charts";
 import { IAchievement } from '../config/achievements';
 import { TestResultData } from '../services/userStatsService';
+import { useNavigation } from '@react-navigation/native';  // 🔁 ZMIANA: dodany import useNavigation
 
 function ProfileScreen() {
     const [achievements, setAchievements] = useState<IAchievement[]>([]);
     const [stats, setStats] = useState<{
         totalTests: number;
         avgScore: number;
-        topicPerformance: any[];
-    } | null>(null);
+        topicPerformance: { value: number; label: string; frontColor: string }[];
+    } | null>(null);  // 🔁 ZMIANA: poprawione typowanie topicPerformance
     const [loading, setLoading] = useState(true);
 
     const currentUser = auth().currentUser;
+    const navigation = useNavigation();  // 🔁 ZMIANA: użycie hooka nawigacji
 
     useEffect(() => {
         if (!currentUser) {
@@ -33,8 +33,6 @@ function ProfileScreen() {
             .doc(currentUser.uid)
             .collection('testResults')
             .onSnapshot(querySnapshot => {
-                console.log(`[Profile] Stats listener fired! Found ${querySnapshot.size} test results.`);
-
                 const results: TestResultData[] = [];
                 querySnapshot.forEach(doc => {
                     results.push(doc.data() as TestResultData);
@@ -55,14 +53,12 @@ function ProfileScreen() {
 
                     const chartData = Object.keys(performanceByTopic).map(topic => ({
                         value: Math.round(performanceByTopic[topic].sum / performanceByTopic[topic].count),
-                        label: topic.substring(0, 8) + '...',
+                        label: topic.length > 8 ? topic.substring(0, 8) + '...' : topic,  // 🔁 ZMIANA: warunkowe skracanie labela, by nie było "topic..."
                         frontColor: '#00BCD4',
                     }));
 
-                    console.log("[Profile] Calculated Stats:", { totalTests, avgScore });
                     setStats({ totalTests, avgScore, topicPerformance: chartData });
                 } else {
-                    console.log("[Profile] No test results found, clearing stats.");
                     setStats(null);
                 }
                 setLoading(false);
@@ -77,7 +73,6 @@ function ProfileScreen() {
             .collection('achievements')
             .orderBy('awardedAt', 'desc')
             .onSnapshot(querySnapshot => {
-                console.log(`[Profile] Achievements listener fired! Found ${querySnapshot.size} achievements.`);
                 const userAchievements: IAchievement[] = [];
                 querySnapshot.forEach(documentSnapshot => {
                     userAchievements.push(documentSnapshot.data() as IAchievement);
@@ -88,7 +83,6 @@ function ProfileScreen() {
             });
 
         return () => {
-            console.log("[Profile] Cleaning up listeners.");
             unsubscribeStats();
             unsubscribeAchievements();
         };
@@ -118,27 +112,29 @@ function ProfileScreen() {
             <View style={styles.container}>
                 <Text style={styles.headerTitle}>Mój Profil</Text>
 
-                <View style={styles.sectionContainer}>
-                    <View style={styles.sectionHeader}>
-                        <Ionicons name="person-circle-outline" size={28} color="#00796B" style={styles.sectionIcon} />
-                        <Text style={styles.sectionTitle}>Dane użytkownika</Text>
-                    </View>
-                    {/* --- ЗМІНА ТУТ --- */}
-                    <Text style={styles.userInfoText}>
-                        Nick: {currentUser?.displayName || 'Brak'}
-                    </Text>
-                    <Text style={styles.userInfoText}>
-                        Email: {currentUser?.email || 'Brak danych'}
-                    </Text>
-                    {currentUser && !currentUser.emailVerified && (
-                        <View style={styles.verificationWarning}>
-                            <Ionicons name="alert-circle-outline" size={24} color="#D84315" />
-                            <Text style={styles.verificationText}>
-                                Twój email nie został potwierdzony.
-                            </Text>
+                {/* 🔁 ZMIANA: cała sekcja 'Dane użytkownika' to teraz TouchableOpacity i na klik przenosi do UserDetails */}
+                <TouchableOpacity style={{ width: '100%' }} onPress={() => navigation.navigate('UserDetails')}>
+                    <View style={styles.sectionContainer}>
+                        <View style={styles.sectionHeader}>
+                            <Ionicons name="person-circle-outline" size={28} color="#00796B" style={styles.sectionIcon} />
+                            <Text style={styles.sectionTitle}>Dane użytkownika</Text>
                         </View>
-                    )}
-                </View>
+                        <Text style={styles.userInfoText}>
+                            Nick: {currentUser?.displayName || 'Brak'}
+                        </Text>
+                        <Text style={styles.userInfoText}>
+                            Email: {currentUser?.email || 'Brak danych'}
+                        </Text>
+                        {currentUser && !currentUser.emailVerified && (
+                            <View style={styles.verificationWarning}>
+                                <Ionicons name="alert-circle-outline" size={24} color="#D84315" />
+                                <Text style={styles.verificationText}>
+                                    Twój email nie został potwierdzony.
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                </TouchableOpacity>
 
                 <View style={styles.sectionContainer}>
                     <View style={styles.sectionHeader}>
@@ -153,15 +149,15 @@ function ProfileScreen() {
                                     <Text style={styles.statsText}>Średni wynik: {stats.avgScore}%</Text>
                                 </View>
                                 <Text style={styles.chartTitle}>Wyniki wg. działów:</Text>
-                                <View style={{paddingHorizontal: 10, paddingBottom: 10, alignItems: 'center'}}>
+                                <View style={{ paddingHorizontal: 10, paddingBottom: 10, alignItems: 'center' }}>
                                     <BarChart
                                         data={stats.topicPerformance}
                                         barWidth={22}
                                         initialSpacing={10}
                                         spacing={30}
                                         barBorderRadius={4}
-                                        yAxisTextStyle={{color: 'gray'}}
-                                        xAxisLabelTextStyle={{color: 'gray', fontSize: 10, transform: [{ rotate: '-20deg' }], marginLeft: 15}}
+                                        yAxisTextStyle={{ color: 'gray' }}
+                                        xAxisLabelTextStyle={{ color: 'gray', fontSize: 10, transform: [{ rotate: '-20deg' }], marginLeft: 15 }}
                                         noOfSections={5}
                                         maxValue={100}
                                         yAxisLabelSuffix="%"
@@ -203,7 +199,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, alignItems: 'center', padding: 20 },
     headerTitle: { fontSize: 26, fontWeight: 'bold', color: '#263238', marginTop: 20, marginBottom: 30 },
     sectionContainer: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 20, width: '100%', marginBottom: 25, elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
-    sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 15, borderBottomWidth: 1, borderBottomColor: '#f0f0f0', paddingBottom: 10},
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 15, borderBottomWidth: 1, borderBottomColor: '#f0f0f0', paddingBottom: 10 },
     sectionIcon: { marginRight: 10 },
     sectionTitle: { fontSize: 18, fontWeight: '600', color: '#37474F' },
     userInfoText: { fontSize: 16, color: '#455A64', paddingLeft: 5, marginBottom: 5 },

@@ -24,7 +24,8 @@ import firestore from '@react-native-firebase/firestore'; // Важливо: і�
 type RegisterScreenProps = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 function RegisterScreen({ navigation }: RegisterScreenProps) {
-    const [nickname, setNickname] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [className, setClassName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -34,7 +35,7 @@ function RegisterScreen({ navigation }: RegisterScreenProps) {
 
     const handleRegister = async () => {
         // 1. Валідація введених даних
-        if (!nickname.trim() || !email.trim() || !password.trim()) {
+        if (!firstName.trim() || !className.trim() || !email.trim() || !password.trim()) {
             Alert.alert('Błąd', 'Proszę wypełnić wszystkie pola.');
             return;
         }
@@ -59,14 +60,15 @@ function RegisterScreen({ navigation }: RegisterScreenProps) {
                 // Цей крок вирішує проблему з пошуком друзів
                 await firestore().collection('users').doc(user.uid).set({
                     email: user.email?.toLowerCase(), // Зберігаємо email в нижньому регістрі
-                    nickname: nickname.trim(),       // Зберігаємо нікнейм
+                    firstName: firstName.trim(),
+                    className: className.trim(),
                     createdAt: firestore.FieldValue.serverTimestamp(),
                     friends: [], // Початковий порожній масив друзів
                 });
 
                 // 4. Оновлення профілю в самій Authentication (додаємо displayName)
                 await user.updateProfile({
-                    displayName: nickname.trim()
+                    displayName: firstName.trim()
                 });
 
                 // 5. Надсилання листа для верифікації email
@@ -112,10 +114,17 @@ function RegisterScreen({ navigation }: RegisterScreenProps) {
 
                         <TextInput
                             style={styles.input}
-                            placeholder="Twój unikalny nick"
-                            value={nickname}
-                            onChangeText={setNickname}
-                            autoCapitalize="none"
+                            placeholder="Twoje imię"
+                            value={firstName}
+                            onChangeText={setFirstName}
+                            autoCapitalize="words"
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Twoja klasa"
+                            value={className}
+                            onChangeText={setClassName}
+                            autoCapitalize="characters"
                         />
                         <TextInput
                             style={styles.input}

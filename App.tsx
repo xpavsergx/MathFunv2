@@ -19,6 +19,7 @@ import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import UserDetailsScreen from './src/screens/UserDetailsScreen';
 import TheoryGradeSelectionScreen from './src/screens/TheoryGradeSelectionScreen';
 import TheoryScreen from './src/screens/TheoryScreen';
 import TheorySubTopicListScreen from './src/screens/TheorySubTopicListScreen';
@@ -67,6 +68,11 @@ export type FriendsStackParamList = {
     DuelSetup: { friendId: string; friendEmail: string };
 };
 
+export type ProfileStackParamList = {
+    ProfileMain: undefined;
+    UserDetails: undefined;
+};
+
 export type AppTabParamList = {
     HomeStack: undefined;
     TeoriaStack: undefined;
@@ -80,6 +86,7 @@ const MainStack = createNativeStackNavigator<MainAppStackParamList>();
 const TheoryStackNav = createNativeStackNavigator<TheoryStackParamList>();
 const ActivityStackNav = createNativeStackNavigator<ActivityStackParamList>();
 const FriendsStackNav = createNativeStackNavigator<FriendsStackParamList>();
+const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 const Tab = createBottomTabNavigator<AppTabParamList>();
 
 function HomeStackNavigator() {
@@ -127,6 +134,14 @@ function FriendsStackNavigator() {
         </FriendsStackNav.Navigator>
     );
 }
+function ProfileStackNavigator() {
+    return (
+        <ProfileStack.Navigator>
+            <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} options={{ title: 'Profil' }} />
+            <ProfileStack.Screen name="UserDetails" component={UserDetailsScreen} options={{ title: 'Dane użytkownika' }} />
+        </ProfileStack.Navigator>
+    );
+}
 
 function MainAppTabNavigator() {
     return (
@@ -150,7 +165,7 @@ function MainAppTabNavigator() {
             <Tab.Screen name="TeoriaStack" component={TheoryStackNavigator} options={{ title: 'Teoria' }} />
             <Tab.Screen name="FriendsStack" component={FriendsStackNavigator} options={{ title: 'Znajomi' }} />
             <Tab.Screen name="ActivityStack" component={ActivityStackNavigator} options={{ title: 'Aktywność' }} />
-            <Tab.Screen name="Profil" component={ProfileScreen} options={{ title: 'Profil', headerShown: true }} />
+            <Tab.Screen name="Profil" component={ProfileStackNavigator} options={{ title: 'Profil', headerShown: false }} />
         </Tab.Navigator>
     );
 }
