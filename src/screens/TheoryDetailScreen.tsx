@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, ScrollView, FlatList } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TheoryStackParamList } from '../../App';
 import questionsDatabase from '../data/questionsDb.json';
-import RachunkiMemoryBlock from '../Components/RachunkiMemoryBlock'; // ✅ Убедись, что "Components" с английской C
+import RachunkiMemoryBlock from '../Components/RachunkiMemoryBlock';
+import MultiplyDivideBlock from '../Components/MultiplyDivideBlock';
 
 type TheoryContentItem = {
     type: "paragraph" | "subHeader" | "listItem" | "example";
@@ -32,21 +33,28 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
 
     const theoryData = db[grade]?.[topic]?.[subTopic];
 
-    const isMemoryTrickTopic =
+    const isSpecialMemoryTopic =
         grade === "4" &&
         topic === "LICZBY I DZIAŁANIA" &&
-        subTopic === "Rachunki pamięciowe - dodawanie i odejmowanie";
+        (subTopic === "Rachunki pamięciowe - dodawanie i odejmowanie" ||
+            subTopic === "Mnożenie i dzielenie (cd.)");
 
     if (
-        subTopic === 'Rachunki pamięciowe - dodawanie i odejmowanie' &&
+        isSpecialMemoryTopic &&
         (!theoryData?.theoryContent || theoryData.theoryContent.length === 0)
     ) {
         return (
             <ScrollView style={styles.scrollContainer}>
-                <RachunkiMemoryBlock />
+                {subTopic === "Rachunki pamięciowe - dodawanie i odejmowanie" && (
+                    <RachunkiMemoryBlock />
+                )}
+                {subTopic === "Mnożenie i dzielenie (cd.)" && (
+                    <MultiplyDivideBlock />
+                )}
             </ScrollView>
         );
     }
+
     const renderTheoryItem = ({ item }: { item: TheoryContentItem }) => {
         switch (item.type) {
             case 'paragraph':
@@ -69,15 +77,17 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
 
     return (
         <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
-            {theoryData.theoryTitle && (
+            {theoryData?.theoryTitle && (
                 <Text style={styles.mainTitle}>{theoryData.theoryTitle}</Text>
             )}
 
-            {isMemoryTrickTopic ? (
+            {subTopic === "Rachunki pamięciowe - dodawanie i odejmowanie" ? (
                 <RachunkiMemoryBlock />
+            ) : subTopic === "Mnożenie i dzielenie (cd.)" ? (
+                <MultiplyDivideBlock />
             ) : (
                 <FlatList
-                    data={theoryData.theoryContent}
+                    data={theoryData?.theoryContent}
                     renderItem={renderTheoryItem}
                     keyExtractor={(item, index) => `${item.type}_${index}`}
                     scrollEnabled={false}

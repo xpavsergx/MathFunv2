@@ -3,20 +3,6 @@
     "LICZBY I DZIAŁANIA": {
       "Rachunki pamięciowe - dodawanie i odejmowanie": {
         "theoryTitle": "Sprytne dodawanie i odejmowanie w pamięci",
-        "theoryContent": [
-          { "type": "paragraph", "text": "Cześć! Czy wiesz, że dodawanie i odejmowanie w pamięci może być jak ciekawa gra? Chodzi o to, żeby znaleźć najłatwiejszy sposób na policzenie!" },
-          { "type": "subHeader", "text": "Jak dodawać większe liczby?" },
-          { "type": "paragraph", "text": "Gdy dodajesz liczby, na przykład 250 + 130, możesz robić to po kawałku:" },
-          { "type": "listItem", "text": "Najpierw dodaj setki: 200 + 100 = 300." },
-          { "type": "listItem", "text": "Potem dodaj dziesiątki: 50 + 30 = 80." },
-          { "type": "listItem", "text": "Na koniec połącz wyniki: 300 + 80 = 380. Proste, prawda?" },
-          { "type": "subHeader", "text": "A jak sprytnie odejmować?" },
-          { "type": "paragraph", "text": "Podobnie przy odejmowaniu, na przykład 760 - 240:" },
-          { "type": "listItem", "text": "Odejmij setki: 700 - 200 = 500." },
-          { "type": "listItem", "text": "Odejmij dziesiątki: 60 - 40 = 20." },
-          { "type": "listItem", "text": "Wynik to 500 + 20 = 520." },
-          { "type": "paragraph", "text": "Pamiętaj, praktyka czyni mistrza! Im więcej ćwiczysz, tym łatwiejsze stają się rachunki w pamięci." }
-        ],
         "questions": [
           { "id": "rp_add_sub_4_q1", "type": "practice", "difficulty": "łatwe", "questionText": "Ile to jest 250 + 130?", "options": ["360", "380", "370", "390"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Świetnie! Wyobraź sobie, że masz 250 cukierków i dostajesz jeszcze 130. Najpierw dodajmy setki: 200 + 100 to 300. Potem dziesiątki: 50 + 30 to 80. Razem masz 300 + 80, czyli 380 cukierków! Mniam!", "theorySnippet": "Gdy dodajesz liczby, możesz liczyć osobno setki, osobno dziesiątki, a na końcu wszystko połączyć. Tak jak budujesz wieżę z klocków!" },
           { "id": "rp_add_sub_4_q2", "type": "practice", "difficulty": "łatwe", "questionText": "Od liczby 760 odejmij 240. Jaki będzie wynik?", "options": ["520", "530", "510", "500"], "correctAnswerIndex": 0, "correctAnswerExplanation": "Doskonale! Jeśli masz 760 naklejek i oddajesz 240, to najpierw odejmij setki: 700 - 200 = 500. Potem dziesiątki: 60 - 40 = 20. Zostało Ci 500 + 20, czyli 520 naklejek!", "theorySnippet": "Odejmowanie jest jak zabieranie. Możesz odejmować po kawałku: najpierw większe części (setki), potem mniejsze (dziesiątki)." },
@@ -54,7 +40,6 @@
         ]
       },
       "Rachunki pamięciowe - mnożenie i dzielenie": {
-        "theoryTitle": "Mnożenie i dzielenie w głowie jak czarodziej!",
         "theoryContent": [
           { "type": "paragraph", "text": "Mnożenie i dzielenie w pamięci to super umiejętność! Pomaga szybko liczyć, gdy masz kilka takich samych grup przedmiotów lub chcesz coś sprawiedliwie podzielić." },
           { "type": "subHeader", "text": "Pamiętaj o tabliczce mnożenia!" },
@@ -78,16 +63,6 @@
       },
       "Mnożenie i dzielenie (cd.)": {
         "theoryTitle": "Mnożenie i dzielenie – sztuczki dla zaawansowanych!",
-        "theoryContent": [
-          { "type": "paragraph", "text": "Poznaliśmy już podstawy mnożenia i dzielenia. Teraz czas na kilka sztuczek, które ułatwią Ci trudniejsze rachunki!" },
-          { "type": "subHeader", "text": "Mnożenie i dzielenie przez 10, 100..." },
-          { "type": "listItem", "text": "Gdy mnożysz liczbę przez 10, po prostu dopisujesz jedno zero na końcu. Na przykład: 12 x 10 = 120." },
-          { "type": "listItem", "text": "Gdy mnożysz przez 100, dopisujesz dwa zera! Na przykład: 7 x 100 = 700." },
-          { "type": "listItem", "text": "Gdy dzielisz liczbę zakończoną zerami przez 10, 'zabierasz' jedno zero z końca. Na przykład: 800 / 10 = 80." },
-          { "type": "subHeader", "text": "Rozbijanie liczb przy mnożeniu (prawo rozdzielności)" },
-          { "type": "paragraph", "text": "Czasem łatwiej pomnożyć dużą liczbę, rozbijając ją na mniejsze, łatwiejsze do policzenia części. To jak dzielenie dużego zadania na mniejsze!" },
-          { "type": "example", "text": "Przykład: Chcesz policzyć 15 x 6. Możesz pomyśleć, że 15 to 10 + 5. Wtedy mnożysz: (10 x 6) dodać (5 x 6). To jest 60 + 30 = 90. Proste!" }
-        ],
         "questions": [
           { "id": "rpmd_cd_4_q1", "type": "practice", "difficulty": "łatwe", "questionText": "Ile to jest 30 x 4?", "options": ["12", "70", "120", "34"], "correctAnswerIndex": 2, "correctAnswerExplanation": "Celująco! Możesz pomnożyć 3 x 4 = 12, a potem dodać zero z liczby 30. Wynik to 120.", "theorySnippet": "Gdy mnożysz liczbę z zerem na końcu, pomnóż liczby bez zera, a potem dopisz zero do wyniku." },
           { "id": "rpmd_cd_4_q2", "type": "practice", "difficulty": "łatwe", "questionText": "Podziel 800 przez 2. Jaki będzie wynik?", "options": ["40", "400", "1600", "802"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Dokładnie tak! Podziel 8 przez 2, co daje 4, a potem dopisz dwa zera. Wynik to 400.", "theorySnippet": "Gdy dzielisz liczbę z zerami na końcu, podziel część bez zer, a potem dopisz zera do wyniku." },
