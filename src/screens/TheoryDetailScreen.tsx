@@ -5,6 +5,7 @@ import { TheoryStackParamList } from '../../App';
 import questionsDatabase from '../data/questionsDb.json';
 import RachunkiMemoryBlock from '../Components/RachunkiMemoryBlock';
 import MultiplyDivideBlock from '../Components/MultiplyDivideBlock';
+import OileExplanationBlock from '../Components/OileExplanationBlock';
 
 type TheoryContentItem = {
     type: "paragraph" | "subHeader" | "listItem" | "example";
@@ -36,13 +37,13 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
     const isSpecialMemoryTopic =
         grade === "4" &&
         topic === "LICZBY I DZIAŁANIA" &&
-        (subTopic === "Rachunki pamięciowe - dodawanie i odejmowanie" ||
-            subTopic === "Mnożenie i dzielenie (cd.)");
+        (
+            subTopic === "Rachunki pamięciowe - dodawanie i odejmowanie" ||
+            subTopic === "Mnożenie i dzielenie (cd.)" ||
+            subTopic === "O ile więcej, o ile mniej"
+        );
 
-    if (
-        isSpecialMemoryTopic &&
-        (!theoryData?.theoryContent || theoryData.theoryContent.length === 0)
-    ) {
+    if (isSpecialMemoryTopic) {
         return (
             <ScrollView style={styles.scrollContainer}>
                 {subTopic === "Rachunki pamięciowe - dodawanie i odejmowanie" && (
@@ -50,6 +51,9 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
                 )}
                 {subTopic === "Mnożenie i dzielenie (cd.)" && (
                     <MultiplyDivideBlock />
+                )}
+                {subTopic === "O ile więcej, o ile mniej" && (
+                    <OileExplanationBlock />
                 )}
             </ScrollView>
         );
@@ -81,19 +85,13 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
                 <Text style={styles.mainTitle}>{theoryData.theoryTitle}</Text>
             )}
 
-            {subTopic === "Rachunki pamięciowe - dodawanie i odejmowanie" ? (
-                <RachunkiMemoryBlock />
-            ) : subTopic === "Mnożenie i dzielenie (cd.)" ? (
-                <MultiplyDivideBlock />
-            ) : (
-                <FlatList
-                    data={theoryData?.theoryContent}
-                    renderItem={renderTheoryItem}
-                    keyExtractor={(item, index) => `${item.type}_${index}`}
-                    scrollEnabled={false}
-                    ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-                />
-            )}
+            <FlatList
+                data={theoryData?.theoryContent}
+                renderItem={renderTheoryItem}
+                keyExtractor={(item, index) => `${item.type}_${index}`}
+                scrollEnabled={false}
+                ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+            />
         </ScrollView>
     );
 }
@@ -106,12 +104,6 @@ const styles = StyleSheet.create({
     contentContainer: {
         paddingVertical: 20,
         paddingHorizontal: 15,
-    },
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
     },
     mainTitle: {
         fontSize: 24,
@@ -160,19 +152,6 @@ const styles = StyleSheet.create({
         lineHeight: 24,
         color: '#37474F',
         fontStyle: 'italic',
-    },
-    emptyText: {
-        textAlign: 'center',
-        marginTop: 20,
-        fontSize: 16,
-        color: '#777',
-    },
-    title: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#444',
-        marginBottom: 10,
-        textAlign: 'center',
     },
 });
 
