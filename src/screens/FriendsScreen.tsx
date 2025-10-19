@@ -36,7 +36,7 @@ const AddFriendSection = ({ friendInput, setFriendInput, onAddFriend, isSendingR
             <Text style={styles.sectionTitle}>Dodaj znajomego</Text>
             <TextInput
                 style={styles.input}
-                placeholder="Wpisz nick znajomego..."
+                placeholder="Wpisz imię znajomego..."
                 value={friendInput}
                 onChangeText={setFriendInput}
                 autoCapitalize="none"

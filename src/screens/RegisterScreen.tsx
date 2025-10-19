@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
     View,
     Text,
     TextInput,
-    Button,
-    StyleSheet,
     TouchableOpacity,
     Alert,
     ActivityIndicator,
@@ -12,119 +10,113 @@ import {
     ScrollView,
     TouchableWithoutFeedback,
     Keyboard,
-    Platform
-} from 'react-native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../../App'; // Перевірте, чи правильний шлях до App.tsx
+    Platform,
+    StatusBar,
+    StyleSheet,
+} from "react-native";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { AuthStackParamList } from "../../App";
 
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore'; // Важливо: імпорт Firestore
+import auth from "@react-native-firebase/auth";
+import firestore from "@react-native-firebase/firestore";
 
-// Типізація для props екрану
-type RegisterScreenProps = NativeStackScreenProps<AuthStackParamList, 'Register'>;
+type RegisterScreenProps = NativeStackScreenProps<
+    AuthStackParamList,
+    "Register"
+>;
 
 function RegisterScreen({ navigation }: RegisterScreenProps) {
-    const [firstName, setFirstName] = useState('');
-    const [className, setClassName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
+    const [firstName, setFirstName] = useState("");
+    const [className, setClassName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [loading, setLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handleRegister = async () => {
-        // 1. Валідація введених даних
         if (!firstName.trim() || !className.trim() || !email.trim() || !password.trim()) {
-            Alert.alert('Błąd', 'Proszę wypełnić wszystkie pola.');
+            Alert.alert("Błąd", "Proszę wypełnić wszystkie pola.");
             return;
         }
         if (password !== confirmPassword) {
-            Alert.alert('Błąd', 'Hasła nie są identyczne.');
+            Alert.alert("Błąd", "Hasła nie są identyczne.");
             return;
         }
         if (password.length < 6) {
-            Alert.alert('Błąd', 'Hasło musi mieć co najmniej 6 znaków.');
+            Alert.alert("Błąd", "Hasło musi mieć co najmniej 6 znaków.");
             return;
         }
 
         setLoading(true);
-
         try {
-            // 2. Створення користувача в Authentication
             const userCredential = await auth().createUserWithEmailAndPassword(email, password);
             const user = userCredential.user;
-
             if (user) {
-                // 3. Створення документа для користувача в Firestore Database
-                // Цей крок вирішує проблему з пошуком друзів
-                await firestore().collection('users').doc(user.uid).set({
-                    email: user.email?.toLowerCase(), // Зберігаємо email в нижньому регістрі
+                await firestore().collection("users").doc(user.uid).set({
+                    email: user.email?.toLowerCase(),
                     firstName: firstName.trim(),
                     className: className.trim(),
                     createdAt: firestore.FieldValue.serverTimestamp(),
-                    friends: [], // Початковий порожній масив друзів
+                    friends: [],
                 });
-
-                // 4. Оновлення профілю в самій Authentication (додаємо displayName)
                 await user.updateProfile({
-                    displayName: firstName.trim()
+                    displayName: firstName.trim(),
                 });
-
-                // 5. Надсилання листа для верифікації email
                 await user.sendEmailVerification();
                 Alert.alert(
                     "Rejestracja udana!",
-                    "Sprawdź swoją skrzynkę pocztową (również folder spam), aby potwierdzić swój adres email."
+                    "Sprawdź skrzynkę pocztową, aby potwierdzić adres email."
                 );
-
-                // Після успішної реєстрації Firebase автоматично логінить користувача,
-                // а слухач onAuthStateChanged в App.tsx перенаправить на головний екран.
             }
         } catch (error: any) {
-            if (error.code === 'auth/email-already-in-use') {
-                Alert.alert('Błąd', 'Ten adres email jest już zajęty!');
-            } else if (error.code === 'auth/invalid-email') {
-                Alert.alert('Błąd', 'Adres email jest nieprawidłowy!');
+            if (error.code === "auth/email-already-in-use") {
+                Alert.alert("Błąd", "Ten adres email jest już zajęty!");
+            } else if (error.code === "auth/invalid-email") {
+                Alert.alert("Błąd", "Adres email jest nieprawidłowy!");
             } else {
-                console.error("Błąd реєстрації: ", error);
-                Alert.alert('Błąd', 'Wystąpił błąd podczas rejestracji.');
+                console.error("Błąd rejestracji: ", error);
+                Alert.alert("Błąd", "Wystąpił błąd podczas rejestracji.");
             }
         }
-
         setLoading(false);
     };
 
-    const handleNavigateToLogin = () => {
-        navigation.goBack();
-    };
+    const handleNavigateToLogin = () => navigation.goBack();
 
     return (
         <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardAvoidingView}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
         >
+            <StatusBar barStyle="dark-content" />
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContainer}
+                    showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                 >
-                    <View style={styles.container}>
-                        <Text style={styles.title}>Stwórz konto</Text>
+                    <View style={styles.card}>
+                        <Text style={styles.title}>Załóż konto</Text>
+                        <Text style={styles.subtitle}>
+                            Dołącz do MathFun i rozwijaj swoje umiejętności matematyczne 🎓
+                        </Text>
 
                         <TextInput
                             style={styles.input}
                             placeholder="Twoje imię"
                             value={firstName}
                             onChangeText={setFirstName}
-                            autoCapitalize="words"
+                            placeholderTextColor="#9CA3AF"
+                            returnKeyType="next"
                         />
                         <TextInput
                             style={styles.input}
-                            placeholder="Twoja klasa"
+                            placeholder="Twoja klasa (np. 8B, 2C LO)"
                             value={className}
                             onChangeText={setClassName}
-                            autoCapitalize="characters"
+                            placeholderTextColor="#9CA3AF"
+                            returnKeyType="next"
                         />
                         <TextInput
                             style={styles.input}
@@ -133,45 +125,46 @@ function RegisterScreen({ navigation }: RegisterScreenProps) {
                             onChangeText={setEmail}
                             keyboardType="email-address"
                             autoCapitalize="none"
+                            placeholderTextColor="#9CA3AF"
+                            returnKeyType="next"
                         />
-                        <View style={styles.passwordWrapper}>
-                            <TextInput
-                                style={styles.passwordInput}
-                                placeholder="Hasło"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry={!showPassword}
-                            />
-                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                                <Text style={styles.toggleText}>{showPassword ? 'Ukryj' : 'Pokaż'}</Text>
-                            </TouchableOpacity>
-                        </View>
-                        <View style={styles.passwordWrapper}>
-                            <TextInput
-                                style={styles.passwordInput}
-                                placeholder="Potwierdź hasło"
-                                value={confirmPassword}
-                                onChangeText={setConfirmPassword}
-                                secureTextEntry={!showConfirmPassword}
-                            />
-                            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                                <Text style={styles.toggleText}>{showConfirmPassword ? 'Ukryj' : 'Pokaż'}</Text>
-                            </TouchableOpacity>
-                        </View>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Hasło"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                            placeholderTextColor="#9CA3AF"
+                            returnKeyType="next"
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Potwierdź hasło"
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            secureTextEntry
+                            placeholderTextColor="#9CA3AF"
+                            returnKeyType="done"
+                        />
 
                         {loading ? (
-                            <ActivityIndicator size="large" color="#007bff" style={styles.loader} />
+                            <ActivityIndicator size="large" color="#2563EB" style={styles.loader} />
                         ) : (
-                            <View style={styles.buttonWrapper}>
-                                <Button title="Zarejestruj się" onPress={handleRegister} />
-                            </View>
+                            <TouchableOpacity
+                                style={styles.button}
+                                onPress={handleRegister}
+                                activeOpacity={0.85}
+                            >
+                                <Text style={styles.buttonText}>Zarejestruj się</Text>
+                            </TouchableOpacity>
                         )}
 
-                        <TouchableOpacity onPress={handleNavigateToLogin} style={styles.loginButton} disabled={loading}>
-                            <Text style={styles.loginButtonText}>
-                                Masz już konto? Zaloguj się
-                            </Text>
-                        </TouchableOpacity>
+                        <View style={styles.footer}>
+                            <Text style={styles.footerText}>Masz już konto?</Text>
+                            <TouchableOpacity onPress={handleNavigateToLogin} disabled={loading}>
+                                <Text style={styles.footerLink}>Zaloguj się</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </ScrollView>
             </TouchableWithoutFeedback>
@@ -180,68 +173,73 @@ function RegisterScreen({ navigation }: RegisterScreenProps) {
 }
 
 const styles = StyleSheet.create({
+    keyboardAvoidingView: { flex: 1, backgroundColor: "#EEF2FF" },
     scrollContainer: {
         flexGrow: 1,
-        justifyContent: 'center',
-    },
-    container: {
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
         padding: 20,
-        backgroundColor: '#f0f8ff',
+        paddingBottom: 40, // dodatkowe miejsce na klawiaturę
+    },
+    card: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 20,
+        padding: 24,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
+        elevation: 6,
     },
     title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 30,
-        color: '#333',
+        fontSize: 30,
+        fontWeight: "800",
+        color: "#111827",
+        marginBottom: 8,
+        textAlign: "center",
+    },
+    subtitle: {
+        fontSize: 15,
+        color: "#6B7280",
+        textAlign: "center",
+        marginBottom: 28,
     },
     input: {
-        width: '100%',
-        height: 50,
-        backgroundColor: '#fff',
+        backgroundColor: "#F9FAFB",
         borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 8,
+        borderColor: "#E5E7EB",
+        borderRadius: 12,
         paddingHorizontal: 15,
-        marginBottom: 15,
+        paddingVertical: 14,
         fontSize: 16,
+        marginBottom: 14,
+        color: "#111827",
     },
-    passwordWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        width: '100%',
-        height: 50,
-        backgroundColor: '#fff',
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 8,
-        marginBottom: 15,
+    button: {
+        backgroundColor: "#2563EB",
+        borderRadius: 12,
+        height: 55,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 10,
     },
-    passwordInput: {
-        flex: 1,
-        height: '100%',
-        paddingHorizontal: 15,
-        fontSize: 16,
+    buttonText: {
+        color: "#FFFFFF",
+        fontSize: 18,
+        fontWeight: "700",
     },
-    toggleText: {
-        color: '#007bff',
-        fontSize: 14,
-        paddingHorizontal: 10,
+    loader: { marginTop: 10, height: 55 },
+    footer: {
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 22,
     },
-    buttonWrapper: {
-        width: '100%',
-    },
-    loader: {
-        marginVertical: 10,
-        height: 40,
-    },
-    loginButton: {
-        marginTop: 20,
-    },
-    loginButtonText: {
-        color: '#007bff',
-        fontSize: 16,
+    footerText: { fontSize: 15, color: "#6B7280" },
+    footerLink: {
+        fontSize: 15,
+        color: "#2563EB",
+        fontWeight: "600",
+        marginLeft: 6,
     },
 });
 
