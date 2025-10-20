@@ -5,14 +5,13 @@ import {
     StyleSheet,
     TextInput,
     Button,
-    ScrollView,
-    KeyboardAvoidingView,
     Platform,
     Keyboard,
     ImageBackground,
     Animated,
     StatusBar,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const MultiplicationTrainerScreen = () => {
     const [number, setNumber] = useState<number>(0);
@@ -156,100 +155,99 @@ const MultiplicationTrainerScreen = () => {
         if (!showValidation) return styles.input;
         return validationState[fieldKey] ? styles.correct : styles.error;
     };
+
     useEffect(() => {
         if (Platform.OS === 'android') {
             StatusBar.setTranslucent(true);
             StatusBar.setBackgroundColor('transparent');
         }
     }, []);
+
     return (
         <View style={{ flex: 1 }}>
             <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-            {/* Фон на весь экран */}
+
             <ImageBackground
                 source={require('../assets/background.jpg')}
                 style={StyleSheet.absoluteFillObject}
                 resizeMode="cover"
             />
 
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={{ flex: 1 }}
+            {/* ✅ Исправленный блок */}
+            <KeyboardAwareScrollView
+                contentContainerStyle={styles.container}
+                enableOnAndroid={true}
+                extraScrollHeight={100}
+                keyboardShouldPersistTaps="handled"
             >
-                <ScrollView
-                    contentContainerStyle={styles.container} // убираем paddingBottom
-                    keyboardShouldPersistTaps="handled"
-                >
-                    <Animated.View style={[styles.card, { backgroundColor: 'transparent' }]}>
-                        {/* Полупрозрачный слой */}
-                        <View
-                            style={{
-                                ...StyleSheet.absoluteFillObject,
-                                backgroundColor: 'rgba(255,255,255,0.4)', // ← меняй 0.4 для прозрачности
-                                borderRadius: 20,
-                            }}
-                        />
+                <Animated.View style={[styles.card, { backgroundColor: 'transparent' }]}>
+                    <View
+                        style={{
+                            ...StyleSheet.absoluteFillObject,
+                            backgroundColor: 'rgba(255,255,255,0.4)',
+                            borderRadius: 20,
+                        }}
+                    />
 
-                        <Text style={styles.title}>Trener mnożenia</Text>
-                        <Text style={styles.task}>{number} × {other} = ?</Text>
+                    <Text style={styles.title}>Trener mnożenia</Text>
+                    <Text style={styles.task}>{number} × {other} = ?</Text>
 
-                        <Text style={styles.label}>Liczba do rozłożenia: {number}</Text>
+                    <Text style={styles.label}>Liczba do rozłożenia: {number}</Text>
 
-                        <View style={styles.inputRow}>
-                            <TextInput style={getValidationStyle('decomp1')} keyboardType="numeric" value={decomp1} onChangeText={setDecomp1} placeholder="dziesiątki" placeholderTextColor="#aaa" />
-                            <TextInput style={getValidationStyle('decomp2')} keyboardType="numeric" value={decomp2} onChangeText={setDecomp2} placeholder="jedności" placeholderTextColor="#aaa" />
-                        </View>
+                    <View style={styles.inputRow}>
+                        <TextInput style={getValidationStyle('decomp1')} keyboardType="numeric" value={decomp1} onChangeText={setDecomp1} placeholder="dziesiątki" placeholderTextColor="#aaa" />
+                        <TextInput style={getValidationStyle('decomp2')} keyboardType="numeric" value={decomp2} onChangeText={setDecomp2} placeholder="jedności" placeholderTextColor="#aaa" />
+                    </View>
 
-                        <Text style={styles.multiplyBy}>× {other}</Text>
+                    <Text style={styles.multiplyBy}> × {other}</Text>
 
-                        <View style={styles.arrowRow}>
-                            <Animated.Text style={[styles.arrow, { opacity: arrowOpacity1 }]}>↓</Animated.Text>
-                            <Animated.Text style={[styles.arrow, { opacity: arrowOpacity2 }]}>↓</Animated.Text>
-                        </View>
+                    <View style={styles.arrowRow}>
+                        <Animated.Text style={[styles.arrow, { opacity: arrowOpacity1 }]}>↓</Animated.Text>
+                        <Animated.Text style={[styles.arrow, { opacity: arrowOpacity2 }]}>↓</Animated.Text>
+                    </View>
 
-                        <View style={styles.inputRow}>
-                            <TextInput style={getValidationStyle('partial1')} keyboardType="numeric" value={partial1} onChangeText={setPartial1} placeholder={`${other}`} placeholderTextColor="#aaa" />
-                            <Text style={styles.operator}>×</Text>
-                            <TextInput style={getValidationStyle('partial2')} keyboardType="numeric" value={partial2} onChangeText={setPartial2} placeholder={`${other}`} placeholderTextColor="#aaa" />
-                        </View>
+                    <View style={styles.inputRow}>
+                        <TextInput style={getValidationStyle('partial1')} keyboardType="numeric" value={partial1} onChangeText={setPartial1} placeholder={`×${other}`} placeholderTextColor="#aaa" />
+                        <Text style={styles.operator}> + </Text>
+                        <TextInput style={getValidationStyle('partial2')} keyboardType="numeric" value={partial2} onChangeText={setPartial2} placeholder={`×${other}`} placeholderTextColor="#aaa" />
+                    </View>
 
-                        <View style={styles.arrowRow}>
-                            <Text style={styles.arrow}>↘</Text>
-                            <Text style={styles.arrow}>↙</Text>
-                        </View>
+                    <View style={styles.arrowRow}>
+                        <Text style={styles.arrow}>↘</Text>
+                        <Text style={styles.arrow}>↙</Text>
+                    </View>
 
-                        <TextInput
-                            style={[getValidationStyle('final'), styles.finalInput]}
-                            keyboardType="numeric"
-                            value={final}
-                            onChangeText={setFinal}
-                            placeholder="wynik"
-                            placeholderTextColor="#aaa"
-                        />
+                    <TextInput
+                        style={[getValidationStyle('final'), styles.finalInput]}
+                        keyboardType="numeric"
+                        value={final}
+                        onChangeText={setFinal}
+                        placeholder="wynik"
+                        placeholderTextColor="#aaa"
+                    />
 
-                        <View style={styles.buttonContainer}>
-                            <Button title={readyForNext ? "Dalej" : "Sprawdź"} onPress={handleButton} color="#007AFF" />
-                        </View>
+                    <View style={styles.buttonContainer}>
+                        <Button title={readyForNext ? "Dalej" : "Sprawdź"} onPress={handleButton} color="#007AFF" />
+                    </View>
 
-                        {resultMessage ? (
-                            <Text
-                                style={[
-                                    styles.result,
-                                    resultMessage.startsWith('Brawo')
-                                        ? styles.correctText
-                                        : styles.errorText,
-                                ]}
-                            >
-                                {resultMessage}
-                            </Text>
-                        ) : null}
-
-                        <Text style={styles.counter}>
-                            ✅ {correctCount}   ❌ {wrongCount}   ⏱ {seconds}s
+                    {resultMessage ? (
+                        <Text
+                            style={[
+                                styles.result,
+                                resultMessage.startsWith('Brawo')
+                                    ? styles.correctText
+                                    : styles.errorText,
+                            ]}
+                        >
+                            {resultMessage}
                         </Text>
-                    </Animated.View>
-                </ScrollView>
-            </KeyboardAvoidingView>
+                    ) : null}
+
+                    <Text style={styles.counter}>
+                        ✅ {correctCount}   ❌ {wrongCount}   ⏱ {seconds}s
+                    </Text>
+                </Animated.View>
+            </KeyboardAwareScrollView>
         </View>
     );
 };
