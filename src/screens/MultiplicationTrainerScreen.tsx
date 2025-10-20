@@ -227,7 +227,11 @@ const MultiplicationTrainerScreen = () => {
                     />
 
                     <View style={styles.buttonContainer}>
-                        <Button title={readyForNext ? "Dalej" : "Sprawdź"} onPress={handleButton} color="#007AFF" />
+                        <Button
+                            title={readyForNext ? "Dalej" : "Sprawdź"}
+                            onPress={readyForNext ? nextTask : handleButton}
+                            color="#007AFF"
+                        />
                     </View>
 
                     {resultMessage ? (
