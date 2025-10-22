@@ -23,7 +23,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     const { grade, topic } = route.params;
     const db: QuestionsDatabaseType = questionsDatabase as QuestionsDatabaseType;
 
-    // Filtrujemy podtematy z pytaniami lub trenerem
+    // Фильтруем подтемы с вопросами или тренером
     const subTopicsWithQuestions = useMemo(() => {
         const topicsForGrade = db[String(grade)];
         const subTopicsMap = topicsForGrade?.[topic] || {};
@@ -51,18 +51,34 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         const subTopicData = db[String(grade)][topic][subTopicKey];
 
         if (subTopicData?.isTrainer) {
-            navigation.navigate('MultiplicationTrainer', {
-                grade,
-                topic,
-                subTopic: subTopicKey,
-            });
+            // Проверяем, какой экран тренера открывать
+            if (subTopicKey === "Mnożenie") {
+                navigation.navigate('MultiplicationTrainer', {
+                    grade,
+                    topic,
+                    subTopic: subTopicKey,
+                });
+            } else if (subTopicKey === "Dodawanie i odejmowanie") {
+                navigation.navigate('PlusMinusTrainer', {
+                    grade,
+                    topic,
+                    subTopic: subTopicKey,
+                });
+            } else {
+                // По умолчанию открываем MultiplicationTrainer для других тренеров
+                navigation.navigate('MultiplicationTrainer', {
+                    grade,
+                    topic,
+                    subTopic: subTopicKey,
+                });
+            }
         } else {
             navigation.navigate('Test', {
                 grade,
                 topic,
                 subTopic: subTopicKey,
                 testType: 'subTopic',
-                mode: 'learn', // tylko tryb treningowy
+                mode: 'learn', // только тренировочный режим
             });
         }
     };
@@ -93,7 +109,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
                 contentContainerStyle={{ paddingVertical: 20 }}
             />
 
-            {/* Przycisk testu z całego działu na dole */}
+            {/* Кнопки теста с целого раздела */}
             <View style={styles.fullTopicButtonContainer}>
                 <Button
                     title={`Test z całego działu "${topic}" (Trening)`}

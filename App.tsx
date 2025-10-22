@@ -16,6 +16,7 @@ import TopicListScreen from './src/screens/TopicListScreen';
 import SubTopicListScreen from './src/screens/SubTopicListScreen';
 import TestScreen from './src/screens/TestScreen';
 import MultiplicationTrainerScreen from './src/screens/MultiplicationTrainerScreen';
+import PlusMinusTrainerScreen from './src/screens/PlusMinusTrainerScreen'; // Новый экран
 import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
@@ -48,7 +49,8 @@ export type MainAppStackParamList = {
         testType?: 'subTopic' | 'mainTopic' | 'gradeRandom' | 'gradeAssessment';
         duelId?: string;
     };
-    MultiplicationTrainer: { grade: number; topic: string; subTopic: string }; // <-- новое имя
+    MultiplicationTrainer: { grade: number; topic: string; subTopic: string };
+    PlusMinusTrainer: { grade: number; topic: string; subTopic: string }; // Новый экран
     Results: {
         score: number;
         total: number;
@@ -88,11 +90,7 @@ function HomeStackNavigator() {
     return (
         <MainStack.Navigator initialRouteName="Main">
             <MainStack.Screen name="Main" component={MainScreen} options={{ headerShown: false }} />
-            <MainStack.Screen
-                name="GradeSelection"
-                component={GradeSelectionScreen}
-                options={{ title: 'Wybierz klasę' }}
-            />
+            <MainStack.Screen name="GradeSelection" component={GradeSelectionScreen} options={{ title: 'Wybierz klasę' }} />
             <MainStack.Screen
                 name="TopicList"
                 component={TopicListScreen}
@@ -107,22 +105,20 @@ function HomeStackNavigator() {
                 name="Test"
                 component={TestScreen}
                 options={({ route }) => ({
-                    title:
-                        (route.params.testType === 'mainTopic'
-                            ? `Test: ${route.params.topic}`
-                            : route.params.subTopic) || 'Test',
+                    title: (route.params.testType === 'mainTopic' ? `Test: ${route.params.topic}` : route.params.subTopic) || 'Test',
                 })}
             />
             <MainStack.Screen
                 name="MultiplicationTrainer"
                 component={MultiplicationTrainerScreen}
-                options={({ route }) => ({ title: `Trener mnożenia: ${route.params.subTopic}` })}
+                options={({ route }) => ({ title: `${route.params.subTopic}` })}
             />
             <MainStack.Screen
-                name="Results"
-                component={ResultsScreen}
-                options={{ title: 'Wyniki Testu' }}
+                name="PlusMinusTrainer"
+                component={PlusMinusTrainerScreen}
+                options={({ route }) => ({ title: `${route.params.subTopic}` })}
             />
+            <MainStack.Screen name="Results" component={ResultsScreen} options={{ title: 'Wyniki Testu' }} />
         </MainStack.Navigator>
     );
 }
@@ -172,16 +168,8 @@ function ActivityStackNavigator() {
 function FriendsStackNavigator() {
     return (
         <FriendsStackNav.Navigator>
-            <FriendsStackNav.Screen
-                name="Friends"
-                component={FriendsScreen}
-                options={{ title: 'Znajomi' }}
-            />
-            <FriendsStackNav.Screen
-                name="DuelSetup"
-                component={DuelSetupScreen}
-                options={{ title: 'Ustawienia pojedynku' }}
-            />
+            <FriendsStackNav.Screen name="Friends" component={FriendsScreen} options={{ title: 'Znajomi' }} />
+            <FriendsStackNav.Screen name="DuelSetup" component={DuelSetupScreen} options={{ title: 'Ustawienia pojedynku' }} />
         </FriendsStackNav.Navigator>
     );
 }
@@ -190,16 +178,8 @@ function FriendsStackNavigator() {
 function ProfileStackNavigator() {
     return (
         <ProfileStack.Navigator>
-            <ProfileStack.Screen
-                name="ProfileMain"
-                component={ProfileScreen}
-                options={{ title: 'Profil' }}
-            />
-            <ProfileStack.Screen
-                name="UserDetails"
-                component={UserDetailsScreen}
-                options={{ title: 'Dane użytkownika' }}
-            />
+            <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} options={{ title: 'Profil' }} />
+            <ProfileStack.Screen name="UserDetails" component={UserDetailsScreen} options={{ title: 'Dane użytkownika' }} />
         </ProfileStack.Navigator>
     );
 }
@@ -211,20 +191,11 @@ function MainAppTabNavigator() {
             screenOptions={({ route }) => ({
                 tabBarIcon: ({ focused, color, size }) => {
                     let iconName: keyof typeof Ionicons.glyphMap = 'help-circle';
-                    if (route.name === 'HomeStack')
-                        iconName = focused ? 'home' : 'home-outline';
-                    else if (route.name === 'TeoriaStack')
-                        iconName = focused ? 'book' : 'book-outline';
-                    else if (route.name === 'FriendsStack')
-                        iconName = focused ? 'people' : 'people-outline';
-                    else if (route.name === 'ActivityStack')
-                        iconName = focused
-                            ? 'notifications'
-                            : 'notifications-outline';
-                    else if (route.name === 'Profil')
-                        iconName = focused
-                            ? 'person-circle'
-                            : 'person-circle-outline';
+                    if (route.name === 'HomeStack') iconName = focused ? 'home' : 'home-outline';
+                    else if (route.name === 'TeoriaStack') iconName = focused ? 'book' : 'book-outline';
+                    else if (route.name === 'FriendsStack') iconName = focused ? 'people' : 'people-outline';
+                    else if (route.name === 'ActivityStack') iconName = focused ? 'notifications' : 'notifications-outline';
+                    else if (route.name === 'Profil') iconName = focused ? 'person-circle' : 'person-circle-outline';
                     return <Ionicons name={iconName} size={size} color={color} />;
                 },
                 tabBarActiveTintColor: '#00BCD4',
@@ -232,31 +203,11 @@ function MainAppTabNavigator() {
                 headerShown: false,
             })}
         >
-            <Tab.Screen
-                name="HomeStack"
-                component={HomeStackNavigator}
-                options={{ title: 'Główna' }}
-            />
-            <Tab.Screen
-                name="TeoriaStack"
-                component={TheoryStackNavigator}
-                options={{ title: 'Teoria' }}
-            />
-            <Tab.Screen
-                name="FriendsStack"
-                component={FriendsStackNavigator}
-                options={{ title: 'Znajomi' }}
-            />
-            <Tab.Screen
-                name="ActivityStack"
-                component={ActivityStackNavigator}
-                options={{ title: 'Aktywność' }}
-            />
-            <Tab.Screen
-                name="Profil"
-                component={ProfileStackNavigator}
-                options={{ title: 'Profil', headerShown: false }}
-            />
+            <Tab.Screen name="HomeStack" component={HomeStackNavigator} options={{ title: 'Główna' }} />
+            <Tab.Screen name="TeoriaStack" component={TheoryStackNavigator} options={{ title: 'Teoria' }} />
+            <Tab.Screen name="FriendsStack" component={FriendsStackNavigator} options={{ title: 'Znajomi' }} />
+            <Tab.Screen name="ActivityStack" component={ActivityStackNavigator} options={{ title: 'Aktywność' }} />
+            <Tab.Screen name="Profil" component={ProfileStackNavigator} options={{ title: 'Profil', headerShown: false }} />
         </Tab.Navigator>
     );
 }
@@ -265,16 +216,8 @@ function MainAppTabNavigator() {
 function AuthNavigator() {
     return (
         <AuthStack.Navigator>
-            <AuthStack.Screen
-                name="Login"
-                component={LoginScreen}
-                options={{ headerShown: false }}
-            />
-            <AuthStack.Screen
-                name="Register"
-                component={RegisterScreen}
-                options={{ title: 'Rejestracja' }}
-            />
+            <AuthStack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+            <AuthStack.Screen name="Register" component={RegisterScreen} options={{ title: 'Rejestracja' }} />
         </AuthStack.Navigator>
     );
 }
@@ -304,9 +247,7 @@ function App(): React.JSX.Element {
 
     return (
         <>
-            <NavigationContainer>
-                {user ? <MainAppTabNavigator /> : <AuthNavigator />}
-            </NavigationContainer>
+            <NavigationContainer>{user ? <MainAppTabNavigator /> : <AuthNavigator />}</NavigationContainer>
             <Toast />
         </>
     );

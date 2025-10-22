@@ -1,5 +1,3 @@
-// src/screens/TestScreen.tsx
-
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -33,7 +31,7 @@ type QuestionsDatabase = {
 
 type TestScreenProps = NativeStackScreenProps<MainAppStackParamList, 'Test'>;
 
-const ASSESSMENT_TIME_SECONDS = 15 * 60; // 15 хвилин
+const ASSESSMENT_TIME_SECONDS = 15 * 60; // 15 минут
 
 function TestScreen({ route, navigation }: TestScreenProps) {
     const { grade, topic, subTopic, mode = 'learn', testType = 'subTopic', duelId } = route.params;
@@ -60,9 +58,8 @@ function TestScreen({ route, navigation }: TestScreenProps) {
             const db: QuestionsDatabase = questionsDatabase as QuestionsDatabase;
             let loadedQuestions: Question[] = [];
 
-            // --- ЛОГІКА ДЛЯ ДУЕЛЕЙ ---
-            if (testType === 'duel' && duelId) {
-                console.log(`[TestScreen] Loading questions for DUEL ID: ${duelId}`);
+            // --- ЛОГИКА ДЛЯ ДУЕЛЕЙ ---
+            if (mode === 'duel' && duelId) {
                 try {
                     const duelDoc = await firestore().collection('duels').doc(duelId).get();
                     if (duelDoc.exists) {
@@ -73,11 +70,8 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                                 Object.values(topicData).flatMap(subtopic => subtopic.questions || [])
                             )
                         );
-                        // Фільтруємо питання з бази даних за ID, що зберігаються в дуелі
                         loadedQuestions = allQuestionsFromDb.filter(q => questionIds.includes(q.id));
-                        console.log(`[TestScreen] Loaded ${loadedQuestions.length} questions for duel.`);
                     } else {
-                        console.error("Duel document not found!");
                         Alert.alert("Błąd", "Nie znaleziono pojedynku. Być może został anulowany.");
                     }
                 } catch (error) {
@@ -85,7 +79,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                     Alert.alert("Błąd", "Nie udało się załadować pytań do pojedynku.");
                 }
             }
-            // --- ЛОГІКА ДЛЯ ЗВИЧАЙНИХ ТЕСТІВ ---
+            // --- ЛОГИКА ДЛЯ ЗВЫЧАЙНЫХ ТЕСТОВ ---
             else if (testType === 'mainTopic' && grade && topic) {
                 const topicsForGrade = db[String(grade)];
                 const subTopicsMap = topicsForGrade?.[topic];
@@ -103,7 +97,6 @@ function TestScreen({ route, navigation }: TestScreenProps) {
             }
 
             setQuestions(loadedQuestions);
-            // Скидаємо всі стани
             setCurrentQuestionIndex(0);
             setScore(0);
             setSelectedAnswerIndex(null);
@@ -120,7 +113,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
     useEffect(() => {
         if (mode === 'assess' && questions.length > 0 && !loading) {
             timerRef.current = setInterval(() => {
-                setTimeLeft((prevTime) => {
+                setTimeLeft(prevTime => {
                     if (prevTime <= 1) {
                         if (timerRef.current) clearInterval(timerRef.current);
                         Alert.alert("Czas minął!", `Test zakończony. Twój wynik: ${scoreRef.current} z ${questions.length}`);
@@ -134,17 +127,14 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         }
     }, [mode, questions.length, loading]);
 
-
     const finishTest = async (finalScore: number) => {
         if (timerRef.current) clearInterval(timerRef.current);
         const currentUser = auth().currentUser;
 
-        // --- ЛОГІКА ЗБЕРЕЖЕННЯ РЕЗУЛЬТАТУ ДУЕЛІ ---
-        if (testType === 'duel' && duelId && currentUser) {
-            console.log(`[TestScreen] Saving DUEL result for user ${currentUser.uid}. Score: ${finalScore}`);
+        if (mode === 'duel' && duelId && currentUser) {
             try {
                 const duelRef = firestore().collection('duels').doc(duelId);
-                const finalTime = mode === 'assess' ? (ASSESSMENT_TIME_SECONDS - timeLeft) : null;
+                const finalTime = ASSESSMENT_TIME_SECONDS - timeLeft; // или null, если не нужно
                 await duelRef.update({
                     [`results.${currentUser.uid}.score`]: finalScore,
                     [`results.${currentUser.uid}.time`]: finalTime,
@@ -155,7 +145,6 @@ function TestScreen({ route, navigation }: TestScreenProps) {
             }
         }
 
-        // Переходимо на екран результатів для всіх типів тестів
         navigation.replace('Results', {
             score: finalScore,
             total: questions.length,
@@ -164,9 +153,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
     };
 
     const handleAnswerSelect = (index: number) => {
-        if (!isAnswerSubmitted) {
-            setSelectedAnswerIndex(index);
-        }
+        if (!isAnswerSubmitted) setSelectedAnswerIndex(index);
     };
 
     const handleNextQuestion = () => {
@@ -181,20 +168,18 @@ function TestScreen({ route, navigation }: TestScreenProps) {
     };
 
     const handleSubmitAnswer = () => {
-        if (selectedAnswerIndex === null && questions[currentQuestionIndex]?.type === 'practice') {
+        const currentQ = questions[currentQuestionIndex];
+        if (selectedAnswerIndex === null && currentQ.type === 'practice') {
             Alert.alert("Uwaga!", "Proszę wybrać odpowiedź.");
             return;
         }
 
         setIsAnswerSubmitted(true);
-        const currentQ = questions[currentQuestionIndex];
         let isCorrect = false;
 
         if (currentQ.type === 'practice' && selectedAnswerIndex !== null) {
             isCorrect = selectedAnswerIndex === currentQ.correctAnswerIndex;
-            if (isCorrect) {
-                setScore(prevScore => prevScore + 1);
-            }
+            if (isCorrect) setScore(prev => prev + 1);
         }
 
         if (mode === 'learn' || currentQ.type === 'theory') {
@@ -202,13 +187,9 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         } else {
             const nextIndex = currentQuestionIndex + 1;
             if (nextIndex >= questions.length) {
-                const finalScore = isCorrect ? score + 1 : score;
-                finishTest(finalScore);
+                finishTest(isCorrect ? score + 1 : score);
             } else {
-                // В режимі 'assess' або 'duel' просто чекаємо 1 секунду і переходимо далі
-                setTimeout(() => {
-                    handleNextQuestion();
-                }, 1000);
+                setTimeout(() => handleNextQuestion(), 1000);
             }
         }
     };
@@ -232,38 +213,25 @@ function TestScreen({ route, navigation }: TestScreenProps) {
 
     const currentQuestion = questions[currentQuestionIndex];
 
-    const capitalizeFirstLetter = (string: string | undefined) => {
-        if (!string) return '';
-        return string.charAt(0).toUpperCase() + string.slice(1);
-    }
-    const formatTime = (seconds: number): string => {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-    };
+    const capitalizeFirstLetter = (str?: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+    const formatTime = (seconds: number) => `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, '0')}`;
 
     return (
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.container}>
-            {mode === 'assess' && (
-                <Text style={styles.timerText}>Pozostały czas: {formatTime(timeLeft)}</Text>
-            )}
+            {mode === 'assess' && <Text style={styles.timerText}>Pozostały czas: {formatTime(timeLeft)}</Text>}
             <View style={styles.headerContainer}>
                 <Text style={styles.questionCounter}>Pytanie {currentQuestionIndex + 1} z {questions.length}</Text>
-                {currentQuestion.difficulty && (
-                    <Text style={styles.difficultyText}>
-                        Poziom: {capitalizeFirstLetter(currentQuestion.difficulty)}
-                    </Text>
-                )}
+                {currentQuestion.difficulty && <Text style={styles.difficultyText}>Poziom: {capitalizeFirstLetter(currentQuestion.difficulty)}</Text>}
             </View>
             <Text style={styles.questionText}>{currentQuestion.questionText}</Text>
 
             {currentQuestion.type === 'practice' && (
                 <View style={styles.optionsContainer}>
-                    {currentQuestion.options.map((option: string, index: number) => {
+                    {currentQuestion.options.map((option, index) => {
                         const isSelected = selectedAnswerIndex === index;
                         const isCorrect = currentQuestion.correctAnswerIndex === index;
-                        let buttonStyle = styles.optionButton;
-                        let textStyle = styles.optionText;
+                        let buttonStyle: any = styles.optionButton;
+                        let textStyle: any = styles.optionText;
 
                         if (isAnswerSubmitted) {
                             if (isCorrect) {
@@ -277,12 +245,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                         }
 
                         return (
-                            <TouchableOpacity
-                                key={index}
-                                style={buttonStyle}
-                                onPress={() => handleAnswerSelect(index)}
-                                disabled={isAnswerSubmitted}
-                            >
+                            <TouchableOpacity key={index} style={buttonStyle} onPress={() => handleAnswerSelect(index)} disabled={isAnswerSubmitted}>
                                 <Text style={textStyle}>{option}</Text>
                             </TouchableOpacity>
                         );
@@ -292,26 +255,21 @@ function TestScreen({ route, navigation }: TestScreenProps) {
 
             {!isAnswerSubmitted && (
                 <TouchableOpacity style={styles.submitButton} onPress={handleSubmitAnswer}>
-                    <Text style={styles.submitButtonText}>
-                        {currentQuestion.type === 'theory' ? "Dalej" : "Odpowiedz"}
-                    </Text>
+                    <Text style={styles.submitButtonText}>{currentQuestion.type === 'theory' ? "Dalej" : "Odpowiedz"}</Text>
                 </TouchableOpacity>
             )}
 
             {isAnswerSubmitted && showFeedback && (
                 <View style={styles.feedbackContainer}>
                     {currentQuestion.type === 'practice' && (
-                        <Text style={[
-                            styles.feedbackTitle,
-                            selectedAnswerIndex === currentQuestion.correctAnswerIndex ? styles.correctFeedbackTitle : styles.incorrectFeedbackTitle
-                        ]}>
-                            {selectedAnswerIndex === currentQuestion.correctAnswerIndex ? "Poprawnie!" : "Niepoprawnie!"}
-                        </Text>
-                    )}
-                    {currentQuestion.type === 'practice' && (
-                        <Text style={styles.feedbackTextBold}>
-                            Prawidłowa odpowiedź: <Text style={styles.feedbackTextNormal}>{currentQuestion.options[currentQuestion.correctAnswerIndex]}</Text>
-                        </Text>
+                        <>
+                            <Text style={[styles.feedbackTitle, selectedAnswerIndex === currentQuestion.correctAnswerIndex ? styles.correctFeedbackTitle : styles.incorrectFeedbackTitle]}>
+                                {selectedAnswerIndex === currentQuestion.correctAnswerIndex ? "Poprawnie!" : "Niepoprawnie!"}
+                            </Text>
+                            <Text style={styles.feedbackTextBold}>
+                                Prawidłowa odpowiedź: <Text style={styles.feedbackTextNormal}>{currentQuestion.options[currentQuestion.correctAnswerIndex]}</Text>
+                            </Text>
+                        </>
                     )}
                     <Text style={styles.feedbackHeader}>Wyjaśnienie:</Text>
                     <Text style={styles.feedbackText}>{currentQuestion.correctAnswerExplanation}</Text>
@@ -322,9 +280,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                         </>
                     )}
                     <TouchableOpacity style={styles.nextButton} onPress={handleNextQuestion}>
-                        <Text style={styles.submitButtonText}>
-                            {currentQuestionIndex + 1 < questions.length ? "Następne pytanie" : "Zakończ test"}
-                        </Text>
+                        <Text style={styles.submitButtonText}>{currentQuestionIndex + 1 < questions.length ? "Następne pytanie" : "Zakończ test"}</Text>
                     </TouchableOpacity>
                 </View>
             )}
@@ -333,33 +289,33 @@ function TestScreen({ route, navigation }: TestScreenProps) {
 }
 
 const styles = StyleSheet.create({
-    scrollView: { flex: 1, backgroundColor: '#f0f8ff' },
-    container: { flexGrow: 1, padding: 20 },
-    loadingText: { marginTop: 10, fontSize: 16, color: '#555', textAlign: 'center' },
-    errorText: { textAlign: 'center', fontSize: 16, color: 'red' },
-    headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-    questionCounter: { fontSize: 16, color: '#555' },
-    difficultyText: { fontSize: 16, color: '#007bff', fontWeight: 'bold' },
-    questionText: { fontSize: 20, fontWeight: 'bold', marginBottom: 25, textAlign: 'center', color: '#333', lineHeight: 28 },
-    optionsContainer: { marginBottom: 20 },
-    optionButton: { backgroundColor: '#ffffff', paddingVertical: 15, paddingHorizontal: 12, marginVertical: 8, borderRadius: 10, borderWidth: 1.5, borderColor: '#b0bec5', elevation: 2, shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.18, shadowRadius: 1.00 },
-    selectedOption: { borderColor: '#00BCD4', borderWidth: 2.5, backgroundColor: '#e0f7fa' },
-    correctOption: { backgroundColor: '#c8e6c9', borderColor: '#4caf50', borderWidth: 2.5 },
-    incorrectOption: { backgroundColor: '#ffcdd2', borderColor: '#f44336', borderWidth: 2.5 },
-    optionText: { fontSize: 17, color: '#455a64', textAlign: 'center' },
-    correctOptionText: { fontWeight: 'bold', color: '#2e7d32' },
-    submitButton: { backgroundColor: '#00BCD4', paddingVertical: 15, paddingHorizontal: 20, borderRadius: 25, alignItems: 'center', marginTop: 10, elevation: 3 },
-    nextButton: { backgroundColor: '#FF9800', paddingVertical: 15, paddingHorizontal: 20, borderRadius: 25, alignItems: 'center', marginTop: 20, elevation: 3 },
-    submitButtonText: { color: '#ffffff', fontSize: 18, fontWeight: 'bold' },
-    feedbackContainer: { marginTop: 20, padding: 15, backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#e0e0e0', marginBottom: 20 },
-    feedbackTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 12, textAlign: 'center' },
-    correctFeedbackTitle: { color: '#388e3c' },
-    incorrectFeedbackTitle: { color: '#d32f2f' },
-    feedbackHeader: { fontSize: 17, fontWeight: 'bold', marginTop: 10, marginBottom: 5, color: '#424242' },
-    feedbackText: { fontSize: 16, color: '#555', marginBottom: 8, lineHeight: 22 },
-    feedbackTextBold: { fontSize: 16, color: '#555', marginBottom: 8, fontWeight: 'bold' },
-    feedbackTextNormal: { fontWeight: 'normal' },
-    timerText: { fontSize: 18, fontWeight: 'bold', color: '#d32f2f', textAlign: 'center', marginBottom: 15 },
+    scrollView: { flex:1, backgroundColor:'#f0f8ff' },
+    container: { flexGrow:1, padding:20 },
+    loadingText: { marginTop:10, fontSize:16, color:'#555', textAlign:'center' },
+    errorText: { textAlign:'center', fontSize:16, color:'red' },
+    headerContainer: { flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:15 },
+    questionCounter: { fontSize:16, color:'#555' },
+    difficultyText: { fontSize:16, color:'#007bff', fontWeight:'bold' },
+    questionText: { fontSize:20, fontWeight:'bold', marginBottom:25, textAlign:'center', color:'#333', lineHeight:28 },
+    optionsContainer: { marginBottom:20 },
+    optionButton: { backgroundColor:'#fff', paddingVertical:15, paddingHorizontal:12, marginVertical:8, borderRadius:10, borderWidth:1.5, borderColor:'#b0bec5', elevation:2, shadowColor:"#000", shadowOffset:{width:0,height:1}, shadowOpacity:0.18, shadowRadius:1 },
+    selectedOption: { borderColor:'#00BCD4', borderWidth:2.5, backgroundColor:'#e0f7fa' },
+    correctOption: { backgroundColor:'#c8e6c9', borderColor:'#4caf50', borderWidth:2.5 },
+    incorrectOption: { backgroundColor:'#ffcdd2', borderColor:'#f44336', borderWidth:2.5 },
+    optionText: { fontSize:17, color:'#455a64', textAlign:'center' },
+    correctOptionText: { fontWeight:'bold', color:'#2e7d32' },
+    submitButton: { backgroundColor:'#00BCD4', paddingVertical:15, paddingHorizontal:20, borderRadius:25, alignItems:'center', marginTop:10, elevation:3 },
+    nextButton: { backgroundColor:'#FF9800', paddingVertical:15, paddingHorizontal:20, borderRadius:25, alignItems:'center', marginTop:20, elevation:3 },
+    submitButtonText: { color:'#fff', fontSize:18, fontWeight:'bold' },
+    feedbackContainer: { marginTop:20, padding:15, backgroundColor:'#fff', borderRadius:8, borderWidth:1, borderColor:'#e0e0e0', marginBottom:20 },
+    feedbackTitle: { fontSize:20, fontWeight:'bold', marginBottom:12, textAlign:'center' },
+    correctFeedbackTitle: { color:'#388e3c' },
+    incorrectFeedbackTitle: { color:'#d32f2f' },
+    feedbackHeader: { fontSize:17, fontWeight:'bold', marginTop:10, marginBottom:5, color:'#424242' },
+    feedbackText: { fontSize:16, color:'#555', marginBottom:8, lineHeight:22 },
+    feedbackTextBold: { fontSize:16, color:'#555', marginBottom:8, fontWeight:'bold' },
+    feedbackTextNormal: { fontWeight:'normal' },
+    timerText: { fontSize:18, fontWeight:'bold', color:'#d32f2f', textAlign:'center', marginBottom:15 },
 });
 
 export default TestScreen;

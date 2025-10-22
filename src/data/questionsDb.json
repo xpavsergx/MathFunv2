@@ -5,7 +5,11 @@
         "theoryTitle": "Sprytne dodawanie i odejmowanie w pamięci",
         "questions": []
       },
-      "Mnożenie i dzielenie (cd.)": {
+      "Dodawanie i odejmowanie": {
+        "isTrainer": true,
+        "questions": []
+      },
+      "Mnożenie": {
         "isTrainer": true,
         "questions": []
       },
