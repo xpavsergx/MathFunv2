@@ -11,9 +11,10 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
-const AdditionTrainerScreen = () => {
+const AdditionSubtractionTrainerScreen = () => {
     const [numberA, setNumberA] = useState<number>(0);
     const [numberB, setNumberB] = useState<number>(0);
+    const [isAddition, setIsAddition] = useState<boolean>(true);
 
     const [tensInput, setTensInput] = useState<string>('');
     const [partialResult, setPartialResult] = useState<string>('');
@@ -31,18 +32,24 @@ const AdditionTrainerScreen = () => {
     const [resultMessage, setResultMessage] = useState<string>('');
     const [readyForNext, setReadyForNext] = useState<boolean>(false);
 
-    // Подсчет правильных/неправильных ответов и времени
     const [correctCount, setCorrectCount] = useState<number>(0);
     const [wrongCount, setWrongCount] = useState<number>(0);
     const [startTime, setStartTime] = useState<number>(0);
     const [seconds, setSeconds] = useState<number>(0);
 
     const nextTask = () => {
-        const a = Math.floor(Math.random() * 90) + 10;
-        const b = Math.floor(Math.random() * 90) + 10;
+        let a = Math.floor(Math.random() * 90) + 10; // 10-99
+        let b = Math.floor(Math.random() * 90) + 10; // 10-99
+        const addition = Math.random() > 0.5;
+
+        if (!addition) {
+            // Вычитание: гарантируем a >= b
+            if (b > a) [a, b] = [b, a];
+        }
 
         setNumberA(a);
         setNumberB(b);
+        setIsAddition(addition);
 
         setTensInput('');
         setPartialResult('');
@@ -57,8 +64,6 @@ const AdditionTrainerScreen = () => {
         });
         setResultMessage('');
         setReadyForNext(false);
-
-        // Сброс времени для новой задачи
         setSeconds(0);
         setStartTime(Date.now());
     };
@@ -71,9 +76,13 @@ const AdditionTrainerScreen = () => {
         Keyboard.dismiss();
 
         const correctTens = Math.floor(numberB / 10) * 10;
-        const correctPartial = numberA + correctTens;
+        const correctPartial = isAddition
+            ? numberA + correctTens
+            : numberA - correctTens;
         const correctOnes = numberB % 10;
-        const correctFinal = numberA + numberB;
+        const correctFinal = isAddition
+            ? numberA + numberB
+            : numberA - numberB;
 
         const vState = {
             tensInput: tensInput ? Number(tensInput) === correctTens : false,
@@ -103,7 +112,6 @@ const AdditionTrainerScreen = () => {
         const allCorrect = onlyFilled.every(([key]) => vState[key as keyof typeof vState]);
 
         if (allCorrect) {
-            // фиксируем время выполнения задачи
             const elapsed = Math.floor((Date.now() - startTime) / 1000);
             setSeconds(elapsed);
 
@@ -123,6 +131,8 @@ const AdditionTrainerScreen = () => {
             : validationState[field] ? styles.correct : styles.error;
     };
 
+    const operationSymbol = isAddition ? '+' : '−';
+
     return (
         <View style={{ flex: 1 }}>
             <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
@@ -138,19 +148,17 @@ const AdditionTrainerScreen = () => {
                 keyboardShouldPersistTaps="handled"
             >
                 <View style={styles.card}>
-                    <Text style={styles.title}>Trener dodawania</Text>
+                    <Text style={styles.title}>Trener dodawania i odejmowania </Text>
 
-                    <Text style={styles.task}>{numberA} + {numberB}</Text>
+                    <Text style={styles.task}>{numberA} {operationSymbol} {numberB}</Text>
 
                     <Text style={styles.subTitle}>
                         Rozłóż liczbę <Text style={styles.highlight}>{numberB}</Text> na dziesiątki i jedności
                     </Text>
 
-                    <View style={{ height: 20 }} />
-
                     <View style={styles.row}>
                         <Text style={styles.number}>{numberA}</Text>
-                        <Text style={styles.operator}> + </Text>
+                        <Text style={styles.operator}> {operationSymbol} </Text>
                         <TextInput
                             style={getStyle('tensInput')}
                             keyboardType="numeric"
@@ -171,7 +179,7 @@ const AdditionTrainerScreen = () => {
                     </View>
 
                     <View style={styles.row}>
-                        <Text style={styles.operator}>+</Text>
+                        <Text style={styles.operator}>{isAddition ? '+' : '−'}</Text>
                         <TextInput
                             style={getStyle('onesInput')}
                             keyboardType="numeric"
@@ -200,14 +208,7 @@ const AdditionTrainerScreen = () => {
                     </View>
 
                     {resultMessage ? (
-                        <Text
-                            style={[
-                                styles.result,
-                                resultMessage.startsWith('Brawo')
-                                    ? styles.correctText
-                                    : styles.errorText,
-                            ]}
-                        >
+                        <Text style={[styles.result, resultMessage.startsWith('Brawo') ? styles.correctText : styles.errorText]}>
                             {resultMessage}
                         </Text>
                     ) : null}
@@ -225,23 +226,17 @@ const styles = StyleSheet.create({
     container: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
     card: {
         width: '100%',
-        maxWidth: 550,
+        maxWidth: 700,
         borderRadius: 20,
-        padding: 30,
+        padding: 50,
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.7)',
+        backgroundColor: 'rgba(255,255,255,0.4)',
     },
-    title: { fontSize: 28, fontWeight: 'bold', marginBottom: 10, color: '#333' },
+    title: { fontSize: 28, fontWeight: 'bold', marginBottom: 15, color: '#333' },
+    task: { fontSize: 36, fontWeight: 'bold', marginBottom: 15, color: '#007AFF' },
     subTitle: { fontSize: 20, marginBottom: 15, color: '#444', textAlign: 'center' },
     highlight: { color: '#007AFF', fontWeight: 'bold' },
-    task: { fontSize: 32, fontWeight: 'bold', marginBottom: 10, color: '#007AFF' },
-    row: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginVertical: 10,
-        flexWrap: 'wrap',
-    },
+    row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: 10, flexWrap: 'wrap' },
     number: { fontSize: 26, marginHorizontal: 5 },
     operator: { fontSize: 26, fontWeight: 'bold', marginHorizontal: 5 },
     input: {
@@ -249,18 +244,18 @@ const styles = StyleSheet.create({
         height: 60,
         borderWidth: 2,
         borderColor: '#ccc',
-        borderRadius: 12,
+        borderRadius: 10,
         textAlign: 'center',
         fontSize: 22,
         marginHorizontal: 8,
-        backgroundColor: '#fafafa',
+        backgroundColor: 'rgba(255,255,255,0.6)',
     },
     correct: {
         width: 130,
         height: 60,
         borderWidth: 2,
         borderColor: '#28a745',
-        borderRadius: 12,
+        borderRadius: 10,
         textAlign: 'center',
         fontSize: 22,
         marginHorizontal: 8,
@@ -272,7 +267,7 @@ const styles = StyleSheet.create({
         height: 60,
         borderWidth: 2,
         borderColor: '#dc3545',
-        borderRadius: 12,
+        borderRadius: 10,
         textAlign: 'center',
         fontSize: 22,
         marginHorizontal: 8,
@@ -284,7 +279,7 @@ const styles = StyleSheet.create({
         height: 60,
         borderWidth: 2,
         borderColor: '#28a745',
-        borderRadius: 12,
+        borderRadius: 10,
         textAlign: 'center',
         fontSize: 22,
         marginHorizontal: 8,
@@ -296,7 +291,7 @@ const styles = StyleSheet.create({
         height: 60,
         borderWidth: 2,
         borderColor: '#dc3545',
-        borderRadius: 12,
+        borderRadius: 10,
         textAlign: 'center',
         fontSize: 22,
         marginHorizontal: 8,
@@ -310,4 +305,4 @@ const styles = StyleSheet.create({
     errorText: { color: '#dc3545' },
 });
 
-export default AdditionTrainerScreen;
+export default AdditionSubtractionTrainerScreen;
