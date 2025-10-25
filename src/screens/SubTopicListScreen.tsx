@@ -48,29 +48,22 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     };
 
     const handleSubTopicPress = (subTopicKey: string) => {
-        const subTopicData = db[String(grade)][topic][subTopicKey];
+        const subTopicData = db[String(grade)]?.[topic]?.[subTopicKey];
+        if (!subTopicData) return;
 
-        if (subTopicData?.isTrainer) {
-            // Проверяем, какой экран тренера открывать
-            if (subTopicKey === "Mnożenie") {
-                navigation.navigate('MultiplicationTrainer', {
-                    grade,
-                    topic,
-                    subTopic: subTopicKey,
-                });
-            } else if (subTopicKey === "Dodawanie i odejmowanie") {
-                navigation.navigate('PlusMinusTrainer', {
-                    grade,
-                    topic,
-                    subTopic: subTopicKey,
-                });
-            } else {
-                // По умолчанию открываем MultiplicationTrainer для других тренеров
-                navigation.navigate('MultiplicationTrainer', {
-                    grade,
-                    topic,
-                    subTopic: subTopicKey,
-                });
+        if (subTopicData.isTrainer) {
+            switch (subTopicKey) {
+                case 'Mnożenie':
+                    navigation.navigate('MultiplicationTrainer', { grade, topic, subTopic: subTopicKey });
+                    break;
+                case 'Dzielenie':
+                    navigation.navigate('DivisionTrainer', { grade, topic, subTopic: subTopicKey });
+                    break;
+                case 'Dodawanie i odejmowanie':
+                    navigation.navigate('PlusMinusTrainer', { grade, topic, subTopic: subTopicKey });
+                    break;
+                default:
+                    navigation.navigate('MultiplicationTrainer', { grade, topic, subTopic: subTopicKey });
             }
         } else {
             navigation.navigate('Test', {
@@ -78,18 +71,18 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
                 topic,
                 subTopic: subTopicKey,
                 testType: 'subTopic',
-                mode: 'learn', // только тренировочный режим
+                mode: 'learn',
             });
         }
     };
 
-    const renderSubTopic = ({ item: subTopicKey }: { item: string }) => (
+    const renderSubTopic = ({ item }: { item: string }) => (
         <TouchableOpacity
             style={styles.topicButton}
-            onPress={() => handleSubTopicPress(subTopicKey)}
+            onPress={() => handleSubTopicPress(item)}
             activeOpacity={0.85}
         >
-            <Text style={styles.topicButtonText}>{subTopicKey}</Text>
+            <Text style={styles.topicButtonText}>{item}</Text>
         </TouchableOpacity>
     );
 
@@ -109,18 +102,21 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
                 contentContainerStyle={{ paddingVertical: 20 }}
             />
 
-            {/* Кнопки теста с целого раздела */}
             <View style={styles.fullTopicButtonContainer}>
-                <Button
-                    title={`Test z całego działu "${topic}" (Trening)`}
-                    onPress={() => handleFullTopicTest('learn')}
-                    color="#2563EB"
-                />
-                <Button
-                    title={`Test z działu "${topic}" (Kontrolny)`}
-                    onPress={() => handleFullTopicTest('assess')}
-                    color="#FFC107"
-                />
+                <View style={styles.fullTopicButtonWrapper}>
+                    <Button
+                        title={`Test z całego działu "${topic}" (Trening)`}
+                        onPress={() => handleFullTopicTest('learn')}
+                        color="#2563EB"
+                    />
+                </View>
+                <View style={styles.fullTopicButtonWrapper}>
+                    <Button
+                        title={`Test z działu "${topic}" (Kontrolny)`}
+                        onPress={() => handleFullTopicTest('assess')}
+                        color="#FFC107"
+                    />
+                </View>
             </View>
         </View>
     );
@@ -153,7 +149,9 @@ const styles = StyleSheet.create({
     },
     fullTopicButtonContainer: {
         marginTop: 20,
-        gap: 10,
+    },
+    fullTopicButtonWrapper: {
+        marginVertical: 5,
     },
 });
 

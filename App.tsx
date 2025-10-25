@@ -16,7 +16,8 @@ import TopicListScreen from './src/screens/TopicListScreen';
 import SubTopicListScreen from './src/screens/SubTopicListScreen';
 import TestScreen from './src/screens/TestScreen';
 import MultiplicationTrainerScreen from './src/screens/MultiplicationTrainerScreen';
-import PlusMinusTrainerScreen from './src/screens/PlusMinusTrainerScreen'; // Новый экран
+import PlusMinusTrainerScreen from './src/screens/PlusMinusTrainerScreen';
+import DivisionTrainerScreen from './src/screens/DivisionTrainerScreen';
 import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
@@ -50,7 +51,8 @@ export type MainAppStackParamList = {
         duelId?: string;
     };
     MultiplicationTrainer: { grade: number; topic: string; subTopic: string };
-    PlusMinusTrainer: { grade: number; topic: string; subTopic: string }; // Новый экран
+    PlusMinusTrainer: { grade: number; topic: string; subTopic: string };
+    DivisionTrainer: { grade: number; topic: string; subTopic: string };
     Results: {
         score: number;
         total: number;
@@ -66,8 +68,14 @@ export type TheoryStackParamList = {
 };
 
 export type ActivityStackParamList = { Activity: undefined };
-export type FriendsStackParamList = { Friends: undefined; DuelSetup: { friendId: string; friendEmail: string } };
-export type ProfileStackParamList = { ProfileMain: undefined; UserDetails: undefined };
+export type FriendsStackParamList = {
+    Friends: undefined;
+    DuelSetup: { friendId: string; friendEmail: string };
+};
+export type ProfileStackParamList = {
+    ProfileMain: undefined;
+    UserDetails: undefined;
+};
 export type AppTabParamList = {
     HomeStack: undefined;
     TeoriaStack: undefined;
@@ -91,33 +99,12 @@ function HomeStackNavigator() {
         <MainStack.Navigator initialRouteName="Main">
             <MainStack.Screen name="Main" component={MainScreen} options={{ headerShown: false }} />
             <MainStack.Screen name="GradeSelection" component={GradeSelectionScreen} options={{ title: 'Wybierz klasę' }} />
-            <MainStack.Screen
-                name="TopicList"
-                component={TopicListScreen}
-                options={({ route }) => ({ title: `Klasa ${route.params.grade} - Tematy` })}
-            />
-            <MainStack.Screen
-                name="SubTopicList"
-                component={SubTopicListScreen}
-                options={({ route }) => ({ title: route.params.topic })}
-            />
-            <MainStack.Screen
-                name="Test"
-                component={TestScreen}
-                options={({ route }) => ({
-                    title: (route.params.testType === 'mainTopic' ? `Test: ${route.params.topic}` : route.params.subTopic) || 'Test',
-                })}
-            />
-            <MainStack.Screen
-                name="MultiplicationTrainer"
-                component={MultiplicationTrainerScreen}
-                options={({ route }) => ({ title: `${route.params.subTopic}` })}
-            />
-            <MainStack.Screen
-                name="PlusMinusTrainer"
-                component={PlusMinusTrainerScreen}
-                options={({ route }) => ({ title: `${route.params.subTopic}` })}
-            />
+            <MainStack.Screen name="TopicList" component={TopicListScreen} options={({ route }) => ({ title: `Klasa ${route.params.grade} - Tematy` })} />
+            <MainStack.Screen name="SubTopicList" component={SubTopicListScreen} options={({ route }) => ({ title: route.params.topic })} />
+            <MainStack.Screen name="Test" component={TestScreen} options={({ route }) => ({ title: (route.params.testType === 'mainTopic' ? `Test: ${route.params.topic}` : route.params.subTopic) || 'Test' })} />
+            <MainStack.Screen name="MultiplicationTrainer" component={MultiplicationTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
+            <MainStack.Screen name="PlusMinusTrainer" component={PlusMinusTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
+            <MainStack.Screen name="DivisionTrainer" component={DivisionTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
             <MainStack.Screen name="Results" component={ResultsScreen} options={{ title: 'Wyniki Testu' }} />
         </MainStack.Navigator>
     );
@@ -127,26 +114,10 @@ function HomeStackNavigator() {
 function TheoryStackNavigator() {
     return (
         <TheoryStackNav.Navigator initialRouteName="TheoryGradeSelection">
-            <TheoryStackNav.Screen
-                name="TheoryGradeSelection"
-                component={TheoryGradeSelectionScreen}
-                options={{ title: 'Teoria - Wybierz Klasę' }}
-            />
-            <TheoryStackNav.Screen
-                name="TheoryTopicList"
-                component={TheoryScreen}
-                options={({ route }) => ({ title: `Działy (Klasa ${route.params.grade})` })}
-            />
-            <TheoryStackNav.Screen
-                name="TheorySubTopicList"
-                component={TheorySubTopicListScreen}
-                options={({ route }) => ({ title: route.params.topic })}
-            />
-            <TheoryStackNav.Screen
-                name="TheoryDetail"
-                component={TheoryDetailScreen}
-                options={({ route }) => ({ title: route.params.subTopic })}
-            />
+            <TheoryStackNav.Screen name="TheoryGradeSelection" component={TheoryGradeSelectionScreen} options={{ title: 'Teoria - Wybierz Klasę' }} />
+            <TheoryStackNav.Screen name="TheoryTopicList" component={TheoryScreen} options={({ route }) => ({ title: `Działy (Klasa ${route.params.grade})` })} />
+            <TheoryStackNav.Screen name="TheorySubTopicList" component={TheorySubTopicListScreen} options={({ route }) => ({ title: route.params.topic })} />
+            <TheoryStackNav.Screen name="TheoryDetail" component={TheoryDetailScreen} options={({ route }) => ({ title: route.params.subTopic })} />
         </TheoryStackNav.Navigator>
     );
 }
@@ -155,11 +126,7 @@ function TheoryStackNavigator() {
 function ActivityStackNavigator() {
     return (
         <ActivityStackNav.Navigator>
-            <ActivityStackNav.Screen
-                name="Activity"
-                component={ActivityScreen}
-                options={{ title: 'Aktywność i Powiadomienia' }}
-            />
+            <ActivityStackNav.Screen name="Activity" component={ActivityScreen} options={{ title: 'Aktywność i Powiadomienia' }} />
         </ActivityStackNav.Navigator>
     );
 }
@@ -247,7 +214,9 @@ function App(): React.JSX.Element {
 
     return (
         <>
-            <NavigationContainer>{user ? <MainAppTabNavigator /> : <AuthNavigator />}</NavigationContainer>
+            <NavigationContainer>
+                {user ? <MainAppTabNavigator /> : <AuthNavigator />}
+            </NavigationContainer>
             <Toast />
         </>
     );
