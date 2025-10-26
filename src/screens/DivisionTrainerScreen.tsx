@@ -13,40 +13,54 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
+// ✅ IMPORTY W STARYM STYLU
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+
+// STAŁE
+const EXERCISE_ID = "divisionTrainer";
+const TASKS_LIMIT = 100;
+
+// ✅ Usunięto inicjalizację 'getAuth' i 'getFirestore'
+
 const DivisionTrainerScreen = () => {
+    // ... (wszystkie stany zostają bez zmian) ...
     const [number, setNumber] = useState<number>(0);
     const [divisor, setDivisor] = useState<number>(0);
-
     const [decomp1, setDecomp1] = useState<string>('');
     const [decomp2, setDecomp2] = useState<string>('');
     const [partial1, setPartial1] = useState<string>('');
     const [partial2, setPartial2] = useState<string>('');
     const [final, setFinal] = useState<string>('');
-
     const [resultMessage, setResultMessage] = useState<string>('');
     const [hintMessage, setHintMessage] = useState<string>('');
     const [showValidation, setShowValidation] = useState<boolean>(false);
     const [finalCorrect, setFinalCorrect] = useState<boolean>(false);
-
     const [readyForNext, setReadyForNext] = useState<boolean>(false);
     const [correctCount, setCorrectCount] = useState<number>(0);
     const [wrongCount, setWrongCount] = useState<number>(0);
     const [seconds, setSeconds] = useState<number>(0);
     const [startTime, setStartTime] = useState<number>(0);
-
+    const [taskCount, setTaskCount] = useState<number>(0);
+    const [isGameFinished, setIsGameFinished] = useState<boolean>(false);
     const backgroundColor = useRef(new Animated.Value(0)).current;
     const arrowOpacity1 = useRef(new Animated.Value(0)).current;
     const arrowOpacity2 = useRef(new Animated.Value(0)).current;
 
+    // Funkcja nextTask (bez zmian)
     const nextTask = () => {
+        if (taskCount >= TASKS_LIMIT) {
+            setIsGameFinished(true);
+            setResultMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
+            setReadyForNext(false);
+            return;
+        }
         const d = Math.floor(Math.random() * 8) + 2;
         const q1 = Math.floor(Math.random() * 10) + 1;
         const q2 = Math.floor(Math.random() * 10) + 1;
         const n = d * (q1 + q2);
-
         setNumber(n);
         setDivisor(d);
-
         setDecomp1('');
         setDecomp2('');
         setPartial1('');
@@ -58,19 +72,34 @@ const DivisionTrainerScreen = () => {
         setFinalCorrect(false);
         setReadyForNext(false);
         setSeconds(0);
-
         setStartTime(Date.now());
         backgroundColor.setValue(0);
         arrowOpacity1.setValue(0);
         arrowOpacity2.setValue(0);
+        setTaskCount(prevCount => prevCount + 1);
     };
 
     useEffect(() => {
         nextTask();
     }, []);
 
+    // ✅ ZMODYFIKOWANA FUNKCJA (STARY STYL)
     const handleButton = () => {
         Keyboard.dismiss();
+
+        // Przygotowujemy referencję do bazy (stary styl)
+        const currentUser = auth().currentUser; // Używamy auth()
+        if (!currentUser) {
+            console.warn('Użytkownik nie jest zalogowany. Wynik nie zostanie zapisany.');
+        }
+        // Używamy firestore().collection()...
+        const statsDocRef = currentUser ?
+            firestore()
+                .collection('users')
+                .doc(currentUser.uid)
+                .collection('exerciseStats')
+                .doc(EXERCISE_ID)
+            : null;
 
         if (!final) {
             setResultMessage('Wpisz wynik końcowy!');
@@ -96,7 +125,6 @@ const DivisionTrainerScreen = () => {
                 useNativeDriver: false,
             }).start();
 
-            // Анимация стрелок, если ребёнок правильно делит число на части
             if (decomp1) Animated.timing(arrowOpacity1, { toValue: 1, duration: 500, useNativeDriver: true }).start();
             if (decomp2) Animated.timing(arrowOpacity2, { toValue: 1, duration: 500, useNativeDriver: true }).start();
 
@@ -104,6 +132,13 @@ const DivisionTrainerScreen = () => {
             setHintMessage('');
             setCorrectCount(prev => prev + 1);
             setReadyForNext(true);
+
+            // ✅ ZAPIS POPRAWNEJ ODPOWIEDZI (STARY STYL)
+            if (statsDocRef) {
+                statsDocRef.set({ // Używamy .set()
+                    totalCorrect: firestore.FieldValue.increment(1) // Używamy firestore.FieldValue.increment
+                }, { merge: true }).catch(error => console.error("Błąd zapisu poprawnej odpowiedzi:", error));
+            }
         } else {
             Animated.sequence([
                 Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
@@ -119,12 +154,19 @@ const DivisionTrainerScreen = () => {
             );
 
             setWrongCount(prev => prev + 1);
+
+            // ✅ ZAPIS BŁĘDNEJ ODPOWIEDZI (STARY STYL)
+            if (statsDocRef) {
+                statsDocRef.set({ // Używamy .set()
+                    totalWrong: firestore.FieldValue.increment(1) // Używamy firestore.FieldValue.increment
+                }, { merge: true }).catch(error => console.error("Błąd zapisu błędnej odpowiedzi:", error));
+            }
         }
     };
 
     const getValidationStyle = () => {
         if (!showValidation) return styles.input;
-        return finalCorrect ? styles.correct : styles.error;
+        return finalCorrect ? styles.correctFinal : styles.errorFinal;
     };
 
     useEffect(() => {
@@ -135,6 +177,7 @@ const DivisionTrainerScreen = () => {
     }, []);
 
     return (
+        // ... (Cały JSX zostaje bez zmian) ...
         <View style={{ flex: 1 }}>
             <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
@@ -154,86 +197,91 @@ const DivisionTrainerScreen = () => {
                     <View
                         style={{
                             ...StyleSheet.absoluteFillObject,
-                            backgroundColor: 'rgba(255,255,255,0.4)',
+                            backgroundColor: 'rgba(255,255,250.4)',
                             borderRadius: 20,
                         }}
                     />
 
                     <Text style={styles.title}>Trener dzielenia</Text>
-                    <Text style={styles.task}>{number} ÷ {divisor} = ?</Text>
 
-                    <Text style={styles.label}>Rozłóż liczbę {number} na dwie części (opcjonalnie)</Text>
+                    {!isGameFinished ? (
+                        <>
+                            <Text style={styles.task}>{number} ÷ {divisor} = ?</Text>
+                            <Text style={styles.label}>Rozłóż liczbę {number} na dwie części (opcjonalnie)</Text>
 
-                    <View style={styles.inputRow}>
-                        <TextInput
-                            style={styles.input}
-                            keyboardType="numeric"
-                            value={decomp1}
-                            onChangeText={setDecomp1}
-                            placeholder="część 1"
-                            placeholderTextColor="#aaa"
-                        />
-                        <TextInput
-                            style={styles.input}
-                            keyboardType="numeric"
-                            value={decomp2}
-                            onChangeText={setDecomp2}
-                            placeholder="część 2"
-                            placeholderTextColor="#aaa"
-                        />
-                    </View>
+                            <View style={styles.inputRow}>
+                                <TextInput
+                                    style={styles.input}
+                                    keyboardType="numeric"
+                                    value={decomp1}
+                                    onChangeText={setDecomp1}
+                                    placeholder="część 1"
+                                    placeholderTextColor="#aaa"
+                                />
+                                <TextInput
+                                    style={styles.input}
+                                    keyboardType="numeric"
+                                    value={decomp2}
+                                    onChangeText={setDecomp2}
+                                    placeholder="część 2"
+                                    placeholderTextColor="#aaa"
+                                />
+                            </View>
 
-                    <Text style={styles.multiplyBy}> ÷ {divisor}</Text>
+                            <Text style={styles.multiplyBy}> ÷ {divisor}</Text>
 
-                    <View style={styles.arrowRow}>
-                        <Animated.Text style={[styles.arrow, { opacity: arrowOpacity1 }]}>↓</Animated.Text>
-                        <Animated.Text style={[styles.arrow, { opacity: arrowOpacity2 }]}>↓</Animated.Text>
-                    </View>
+                            <View style={styles.arrowRow}>
+                                <Animated.Text style={[styles.arrow, { opacity: arrowOpacity1 }]}>↓</Animated.Text>
+                                <Animated.Text style={[styles.arrow, { opacity: arrowOpacity2 }]}>↓</Animated.Text>
+                            </View>
 
-                    <View style={styles.inputRow}>
-                        <TextInput
-                            style={styles.input}
-                            keyboardType="numeric"
-                            value={partial1}
-                            onChangeText={setPartial1}
-                            placeholder={`wynik 1`}
-                            placeholderTextColor="#aaa"
-                        />
-                        <Text style={styles.operator}> + </Text>
-                        <TextInput
-                            style={styles.input}
-                            keyboardType="numeric"
-                            value={partial2}
-                            onChangeText={setPartial2}
-                            placeholder={`wynik 2`}
-                            placeholderTextColor="#aaa"
-                        />
-                    </View>
+                            <View style={styles.inputRow}>
+                                <TextInput
+                                    style={styles.input}
+                                    keyboardType="numeric"
+                                    value={partial1}
+                                    onChangeText={setPartial1}
+                                    placeholder={`wynik 1`}
+                                    placeholderTextColor="#aaa"
+                                />
+                                <Text style={styles.operator}> + </Text>
+                                <TextInput
+                                    style={styles.input}
+                                    keyboardType="numeric"
+                                    value={partial2}
+                                    onChangeText={setPartial2}
+                                    placeholder={`wynik 2`}
+                                    placeholderTextColor="#aaa"
+                                />
+                            </View>
 
-                    <View style={styles.arrowRow}>
-                        <Text style={styles.arrow}>↘</Text>
-                        <Text style={styles.arrow}>↙</Text>
-                    </View>
+                            <View style={styles.arrowRow}>
+                                <Text style={styles.arrow}>↘</Text>
+                                <Text style={styles.arrow}>↙</Text>
+                            </View>
 
-                    <TextInput
-                        style={[getValidationStyle(), styles.finalInput]}
-                        keyboardType="numeric"
-                        value={final}
-                        onChangeText={setFinal}
-                        placeholder="wynik końcowy"
-                        placeholderTextColor="#aaa"
-                    />
+                            <TextInput
+                                style={[getValidationStyle(), styles.finalInput]}
+                                keyboardType="numeric"
+                                value={final}
+                                onChangeText={setFinal}
+                                placeholder="wynik końcowy"
+                                placeholderTextColor="#aaa"
+                            />
+                        </>
+                    ) : null}
 
                     <View style={styles.buttonContainer}>
                         <Button
                             title={readyForNext ? "Dalej" : "Sprawdź"}
                             onPress={readyForNext ? nextTask : handleButton}
                             color="#007AFF"
+                            disabled={isGameFinished}
                         />
                     </View>
 
                     {resultMessage ? (
-                        <Text style={[styles.result, finalCorrect ? styles.correctText : styles.errorText]}>
+                        <Text style={[styles.result, (finalCorrect || resultMessage.startsWith('Gratulacje')) ? styles.correctText : styles.errorText]}>
                             {resultMessage}
                         </Text>
                     ) : null}
@@ -243,6 +291,8 @@ const DivisionTrainerScreen = () => {
                     ) : null}
 
                     <Text style={styles.counter}>
+                        Zadanie: {taskCount > TASKS_LIMIT ? TASKS_LIMIT : taskCount} / {TASKS_LIMIT}
+                        {'\n'}
                         ✅ {correctCount}   ❌ {wrongCount}   ⏱ {seconds}s
                     </Text>
                 </Animated.View>
@@ -251,6 +301,7 @@ const DivisionTrainerScreen = () => {
     );
 };
 
+// ... (StyleSheet zostaje bez zmian) ...
 const styles = StyleSheet.create({
     container: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
     card: {
@@ -277,11 +328,11 @@ const styles = StyleSheet.create({
     result: { fontSize: 18, fontWeight: 'bold', marginTop: 20, textAlign: 'center' },
     hintText: { fontSize: 16, color: '#111', marginTop: 10, textAlign: 'center' },
     counter: { fontSize: 18, marginTop: 10, color: '#555', textAlign: 'center' },
-    correct: {
+    correctFinal: {
         width: 150, height: 60, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22,
         backgroundColor: '#d4edda', borderColor: '#28a745', color: '#155724',
     },
-    error: {
+    errorFinal: {
         width: 150, height: 60, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22,
         backgroundColor: '#f8d7da', borderColor: '#dc3545', color: '#721c24',
     },

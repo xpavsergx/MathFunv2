@@ -30,6 +30,7 @@ import TheoryDetailScreen from './src/screens/TheoryDetailScreen';
 import ActivityScreen from './src/screens/ActivityScreen';
 import FriendsScreen from './src/screens/FriendsScreen';
 import DuelSetupScreen from './src/screens/DuelSetupScreen';
+import StatsScreen from './src/screens/StatsScreen';
 
 // --- Types ---
 export type AuthStackParamList = {
@@ -75,6 +76,7 @@ export type FriendsStackParamList = {
 export type ProfileStackParamList = {
     ProfileMain: undefined;
     UserDetails: undefined;
+    StatsScreen: undefined;
 };
 export type AppTabParamList = {
     HomeStack: undefined;
@@ -147,6 +149,7 @@ function ProfileStackNavigator() {
         <ProfileStack.Navigator>
             <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} options={{ title: 'Profil' }} />
             <ProfileStack.Screen name="UserDetails" component={UserDetailsScreen} options={{ title: 'Dane użytkownika' }} />
+            <ProfileStack.Screen name="StatsScreen" component={StatsScreen} options={{ title: 'Moje Statystyki' }} />
         </ProfileStack.Navigator>
     );
 }

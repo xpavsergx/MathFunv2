@@ -13,6 +13,14 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
+// Importy Firebase
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+
+// ✅ ZMIANA: Definiujemy ID tego ćwiczenia w jednym miejscu
+const EXERCISE_ID = "multiplicationTrainer";
+const TASKS_LIMIT = 100; // Ustawiamy limit zadań
+
 const MultiplicationTrainerScreen = () => {
     const [number, setNumber] = useState<number>(0);
     const [other, setOther] = useState<number>(0);
@@ -37,16 +45,39 @@ const MultiplicationTrainerScreen = () => {
     });
 
     const [readyForNext, setReadyForNext] = useState<boolean>(false);
+
+    // ✅ ZMIANA: Te liczniki są teraz TYLKO dla bieżącej sesji. Zawsze startują od 0.
     const [correctCount, setCorrectCount] = useState<number>(0);
     const [wrongCount, setWrongCount] = useState<number>(0);
+    const [taskCount, setTaskCount] = useState<number>(0);
+
     const [seconds, setSeconds] = useState<number>(0);
     const [startTime, setStartTime] = useState<number>(0);
+
+    const [isGameFinished, setIsGameFinished] = useState<boolean>(false);
+
+    // ✅ ZMIANA: Usunęliśmy stan 'isLoading'.
 
     const backgroundColor = useRef(new Animated.Value(0)).current;
     const arrowOpacity1 = useRef(new Animated.Value(0)).current;
     const arrowOpacity2 = useRef(new Animated.Value(0)).current;
 
+    // ✅ ZMIANA: Przywróciliśmy prosty useEffect. Uruchamia się raz i odpala 'nextTask'.
+    useEffect(() => {
+        nextTask(); // To wywoła nextTask() po raz pierwszy i ustawi taskCount na 1
+    }, []);
+
+    // ✅ ZMIANA: nextTask *nie* wczytuje ani *nie* zapisuje licznika zadań w bazie.
+    // Działa tylko na lokalnym stanie.
     const nextTask = () => {
+        // Sprawdzamy, czy użytkownik nie wykonał już 100 zadań (w tej sesji)
+        if (taskCount >= TASKS_LIMIT) {
+            setIsGameFinished(true); // Ustawiamy flagę końca gry
+            setResultMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
+            setReadyForNext(false);
+            return;
+        }
+
         const n = Math.floor(Math.random() * 89) + 11;
         const o = Math.floor(Math.random() * 8) + 2;
 
@@ -77,14 +108,26 @@ const MultiplicationTrainerScreen = () => {
         backgroundColor.setValue(0);
         arrowOpacity1.setValue(0);
         arrowOpacity2.setValue(0);
+
+        // Zwiększamy licznik zadań (tylko w tej sesji)
+        setTaskCount(prevCount => prevCount + 1);
     };
 
-    useEffect(() => {
-        nextTask();
-    }, []);
-
+    // ✅ ZMIANA: handleButton zapisuje teraz wyniki do subkolekcji
     const handleButton = () => {
         Keyboard.dismiss();
+
+        const currentUser = auth().currentUser;
+        if (!currentUser) {
+            console.warn('Użytkownik nie jest zalogowany. Wynik nie zostanie zapisany.');
+        }
+
+        // ✅ ZMIANA: Przygotowujemy referencję do dedykowanego dokumentu w subkolekcji
+        const statsDocRef = currentUser ? firestore()
+            .collection('users')
+            .doc(currentUser.uid)
+            .collection('exerciseStats')
+            .doc(EXERCISE_ID) : null;
 
         const numDecomp1 = decomp1 ? Number(decomp1) : null;
         const numDecomp2 = decomp2 ? Number(decomp2) : null;
@@ -137,15 +180,32 @@ const MultiplicationTrainerScreen = () => {
                 Animated.timing(arrowOpacity2, { toValue: 1, duration: 500, useNativeDriver: true }).start();
 
             setResultMessage(`Brawo! 🎉 Poprawna odpowiedź: ${correctFinal}`);
-            setCorrectCount(prev => prev + 1);
+            setCorrectCount(prev => prev + 1); // Aktualizujemy licznik lokalny
             setReadyForNext(true);
+
+            // ✅ ZMIANA: Zapisujemy POPRAWNĄ odpowiedź w dedykowanym dokumencie
+            // Używamy .set z { merge: true } - stworzy dokument/kolekcję, jeśli nie istnieje
+            // i doda +1 do łącznej puli w bazie.
+            if (statsDocRef) {
+                statsDocRef.set({
+                    totalCorrect: firestore.FieldValue.increment(1)
+                }, { merge: true }).catch(error => console.error("Błąd zapisu poprawnej odpowiedzi:", error));
+            }
+
         } else {
             Animated.sequence([
                 Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
                 Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
             ]).start();
             setResultMessage('Coś się nie zgadza. Spróbuj ponownie!');
-            setWrongCount(prev => prev + 1);
+            setWrongCount(prev => prev + 1); // Aktualizujemy licznik lokalny
+
+            // ✅ ZMIANA: Zapisujemy BŁĘDNĄ odpowiedź w dedykowanym dokumencie
+            if (statsDocRef) {
+                statsDocRef.set({
+                    totalWrong: firestore.FieldValue.increment(1)
+                }, { merge: true }).catch(error => console.error("Błąd zapisu błędnej odpowiedzi:", error));
+            }
         }
 
         if (readyForNext) nextTask();
@@ -156,6 +216,7 @@ const MultiplicationTrainerScreen = () => {
         return validationState[fieldKey] ? styles.correct : styles.error;
     };
 
+    // To zostaje bez zmian
     useEffect(() => {
         if (Platform.OS === 'android') {
             StatusBar.setTranslucent(true);
@@ -163,6 +224,8 @@ const MultiplicationTrainerScreen = () => {
         }
     }, []);
 
+    // ✅ ZMIANA: Usunęliśmy 'if (isLoading) { ... }'
+    // Komponent od razu renderuje widok gry.
     return (
         <View style={{ flex: 1 }}>
             <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
@@ -173,7 +236,6 @@ const MultiplicationTrainerScreen = () => {
                 resizeMode="cover"
             />
 
-            {/* ✅ Исправленный блок */}
             <KeyboardAwareScrollView
                 contentContainerStyle={styles.container}
                 enableOnAndroid={true}
@@ -190,47 +252,47 @@ const MultiplicationTrainerScreen = () => {
                     />
 
                     <Text style={styles.title}>Trener mnożenia</Text>
-                    <Text style={styles.task}>{number} × {other} = ?</Text>
 
-                    <Text style={styles.label}>Liczba do rozłożenia: {number}</Text>
+                    {!isGameFinished && (
+                        <>
+                            <Text style={styles.task}>{number} × {other} = ?</Text>
+                            <Text style={styles.label}>Liczba do rozłożenia: {number}</Text>
 
-                    <View style={styles.inputRow}>
-                        <TextInput style={getValidationStyle('decomp1')} keyboardType="numeric" value={decomp1} onChangeText={setDecomp1} placeholder="dziesiątki" placeholderTextColor="#aaa" />
-                        <TextInput style={getValidationStyle('decomp2')} keyboardType="numeric" value={decomp2} onChangeText={setDecomp2} placeholder="jedności" placeholderTextColor="#aaa" />
-                    </View>
-
-                    <Text style={styles.multiplyBy}> × {other}</Text>
-
-                    <View style={styles.arrowRow}>
-                        <Animated.Text style={[styles.arrow, { opacity: arrowOpacity1 }]}>↓</Animated.Text>
-                        <Animated.Text style={[styles.arrow, { opacity: arrowOpacity2 }]}>↓</Animated.Text>
-                    </View>
-
-                    <View style={styles.inputRow}>
-                        <TextInput style={getValidationStyle('partial1')} keyboardType="numeric" value={partial1} onChangeText={setPartial1} placeholder={`×${other}`} placeholderTextColor="#aaa" />
-                        <Text style={styles.operator}> + </Text>
-                        <TextInput style={getValidationStyle('partial2')} keyboardType="numeric" value={partial2} onChangeText={setPartial2} placeholder={`×${other}`} placeholderTextColor="#aaa" />
-                    </View>
-
-                    <View style={styles.arrowRow}>
-                        <Text style={styles.arrow}>↘</Text>
-                        <Text style={styles.arrow}>↙</Text>
-                    </View>
-
-                    <TextInput
-                        style={[getValidationStyle('final'), styles.finalInput]}
-                        keyboardType="numeric"
-                        value={final}
-                        onChangeText={setFinal}
-                        placeholder="wynik"
-                        placeholderTextColor="#aaa"
-                    />
+                            <View style={styles.inputRow}>
+                                <TextInput style={getValidationStyle('decomp1')} keyboardType="numeric" value={decomp1} onChangeText={setDecomp1} placeholder="dziesiątki" placeholderTextColor="#aaa" />
+                                <TextInput style={getValidationStyle('decomp2')} keyboardType="numeric" value={decomp2} onChangeText={setDecomp2} placeholder="jedności" placeholderTextColor="#aaa" />
+                            </View>
+                            <Text style={styles.multiplyBy}> × {other}</Text>
+                            <View style={styles.arrowRow}>
+                                <Animated.Text style={[styles.arrow, { opacity: arrowOpacity1 }]}>↓</Animated.Text>
+                                <Animated.Text style={[styles.arrow, { opacity: arrowOpacity2 }]}>↓</Animated.Text>
+                            </View>
+                            <View style={styles.inputRow}>
+                                <TextInput style={getValidationStyle('partial1')} keyboardType="numeric" value={partial1} onChangeText={setPartial1} placeholder={`×${other}`} placeholderTextColor="#aaa" />
+                                <Text style={styles.operator}> + </Text>
+                                <TextInput style={getValidationStyle('partial2')} keyboardType="numeric" value={partial2} onChangeText={setPartial2} placeholder={`×${other}`} placeholderTextColor="#aaa" />
+                            </View>
+                            <View style={styles.arrowRow}>
+                                <Text style={styles.arrow}>↘</Text>
+                                <Text style={styles.arrow}>↙</Text>
+                            </View>
+                            <TextInput
+                                style={[getValidationStyle('final'), styles.finalInput]}
+                                keyboardType="numeric"
+                                value={final}
+                                onChangeText={setFinal}
+                                placeholder="wynik"
+                                placeholderTextColor="#aaa"
+                            />
+                        </>
+                    )}
 
                     <View style={styles.buttonContainer}>
                         <Button
                             title={readyForNext ? "Dalej" : "Sprawdź"}
                             onPress={readyForNext ? nextTask : handleButton}
                             color="#007AFF"
+                            disabled={isGameFinished}
                         />
                     </View>
 
@@ -238,7 +300,7 @@ const MultiplicationTrainerScreen = () => {
                         <Text
                             style={[
                                 styles.result,
-                                resultMessage.startsWith('Brawo')
+                                (resultMessage.startsWith('Brawo') || resultMessage.startsWith('Gratulacje'))
                                     ? styles.correctText
                                     : styles.errorText,
                             ]}
@@ -247,7 +309,10 @@ const MultiplicationTrainerScreen = () => {
                         </Text>
                     ) : null}
 
+                    {/* Licznik pokazuje teraz postęp sesji (lokalny) */}
                     <Text style={styles.counter}>
+                        Zadanie: {taskCount > TASKS_LIMIT ? TASKS_LIMIT : taskCount} / {TASKS_LIMIT}
+                        {'\n'}
                         ✅ {correctCount}   ❌ {wrongCount}   ⏱ {seconds}s
                     </Text>
                 </Animated.View>
@@ -257,6 +322,9 @@ const MultiplicationTrainerScreen = () => {
 };
 
 const styles = StyleSheet.create({
+    // ✅ ZMIANA: Usunęliśmy style 'loadingContainer' i 'loadingText'
+
+    // Reszta stylów bez zmian
     container: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
     card: {
         width: '100%',

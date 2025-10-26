@@ -2,18 +2,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Правила для колекції users
+    // ✅ Разрешаем только авторизованным пользователям читать документы из lessons
+    match /lessons/{lessonId} {
+      allow read: if request.auth != null;
+    }
+
+    // --- users ---
     match /users/{userId} {
-      // Дозволяємо створювати та читати свій документ
       allow create, read: if request.auth.uid == userId;
-
-      // ЗМІНА ТУТ: Дозволяємо оновлювати будь-який профіль,
-      // якщо користувач залогінений. Це потрібно для додавання друзів.
       allow update: if request.auth != null;
+      allow get: if request.auth != null;
 
-      allow get: if request.auth != null; // Дозволяє отримати документ за ID
-
-      // --- Вкладені колекції ---
+      // --- вложенные коллекции ---
       match /notifications/{notificationId} {
         allow create: if request.auth != null;
         allow read, delete: if request.auth.uid == userId;
@@ -24,12 +24,20 @@ service cloud.firestore {
       match /achievements/{achievementId} {
         allow read, create: if request.auth.uid == userId;
       }
+
+      // ✅✅✅ DODAJEMY TĘ REGUŁĘ TUTAJ ✅✅✅
+      // Pozwala użytkownikowi czytać i pisać
+      // w jego WŁASNEJ subkolekcji 'exerciseStats'
+      match /exerciseStats/{exerciseId} {
+        allow read, write: if request.auth.uid == userId;
+      }
     }
 
     match /users/{userId} {
       allow list: if request.auth != null;
     }
 
+    // --- duels ---
     match /duels/{duelId} {
       allow read, create, update: if request.auth != null;
     }

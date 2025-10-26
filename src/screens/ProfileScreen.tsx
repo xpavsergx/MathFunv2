@@ -6,7 +6,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { BarChart } from "react-native-gifted-charts";
 import { IAchievement } from '../config/achievements';
 import { TestResultData } from '../services/userStatsService';
-import { useNavigation } from '@react-navigation/native';  // 🔁 ZMIANA: dodany import useNavigation
+import { useNavigation } from '@react-navigation/native';
 
 function ProfileScreen() {
     const [achievements, setAchievements] = useState<IAchievement[]>([]);
@@ -14,20 +14,26 @@ function ProfileScreen() {
         totalTests: number;
         avgScore: number;
         topicPerformance: { value: number; label: string; frontColor: string }[];
-    } | null>(null);  // 🔁 ZMIANA: poprawione typowanie topicPerformance
-    const [loading, setLoading] = useState(true);
+    } | null>(null);
+
+    // ✅ ZMIANA: Zmieniliśmy nazwę 'loading' na 'loadingTestStats' dla jasności
+    const [loadingTestStats, setLoadingTestStats] = useState(true);
+    // ✅ ZMIANA: Dodajemy oddzielne ładowanie dla osiągnięć
+    const [loadingAchievements, setLoadingAchievements] = useState(true);
 
     const currentUser = auth().currentUser;
-    const navigation = useNavigation();  // 🔁 ZMIANA: użycie hooka nawigacji
+    const navigation = useNavigation();
 
     useEffect(() => {
         if (!currentUser) {
-            setLoading(false);
+            setLoadingTestStats(false);
+            setLoadingAchievements(false); // ✅ Ustawiamy ładowanie
             return;
         }
 
         console.log(`[Profile] Setting up Firestore listeners for user ${currentUser.uid}...`);
 
+        // Listener dla Statystyk Testów (testResults) - zostaje bez zmian
         const unsubscribeStats = firestore()
             .collection('users')
             .doc(currentUser.uid)
@@ -41,7 +47,6 @@ function ProfileScreen() {
                 if (results.length > 0) {
                     const totalTests = results.length;
                     const avgScore = Math.round(results.reduce((sum, r) => sum + r.percentage, 0) / totalTests);
-
                     const performanceByTopic: { [key: string]: { sum: number; count: number } } = {};
                     results.forEach(res => {
                         if (!performanceByTopic[res.topic]) {
@@ -50,23 +55,22 @@ function ProfileScreen() {
                         performanceByTopic[res.topic].sum += res.percentage;
                         performanceByTopic[res.topic].count += 1;
                     });
-
                     const chartData = Object.keys(performanceByTopic).map(topic => ({
                         value: Math.round(performanceByTopic[topic].sum / performanceByTopic[topic].count),
-                        label: topic.length > 8 ? topic.substring(0, 8) + '...' : topic,  // 🔁 ZMIANA: warunkowe skracanie labela, by nie było "topic..."
+                        label: topic.length > 8 ? topic.substring(0, 8) + '...' : topic,
                         frontColor: '#00BCD4',
                     }));
-
                     setStats({ totalTests, avgScore, topicPerformance: chartData });
                 } else {
                     setStats(null);
                 }
-                setLoading(false);
+                setLoadingTestStats(false); // ✅ ZMIANA
             }, error => {
                 console.error("[Profile] STATS_LISTENER_ERROR:", error);
-                setLoading(false);
+                setLoadingTestStats(false); // ✅ ZMIANA
             });
 
+        // Listener dla Osiągnięć (achievements) - zostaje bez zmian
         const unsubscribeAchievements = firestore()
             .collection('users')
             .doc(currentUser.uid)
@@ -78,8 +82,10 @@ function ProfileScreen() {
                     userAchievements.push(documentSnapshot.data() as IAchievement);
                 });
                 setAchievements(userAchievements);
+                setLoadingAchievements(false); // ✅ Ustawiamy ładowanie
             }, error => {
                 console.error("[Profile] ACHIEVEMENTS_LISTENER_ERROR:", error);
+                setLoadingAchievements(false); // ✅ Ustawiamy ładowanie
             });
 
         return () => {
@@ -89,6 +95,7 @@ function ProfileScreen() {
     }, [currentUser]);
 
     const handleLogout = async () => {
+        // ... (bez zmian)
         try {
             await auth().signOut();
         } catch (error: any) {
@@ -98,6 +105,7 @@ function ProfileScreen() {
     };
 
     const renderAchievement = ({ item }: { item: IAchievement }) => (
+        // ... (bez zmian)
         <View style={styles.achievementCard}>
             <Ionicons name={item.icon} size={36} color="#FFC107" />
             <View style={styles.achievementTextContainer}>
@@ -112,12 +120,14 @@ function ProfileScreen() {
             <View style={styles.container}>
                 <Text style={styles.headerTitle}>Mój Profil</Text>
 
-                {/* 🔁 ZMIANA: cała sekcja 'Dane użytkownika' to teraz TouchableOpacity i na klik przenosi do UserDetails */}
+                {/* Sekcja "Dane użytkownika" (bez zmian) */}
                 <TouchableOpacity style={{ width: '100%' }} onPress={() => navigation.navigate('UserDetails')}>
                     <View style={styles.sectionContainer}>
                         <View style={styles.sectionHeader}>
                             <Ionicons name="person-circle-outline" size={28} color="#00796B" style={styles.sectionIcon} />
                             <Text style={styles.sectionTitle}>Dane użytkownika</Text>
+                            {/* ✅ Dodajemy strzałkę w prawo dla spójności */}
+                            <Ionicons name="chevron-forward-outline" size={22} color="#546E7A" style={{ marginLeft: 'auto' }} />
                         </View>
                         <Text style={styles.userInfoText}>
                             Nick: {currentUser?.displayName || 'Brak'}
@@ -136,12 +146,13 @@ function ProfileScreen() {
                     </View>
                 </TouchableOpacity>
 
+                {/* Karta "Statystyki Testów" (bez zmian) */}
                 <View style={styles.sectionContainer}>
                     <View style={styles.sectionHeader}>
                         <Ionicons name="stats-chart-outline" size={26} color="#4CAF50" style={styles.sectionIcon} />
-                        <Text style={styles.sectionTitle}>Moja Statystyka</Text>
+                        <Text style={styles.sectionTitle}>Statystyki Testów</Text>
                     </View>
-                    {loading ? <ActivityIndicator color="#00BCD4" /> : (
+                    {loadingTestStats ? <ActivityIndicator color="#00BCD4" /> : ( // ✅ ZMIANA
                         stats ? (
                             <>
                                 <View style={styles.statsSummary}>
@@ -169,12 +180,29 @@ function ProfileScreen() {
                     )}
                 </View>
 
+                {/* ✅ ZMIANA: DODANA NOWA KARTA-PRZYCISK DLA STATYSTYK TRENINGÓW */}
+                <TouchableOpacity
+                    style={styles.sectionContainer}
+                    onPress={() => navigation.navigate('StatsScreen')} // Nawiguje do 'StatsScreen'
+                >
+                    <View style={styles.sectionHeader}>
+                        <Ionicons name="barbell-outline" size={26} color="#00796B" style={styles.sectionIcon} />
+                        <Text style={styles.sectionTitle}>Statystyki Treningów</Text>
+                        {/* Strzałka sugerująca, że można kliknąć */}
+                        <Ionicons name="chevron-forward-outline" size={22} color="#546E7A" style={{ marginLeft: 'auto' }} />
+                    </View>
+                    <Text style={styles.placeholderText}>
+                        Zobacz podsumowanie swoich ćwiczeń (mnożenie, dzielenie...)
+                    </Text>
+                </TouchableOpacity>
+
+                {/* Karta "Moje osiągnięcia" (bez zmian) */}
                 <View style={styles.sectionContainer}>
                     <View style={styles.sectionHeader}>
                         <Ionicons name="trophy-outline" size={26} color="#FFC107" style={styles.sectionIcon} />
                         <Text style={styles.sectionTitle}>Moje osiągnięcia</Text>
                     </View>
-                    {loading ? <ActivityIndicator color="#FFC107" /> : (
+                    {loadingAchievements ? <ActivityIndicator color="#FFC107" /> : ( // ✅ ZMIANA
                         <FlatList
                             data={achievements}
                             renderItem={renderAchievement}
@@ -185,6 +213,7 @@ function ProfileScreen() {
                     )}
                 </View>
 
+                {/* Przycisk wylogowania (bez zmian) */}
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
                     <Text style={styles.logoutButtonText}>Wyloguj się</Text>
@@ -195,6 +224,7 @@ function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+    // ... (wszystkie style pozostają bez zmian)
     scrollViewContainer: { flexGrow: 1, backgroundColor: '#F0F4F8' },
     container: { flex: 1, alignItems: 'center', padding: 20 },
     headerTitle: { fontSize: 26, fontWeight: 'bold', color: '#263238', marginTop: 20, marginBottom: 30 },

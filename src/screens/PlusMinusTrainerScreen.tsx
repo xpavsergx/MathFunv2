@@ -11,6 +11,14 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
+// ✅ IMPORTY W STARYM STYLU
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+
+// ✅ DODANE STAŁE
+const EXERCISE_ID = "addSubtractTrainer"; // Unikalne ID dla tego ćwiczenia
+const TASKS_LIMIT = 100;
+
 const AdditionSubtractionTrainerScreen = () => {
     const [numberA, setNumberA] = useState<number>(0);
     const [numberB, setNumberB] = useState<number>(0);
@@ -37,13 +45,25 @@ const AdditionSubtractionTrainerScreen = () => {
     const [startTime, setStartTime] = useState<number>(0);
     const [seconds, setSeconds] = useState<number>(0);
 
+    // ✅ DODANY STAN DO LICZENIA ZADAŃ
+    const [taskCount, setTaskCount] = useState<number>(0);
+    const [isGameFinished, setIsGameFinished] = useState<boolean>(false);
+
+    // ✅ ZMODYFIKOWANA FUNKCJA
     const nextTask = () => {
+        // Sprawdzamy, czy użytkownik nie wykonał już 100 zadań
+        if (taskCount >= TASKS_LIMIT) {
+            setIsGameFinished(true); // Ustawiamy flagę końca gry
+            setResultMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
+            setReadyForNext(false);
+            return; // Przerywamy funkcję
+        }
+
         let a = Math.floor(Math.random() * 90) + 10; // 10-99
         let b = Math.floor(Math.random() * 90) + 10; // 10-99
         const addition = Math.random() > 0.5;
 
         if (!addition) {
-            // Вычитание: гарантируем a >= b
             if (b > a) [a, b] = [b, a];
         }
 
@@ -66,14 +86,31 @@ const AdditionSubtractionTrainerScreen = () => {
         setReadyForNext(false);
         setSeconds(0);
         setStartTime(Date.now());
+
+        // ✅ Zwiększamy licznik zadań (tylko w tej sesji)
+        setTaskCount(prevCount => prevCount + 1);
     };
 
     useEffect(() => {
         nextTask();
     }, []);
 
+    // ✅ ZMODYFIKOWANA FUNKCJA
     const handleCheck = () => {
         Keyboard.dismiss();
+
+        // Przygotowujemy referencję do bazy (stary styl)
+        const currentUser = auth().currentUser;
+        if (!currentUser) {
+            console.warn('Użytkownik nie jest zalogowany. Wynik nie zostanie zapisany.');
+        }
+        const statsDocRef = currentUser ?
+            firestore()
+                .collection('users')
+                .doc(currentUser.uid)
+                .collection('exerciseStats')
+                .doc(EXERCISE_ID)
+            : null;
 
         const correctTens = Math.floor(numberB / 10) * 10;
         const correctPartial = isAddition
@@ -115,12 +152,26 @@ const AdditionSubtractionTrainerScreen = () => {
             const elapsed = Math.floor((Date.now() - startTime) / 1000);
             setSeconds(elapsed);
 
-            setResultMessage(`Brawo! Poprawna odpowiedź: ${correctFinal} (⏱ ${elapsed}s)`);
+            setResultMessage(`Brawo! Poprawna odpowiedź: ${correctFinal}`); // Usunąłem czas z komunikatu, jest w liczniku
             setCorrectCount(prev => prev + 1);
             setReadyForNext(true);
+
+            // ✅ ZAPIS POPRAWNEJ ODPOWIEDZI (STARY STYL)
+            if (statsDocRef) {
+                statsDocRef.set({
+                    totalCorrect: firestore.FieldValue.increment(1)
+                }, { merge: true }).catch(error => console.error("Błąd zapisu poprawnej odpowiedzi:", error));
+            }
         } else {
             setResultMessage('Nie wszystkie odpowiedzi są poprawne. Spróbuj ponownie!');
             setWrongCount(prev => prev + 1);
+
+            // ✅ ZAPIS BŁĘDNEJ ODPOWIEDZI (STARY STYL)
+            if (statsDocRef) {
+                statsDocRef.set({
+                    totalWrong: firestore.FieldValue.increment(1)
+                }, { merge: true }).catch(error => console.error("Błąd zapisu błędnej odpowiedzi:", error));
+            }
         }
     };
 
@@ -150,70 +201,80 @@ const AdditionSubtractionTrainerScreen = () => {
                 <View style={styles.card}>
                     <Text style={styles.title}>Trener dodawania i odejmowania </Text>
 
-                    <Text style={styles.task}>{numberA} {operationSymbol} {numberB}</Text>
+                    {/* ✅ Ukrywanie zadania po skończeniu gry */}
+                    {!isGameFinished ? (
+                        <>
+                            <Text style={styles.task}>{numberA} {operationSymbol} {numberB}</Text>
 
-                    <Text style={styles.subTitle}>
-                        Rozłóż liczbę <Text style={styles.highlight}>{numberB}</Text> na dziesiątki i jedności
-                    </Text>
+                            <Text style={styles.subTitle}>
+                                Rozłóż liczbę <Text style={styles.highlight}>{numberB}</Text> na dziesiątki i jedności
+                            </Text>
 
-                    <View style={styles.row}>
-                        <Text style={styles.number}>{numberA}</Text>
-                        <Text style={styles.operator}> {operationSymbol} </Text>
-                        <TextInput
-                            style={getStyle('tensInput')}
-                            keyboardType="numeric"
-                            value={tensInput}
-                            onChangeText={setTensInput}
-                            placeholder="dziesiątki"
-                            placeholderTextColor="#aaa"
-                        />
-                        <Text style={styles.operator}> = </Text>
-                        <TextInput
-                            style={getStyle('partialResult')}
-                            keyboardType="numeric"
-                            value={partialResult}
-                            onChangeText={setPartialResult}
-                            placeholder="wynik"
-                            placeholderTextColor="#aaa"
-                        />
-                    </View>
+                            <View style={styles.row}>
+                                <Text style={styles.number}>{numberA}</Text>
+                                <Text style={styles.operator}> {operationSymbol} </Text>
+                                <TextInput
+                                    style={getStyle('tensInput')}
+                                    keyboardType="numeric"
+                                    value={tensInput}
+                                    onChangeText={setTensInput}
+                                    placeholder="dziesiątki"
+                                    placeholderTextColor="#aaa"
+                                />
+                                <Text style={styles.operator}> = </Text>
+                                <TextInput
+                                    style={getStyle('partialResult')}
+                                    keyboardType="numeric"
+                                    value={partialResult}
+                                    onChangeText={setPartialResult}
+                                    placeholder="wynik"
+                                    placeholderTextColor="#aaa"
+                                />
+                            </View>
 
-                    <View style={styles.row}>
-                        <Text style={styles.operator}>{isAddition ? '+' : '−'}</Text>
-                        <TextInput
-                            style={getStyle('onesInput')}
-                            keyboardType="numeric"
-                            value={onesInput}
-                            onChangeText={setOnesInput}
-                            placeholder="jedności"
-                            placeholderTextColor="#aaa"
-                        />
-                        <Text style={styles.operator}> = </Text>
-                        <TextInput
-                            style={[getStyle('finalResult'), { width: 240 }]}
-                            keyboardType="numeric"
-                            value={finalResult}
-                            onChangeText={setFinalResult}
-                            placeholder="wynik końcowy"
-                            placeholderTextColor="#aaa"
-                        />
-                    </View>
+                            <View style={styles.row}>
+                                <Text style={styles.operator}>{isAddition ? '+' : '−'}</Text>
+                                <TextInput
+                                    style={getStyle('onesInput')}
+                                    keyboardType="numeric"
+                                    value={onesInput}
+                                    onChangeText={setOnesInput}
+                                    placeholder="jedności"
+                                    placeholderTextColor="#aaa"
+                                />
+                                <Text style={styles.operator}> = </Text>
+                                <TextInput
+                                    style={[getStyle('finalResult'), { width: 240 }]}
+                                    keyboardType="numeric"
+                                    value={finalResult}
+                                    onChangeText={setFinalResult}
+                                    placeholder="wynik końcowy"
+                                    placeholderTextColor="#aaa"
+                                />
+                            </View>
+                        </>
+                    ) : null}
 
                     <View style={styles.buttonContainer}>
                         <Button
                             title={readyForNext ? "Dalej" : "Sprawdź"}
                             onPress={readyForNext ? nextTask : handleCheck}
                             color="#007AFF"
+                            // ✅ Blokowanie przycisku po skończeniu
+                            disabled={isGameFinished}
                         />
                     </View>
 
                     {resultMessage ? (
-                        <Text style={[styles.result, resultMessage.startsWith('Brawo') ? styles.correctText : styles.errorText]}>
+                        <Text style={[styles.result, (resultMessage.startsWith('Brawo') || resultMessage.startsWith('Gratulacje')) ? styles.correctText : styles.errorText]}>
                             {resultMessage}
                         </Text>
                     ) : null}
 
+                    {/* ✅ Zaktualizowany licznik */}
                     <Text style={styles.counter}>
+                        Zadanie: {taskCount > TASKS_LIMIT ? TASKS_LIMIT : taskCount} / {TASKS_LIMIT}
+                        {'\n'}
                         ✅ {correctCount}   ❌ {wrongCount}   ⏱ {seconds}s
                     </Text>
                 </View>
@@ -222,6 +283,7 @@ const AdditionSubtractionTrainerScreen = () => {
     );
 };
 
+// ... (StyleSheet zostaje bez zmian) ...
 const styles = StyleSheet.create({
     container: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
     card: {
