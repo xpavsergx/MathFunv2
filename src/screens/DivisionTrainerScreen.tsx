@@ -159,7 +159,7 @@ const DivisionTrainerScreen = () => {
             const firstPartHint = Math.floor(number / 2 / divisor) * divisor;
             const secondPartHint = number - firstPartHint;
             setHintMessage(
-                `Podpowiedź: Spróbuj rozłożyć ${number} na dwie liczby, np. ${firstPartHint} i ${secondPartPart}, które można podzielić przez ${divisor}.`
+                `Podpowiedź: Spróbuj rozłożyć ${number} na dwie liczby, np. ${firstPartHint} i ${secondPartHint}, które można podzielić przez ${divisor}.`
             );
 
             setWrongCount(prev => prev + 1);
