@@ -19,6 +19,8 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { AuthStackParamList } from "../../App";
 import auth from "@react-native-firebase/auth";
 
+
+
 type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, "Login">;
 
 function LoginScreen({ navigation }: LoginScreenProps) {

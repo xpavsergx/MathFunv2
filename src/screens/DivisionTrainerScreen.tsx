@@ -23,6 +23,13 @@ const TASKS_LIMIT = 100;
 
 // ✅ Usunięto inicjalizację 'getAuth' i 'getFirestore'
 
+useEffect(() => {
+    if (Platform.OS === 'android') {
+        StatusBar.setTranslucent(true);
+        StatusBar.setBackgroundColor('transparent');
+    }
+}, []);
+
 const DivisionTrainerScreen = () => {
     // ... (wszystkie stany zostają bez zmian) ...
     const [number, setNumber] = useState<number>(0);
@@ -179,7 +186,6 @@ const DivisionTrainerScreen = () => {
     return (
         // ... (Cały JSX zostaje bez zmian) ...
         <View style={{ flex: 1 }}>
-            <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
             <ImageBackground
                 source={require('../assets/background.jpg')}
