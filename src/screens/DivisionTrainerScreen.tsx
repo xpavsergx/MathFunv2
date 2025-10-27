@@ -9,7 +9,7 @@ import {
     Keyboard,
     ImageBackground,
     Animated,
-    StatusBar,
+    // ✅ ВИДАЛЕНО: StatusBar
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
@@ -21,17 +21,8 @@ import firestore from '@react-native-firebase/firestore';
 const EXERCISE_ID = "divisionTrainer";
 const TASKS_LIMIT = 100;
 
-// ✅ Usunięto inicjalizację 'getAuth' i 'getFirestore'
-
-useEffect(() => {
-    if (Platform.OS === 'android') {
-        StatusBar.setTranslucent(true);
-        StatusBar.setBackgroundColor('transparent');
-    }
-}, []);
-
 const DivisionTrainerScreen = () => {
-    // ... (wszystkie stany zostają bez zmian) ...
+    // ... (всі стани залишаються) ...
     const [number, setNumber] = useState<number>(0);
     const [divisor, setDivisor] = useState<number>(0);
     const [decomp1, setDecomp1] = useState<string>('');
@@ -54,7 +45,7 @@ const DivisionTrainerScreen = () => {
     const arrowOpacity1 = useRef(new Animated.Value(0)).current;
     const arrowOpacity2 = useRef(new Animated.Value(0)).current;
 
-    // Funkcja nextTask (bez zmian)
+    // Функція nextTask (без змін)
     const nextTask = () => {
         if (taskCount >= TASKS_LIMIT) {
             setIsGameFinished(true);
@@ -86,9 +77,18 @@ const DivisionTrainerScreen = () => {
         setTaskCount(prevCount => prevCount + 1);
     };
 
+    // ✅ ЗАЛИШЕНО: useEffect для запуску першого завдання
     useEffect(() => {
         nextTask();
     }, []);
+
+    // ✅ ВИДАЛЕНО: useEffect, який містив StatusBar.setTranslucent (проблема з нативними модулями)
+    // useEffect(() => {
+    //     if (Platform.OS === 'android') {
+    //         StatusBar.setTranslucent(true);
+    //         StatusBar.setBackgroundColor('transparent');
+    //     }
+    // }, []);
 
     // ✅ ZMODYFIKOWANA FUNKCJA (STARY STYL)
     const handleButton = () => {
@@ -142,9 +142,11 @@ const DivisionTrainerScreen = () => {
 
             // ✅ ZAPIS POPRAWNEJ ODPOWIEDZI (STARY STYL)
             if (statsDocRef) {
-                statsDocRef.set({ // Używamy .set()
-                    totalCorrect: firestore.FieldValue.increment(1) // Używamy firestore.FieldValue.increment
-                }, { merge: true }).catch(error => console.error("Błąd zapisu poprawnej odpowiedzi:", error));
+                firestore().runTransaction(async (transaction) => {
+                    transaction.set(statsDocRef, {
+                        totalCorrect: firestore.FieldValue.increment(1)
+                    }, { merge: true });
+                }).catch(error => console.error("Błąd zapisu poprawnej odpowiedzi:", error));
             }
         } else {
             Animated.sequence([
@@ -157,16 +159,18 @@ const DivisionTrainerScreen = () => {
             const firstPartHint = Math.floor(number / 2 / divisor) * divisor;
             const secondPartHint = number - firstPartHint;
             setHintMessage(
-                `Podpowiedź: Spróbuj rozłożyć ${number} na dwie liczby, np. ${firstPartHint} i ${secondPartHint}, które można podzielić przez ${divisor}.`
+                `Podpowiedź: Spróbuj rozłożyć ${number} na dwie liczby, np. ${firstPartHint} i ${secondPartPart}, które można podzielić przez ${divisor}.`
             );
 
             setWrongCount(prev => prev + 1);
 
             // ✅ ZAPIS BŁĘDNEJ ODPOWIEDZI (STARY STYL)
             if (statsDocRef) {
-                statsDocRef.set({ // Używamy .set()
-                    totalWrong: firestore.FieldValue.increment(1) // Używamy firestore.FieldValue.increment
-                }, { merge: true }).catch(error => console.error("Błąd zapisu błędnej odpowiedzi:", error));
+                firestore().runTransaction(async (transaction) => {
+                    transaction.set(statsDocRef, {
+                        totalWrong: firestore.FieldValue.increment(1)
+                    }, { merge: true });
+                }).catch(error => console.error("Błąd zapisu błędnej odpowiedzi:", error));
             }
         }
     };
@@ -176,16 +180,10 @@ const DivisionTrainerScreen = () => {
         return finalCorrect ? styles.correctFinal : styles.errorFinal;
     };
 
-    useEffect(() => {
-        if (Platform.OS === 'android') {
-            StatusBar.setTranslucent(true);
-            StatusBar.setBackgroundColor('transparent');
-        }
-    }, []);
-
     return (
-        // ... (Cały JSX zostaje bez zmian) ...
         <View style={{ flex: 1 }}>
+            {/* ✅ ВИДАЛЕНО: Компонент StatusBar */}
+            {/* <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" /> */}
 
             <ImageBackground
                 source={require('../assets/background.jpg')}
@@ -307,7 +305,7 @@ const DivisionTrainerScreen = () => {
     );
 };
 
-// ... (StyleSheet zostaje bez zmian) ...
+// ... (StyleSheet залишається без змін) ...
 const styles = StyleSheet.create({
     container: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
     card: {
@@ -346,4 +344,4 @@ const styles = StyleSheet.create({
     errorText: { color: '#dc3545' },
 });
 
-export default DivisionTrainerScreen;
+export default DivisionTrainerScreen;;

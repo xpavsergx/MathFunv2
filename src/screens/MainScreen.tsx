@@ -1,12 +1,12 @@
 // src/screens/MainScreen.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View, Text, StyleSheet, Image, TouchableOpacity,
     Dimensions, ScrollView, useColorScheme, Alert, Platform,
-    SafeAreaView, // Залишаємо SafeAreaView
-    ImageBackground,
-    Animated
+    SafeAreaView,
+    ImageBackground
 } from 'react-native';
+// Імпортуємо LinearGradient
 import { LinearGradient } from 'expo-linear-gradient';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -17,7 +17,7 @@ import { MainAppStackParamList, AppTabParamList, TheoryStackParamList } from '..
 import { COLORS, FONT_SIZES, PADDING, MARGIN } from '../styles/theme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
-// Типи навігації (без змін)
+// --- Типи навігації (Правильний варіант) ---
 type MainScreenNavigationProp = CompositeNavigationProp<
     BottomTabNavigationProp<AppTabParamList, 'HomeStack'>,
     NativeStackScreenProps<MainAppStackParamList & TheoryStackParamList>['navigation']
@@ -26,16 +26,15 @@ type MainScreenProps = { navigation: MainScreenNavigationProp };
 
 // Константи
 const GRADES = [4, 5, 6, 7];
-const ACCENT_COLOR_PURPLE = '#7C4DFF';
 
-// Компонент Feature Card (без змін)
-const FeatureCard = ({ icon, title, onPress, cardStyle, textStyle, iconColor, disabled }) => (
+// Компонент FeatureCard
+const FeatureCard = ({ icon, title, subtitle, onPress, cardStyle, textStyle, iconColor, disabled }) => (
     <TouchableOpacity style={[styles.card, cardStyle, disabled && styles.cardDisabled]} onPress={onPress} activeOpacity={disabled ? 1 : 0.7} disabled={disabled}>
-        <Ionicons name={icon} size={38} color={disabled ? COLORS.greyDarkTheme : (iconColor || COLORS.primary)} style={{ marginBottom: MARGIN.medium }} />
+        <Ionicons name={icon} size={40} color={disabled ? COLORS.greyDarkTheme : (iconColor || COLORS.primary)} style={{ marginBottom: MARGIN.small }} />
         <Text style={[styles.cardTitle, textStyle, disabled && styles.cardTextDisabled]} numberOfLines={1} adjustsFontSizeToFit>{title}</Text>
+        <Text style={[styles.cardSubtitle, textStyle, disabled && styles.cardTextDisabled]} numberOfLines={2}>{subtitle}</Text>
     </TouchableOpacity>
 );
-
 
 function MainScreen({ navigation }: MainScreenProps) {
     const colorScheme = useColorScheme();
@@ -43,18 +42,18 @@ function MainScreen({ navigation }: MainScreenProps) {
 
     const [userClass, setUserClass] = useState<string | null>(null);
     const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
+
     const currentUser = auth().currentUser;
 
-    const fadeAnim = useRef(new Animated.Value(0)).current;
-
     useEffect(() => {
-        // Логіка завантаження userClass (без змін)
+        // Логіка завантаження userClass
         if (currentUser) {
             const userRef = firestore().collection('users').doc(currentUser.uid);
             const unsubscribe = userRef.onSnapshot(doc => {
                 if (doc.exists) {
                     const fetchedClass = doc.data()?.userClass;
                     setUserClass(fetchedClass ? String(fetchedClass) : null);
+                    // Встановлюємо початково вибраний клас = клас реєстрації
                     if (fetchedClass && selectedGrade === null) {
                         setSelectedGrade(Number(fetchedClass));
                     }
@@ -64,62 +63,65 @@ function MainScreen({ navigation }: MainScreenProps) {
         }
     }, [currentUser]);
 
-    useEffect(() => {
-        Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 600,
-            useNativeDriver: true,
-        }).start();
-    }, [fadeAnim]);
+    // Функції навігації
+    const handleGradeSelect = (grade: number) => {
+        console.warn("Wybrano klasę:", grade); // Залишено console.warn для перевірки
+        setSelectedGrade(grade);
+    };
+    const navigateToPractice = () => {
+        console.warn("Próba nawigacji do Praktyki. Wybrana klasa:", selectedGrade); // Залишено console.warn для перевірки
+        if (selectedGrade) {
+            navigation.navigate('TopicList', { grade: selectedGrade });
+        } else {
+            Alert.alert("Wybierz klasę", "Najpierw wybierz klasę z listy powyżej.");
+        }
+    };
+    const navigateToTheory = () => {
+        if (selectedGrade) {
+            navigation.navigate('TheoryTopicList', { grade: String(selectedGrade) });
+        } else {
+            Alert.alert("Wybierz klasę", "Najpierw wybierz klasę z listy powyżej.");
+        }
+    };
 
-    // Функції навігації (без змін)
-    const handleGradeSelect = (grade: number) => { setSelectedGrade(grade); };
-    const navigateToPractice = () => { /* ... */ };
-    const navigateToTheory = () => { /* ... */ };
-
-    // Динамічні стилі (без змін)
+    // Динамічні стилі
     const dynamicStyles = {
-        backgroundGradient: isDarkMode ? ['#212121', '#121212'] : ['#F5F5F5', '#E0E0E0'],
-        headerText: { color: isDarkMode ? COLORS.textDark : COLORS.textLight },
-        subText: { color: isDarkMode ? COLORS.grey : '#757575' },
-        card: { backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.white },
-        cardText: { color: isDarkMode ? COLORS.textDark : COLORS.textLight },
-        gradeButton: { backgroundColor: isDarkMode ? '#333333' : '#F5F5F5', borderColor: isDarkMode ? '#555' : '#E0E0E0' },
-        gradeButtonSelected: { backgroundColor: ACCENT_COLOR_PURPLE, borderColor: ACCENT_COLOR_PURPLE },
-        gradeButtonUserClass: { borderColor: isDarkMode ? COLORS.accent : COLORS.accent, borderWidth: 1.5 },
-        gradeButtonText: { color: isDarkMode ? COLORS.textDark : COLORS.textLight },
-        gradeButtonTextSelected: { color: COLORS.white },
-        cardIconColor: isDarkMode ? ACCENT_COLOR_PURPLE : ACCENT_COLOR_PURPLE,
-        cardDisabled: { opacity: 0.5 },
-        cardTextDisabled: { opacity: 0.5 },
+        backgroundOverlayLight: { backgroundColor: 'rgba(255, 255, 255, 0.3)' },
+        card: { backgroundColor: isDarkMode ? COLORS.cardDark : 'rgba(255, 255, 255, 0.9)' },
+        text: { color: isDarkMode ? COLORS.textDark : COLORS.textLight },
+        welcomeTitle: { color: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primaryDark },
+        userInfoText: { color: isDarkMode ? COLORS.textDark : '#424242' },
+        encouragementText: { color: isDarkMode ? COLORS.textDark : '#37474F' },
+        gradeButton: { backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.primary },
+        gradeButtonSelected: { backgroundColor: COLORS.accent },
+        gradeButtonUserClass: { borderColor: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primaryDark, borderWidth: 1.5 },
+        gradeButtonText: { color: isDarkMode ? COLORS.textDark : COLORS.white },
+        gradeButtonTextSelected: { color: isDarkMode ? COLORS.black : COLORS.white },
+        cardIconColor: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary,
+        cardDisabled: { backgroundColor: isDarkMode ? '#282828' : '#E0E0E0', opacity: 0.7 },
+        cardTextDisabled: { color: COLORS.greyDarkTheme }
     };
 
     // Компонент вмісту екрану
     const ScreenContent = () => (
-        // ✅ Встановлюємо flexGrow, щоб вміст займав місце, якщо ScrollView активний
-        <Animated.View style={[styles.scrollContentContainer, { opacity: fadeAnim }]}>
-            {/* --- HEADER --- */}
-            <View style={styles.headerContainer}>
-                {/* Текст зліва */}
-                <View style={styles.headerTextContainer}>
-                    <Text style={[styles.welcomeTitle, dynamicStyles.headerText]}>
-                        Cześć {currentUser?.displayName || 'Viola'}!
+        <View style={styles.contentContainer}>
+            {/* Верхня секція */}
+            <View style={styles.topSection}>
+                <Image source={require('../assets/logo.jpg')} style={styles.logo} resizeMode="contain" />
+                <Text style={[styles.welcomeTitle, dynamicStyles.welcomeTitle]}>Witaj w MathFun!</Text>
+                {currentUser && (
+                    <Text style={[styles.userInfoText, dynamicStyles.userInfoText]}>
+                        Gotowy na nową przygodę, {currentUser.displayName || currentUser.email}?
                     </Text>
-                    <Text style={[styles.subText, dynamicStyles.subText]}>
-                        Co chcesz dziś ogarnąć?
-                    </Text>
-                </View>
-                {/* Лисиця справа */}
-                <Image
-                    source={require('../assets/images/fox_mascot.png')}
-                    style={styles.mascot}
-                    resizeMode="contain"
-                />
+                )}
+                <Text style={[styles.encouragementText, dynamicStyles.encouragementText]}>
+                    Wybierz klasę, aby rozpocząć!
+                </Text>
             </View>
 
-            {/* --- GRADE SELECTOR --- */}
+            {/* Горизонтальний вибір класу */}
             <View style={styles.gradesScrollViewContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.gradesContainer}>
+                <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.gradesContainer}>
                     {GRADES.map((grade) => {
                         const isUserRegClass = String(grade) === userClass;
                         const isCurrentlySelected = grade === selectedGrade;
@@ -129,169 +131,183 @@ function MainScreen({ navigation }: MainScreenProps) {
                                 style={[ styles.gradeButton, dynamicStyles.gradeButton, isUserRegClass && dynamicStyles.gradeButtonUserClass, isCurrentlySelected && dynamicStyles.gradeButtonSelected ]}
                                 onPress={() => handleGradeSelect(grade)}
                             >
-                                {isCurrentlySelected && <Ionicons name="checkmark-sharp" size={16} color={dynamicStyles.gradeButtonTextSelected.color} style={styles.checkmarkIcon}/>}
                                 <Text style={[ styles.gradeButtonText, dynamicStyles.gradeButtonText, isCurrentlySelected && dynamicStyles.gradeButtonTextSelected ]}>
-                                    Klasa {grade}
+                                    Klasa {grade} {isUserRegClass ? '⭐' : ''}
                                 </Text>
-                                {/* {isUserRegClass && !isCurrentlySelected && <Text style={{ fontSize: 10, marginLeft: 2 }}>⭐</Text>} */}
                             </TouchableOpacity>
                         );
                     })}
                 </ScrollView>
             </View>
 
-            {/* --- FEATURE CARDS GRID --- */}
+            {/* Сітка з 4 картками функцій */}
             <View style={styles.featuresGrid}>
-                <FeatureCard icon="book-outline" title="Teoria" onPress={navigateToTheory} cardStyle={dynamicStyles.card} textStyle={dynamicStyles.cardText} iconColor={dynamicStyles.cardIconColor} disabled={!selectedGrade}/>
-                <FeatureCard icon="pencil-outline" title="Praktyka" onPress={navigateToPractice} cardStyle={dynamicStyles.card} textStyle={dynamicStyles.cardText} iconColor={dynamicStyles.cardIconColor} disabled={!selectedGrade}/>
-                <FeatureCard icon="game-controller-outline" title="Gry" onPress={() => Alert.alert("Wkrótce", "Sekcja gier jest w przygotowaniu!")} cardStyle={dynamicStyles.card} textStyle={dynamicStyles.cardText} iconColor={dynamicStyles.cardIconColor} disabled={false}/>
-                <FeatureCard icon="star-outline" title="Wyzwanie" onPress={() => Alert.alert("Wkrótce", "Codzienne wyzwania są w przygotowaniu!")} cardStyle={dynamicStyles.card} textStyle={dynamicStyles.cardText} iconColor={dynamicStyles.cardIconColor} disabled={false}/>
+                <FeatureCard icon="book-outline" title="Teoria" subtitle="Ucz się zasad i wzorów" onPress={navigateToTheory} cardStyle={dynamicStyles.card} textStyle={dynamicStyles.text} iconColor={dynamicStyles.cardIconColor} disabled={!selectedGrade}/>
+                <FeatureCard icon="pencil-outline" title="Praktyka" subtitle="Testy i ćwiczenia" onPress={navigateToPractice} cardStyle={dynamicStyles.card} textStyle={dynamicStyles.text} iconColor={dynamicStyles.cardIconColor} disabled={!selectedGrade}/>
+                <FeatureCard icon="game-controller-outline" title="Gry" subtitle="Baw się matematyką!" onPress={() => Alert.alert("Wkrótce", "Sekcja gier jest w przygotowaniu!")} cardStyle={dynamicStyles.card} textStyle={dynamicStyles.text} iconColor={dynamicStyles.cardIconColor} disabled={false}/>
+                <FeatureCard icon="star-outline" title="Wyzwanie dnia" subtitle="Sprawdź się!" onPress={() => Alert.alert("Wkrótce", "Codzienne wyzwania są w przygotowaniu!")} cardStyle={dynamicStyles.card} textStyle={dynamicStyles.text} iconColor={dynamicStyles.cardIconColor} disabled={false}/>
             </View>
-
-            {/* Додатковий відступ знизу, щоб вміст не зливався з TabBar */}
-            <View style={styles.bottomSpacer} />
-        </Animated.View>
+        </View>
     );
 
     // Умовний рендеринг фону
-    const BackgroundWrapper = isDarkMode ? LinearGradient : ImageBackground;
-    const backgroundProps = isDarkMode ? {
-        colors: dynamicStyles.backgroundGradient,
-        style: styles.backgroundContainer,
-    } : {
-        source: require('../assets/background.jpg'),
-        style: styles.backgroundContainer,
-        resizeMode: 'cover',
-    };
-
     return (
-        <SafeAreaView style={styles.safeArea}>
-            <BackgroundWrapper {...backgroundProps}>
-                {/* Overlay тільки для ImageBackground */}
-                {!isDarkMode && <View style={[StyleSheet.absoluteFill, dynamicStyles.backgroundOverlayLight]} />}
-
-                {/* ✅ ЗАМІНЯЄМО contentContainer НА ScrollView */}
-                <ScrollView
-                    style={styles.scrollWrapper}
-                    contentContainerStyle={styles.scrollViewContentStyle}
-                    showsVerticalScrollIndicator={false}
-                >
+        isDarkMode ? (
+            <LinearGradient
+                colors={['#1A237E', '#121212']} // Темно-синій до чорного
+                style={styles.gradientBackground}
+            >
+                <SafeAreaView style={styles.safeAreaTransparent}>
                     <ScreenContent />
-                </ScrollView>
-            </BackgroundWrapper>
-        </SafeAreaView>
+                </SafeAreaView>
+            </LinearGradient>
+        ) : (
+            <ImageBackground
+                source={require('../assets/background.jpg')}
+                style={styles.backgroundImage}
+                resizeMode="cover"
+            >
+                <View style={[StyleSheet.absoluteFill, dynamicStyles.backgroundOverlayLight]} />
+                <SafeAreaView style={styles.safeAreaTransparent}>
+                    <ScreenContent />
+                </SafeAreaView>
+            </ImageBackground>
+        )
     );
 }
 
-// Стилі, адаптовані для скролінгу
+// Стилі
 const windowWidth = Dimensions.get('window').width;
-const cardSize = (windowWidth - PADDING.large * 2 - MARGIN.medium) / 2;
+const cardWidth = (windowWidth - PADDING.large * 2 - MARGIN.medium) / 2;
 
 const styles = StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: '#121212' }, // Колір Safe Area за замовчуванням
-    backgroundContainer: { flex: 1 }, // Контейнер для фону/градієнта
-
-    scrollWrapper: {
+    backgroundImage: {
         flex: 1,
     },
-    // ✅ Новий стиль для ScrollView contentContainer: забезпечує гнучкість, але дозволяє скрол
-    scrollViewContentStyle: {
-        flexGrow: 1, // Дозволяє вмісту займати весь простір, коли це можливо
+    gradientBackground: {
+        flex: 1,
     },
-
-    // ✅ Оновлений контейнер вмісту (вже не має flex: 1)
-    scrollContentContainer: {
-        flexGrow: 1,
-        paddingTop: Platform.OS === 'ios' ? PADDING.medium : PADDING.large + PADDING.medium,
-        minHeight: Dimensions.get('window').height * 1.1, // Щоб забезпечити скролінг, якщо вміст не займає 100%
+    safeAreaTransparent: {
+        flex: 1,
+        backgroundColor: 'transparent',
     },
-
-    // --- HEADER ---
-    headerContainer: {
-        flexDirection: 'row',
+    contentContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        paddingBottom: Platform.OS === 'ios' ? 90 : 70,
+        paddingTop: Platform.OS === 'ios' ? 0 : 10,
+    },
+    topSection: {
+        width: '100%',
         alignItems: 'center',
         paddingHorizontal: PADDING.large,
-        marginBottom: MARGIN.large + MARGIN.small,
     },
-    headerTextContainer: {
-        flex: 1,
+    logo: {
+        width: windowWidth * 0.25,
+        height: windowWidth * 0.25,
+        marginBottom: MARGIN.small,
+        borderRadius: (windowWidth*0.25)/2
     },
     welcomeTitle: {
         fontSize: FONT_SIZES.xlarge,
         fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: MARGIN.small / 2,
+        textShadowColor: 'rgba(0, 0, 0, 0.4)',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 2,
     },
-    subText: {
+    userInfoText: {
+        fontSize: FONT_SIZES.medium - 1,
+        marginBottom: MARGIN.small,
+        textAlign: 'center',
+        opacity: 0.9,
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 1,
+    },
+    encouragementText: {
         fontSize: FONT_SIZES.medium,
-        opacity: 0.8,
-        marginTop: 4,
+        textAlign: 'center',
+        paddingHorizontal: PADDING.small,
+        lineHeight: 20,
+        opacity: 0.95,
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 1,
     },
-    mascot: {
-        width: 80,
-        height: 80,
-        marginLeft: MARGIN.small,
-    },
-    // --- GRADE SELECTOR ---
     gradesScrollViewContainer: {
-        marginBottom: MARGIN.large + MARGIN.small,
-        paddingLeft: PADDING.large,
+        width: '100%',
+        height: 50,
+        marginVertical: MARGIN.small,
     },
     gradesContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingRight: PADDING.large,
+        paddingHorizontal: PADDING.medium
     },
     gradeButton: {
-        flexDirection: 'row',
+        paddingVertical: PADDING.small - 2,
+        paddingHorizontal: PADDING.medium,
+        borderRadius: 18,
+        marginHorizontal: MARGIN.small / 2,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: PADDING.small,
-        paddingHorizontal: PADDING.medium + 2,
-        borderRadius: 20,
-        marginRight: MARGIN.small,
-        borderWidth: 1,
-        minHeight: 40,
-    },
-    checkmarkIcon: {
-        marginRight: 5,
+        elevation: 3,
+        height: 36,
+        borderWidth: 0.5,
+        borderColor: 'rgba(255, 255, 255, 0.3)',
     },
     gradeButtonText: {
-        fontSize: FONT_SIZES.medium -1,
-        fontWeight: '600',
+        fontSize: FONT_SIZES.medium - 2,
+        fontWeight: 'bold',
+        textShadowColor: 'rgba(0, 0, 0, 0.2)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 1,
     },
-    // --- FEATURE GRID ---
     featuresGrid: {
+        width: '100%',
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
         paddingHorizontal: PADDING.large,
+        marginTop: MARGIN.small,
     },
     card: {
-        width: cardSize,
-        height: cardSize * 0.9,
-        borderRadius: 12,
-        padding: PADDING.medium,
+        width: cardWidth,
+        minHeight: cardWidth * 0.8,
+        borderRadius: 15,
+        padding: PADDING.medium - 2,
         marginBottom: MARGIN.medium,
-        elevation: 3,
+        elevation: 4,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 5,
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 0,
     },
-    cardDisabled: { opacity: 0.5 },
-    cardTextDisabled: { opacity: 0.5 },
-    cardTitle: {
-        fontSize: FONT_SIZES.medium,
-        fontWeight: '600',
-        textAlign: 'center',
-        marginTop: MARGIN.small,
+    cardDisabled: {
+        opacity: 0.7,
+        elevation: 1,
     },
-    // ✅ Новий стиль: Додатковий простір внизу
-    bottomSpacer: {
-        height: Platform.OS === 'ios' ? 90 : 70, // Висота TabBar
-    }
+    cardTextDisabled: {
+        opacity: 0.7,
+    },
+    cardTitle: {
+        fontSize: FONT_SIZES.large - 4,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginTop: MARGIN.small / 2,
+    },
+    cardSubtitle: {
+        fontSize: FONT_SIZES.small,
+        opacity: 0.8,
+        textAlign: 'center',
+        marginTop: MARGIN.small / 4,
+    },
 });
 
 export default MainScreen;
