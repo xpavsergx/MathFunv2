@@ -8,16 +8,22 @@ import {
     Keyboard,
     ImageBackground,
     StatusBar,
+    Dimensions,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-
-// ✅ IMPORTY W STARYM STYLU
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
-// ✅ DODANE STAŁE
-const EXERCISE_ID = "addSubtractTrainer"; // Unikalne ID dla tego ćwiczenia
+// ✅ Константы
+const EXERCISE_ID = "addSubtractTrainer";
 const TASKS_LIMIT = 100;
+
+// ✅ Адаптивные размеры экрана
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_PADDING = SCREEN_WIDTH > 500 ? 50 : 20;
+const CARD_WIDTH = SCREEN_WIDTH > 700 ? 700 : SCREEN_WIDTH - 40;
+const INPUT_WIDTH = SCREEN_WIDTH > 400 ? 130 : (SCREEN_WIDTH - 120) / 2;
+const FINAL_INPUT_WIDTH = SCREEN_WIDTH > 400 ? 240 : SCREEN_WIDTH - 80;
 
 const AdditionSubtractionTrainerScreen = () => {
     const [numberA, setNumberA] = useState<number>(0);
@@ -45,27 +51,22 @@ const AdditionSubtractionTrainerScreen = () => {
     const [startTime, setStartTime] = useState<number>(0);
     const [seconds, setSeconds] = useState<number>(0);
 
-    // ✅ DODANY STAN DO LICZENIA ZADAŃ
     const [taskCount, setTaskCount] = useState<number>(0);
     const [isGameFinished, setIsGameFinished] = useState<boolean>(false);
 
-    // ✅ ZMODYFIKOWANA FUNKCJA
     const nextTask = () => {
-        // Sprawdzamy, czy użytkownik nie wykonał już 100 zadań
         if (taskCount >= TASKS_LIMIT) {
-            setIsGameFinished(true); // Ustawiamy flagę końca gry
+            setIsGameFinished(true);
             setResultMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
             setReadyForNext(false);
-            return; // Przerywamy funkcję
+            return;
         }
 
-        let a = Math.floor(Math.random() * 90) + 10; // 10-99
-        let b = Math.floor(Math.random() * 90) + 10; // 10-99
+        let a = Math.floor(Math.random() * 90) + 10;
+        let b = Math.floor(Math.random() * 90) + 10;
         const addition = Math.random() > 0.5;
 
-        if (!addition) {
-            if (b > a) [a, b] = [b, a];
-        }
+        if (!addition && b > a) [a, b] = [b, a];
 
         setNumberA(a);
         setNumberB(b);
@@ -87,7 +88,6 @@ const AdditionSubtractionTrainerScreen = () => {
         setSeconds(0);
         setStartTime(Date.now());
 
-        // ✅ Zwiększamy licznik zadań (tylko w tej sesji)
         setTaskCount(prevCount => prevCount + 1);
     };
 
@@ -95,31 +95,18 @@ const AdditionSubtractionTrainerScreen = () => {
         nextTask();
     }, []);
 
-    // ✅ ZMODYFIKOWANA FUNKCJA
     const handleCheck = () => {
         Keyboard.dismiss();
 
-        // Przygotowujemy referencję do bazy (stary styl)
         const currentUser = auth().currentUser;
-        if (!currentUser) {
-            console.warn('Użytkownik nie jest zalogowany. Wynik nie zostanie zapisany.');
-        }
-        const statsDocRef = currentUser ?
-            firestore()
-                .collection('users')
-                .doc(currentUser.uid)
-                .collection('exerciseStats')
-                .doc(EXERCISE_ID)
+        const statsDocRef = currentUser
+            ? firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
             : null;
 
         const correctTens = Math.floor(numberB / 10) * 10;
-        const correctPartial = isAddition
-            ? numberA + correctTens
-            : numberA - correctTens;
+        const correctPartial = isAddition ? numberA + correctTens : numberA - correctTens;
         const correctOnes = numberB % 10;
-        const correctFinal = isAddition
-            ? numberA + numberB
-            : numberA - numberB;
+        const correctFinal = isAddition ? numberA + numberB : numberA - numberB;
 
         const vState = {
             tensInput: tensInput ? Number(tensInput) === correctTens : false,
@@ -151,26 +138,21 @@ const AdditionSubtractionTrainerScreen = () => {
         if (allCorrect) {
             const elapsed = Math.floor((Date.now() - startTime) / 1000);
             setSeconds(elapsed);
-
-            setResultMessage(`Brawo! Poprawna odpowiedź: ${correctFinal}`); // Usunąłem czas z komunikatu, jest w liczniku
+            setResultMessage(`Brawo! Poprawna odpowiedź: ${correctFinal}`);
             setCorrectCount(prev => prev + 1);
             setReadyForNext(true);
 
-            // ✅ ZAPIS POPRAWNEJ ODPOWIEDZI (STARY STYL)
             if (statsDocRef) {
-                statsDocRef.set({
-                    totalCorrect: firestore.FieldValue.increment(1)
-                }, { merge: true }).catch(error => console.error("Błąd zapisu poprawnej odpowiedzi:", error));
+                statsDocRef.set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true })
+                    .catch(error => console.error("Błąd zapisu poprawnej odpowiedzi:", error));
             }
         } else {
             setResultMessage('Nie wszystkie odpowiedzi są poprawne. Spróbuj ponownie!');
             setWrongCount(prev => prev + 1);
 
-            // ✅ ZAPIS BŁĘDNEJ ODPOWIEDZI (STARY STYL)
             if (statsDocRef) {
-                statsDocRef.set({
-                    totalWrong: firestore.FieldValue.increment(1)
-                }, { merge: true }).catch(error => console.error("Błąd zapisu błędnej odpowiedzi:", error));
+                statsDocRef.set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true })
+                    .catch(error => console.error("Błąd zapisu błędnej odpowiedzi:", error));
             }
         }
     };
@@ -199,31 +181,29 @@ const AdditionSubtractionTrainerScreen = () => {
                 keyboardShouldPersistTaps="handled"
             >
                 <View style={styles.card}>
-                    <Text style={styles.title}>Trener dodawania i odejmowania </Text>
+                    <Text style={styles.title}>Trener dodawania i odejmowania</Text>
 
-                    {/* ✅ Ukrywanie zadania po skończeniu gry */}
-                    {!isGameFinished ? (
+                    {!isGameFinished && (
                         <>
                             <Text style={styles.task}>{numberA} {operationSymbol} {numberB}</Text>
-
                             <Text style={styles.subTitle}>
                                 Rozłóż liczbę <Text style={styles.highlight}>{numberB}</Text> na dziesiątki i jedności
                             </Text>
 
                             <View style={styles.row}>
                                 <Text style={styles.number}>{numberA}</Text>
-                                <Text style={styles.operator}> {operationSymbol} </Text>
+                                <Text style={styles.operator}>{operationSymbol}</Text>
                                 <TextInput
-                                    style={getStyle('tensInput')}
+                                    style={[getStyle('tensInput'), { width: INPUT_WIDTH }]}
                                     keyboardType="numeric"
                                     value={tensInput}
                                     onChangeText={setTensInput}
                                     placeholder="dziesiątki"
                                     placeholderTextColor="#aaa"
                                 />
-                                <Text style={styles.operator}> = </Text>
+                                <Text style={styles.operator}>=</Text>
                                 <TextInput
-                                    style={getStyle('partialResult')}
+                                    style={[getStyle('partialResult'), { width: INPUT_WIDTH }]}
                                     keyboardType="numeric"
                                     value={partialResult}
                                     onChangeText={setPartialResult}
@@ -235,16 +215,16 @@ const AdditionSubtractionTrainerScreen = () => {
                             <View style={styles.row}>
                                 <Text style={styles.operator}>{isAddition ? '+' : '−'}</Text>
                                 <TextInput
-                                    style={getStyle('onesInput')}
+                                    style={[getStyle('onesInput'), { width: INPUT_WIDTH }]}
                                     keyboardType="numeric"
                                     value={onesInput}
                                     onChangeText={setOnesInput}
                                     placeholder="jedności"
                                     placeholderTextColor="#aaa"
                                 />
-                                <Text style={styles.operator}> = </Text>
+                                <Text style={styles.operator}>=</Text>
                                 <TextInput
-                                    style={[getStyle('finalResult'), { width: 240 }]}
+                                    style={[getStyle('finalResult'), { width: FINAL_INPUT_WIDTH }]}
                                     keyboardType="numeric"
                                     value={finalResult}
                                     onChangeText={setFinalResult}
@@ -253,25 +233,27 @@ const AdditionSubtractionTrainerScreen = () => {
                                 />
                             </View>
                         </>
-                    ) : null}
+                    )}
 
                     <View style={styles.buttonContainer}>
                         <Button
                             title={readyForNext ? "Dalej" : "Sprawdź"}
                             onPress={readyForNext ? nextTask : handleCheck}
                             color="#007AFF"
-                            // ✅ Blokowanie przycisku po skończeniu
                             disabled={isGameFinished}
                         />
                     </View>
 
                     {resultMessage ? (
-                        <Text style={[styles.result, (resultMessage.startsWith('Brawo') || resultMessage.startsWith('Gratulacje')) ? styles.correctText : styles.errorText]}>
+                        <Text style={[
+                            styles.result,
+                            (resultMessage.startsWith('Brawo') || resultMessage.startsWith('Gratulacje'))
+                                ? styles.correctText : styles.errorText
+                        ]}>
                             {resultMessage}
                         </Text>
                     ) : null}
 
-                    {/* ✅ Zaktualizowany licznik */}
                     <Text style={styles.counter}>
                         Zadanie: {taskCount > TASKS_LIMIT ? TASKS_LIMIT : taskCount} / {TASKS_LIMIT}
                         {'\n'}
@@ -283,26 +265,29 @@ const AdditionSubtractionTrainerScreen = () => {
     );
 };
 
-// ... (StyleSheet zostaje bez zmian) ...
 const styles = StyleSheet.create({
     container: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
     card: {
-        width: '100%',
-        maxWidth: 700,
+        width: CARD_WIDTH,
+        padding: CARD_PADDING,
         borderRadius: 20,
-        padding: 50,
         alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.4)',
     },
-    title: { fontSize: 28, fontWeight: 'bold', marginBottom: 15, color: '#333' },
+    title: { fontSize: 28, fontWeight: 'bold', marginBottom: 15, color: '#333', textAlign: 'center' },
     task: { fontSize: 36, fontWeight: 'bold', marginBottom: 15, color: '#007AFF' },
     subTitle: { fontSize: 20, marginBottom: 15, color: '#444', textAlign: 'center' },
     highlight: { color: '#007AFF', fontWeight: 'bold' },
-    row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: 10, flexWrap: 'wrap' },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginVertical: 10,
+        flexWrap: 'wrap',
+    },
     number: { fontSize: 26, marginHorizontal: 5 },
     operator: { fontSize: 26, fontWeight: 'bold', marginHorizontal: 5 },
     input: {
-        width: 130,
         height: 60,
         borderWidth: 2,
         borderColor: '#ccc',
@@ -313,7 +298,6 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.6)',
     },
     correct: {
-        width: 130,
         height: 60,
         borderWidth: 2,
         borderColor: '#28a745',
@@ -325,7 +309,6 @@ const styles = StyleSheet.create({
         color: '#155724',
     },
     error: {
-        width: 130,
         height: 60,
         borderWidth: 2,
         borderColor: '#dc3545',
@@ -337,7 +320,6 @@ const styles = StyleSheet.create({
         color: '#721c24',
     },
     correctFinal: {
-        width: 240,
         height: 60,
         borderWidth: 2,
         borderColor: '#28a745',
@@ -349,7 +331,6 @@ const styles = StyleSheet.create({
         color: '#155724',
     },
     errorFinal: {
-        width: 240,
         height: 60,
         borderWidth: 2,
         borderColor: '#dc3545',
