@@ -49,7 +49,20 @@ function ProfileScreen() {
     useEffect(() => { /* ... logika ładowania ... */ }, [currentUser]);
 
     // ... handleLogout ...
-    const handleLogout = async () => { /* ... */ };
+    const handleLogout = async () => {
+        try {
+            await auth().signOut();
+            // Po wylogowaniu resetujemy nawigację do ekranu 'Login'
+            // Używamy 'Login' jako nazwy ekranu z drugiego pliku, który podałeś
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+            });
+        } catch (error) {
+            console.error("Błąd podczas wylogowywania: ", error);
+            Alert.alert("Błąd", "Nie udało się wylogować. Spróbuj ponownie.");
+        }
+    };
 
     // ... renderAchievement ...
     const renderAchievement = ({ item }: { item: IAchievement }) => (
@@ -136,7 +149,7 @@ function ProfileScreen() {
                         <Ionicons name="chevron-forward-outline" size={22} color={dynamicStyles.placeholderText.color} style={{ marginLeft: 'auto' }} />
                     </View>
                     <Text style={[styles.placeholderText, dynamicStyles.placeholderText]}>
-                        Zobacz podsumowanie swoich ćwiczeń (mnożenie, dzielenie...)
+                        Zobacz podsumowanie swoich treningów
                     </Text>
                 </TouchableOpacity>
 

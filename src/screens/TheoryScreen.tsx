@@ -1,105 +1,167 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import questionsDatabase from '../data/questionsDb.json';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ImageBackground,
+    ScrollView,
+    Dimensions,
+} from 'react-native';
+
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { TheoryStackParamList } from '../../App'; // Імпортуємо правильні типи
+import { MainAppStackParamList } from '../../App'; // Importujemy główny typ
+import questionsDatabase from '../data/questionsDb.json';
+import backgroundImage from '../assets/books1.png';
+import { COLORS } from '../styles/theme';
 
-// Видаляємо GRADE_FOR_THEORY, бо тепер отримуємо з route.params
+// Używamy MainAppStackParamList, ponieważ ten ekran jest w głównym stosie
+type TopicListProps = NativeStackScreenProps<MainAppStackParamList, 'TopicList'>;
 
-type QuestionsDatabaseType = {
-    [grade: string]: {
-        [topic: string]: any;
-    };
+type QuestionsDatabase = {
+    [grade: string]: { [topic: string]: { [subTopic: string]: any[] } };
 };
 
-// Оновлюємо тип props
-type TheoryTopicListScreenProps = NativeStackScreenProps<TheoryStackParamList, 'TheoryTopicList'>;
+const { width } = Dimensions.get('window');
+const CIRCLE_DIAMETER = width / 2.5;
 
-function TheoryScreen({ route, navigation }: TheoryTopicListScreenProps) { // Отримуємо route
-    const { grade } = route.params; // <--- ОТРИМУЄМО КЛАС З ПАРАМЕТРІВ МАРШРУТУ
+function TopicListScreen({ route, navigation }: TopicListProps) {
+    const { grade } = route.params; // grade jest tutaj liczbą (number)
+    const db: QuestionsDatabase = (questionsDatabase as any).default || questionsDatabase;
 
-    const db: QuestionsDatabaseType = questionsDatabase;
-
-    const mainTopics = useMemo(() => {
-        const topicsForGrade = db[grade]; // Використовуємо grade з route.params
-        return topicsForGrade ? Object.keys(topicsForGrade) : [];
+    const topics = useMemo(() => {
+        const topicsForGrade = db[String(grade)];
+        if (!topicsForGrade) {
+            console.error("TopicListScreen: Nie znaleziono danych dla klasy:", String(grade));
+            return [];
+        }
+        return Object.keys(topicsForGrade);
     }, [db, grade]);
 
+    // --- ✅ TUTAJ JEST POPRAWKA ---
     const handleTopicPress = (topic: string) => {
-        navigation.navigate('TheorySubTopicList', { // Передаємо поточний grade
-            grade: grade,
-            topic: topic,
+        // Zmieniamy cel nawigacji z 'SubTopicList' na 'TheorySubTopicList'
+        navigation.navigate('TheorySubTopicList', {
+            grade: String(grade), // Przekazujemy 'grade' jako string, bo TheorySubTopicList tego oczekuje
+            topic: topic
         });
     };
+    // --- KONIEC POPRAWKI ---
 
-    const renderTopicItem = ({ item }: { item: string }) => (
+    const renderCircleButton = (item: string, index: number) => (
         <TouchableOpacity
-            style={styles.itemContainer}
+            key={`circle-${item}-${index}`}
+            style={styles.topicButton}
             onPress={() => handleTopicPress(item)}
+            activeOpacity={0.85}
         >
-            <Text style={styles.itemText}>{item}</Text>
+            <Text style={styles.topicButtonText}>{item}</Text>
         </TouchableOpacity>
     );
 
     return (
-        <View style={styles.container}>
-            {/* Заголовок тепер встановлюється в навігаторі, але можна додати підзаголовок */}
-            {/* <Text style={styles.header}>Działy Teoretyczne (Klasa {grade})</Text> */}
-            {mainTopics.length > 0 ? (
-                <FlatList
-                    data={mainTopics}
-                    renderItem={renderTopicItem}
-                    keyExtractor={(item) => `${grade}-${item}`}
-                    contentContainerStyle={styles.listContentContainer}
-                />
-            ) : (
-                <Text style={styles.emptyText}>Brak dostępnych działów teorii dla klasy {grade}.</Text>
-            )}
-        </View>
+        <ImageBackground
+            source={backgroundImage}
+            style={styles.backgroundImage}
+            resizeMode="cover"
+        >
+            <View style={styles.overlay}>
+                <Text style={styles.headerText}>Wybierz dział:</Text>
+
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    {topics.length === 0 ? (
+                        <Text style={styles.emptyText}>
+                            Brak działów dla tej klasy.
+                        </Text>
+                    ) : (
+                        <View style={styles.pathContainer}>
+                            {topics.map((topic, index) => (
+                                <View
+                                    key={topic}
+                                    style={[
+                                        styles.circleContainer,
+                                        index % 2 === 0
+                                            ? styles.circleContainerLeft
+                                            : styles.circleContainerRight
+                                    ]}
+                                >
+                                    {renderCircleButton(topic, index)}
+                                </View>
+                            ))}
+                        </View>
+                    )}
+                </ScrollView>
+            </View>
+        </ImageBackground>
     );
 }
 
-// Стилі залишаються ті самі, що були в TheoryScreen.tsx
+// Style (bez zmian)
 const styles = StyleSheet.create({
-    container: {
+    backgroundImage: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
+        width: '100%',
+        height: '100%',
     },
-    // header: { // Цей стиль для заголовка всередині екрану можна прибрати, якщо заголовок встановлюється навігатором
-    //   fontSize: 20,
-    //   fontWeight: 'bold',
-    //   color: '#333',
-    //   padding: 15,
-    //   textAlign: 'center',
-    //   borderBottomWidth: 1,
-    //   borderBottomColor: '#ddd',
-    // },
-    listContentContainer: {
-        paddingVertical: 10,
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 10,
     },
-    itemContainer: {
-        backgroundColor: '#ffffff',
-        paddingVertical: 18,
-        paddingHorizontal: 15,
-        marginVertical: 6,
-        marginHorizontal: 12,
-        borderRadius: 8,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.18,
-        shadowRadius: 1.00,
-    },
-    itemText: {
-        fontSize: 17,
-        color: '#444',
+    headerText: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#111827',
+        textAlign: 'center',
+        marginBottom: 20,
     },
     emptyText: {
         textAlign: 'center',
         marginTop: 50,
         fontSize: 16,
-        color: '#777',
+        color: '#6B7280'
+    },
+    scrollContent: {
+        paddingVertical: 10,
+        paddingBottom: 40,
+    },
+    pathContainer: {
+        width: '100%',
+    },
+    circleContainer: {
+        marginBottom: 20,
+    },
+    circleContainerLeft: {
+        alignSelf: 'flex-start',
+        marginLeft: '15%',
+    },
+    circleContainerRight: {
+        alignSelf: 'flex-end',
+        marginRight: '15%',
+    },
+    topicButton: {
+        backgroundColor: COLORS.primary,
+        width: CIRCLE_DIAMETER,
+        height: CIRCLE_DIAMETER,
+        borderRadius: CIRCLE_DIAMETER / 2,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
+        padding: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    topicButtonText: {
+        color: '#FFFFFF',
+        fontSize: 18,
+        fontWeight: '700',
+        textAlign: 'center',
     },
 });
 
-export default TheoryScreen; // Назва файлу залишається TheoryScreen.tsx, але логічно це тепер список тем
+export default TopicListScreen;
+
