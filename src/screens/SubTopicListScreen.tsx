@@ -80,13 +80,16 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
                     navigation.navigate('DivisionTrainer', { grade, topic, subTopic: subTopicKey });
                     break;
                 case 'Dodawanie i odejmowanie':
-                    // ✅ Poprawka na podstawie Twojego pliku - nazwa ekranu
                     navigation.navigate('PlusMinusTrainer', { grade, topic, subTopic: subTopicKey });
+                    break;
+                case 'O ile więcej, o ile mniej':
+                    navigation.navigate('MoreLessTrainer4', { grade, topic, subTopic: subTopicKey });
                     break;
                 default:
                     navigation.navigate('MultiplicationTrainer', { grade, topic, subTopic: subTopicKey });
             }
-        } else {
+        }
+        else {
             navigation.navigate('Test', {
                 grade,
                 topic,

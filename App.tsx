@@ -37,6 +37,9 @@ import StatsScreen from './src/screens/StatsScreen';
 import ActivityScreen from './src/screens/ActivityScreen'; // Ekran Aktywności
 import MatchstickEquationGame from './src/screens/MatchstickEquationGame'; // ✅ НОВА ГРА
 
+// ✅ ДОДАНО НОВИЙ ТРЕНАЖЕР
+import MoreLessTrainerScreen4 from './src/screens/MoreLessTrainerScreen4';
+
 // --- Typy ---
 export type AuthStackParamList = {
     Login: undefined;
@@ -59,6 +62,7 @@ export type MainAppStackParamList = {
     MultiplicationTrainer: { grade: number; topic: string; subTopic: string };
     PlusMinusTrainer: { grade: number; topic: string; subTopic: string };
     DivisionTrainer: { grade: number; topic: string; subTopic: string };
+    MoreLessTrainer4: { grade: number; topic: string; subTopic: string }; // ✅ ДОДАНО
     Results: {
         score: number;
         total: number;
@@ -116,6 +120,14 @@ function HomeStackNavigator() {
             <MainStack.Screen name="MultiplicationTrainer" component={MultiplicationTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
             <MainStack.Screen name="PlusMinusTrainer" component={PlusMinusTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
             <MainStack.Screen name="DivisionTrainer" component={DivisionTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
+
+            {/* ✅ ДОДАНО НОВИЙ ТРЕНАЖЕР */}
+            <MainStack.Screen
+                name="MoreLessTrainer4"
+                component={MoreLessTrainerScreen4}
+                options={({ route }) => ({ title: route.params.subTopic })}
+            />
+
             <MainStack.Screen name="Results" component={ResultsScreen} options={{ title: 'Wyniki Testu' }} />
             {/* Ekrany Teorii - dostępne z HomeStack */}
             <MainStack.Screen name="TheoryGradeSelection" component={TheoryGradeSelectionScreen} options={{ title: 'Teoria - Wybierz Klasę' }} />
@@ -167,7 +179,7 @@ function ActivityStackNavigator() {
     );
 }
 
-// --- Funkcja Tab Navigator (З коригуванням стилів) ---
+// --- Funkcja Tab Navigator ---
 function MainAppTabNavigator() {
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
@@ -176,13 +188,11 @@ function MainAppTabNavigator() {
     const inactiveColor = isDarkMode ? COLORS.greyDarkTheme : COLORS.grey;
     const borderTopColor = isDarkMode ? COLORS.greyDarkTheme : '#E0E0E0';
 
-    // ✅ СТИЛЬ З КОРИГУВАННЯМ SAFE AREA
     const customTabBarStyle = {
         backgroundColor: tabBarBackground,
         borderTopColor: borderTopColor,
         borderTopWidth: StyleSheet.hairlineWidth,
         elevation: 8,
-        // Оптимізація висоти для iOS (включаючи Safe Area)
         height: Platform.OS === 'ios' ? 90 : 65,
         paddingBottom: Platform.OS === 'ios' ? 34 : 0,
     };
@@ -202,7 +212,7 @@ function MainAppTabNavigator() {
                 tabBarActiveTintColor: activeColor,
                 tabBarInactiveTintColor: inactiveColor,
                 headerShown: false,
-                tabBarStyle: customTabBarStyle, // ✅ ВИКОРИСТОВУЄМО ОНОВЛЕНИЙ СТИЛЬ
+                tabBarStyle: customTabBarStyle,
                 tabBarLabelStyle: {
                     fontWeight: '500',
                     fontSize: 11,

@@ -11,19 +11,15 @@ import {
     Dimensions,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
 const EXERCISE_ID = "addSubtractTrainer";
 const TASKS_LIMIT = 100;
 
-// 🔹 адаптивные размеры
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH > 700 ? 700 : SCREEN_WIDTH - 30;
 const CARD_PADDING = SCREEN_WIDTH > 500 ? 50 : 20;
-const INPUT_WIDTH = SCREEN_WIDTH > 400 ? 130 : (SCREEN_WIDTH - 120) / 2;
-const FINAL_INPUT_WIDTH = SCREEN_WIDTH > 400 ? 240 : SCREEN_WIDTH - 80;
 
 const AdditionSubtractionTrainerScreen = () => {
     const [numberA, setNumberA] = useState<number>(0);
@@ -128,8 +124,8 @@ const AdditionSubtractionTrainerScreen = () => {
     const getStyle = (f) => {
         if (!showValidation) return styles.input;
         return f === 'finalResult'
-            ? validationState[f] ? styles.correctFinal : styles.errorFinal
-            : validationState[f] ? styles.correct : styles.error;
+            ? validationState[f] ? [styles.input, styles.correctFinal] : [styles.input, styles.errorFinal]
+            : validationState[f] ? [styles.input, styles.correct] : [styles.input, styles.error];
     };
 
     const operationSymbol = isAddition ? '+' : '−';
@@ -137,44 +133,91 @@ const AdditionSubtractionTrainerScreen = () => {
     return (
         <View style={{ flex: 1 }}>
             <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-            <ImageBackground source={require('../assets/background.jpg')}
-                             style={StyleSheet.absoluteFillObject} resizeMode="cover" />
-            <KeyboardAwareScrollView contentContainerStyle={styles.container}
-                                     enableOnAndroid extraScrollHeight={100} keyboardShouldPersistTaps="handled">
+            <ImageBackground
+                source={require('../assets/background.jpg')}
+                style={StyleSheet.absoluteFillObject}
+                resizeMode="cover"
+            />
+            <KeyboardAwareScrollView
+                contentContainerStyle={styles.container}
+                enableOnAndroid
+                extraScrollHeight={100}
+                keyboardShouldPersistTaps="handled"
+            >
                 <View style={styles.card}>
                     <Text style={styles.title}>Trener dodawania i odejmowania</Text>
-                    {!isGameFinished && (<>
-                        <Text style={styles.task}>{numberA} {operationSymbol} {numberB}</Text>
-                        <View style={styles.row}>
-                            <Text style={styles.number}>{numberA}</Text>
-                            <Text style={styles.operator}>{operationSymbol}</Text>
-                            <TextInput style={[getStyle('tensInput'), { width: INPUT_WIDTH }]}
-                                       keyboardType="numeric" value={tensInput} onChangeText={setTensInput}
-                                       placeholder="dziesiątki" placeholderTextColor="#aaa" />
-                            <Text style={styles.operator}>=</Text>
-                            <TextInput style={[getStyle('partialResult'), { width: INPUT_WIDTH }]}
-                                       keyboardType="numeric" value={partialResult} onChangeText={setPartialResult}
-                                       placeholder="wynik" placeholderTextColor="#aaa" />
-                        </View>
-                        <View style={styles.row}>
-                            <Text style={styles.operator}>{isAddition ? '+' : '−'}</Text>
-                            <TextInput style={[getStyle('onesInput'), { width: INPUT_WIDTH }]}
-                                       keyboardType="numeric" value={onesInput} onChangeText={setOnesInput}
-                                       placeholder="jedności" placeholderTextColor="#aaa" />
-                            <Text style={styles.operator}>=</Text>
-                            <TextInput style={[getStyle('finalResult'), { width: FINAL_INPUT_WIDTH }]}
-                                       keyboardType="numeric" value={finalResult} onChangeText={setFinalResult}
-                                       placeholder="wynik końcowy" placeholderTextColor="#aaa" />
-                        </View>
-                    </>)}
+
+                    {!isGameFinished && (
+                        <>
+                            <Text style={styles.task}>{numberA} {operationSymbol} {numberB}</Text>
+
+                            <View style={styles.row}>
+                                <Text style={styles.number}>{numberA}</Text>
+                                <Text style={styles.operator}>{operationSymbol}</Text>
+                                <TextInput
+                                    style={getStyle('tensInput')}
+                                    keyboardType="numeric"
+                                    value={tensInput}
+                                    onChangeText={setTensInput}
+                                    placeholder="dziesiątki"
+                                    placeholderTextColor="#aaa"
+                                />
+                                <Text style={styles.operator}>=</Text>
+                                <TextInput
+                                    style={getStyle('partialResult')}
+                                    keyboardType="numeric"
+                                    value={partialResult}
+                                    onChangeText={setPartialResult}
+                                    placeholder="wynik"
+                                    placeholderTextColor="#aaa"
+                                />
+                            </View>
+
+                            <View style={styles.row}>
+                                <Text style={styles.operator}>{isAddition ? '+' : '−'}</Text>
+                                <TextInput
+                                    style={getStyle('onesInput')}
+                                    keyboardType="numeric"
+                                    value={onesInput}
+                                    onChangeText={setOnesInput}
+                                    placeholder="jedności"
+                                    placeholderTextColor="#aaa"
+                                />
+                                <Text style={styles.operator}>=</Text>
+                                <TextInput
+                                    style={getStyle('finalResult')}
+                                    keyboardType="numeric"
+                                    value={finalResult}
+                                    onChangeText={setFinalResult}
+                                    placeholder="wynik końcowy"
+                                    placeholderTextColor="#aaa"
+                                />
+                            </View>
+                        </>
+                    )}
+
                     <View style={styles.buttonContainer}>
-                        <Button title={readyForNext ? "Dalej" : "Sprawdź"}
-                                onPress={readyForNext ? nextTask : handleCheck}
-                                color="#007AFF" disabled={isGameFinished} />
+                        <Button
+                            title={readyForNext ? "Dalej" : "Sprawdź"}
+                            onPress={readyForNext ? nextTask : handleCheck}
+                            color="#007AFF"
+                            disabled={isGameFinished}
+                        />
                     </View>
-                    {resultMessage ? (<Text style={[styles.result,
-                        (resultMessage.startsWith('Brawo') || resultMessage.startsWith('Gratulacje'))
-                            ? styles.correctText : styles.errorText]}>{resultMessage}</Text>) : null}
+
+                    {resultMessage ? (
+                        <Text
+                            style={[
+                                styles.result,
+                                (resultMessage.startsWith('Brawo') || resultMessage.startsWith('Gratulacje'))
+                                    ? styles.correctText
+                                    : styles.errorText,
+                            ]}
+                        >
+                            {resultMessage}
+                        </Text>
+                    ) : null}
+
                     <Text style={styles.counter}>
                         Zadanie: {taskCount > TASKS_LIMIT ? TASKS_LIMIT : taskCount} / {TASKS_LIMIT}{'\n'}
                         ✅ {correctCount}   ❌ {wrongCount}   ⏱ {seconds}s
@@ -186,27 +229,107 @@ const AdditionSubtractionTrainerScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-    card: { width: CARD_WIDTH, borderRadius: 20, padding: CARD_PADDING, alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.4)' },
-    title: { fontSize: 28, fontWeight: 'bold', marginBottom: 15, color: '#333', textAlign: 'center' },
-    task: { fontSize: 36, fontWeight: 'bold', marginBottom: 15, color: '#007AFF' },
-    row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: 10, flexWrap: 'wrap' },
-    number: { fontSize: 26, marginHorizontal: 5 },
-    operator: { fontSize: 26, fontWeight: 'bold', marginHorizontal: 5 },
-    input: { width: INPUT_WIDTH, height: 60, borderWidth: 2, borderColor: '#ccc', borderRadius: 10,
-        textAlign: 'center', fontSize: 22, margin: 5, backgroundColor: 'rgba(255,255,255,0.6)' },
-    correct: { width: INPUT_WIDTH, height: 60, borderWidth: 2, borderColor: '#28a745', borderRadius: 10,
-        textAlign: 'center', fontSize: 22, margin: 5, backgroundColor: '#d4edda', color: '#155724' },
-    error: { width: INPUT_WIDTH, height: 60, borderWidth: 2, borderColor: '#dc3545', borderRadius: 10,
-        textAlign: 'center', fontSize: 22, margin: 5, backgroundColor: '#f8d7da', color: '#721c24' },
-    correctFinal: { width: FINAL_INPUT_WIDTH, height: 60, borderWidth: 2, borderColor: '#28a745',
-        borderRadius: 10, textAlign: 'center', fontSize: 22, margin: 5, backgroundColor: '#d4edda', color: '#155724' },
-    errorFinal: { width: FINAL_INPUT_WIDTH, height: 60, borderWidth: 2, borderColor: '#dc3545', borderRadius: 10,
-        textAlign: 'center', fontSize: 22, margin: 5, backgroundColor: '#f8d7da', color: '#721c24' },
-    buttonContainer: { marginTop: 25, width: '80%', borderRadius: 10, overflow: 'hidden' },
-    result: { fontSize: 18, fontWeight: 'bold', marginTop: 20, textAlign: 'center' },
-    counter: { fontSize: 18, marginTop: 10, color: '#555', textAlign: 'center' },
+    container: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    card: {
+        width: '100%',
+        maxWidth: 700,
+        borderRadius: 20,
+        paddingVertical: 30,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.4)',
+    },
+    title: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        marginBottom: 15,
+        color: '#333',
+        textAlign: 'center',
+    },
+    task: {
+        fontSize: 36,
+        fontWeight: 'bold',
+        marginBottom: 15,
+        color: '#007AFF',
+        textAlign: 'center',
+    },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexWrap: 'wrap',
+        marginVertical: 6,
+        width: '100%',
+    },
+    number: {
+        fontSize: 26,
+        marginHorizontal: 5,
+        textAlign: 'center',
+    },
+    operator: {
+        fontSize: 26,
+        fontWeight: 'bold',
+        marginHorizontal: 5,
+        textAlign: 'center',
+    },
+    input: {
+        flexShrink: 1,
+        flexGrow: 1,
+        minWidth: 80,
+        maxWidth: 140,
+        height: 55,
+        borderWidth: 2,
+        borderColor: '#ccc',
+        borderRadius: 10,
+        textAlign: 'center',
+        fontSize: 20,
+        marginHorizontal: 5,
+        marginVertical: 5,
+        backgroundColor: 'rgba(255,255,255,0.6)',
+    },
+    correct: {
+        borderColor: '#28a745',
+        backgroundColor: '#d4edda',
+        color: '#155724',
+    },
+    error: {
+        borderColor: '#dc3545',
+        backgroundColor: '#f8d7da',
+        color: '#721c24',
+    },
+    correctFinal: {
+        borderColor: '#28a745',
+        backgroundColor: '#d4edda',
+        color: '#155724',
+    },
+    errorFinal: {
+        borderColor: '#dc3545',
+        backgroundColor: '#f8d7da',
+        color: '#721c24',
+    },
+    buttonContainer: {
+        marginTop: 25,
+        width: '80%',
+        borderRadius: 10,
+        overflow: 'hidden',
+    },
+    result: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginTop: 20,
+        textAlign: 'center',
+    },
+    counter: {
+        fontSize: 18,
+        marginTop: 10,
+        color: '#555',
+        textAlign: 'center',
+    },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
 });

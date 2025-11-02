@@ -17,6 +17,10 @@
         "isTrainer": true,
         "questions": []
       },
+      "O ile więcej, o ile mniej": {
+        "isTrainer": true,
+        "questions": []
+      },
       "Ile razy więcej, ile razy mniej": {
         "theoryTitle": "Porównywanie liczb: ile razy więcej lub mniej?",
         "theoryContent": [],
