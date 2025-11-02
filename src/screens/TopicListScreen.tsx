@@ -1,12 +1,18 @@
 import React, { useMemo } from 'react';
-// Забираємо Button, якщо він більше не потрібен
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ImageBackground,
+    ScrollView,
+    Dimensions,
+} from 'react-native';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { MainAppStackParamList } from '../../App'; // Перевірте шлях
+import { MainAppStackParamList } from '../../App';
 import questionsDatabase from '../data/questionsDb.json';
-// Імпортуємо константи теми
-import { COLORS, FONT_SIZES, PADDING, MARGIN } from '../styles/theme';
+import backgroundImage from '../assets/books1.png';
 
 type TopicListProps = NativeStackScreenProps<MainAppStackParamList, 'TopicList'>;
 
@@ -14,82 +20,150 @@ type QuestionsDatabase = {
     [grade: string]: { [topic: string]: { [subTopic: string]: any[] } };
 };
 
+// --- 1. ZMIANA: KÓŁKA SĄ MNIEJSZE ---
+const { width } = Dimensions.get('window');
+const CIRCLE_DIAMETER = width / 2.5; // Kółka mają ~40% szerokości ekranu
+
 function TopicListScreen({ route, navigation }: TopicListProps) {
     const { grade } = route.params;
-    const db: QuestionsDatabase = questionsDatabase;
+    const db: QuestionsDatabase = (questionsDatabase as any).default || questionsDatabase;
 
     const topics = useMemo(() => {
-        const topicsForGrade = db[String(grade)]; // Конвертуємо grade в рядок для індексації
-        return topicsForGrade ? Object.keys(topicsForGrade) : [];
+        const topicsForGrade = db[String(grade)];
+        if (!topicsForGrade) {
+            console.error("TopicListScreen: Nie znaleziono danych dla klasy:", String(grade));
+            return [];
+        }
+        return Object.keys(topicsForGrade);
     }, [db, grade]);
 
-    // Перехід до списку підтем
     const handleTopicPress = (topic: string) => {
         navigation.navigate('SubTopicList', { grade: grade, topic: topic });
     };
 
-    // Рендеринг елемента списку тем
-    const renderTopic = ({ item }: { item: string }) => (
+    // Ta funkcja zostaje bez zmian, renderuje jedno kółko
+    const renderCircleButton = (item: string, index: number) => (
         <TouchableOpacity
-            style={styles.itemContainer} // Використовуємо оновлений стиль
+            key={`circle-${item}-${index}`}
+            style={styles.topicButton}
             onPress={() => handleTopicPress(item)}
+            activeOpacity={0.85}
         >
-            <Text style={styles.itemText}>{item}</Text>
-            {/* Можна додати сюди іконку стрілки ">" пізніше */}
+            <Text style={styles.topicButtonText}>{item}</Text>
         </TouchableOpacity>
     );
 
+    // --- 2. ZMIANA: Usunięto 'renderContent', nowa logika jest w JSX ---
+
     return (
-        <View style={styles.container}>
-            <FlatList
-                data={topics}
-                renderItem={renderTopic}
-                keyExtractor={(item) => `${grade}-${item}`}
-                ListEmptyComponent={<Text style={styles.emptyText}>Список тем порожній.</Text>}
-                // Додамо відступи для самого списку
-                contentContainerStyle={styles.listContentContainer}
-            />
-            {/* Кнопку "Тест за розділ" прибрали звідси */}
-        </View>
+        <ImageBackground
+            source={backgroundImage}
+            style={styles.backgroundImage}
+            resizeMode="cover"
+        >
+            <View style={styles.overlay}>
+                <Text style={styles.headerText}>Wybierz dział:</Text>
+
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    {topics.length === 0 ? (
+                        <Text style={styles.emptyText}>
+                            Brak działów dla tej klasy.
+                        </Text>
+                    ) : (
+                        // --- 3. ZMIANA: Nowy układ "węża" (snake layout) ---
+                        <View style={styles.pathContainer}>
+                            {topics.map((topic, index) => (
+                                <View
+                                    key={topic}
+                                    style={[
+                                        styles.circleContainer,
+                                        // Stosujemy naprzemienne wyrównanie
+                                        index % 2 === 0
+                                            ? styles.circleContainerLeft // Parzyste (0, 2, 4...) idą na lewo
+                                            : styles.circleContainerRight // Nieparzyste (1, 3, 5...) idą na prawo
+                                    ]}
+                                >
+                                    {renderCircleButton(topic, index)}
+                                </View>
+                            ))}
+                        </View>
+                        // --- Koniec zmiany ---
+                    )}
+                </ScrollView>
+            </View>
+        </ImageBackground>
     );
 }
 
-// --- Оновлені СТИЛІ ---
+// --- 4. ZMIANA: Całkowicie nowe style dla układu "węża" ---
 const styles = StyleSheet.create({
-    container: {
+    backgroundImage: {
         flex: 1,
-        backgroundColor: COLORS.backgroundLight, // Світлий фон з теми
+        width: '100%',
+        height: '100%',
     },
-    listContentContainer: {
-        paddingVertical: PADDING.medium, // Вертикальний відступ всередині списку
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 10,
     },
-    itemContainer: {
-        backgroundColor: COLORS.white, // Білий фон елемента
-        paddingVertical: PADDING.large, // Зробимо елементи вищими
-        paddingHorizontal: PADDING.medium,
-        marginVertical: MARGIN.small, // Відступ між елементами
-        marginHorizontal: MARGIN.medium, // Відступ від країв
-        borderRadius: 10,
-        elevation: 2,
-        shadowColor: COLORS.black,
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.18,
-        shadowRadius: 1.00,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+    headerText: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#111827',
+        textAlign: 'center',
+        marginBottom: 20,
     },
-    itemText: {
-        fontSize: FONT_SIZES.large, // Трохи більший шрифт для тем
-        color: COLORS.text, // Колір тексту з теми
-        flex: 1, // Щоб текст займав доступне місце
-    },
-    emptyText: { // Стиль для повідомлення про порожній список
+    emptyText: {
         textAlign: 'center',
         marginTop: 50,
-        fontSize: FONT_SIZES.medium,
-        color: COLORS.grey, // Сірий колір
+        fontSize: 16,
+        color: '#6B7280'
+    },
+    scrollContent: {
+        paddingVertical: 10,
+        paddingBottom: 40,
+    },
+    // Nowy kontener na całą ścieżkę
+    pathContainer: {
+        width: '100%',
+        paddingHorizontal: 20, // Zapewnia margines dla kółek na krawędziach
+    },
+    // Kontener na pojedyncze kółko, aby umożliwić wyrównanie
+    circleContainer: {
+        marginBottom: 20, // Odstęp między kółkami
+    },
+    circleContainerLeft: {
+        alignSelf: 'flex-start', // Wyrównaj do lewej
+    },
+    circleContainerRight: {
+        alignSelf: 'flex-end',   // Wyrównaj do prawej
+    },
+    // Styl kółka (używa nowej, mniejszej stałej CIRCLE_DIAMETER)
+    topicButton: {
+        backgroundColor: '#3A7D44',
+        width: CIRCLE_DIAMETER,
+        height: CIRCLE_DIAMETER,
+        borderRadius: CIRCLE_DIAMETER / 2,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
+        padding: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    // Styl tekstu (z większą czcionką)
+    topicButtonText: {
+        color: '#FFFFFF',
+        fontSize: 18, // Zwiększono z 14
+        fontWeight: '700',
+        textAlign: 'center',
     },
 });
 
 export default TopicListScreen;
+

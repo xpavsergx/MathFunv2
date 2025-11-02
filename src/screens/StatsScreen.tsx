@@ -1,18 +1,19 @@
-import React, { useState, useEffect, useMemo } from 'react'; // ✅ ZMIANA: Dodano useMemo
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
     ActivityIndicator,
-    TextInput, // ✅ ZMIANA: Dodano TextInput
+    TextInput,
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import Ionicons from '@expo/vector-icons/Ionicons';
+// --- ✅ POPRAWKA BŁĘDU: Usunięto '@expo/' ze ścieżki ---
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { BarChart } from "react-native-gifted-charts";
 
-// ... (Typy TestStatGroup i TrainerStat bez zmian) ...
+// (Typy bez zmian)
 type TestStatGroup = {
     topic: string;
     totalTests: number;
@@ -25,7 +26,7 @@ type TrainerStat = {
     totalWrong: number;
 };
 
-// Funkcja pomocnicza (bez zmian)
+// (Funkcja pomocnicza bez zmian)
 const getTrainerName = (id: string) => {
     switch (id) {
         case 'multiplicationTrainer':
@@ -43,14 +44,12 @@ function StatsScreen() {
     const [testStats, setTestStats] = useState<TestStatGroup[]>([]);
     const [trainerStats, setTrainerStats] = useState<TrainerStat[]>([]);
     const [loading, setLoading] = useState(true);
-
-    // ✅ ZMIANA: Dodajemy stan dla paska wyszukiwania
     const [searchQuery, setSearchQuery] = useState('');
 
     const currentUser = auth().currentUser;
 
     useEffect(() => {
-        // ... (Cała funkcja useEffect do pobierania danych zostaje BEZ ZMIAN) ...
+        // (Logika pobierania danych 'useEffect' zostaje bez zmian)
         if (!currentUser) {
             setLoading(false);
             return;
@@ -127,25 +126,35 @@ function StatsScreen() {
         };
     }, [currentUser]);
 
-    // ✅ ZMIANA: Używamy useMemo do filtrowania statystyk treningów na żywo
+    // (Logika filtrowania bez zmian)
     const filteredTrainerStats = useMemo(() => {
         if (!searchQuery) {
-            return trainerStats; // Jeśli wyszukiwarka jest pusta, pokaż wszystko
+            return trainerStats;
         }
-        // Filtrujemy na podstawie nazwy treningu
         return trainerStats.filter(stat =>
             getTrainerName(stat.id)
                 .toLowerCase()
                 .includes(searchQuery.toLowerCase())
         );
-    }, [searchQuery, trainerStats]); // Przelicz tylko, gdy zmieni się tekst lub dane
+    }, [searchQuery, trainerStats]);
 
 
-    // Renderowanie pojedynczej karty dla statystyk TRENINGU
+    // (Renderowanie karty treningu z paskiem postępu)
     const renderTrainerStatCard = (item: TrainerStat) => {
-        // ... (Ta funkcja zostaje bez zmian) ...
         const total = item.totalCorrect + item.totalWrong;
         const accuracy = total > 0 ? Math.floor((item.totalCorrect / total) * 100) : 0;
+
+        // Logika koloru tła (bez zmian)
+        let accuracyColor = '#28a745'; // Zielony
+        if (accuracy < 50) {
+            accuracyColor = '#dc3545'; // Czerwony
+        } else if (accuracy < 75) {
+            accuracyColor = '#ffc107'; // Żółty
+        }
+
+        // --- ✅ ZMIANA: Kolor tekstu jest teraz zawsze czarny ---
+        let progressBarTextColor = '#000000'; // Zawsze czarny
+        // --- Koniec zmiany ---
 
         return (
             <View key={item.id} style={styles.sectionContainer}>
@@ -164,16 +173,22 @@ function StatsScreen() {
                     </Text>
                     <Text style={styles.statRow}>
                         📊 Dokładność:
-                        <Text style={styles.statValue}> {accuracy}%</Text>
+                        <Text style={[styles.statValue, { color: accuracyColor }]}> {accuracy}%</Text>
                     </Text>
+
+                    <View style={styles.progressBarBackground}>
+                        <View style={[styles.progressBarFill, { width: `${accuracy}%`, backgroundColor: accuracyColor }]} />
+                        <Text style={[styles.progressBarText, { color: progressBarTextColor }]}>
+                            {accuracy}%
+                        </Text>
+                    </View>
                 </View>
             </View>
         );
     };
 
-    // Renderowanie pojedynczej karty dla statystyk TESTU
+    // (Renderowanie karty testu bez zmian)
     const renderTestStatCard = (item: TestStatGroup) => {
-        // ... (Ta funkcja zostaje bez zmian) ...
         return (
             <View key={item.topic} style={styles.sectionContainer}>
                 <View style={styles.sectionHeader}>
@@ -211,36 +226,27 @@ function StatsScreen() {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
-
-            {/* ✅ ZMIANA: Ta linia została USUNIĘTA
-            <Text style={styles.headerTitle}>Moje Statystyki</Text>
-            */}
-
-            {/* Sekcja Treningów */}
+            {/* (Reszta JSX bez zmian) */}
             <Text style={styles.bigSectionTitle}>Treningi (Ćwiczenia)</Text>
 
-            {/* ✅ ZMIANA: Dodano pasek wyszukiwania */}
             <TextInput
                 style={styles.searchInput}
                 placeholder="Szukaj treningu..."
                 placeholderTextColor="#666"
                 value={searchQuery}
-                onChangeText={setSearchQuery} // Aktualizuje stan searchQuery przy każdym naciśnięciu klawisza
+                onChangeText={setSearchQuery}
             />
 
-            {/* ✅ ZMIANA: Używamy 'filteredTrainerStats' zamiast 'trainerStats' */}
             {filteredTrainerStats.length > 0 ? (
                 filteredTrainerStats.map(renderTrainerStatCard)
             ) : (
                 <View style={styles.sectionContainer}>
-                    {/* ✅ ZMIANA: Lepszy komunikat, gdy nic nie znaleziono */}
                     <Text style={styles.placeholderText}>
                         {searchQuery ? 'Nie znaleziono treningu.' : 'Brak statystyk z treningów.'}
                     </Text>
                 </View>
             )}
 
-            {/* Sekcja Testów (bez zmian) */}
             <Text style={styles.bigSectionTitle}>Testy (Quizy)</Text>
             {testStats.length > 0 ? (
                 testStats.map(renderTestStatCard)
@@ -254,6 +260,7 @@ function StatsScreen() {
     );
 }
 
+// (Style bez zmian)
 const styles = StyleSheet.create({
     centered: {
         flex: 1,
@@ -266,8 +273,6 @@ const styles = StyleSheet.create({
         padding: 20,
         backgroundColor: '#F0F4F8',
     },
-    // ✅ ZMIANA: Usunęliśmy styl 'headerTitle'
-
     bigSectionTitle: {
         fontSize: 22,
         fontWeight: '600',
@@ -276,8 +281,6 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         marginTop: 10,
     },
-
-    // ✅ ZMIANA: Dodano styl dla paska wyszukiwania
     searchInput: {
         width: '100%',
         height: 50,
@@ -289,9 +292,8 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E0E0E0',
         color: '#000',
-        elevation: 2, // Lekki cień na Androidzie
+        elevation: 2,
     },
-
     sectionContainer: {
         backgroundColor: '#FFFFFF',
         borderRadius: 12,
@@ -358,6 +360,29 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#dc3545',
     },
+    progressBarBackground: {
+        height: 18,
+        width: '100%',
+        backgroundColor: '#e9ecef',
+        borderRadius: 9,
+        marginTop: 10,
+        overflow: 'hidden',
+        justifyContent: 'center',
+    },
+    progressBarFill: {
+        height: '100%',
+        borderRadius: 9,
+        position: 'absolute',
+        top: 0,
+        left: 0,
+    },
+    progressBarText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        backgroundColor: 'transparent',
+    },
 });
 
 export default StatsScreen;
+
