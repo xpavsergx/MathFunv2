@@ -1,39 +1,27 @@
 // src/screens/MatchstickEquationGame.tsx
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react'; // ✅ ВИПРАВЛЕНО: Додано useEffect
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Dimensions, useColorScheme, TextInput } from 'react-native';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import {
+    View, Text, StyleSheet, TouchableOpacity, ScrollView,
+    Alert, useColorScheme
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS, FONT_SIZES, PADDING } from '../styles/theme';
-import * as MatchstickEngine from '../utils/matchstickEngine'; // ✅ ВИПРАВЛЕНО ШЛЯХ
+import * as MatchstickEngine from '../utils/matchstickEngine';
+import MatchstickSymbol from '../Components/MatchstickSymbol';
 
-// База даних головоломок: [початкове рівняння, правильне рівняння, підказка]
+// База даних головоломок
 const PUZZLE_LEVELS = [
-    { id: 1, initial: "6 + 4 = 4", solution: "8 - 4 = 4", hint: "Спробуй змінити 6 на 8 та + на -" },
-    { id: 2, initial: "5 + 5 = 5", solution: "5 = 5 - 0", hint: "Зміни знак додавання на рівності." },
-    { id: 3, initial: "3 + 3 = 5", solution: "3 + 2 = 5", hint: "Зміни одну цифру на іншу." },
-    { id: 4, initial: "9 - 5 = 6", solution: "9 - 3 = 6", hint: "Цифра після знаку віднімання невірна." },
-    { id: 5, initial: "5 + 5 = 550", solution: "5 + 5 = 550" , hint: "Недоступно для тесту" }, // Заглушка
+    { id: 1, initial: "6+4=4", solution: "8-4=4", hint: "Spróbuj zmienić '6' na '8' i '+' на '-'." },
+    { id: 2, initial: "9-5=6", solution: "9-3=6", hint: "Cyfra po znaku odejmowania jest błędna." },
+    { id: 3, initial: "3+3=5", solution: "3+2=5", hint: "Zmień jedną cyfrę на inną." },
 ];
 
-// Утиліта для відображення рівняння зі стилями
-const EquationDisplay = React.memo(({ equation, isSolved, setInputEquation }) => {
-    return (
-        <View style={matchStyles.equationContainer}>
-            <TextInput
-                style={[matchStyles.inputEquation, isSolved && matchStyles.solvedInput]}
-                onChangeText={setInputEquation}
-                value={equation}
-                editable={!isSolved}
-                keyboardType="default"
-                placeholder="Wpisz rozwiązanie (np. 8-4=4)"
-                placeholderTextColor={isSolved ? COLORS.white : "#A0A0A0"}
-                autoCapitalize="none"
-            />
-        </View>
-    );
-});
-
+type HeldMatchstick = {
+    symbolIndex: number;
+    segmentIndex: number;
+} | null;
 
 function MatchstickEquationGame() {
     const colorScheme = useColorScheme();
@@ -42,44 +30,123 @@ function MatchstickEquationGame() {
 
     const [currentLevel, setCurrentLevel] = useState(0);
     const [status, setStatus] = useState<'playing' | 'solved'>('playing');
-    const [inputEquation, setInputEquation] = useState(''); // Рівняння, яке вводить гравець
+    const [equationChars, setEquationChars] = useState<string[]>([]);
+    const [heldMatchstick, setHeldMatchstick] = useState<HeldMatchstick>(null);
+    const [movesMade, setMovesMade] = useState(0);
 
-    // Вибрана головоломка
     const puzzle = useMemo(() => PUZZLE_LEVELS[currentLevel], [currentLevel]);
 
-    // Ініціалізація або скидання рівня
-    useEffect(() => {
-        setInputEquation(puzzle.initial.replace(/\s/g, ''));
+    const resetLevel = useCallback(() => {
+        setEquationChars(puzzle.initial.replace(/\s/g, '').split(''));
         setStatus('playing');
-    }, [currentLevel, puzzle.initial]);
+        setHeldMatchstick(null);
+        setMovesMade(0);
+    }, [puzzle.initial]);
 
+    useEffect(() => {
+        resetLevel();
+    }, [currentLevel, resetLevel]);
 
-    // ✅ ФУНКЦІЯ ПЕРЕВІРКИ
-    const handleCheck = () => {
-        // 1. Перевіряємо, чи нове рівняння є математично правильним
-        const isCorrectResult = MatchstickEngine.isEquationCorrect(inputEquation);
+    // ✅ --- ОНОВЛЕНА ЛОГІКА КЛІКІВ ---
+    const handleSegmentPress = (symbolIndex: number, segmentIndex: number) => {
+        if (status === 'solved') return;
 
-        // 2. Перевіряємо, чи рішення відрізняється від початкового
-        const isDifferentFromInitial = inputEquation.replace(/\s/g, '') !== puzzle.initial.replace(/\s/g, '');
-
-        if (!isDifferentFromInitial) {
-            Alert.alert("Błąd", "Wprowadzone równanie jest takie samo jak początkowe.");
+        // Перевіряємо, чи ми не намагаємося зробити другий хід
+        if (movesMade >= 1 && !heldMatchstick) {
+            Alert.alert("Stop!", "Możesz wykonać only JEDEN ruch. Zresetuj poziom, aby spróbować ponownie.");
             return;
         }
 
-        if (isCorrectResult) {
-            // Тут має бути реальна перевірка правила "один сірник":
-            // const isOneMoveValid = MatchstickEngine.checkMatchstickRule(puzzle.initial, inputEquation);
-            // if (!isOneMoveValid) { Alert.alert("Błąd", "Równanie jest poprawne, ale wymaga więcej niż jednego ruchu zapałką."); return; }
+        const char = equationChars[symbolIndex];
+        const segmentsMapEntry = MatchstickEngine.SEGMENTS_MAP[char];
+        if (!segmentsMapEntry) {
+            console.error(`Brak definicji SEGMENTS_MAP dla symbolu: ${char}`);
+            return;
+        }
 
-            setStatus('solved');
-            Alert.alert("Brawo!", `Równanie jest poprawne: ${inputEquation}`);
+        const segments = [...segmentsMapEntry];
+
+        if (!heldMatchstick) {
+            // --- КРОК 1: ВЗЯТИ СІРНИК ---
+            if (segments[segmentIndex] === 1) {
+                setHeldMatchstick({ symbolIndex, segmentIndex });
+                // Ми не змінюємо стан `equationChars` тут,
+                // `MatchstickSymbol` сам оновить вигляд
+            } else {
+                Alert.alert("Pusto!", "Nie ma tu zapałki do wzięcia.");
+            }
         } else {
-            Alert.alert("Błąd", "Równanie jest niepoprawne lub niezgodne z zasadą jednej zapałki. Spróbuj ponownie!");
+            // --- КРОК 2: ПОСТАВИТИ СІРНИК ---
+
+            // Якщо натиснули на те саме місце (скасування ходу)
+            if (heldMatchstick.symbolIndex === symbolIndex && heldMatchstick.segmentIndex === segmentIndex) {
+                setHeldMatchstick(null); // Просто кидаємо сірник
+                return;
+            }
+
+            // Якщо місце зайняте
+            if (segments[segmentIndex] === 1) {
+                Alert.alert("Zajęte!", "Tu już jest zapałka. Odłóż najpierw tę, którą trzymasz.");
+                return;
+            }
+
+            // --- МІСЦЕ ВІЛЬНЕ, ВИКОНУЄМО ХІД ---
+
+            const newEquation = [...equationChars];
+
+            // Перевіряємо, чи це рух В МЕЖАХ одного символу (напр. 5 -> 3)
+            if (heldMatchstick.symbolIndex === symbolIndex) {
+
+                // 'segments' вже є копією поточного символу
+                segments[heldMatchstick.segmentIndex] = 0; // Забираємо старий
+                segments[segmentIndex] = 1; // Ставимо новий
+
+                const newChar = MatchstickEngine.segmentsToChar(segments);
+                newEquation[symbolIndex] = newChar; // Оновлюємо символ у масиві
+
+            } else {
+                // Рух МІЖ ДВОМА СИМВОЛАMI (напр. 6+4=4)
+
+                // 1. Оновлюємо символ, З ЯКОГО взяли
+                const fromChar = equationChars[heldMatchstick.symbolIndex];
+                const fromSegments = [...MatchstickEngine.SEGMENTS_MAP[fromChar]];
+                fromSegments[heldMatchstick.segmentIndex] = 0; // Забираємо
+                const newFromChar = MatchstickEngine.segmentsToChar(fromSegments);
+                newEquation[heldMatchstick.symbolIndex] = newFromChar;
+
+                // 2. Оновлюємо символ, НА ЯКИЙ поставили
+                segments[segmentIndex] = 1; // Додаємо
+                const newToChar = MatchstickEngine.segmentsToChar(segments);
+                newEquation[symbolIndex] = newToChar;
+            }
+
+            setEquationChars(newEquation); // Оновлюємо стан рівняння
+            setMovesMade(1); // Зараховуємо хід
+            setHeldMatchstick(null); // Опускаємо сірник
+        }
+    };
+
+    // Функція перевірки (без змін)
+    const handleCheck = () => {
+        if (heldMatchstick) {
+            Alert.alert("Błąd", "Nadal trzymasz zapałkę! Odłóż ją gdzieś.");
+            return;
+        }
+        if (movesMade !== 1) {
+            Alert.alert("Błąd", "Musisz wykonać dokładnie jeden ruch.");
+            return;
+        }
+        const finalEquation = equationChars.join('');
+        const isCorrect = MatchstickEngine.isEquationCorrect(finalEquation);
+        if (isCorrect) {
+            setStatus('solved');
+            Alert.alert("Brawo!", `Równanie jest poprawnie rozwiązane!`);
+        } else {
+            Alert.alert("Błąd", "Równanie jest niepoprawne. Spróbuj ponownie!");
         }
     }
 
-    // Обробка пропуску/завершення
+    // Перехід до наступного рівня (без змін)
     const handleNext = () => {
         if (currentLevel < PUZZLE_LEVELS.length - 1) {
             setCurrentLevel(currentLevel + 1);
@@ -89,12 +156,12 @@ function MatchstickEquationGame() {
         }
     };
 
-    // Стилі для теми
+    // Стилі для теми (без змін)
     const themeStyles = {
-        background: isDarkMode ? COLORS.backgroundDark : COLORS.backgroundLight,
+        background: isDarkMode ? '#121212' : '#E0F7FA',
         title: { color: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primaryDark },
         hint: { color: isDarkMode ? COLORS.grey : '#555' },
-        button: { backgroundColor: COLORS.primary }
+        matchstickArea: { backgroundColor: isDarkMode ? '#212121' : '#FFF', elevation: isDarkMode ? 3 : 1 },
     };
 
     return (
@@ -102,35 +169,39 @@ function MatchstickEquationGame() {
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <Text style={[styles.title, themeStyles.title]}>Poziom {currentLevel + 1}</Text>
 
-                <Text style={[matchStyles.currentEquation, {color: themeStyles.title.color}]}>
-                    Początkowe: {puzzle.initial}
-                </Text>
+                <View style={[matchStyles.matchstickArea, themeStyles.matchstickArea]}>
+                    <Text style={[matchStyles.label, themeStyles.hint]}>
+                        {heldMatchstick ? "Kliknij, gdzie chcesz położyć zapałkę" : "Kliknij na zapałkę, aby ją podnieść"}
+                    </Text>
 
-                {/* ✅ ПОЛЕ ВВЕДЕННЯ ДЛЯ РОЗВ'ЯЗКУ */}
-                <View style={matchStyles.matchstickArea}>
-                    <Text style={[matchStyles.label, {color: themeStyles.hint.color}]}>Twoje rozwiązanie:</Text>
-                    <EquationDisplay
-                        equation={inputEquation}
-                        isSolved={status === 'solved'}
-                        setInputEquation={setInputEquation}
-                    />
+                    {/* ВІДОБРАЖЕННЯ СІРНИКІВ */}
+                    <View style={matchStyles.equationContainer}>
+                        {equationChars.map((char, index) => (
+                            <MatchstickSymbol
+                                key={index}
+                                char={char}
+                                symbolIndex={index}
+                                onSegmentPress={(segIdx) => handleSegmentPress(index, segIdx)}
+                                heldMatchstick={heldMatchstick}
+                            />
+                        ))}
+                    </View>
 
                     {status === 'solved' && (
                         <View style={matchStyles.solutionBox}>
-                            <Text style={matchStyles.solutionText}>✅ Równanie jest matematycznie poprawne!</Text>
+                            <Text style={styles.buttonText}>✅ Równanie jest matematycznie poprawne!</Text>
                         </View>
                     )}
                 </View>
 
                 {status === 'playing' ? (
                     <>
-                        <TouchableOpacity style={[styles.button, { backgroundColor: COLORS.primary }]} onPress={handleCheck} disabled={!inputEquation}>
+                        <TouchableOpacity style={[styles.button, { backgroundColor: COLORS.primary }]} onPress={handleCheck}>
                             <Text style={styles.buttonText}>Sprawdź rozwiązanie</Text>
                         </TouchableOpacity>
-
-                        <Text style={[styles.hintText, themeStyles.hint]}>
-                            Zasada: Przesuń tylko JEDNĄ zapałkę, aby równanie było poprawne.
-                        </Text>
+                        <TouchableOpacity style={[styles.button, { backgroundColor: COLORS.grey }]} onPress={resetLevel}>
+                            <Text style={styles.buttonText}>Resetuj</Text>
+                        </TouchableOpacity>
                     </>
                 ) : (
                     <>
@@ -145,6 +216,7 @@ function MatchstickEquationGame() {
     );
 }
 
+// ... (styles) ...
 const styles = StyleSheet.create({
     container: { flex: 1, },
     scrollContent: {
@@ -161,9 +233,10 @@ const styles = StyleSheet.create({
         paddingVertical: 15,
         paddingHorizontal: 30,
         borderRadius: 25,
-        marginTop: 30,
+        marginTop: 15,
         width: '80%',
         alignItems: 'center',
+        elevation: 4,
     },
     buttonText: {
         color: 'white',
@@ -177,49 +250,28 @@ const styles = StyleSheet.create({
     }
 });
 
-// Стилі, що стосуються симуляції сірників
+// ... (matchStyles) ...
 const matchStyles = StyleSheet.create({
     matchstickArea: {
-        backgroundColor: '#D2B48C', // Колір дерева/поверхні
         borderRadius: 10,
-        padding: 20,
+        paddingVertical: 30,
+        paddingHorizontal: 10,
         marginBottom: 20,
         width: '100%',
         alignItems: 'center',
-        minHeight: 180, // Даємо більше місця
+        minHeight: 200,
         justifyContent: 'center',
     },
     label: {
         fontSize: FONT_SIZES.medium,
-        marginBottom: 10,
-    },
-    currentEquation: {
-        fontSize: FONT_SIZES.large,
-        fontWeight: 'bold',
         marginBottom: 20,
+        textAlign: 'center'
     },
     equationContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         flexWrap: 'wrap',
-    },
-    inputEquation: {
-        fontSize: 30,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        backgroundColor: COLORS.white,
-        borderRadius: 8,
-        padding: 10,
-        borderWidth: 3,
-        borderColor: '#5D4037', // Коричнева рамка
-        width: '90%',
-        color: COLORS.black,
-    },
-    solvedInput: {
-        borderColor: COLORS.correct,
-        backgroundColor: '#E8F5E9',
-        color: COLORS.correct,
     },
     solutionBox: {
         marginTop: 20,
@@ -227,11 +279,6 @@ const matchStyles = StyleSheet.create({
         backgroundColor: COLORS.correct,
         borderRadius: 8,
     },
-    solutionText: {
-        fontSize: FONT_SIZES.medium,
-        fontWeight: 'bold',
-        color: COLORS.white,
-    }
 });
 
 export default MatchstickEquationGame;

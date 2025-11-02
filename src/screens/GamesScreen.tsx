@@ -14,15 +14,15 @@ type GamesScreenNavigationProp = NativeStackNavigationProp<GamesStackParamList, 
 // Компонент-картка для гри
 const GameCard = ({ title, subtitle, icon, onPress, isComingSoon, theme }) => (
     <TouchableOpacity
-        style={[styles.gameCard, { backgroundColor: theme.cardBackground, borderColor: theme.cardBorder }]}
+        style={[styles.gameCard, { backgroundColor: theme.cardBackground, borderColor: theme.cardBorder }, isComingSoon && styles.disabledCard]} // ✅ Додано стиль для неактивної
         onPress={onPress}
         disabled={isComingSoon}
         activeOpacity={isComingSoon ? 1 : 0.7}
     >
-        <Ionicons name={icon} size={40} color={theme.iconColor} style={styles.icon} />
+        <Ionicons name={icon} size={40} color={isComingSoon ? theme.disabledIconColor : theme.iconColor} style={styles.icon} />
         <View style={styles.textContainer}>
-            <Text style={[styles.gameTitle, { color: theme.titleColor }]}>{title}</Text>
-            <Text style={[styles.gameSubtitle, { color: theme.subtitleColor }]}>{subtitle}</Text>
+            <Text style={[styles.gameTitle, { color: isComingSoon ? theme.disabledTitleColor : theme.titleColor }]}>{title}</Text>
+            <Text style={[styles.gameSubtitle, { color: theme.disabledSubtitleColor }]}>{subtitle}</Text>
         </View>
         {isComingSoon && <Text style={styles.comingSoon}>Wkrótce!</Text>}
     </TouchableOpacity>
@@ -40,6 +40,10 @@ function GamesScreen() {
         titleColor: isDarkMode ? COLORS.textDark : COLORS.textLight,
         subtitleColor: isDarkMode ? COLORS.greyDarkTheme : COLORS.grey,
         iconColor: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary,
+        // Кольори для неактивних
+        disabledIconColor: isDarkMode ? '#555' : '#BBB',
+        disabledTitleColor: isDarkMode ? '#777' : '#999',
+        disabledSubtitleColor: isDarkMode ? '#555' : '#AAA',
         // Використовуємо наш фіолетовий акцент
         accentColor: '#7C4DFF',
         containerBackground: isDarkMode ? '#121212' : '#F0F4F8'
@@ -51,14 +55,14 @@ function GamesScreen() {
 
             <View style={styles.gridContainer}>
 
-                {/* 1. Рівняння з Сірниками (ЗАБЛОКОВАНО) */}
+                {/* 1. Рівняння з Сірниками (РОЗБЛОКОВАНО) */}
                 <GameCard
                     title="Równania z Zapałkami"
                     subtitle="Popraw równanie, przesuwając jedną zapałkę."
                     icon="flame-outline"
                     onPress={() => navigation.navigate('MatchstickGame')}
                     theme={{...theme, iconColor: theme.accentColor}}
-                    isComingSoon={true} // ✅ ЗАБЛОКОВАНО
+                    isComingSoon={false} // ✅ РОЗБЛОКОВАНО
                 />
 
                 {/* 2. Math Sudoku (НОВА) */}
@@ -135,6 +139,10 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'flex-start',
     },
+    disabledCard: { // ✅ Стиль для неактивної картки
+        opacity: 0.6,
+        elevation: 1,
+    },
     icon: {
         marginBottom: MARGIN.small, // Відступ під іконкою
     },
@@ -166,4 +174,3 @@ const styles = StyleSheet.create({
 });
 
 export default GamesScreen;
-
