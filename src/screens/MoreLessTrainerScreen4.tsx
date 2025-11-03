@@ -155,9 +155,9 @@ const MoreLessTrainerScreen4 = () => {
                 keyboardShouldPersistTaps="handled"
             >
                 {/* Всплывающая подсказка с вопросом */}
-                <View style={{ position: 'absolute', top: 20, right: 20, alignItems: 'center', zIndex: 10 }}>
+                <View style={{ position: 'absolute', top: 5, right: 5, alignItems: 'center', zIndex: 10 }}>
                     <TouchableOpacity onPress={() => setShowHint(!showHint)}>
-                        <Image source={require('../assets/question.png')} style={{ width:110, height: 110 }} />
+                        <Image source={require('../assets/question.png')} style={{ width:90, height: 90 }} />
                     </TouchableOpacity>
                     <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#007AFF', textAlign: 'center' }}>
                         Pomóc
