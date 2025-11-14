@@ -1,118 +1,221 @@
 // src/screens/ResultsScreen.tsx
-import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import Ionicons from '@expo/vector-icons/Ionicons';
+
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, SafeAreaView, Platform } from 'react-native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { MainAppStackParamList } from '../../App';
-import { saveTestResult } from '../services/userStatsService';
-import { checkAchievementsOnTestComplete } from '../services/achievementService';
-// ✅ 1. Імпортуємо сервіс XP
-import { awardXpAndCoins } from '../services/xpService';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { COLORS, FONT_SIZES, PADDING, MARGIN } from '../styles/theme';
+// --- ✅ 1. ВИПРАВЛЕНИЙ ІМПОРТ ---
+// Ми імпортуємо *як модуль*, щоб уникнути помилок 'undefined'
+import * as XpModule from '../services/xpService';
+import auth from '@react-native-firebase/auth';
 
-type ResultsScreenProps = NativeStackScreenProps<MainAppStackParamList, 'Results'>;
+// --- ✅ 2. ОНОВЛЮЄМО ТИП ---
+type ResultsScreenRouteProp = RouteProp<{
+    params: {
+        score: number;
+        total: number;
+        originalTestParams: MainAppStackParamList['Test'];
+        isDoubleXp?: boolean; // <-- 'isDoubleXp' ПОВЕРНУВСЯ
+    };
+}, 'params'>;
 
-function ResultsScreen({ route, navigation }: ResultsScreenProps) {
-    const { score, total, originalTestParams } = route.params;
+export default function ResultsScreen() {
+    const navigation = useNavigation<any>();
+    const route = useRoute<ResultsScreenRouteProp>();
 
-    const percentage = useMemo(() => {
-        return total > 0 ? Math.round((score / total) * 100) : 0;
-    }, [score, total]);
+    // --- ✅ 3. ОТРИМУЄМО 'isDoubleXp' ---
+    const { score, total, originalTestParams, isDoubleXp = false } = route.params;
 
-    useEffect(() => {
-        console.log('[ResultsScreen] Saving result and checking achievements...');
+    const percentage = Math.round((score / total) * 100);
+    const currentUser = auth().currentUser;
 
-        // Зберігаємо результат тесту
-        saveTestResult(originalTestParams, score, total);
+    // --- ✅ 4. ПОВЕРТАЄМО 'xpGained' ---
+    const [xpGained, setXpGained] = useState(0);
 
-        // Перевіряємо досягнення
-        checkAchievementsOnTestComplete(score, total, originalTestParams.topic);
+    const colorScheme = useColorScheme();
+    const isDarkMode = colorScheme === 'dark';
 
-        // ✅ 2. Нараховуємо XP та монети за тест
-        // (Наприклад, 10 XP та 2 монети за кожну правильну відповідь)
-        const xpGained = score * 10;
-        const coinsGained = score * 2;
-
-        // Викликаємо сервіс (він сам покаже Toast)
-        awardXpAndCoins(xpGained, coinsGained);
-
-    }, [score, total, originalTestParams]); // Додаємо залежності
-
-    const getFeedback = () => {
-        // ... (Логіка getFeedback без змін) ...
-        if (percentage === 100) {
-            return { message: 'Genialnie! Jesteś mistrzem!', icon: 'ribbon', color: '#FFC107' };
-        }
-        if (percentage >= 80) {
-            return { message: 'Świetna robota! Tak trzymać!', icon: 'thumbs-up', color: '#4CAF50' };
-        }
-        if (percentage >= 50) {
-            return { message: 'Dobrze Ci idzie! Poćwicz jeszcze trochę.', icon: 'rocket', color: '#00BCD4' };
-        }
-        return { message: 'Nie martw się, praktyka czyni mistrza!', icon: 'barbell', color: '#F44336' };
+    // Динамічні стилі (з вашого файлу)
+    const themeStyles = {
+        container: { backgroundColor: isDarkMode ? COLORS.backgroundDark : COLORS.backgroundLight },
+        card: { backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.white },
+        text: { color: isDarkMode ? COLORS.textDark : COLORS.textLight },
+        scoreText: { color: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary },
+        // ✅ 5. ПОВЕРТАЄМО СТИЛЬ 'xpText' ---
+        xpText: { color: isDarkMode ? '#FFD700' : '#E6A23C' },
+        button: { backgroundColor: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary },
+        buttonText: { color: COLORS.white },
+        secondaryButton: { backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.white, borderWidth: 1, borderColor: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary },
+        secondaryButtonText: { color: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary },
     };
 
-    const feedback = getFeedback();
+    // --- ✅ 6. ПОВЕРТАЄМО ЛОГІКУ XP ---
+    useEffect(() => {
+        if (currentUser) {
+            let baseActiveXp = score * 5;
+            let basePassiveXp = Math.round(percentage / 10);
+
+            if (isDoubleXp) {
+                baseActiveXp = baseActiveXp * 2;
+                basePassiveXp = basePassiveXp * 2;
+            }
+
+            const totalXp = baseActiveXp + basePassiveXp;
+            setXpGained(totalXp);
+
+            // --- ✅ 7. ВИПРАВЛЕНИЙ ВИКЛИК ФУНКЦІЇ ---
+            // Використовуємо 'XpModule.xpService.addXP'
+            XpModule.xpService.addXP(currentUser.uid, totalXp, baseActiveXp, basePassiveXp);
+        }
+    }, [currentUser, score, total, isDoubleXp]); // (Залежності виправлено)
 
     const handleRetry = () => {
         navigation.replace('Test', originalTestParams);
     };
 
     const handleFinish = () => {
-        navigation.popToTop();
+        navigation.navigate('HomeStack', {
+            screen: 'SubTopicList',
+            params: {
+                grade: originalTestParams.grade,
+                topic: originalTestParams.topic
+            },
+        });
+    };
+
+    const getFeedback = () => {
+        if (percentage === 100) return "Perfekcyjnie! 🌟";
+        if (percentage >= 80) return "Świetna robota! 👍";
+        if (percentage >= 50) return "Nieźle, tak trzymaj!";
+        return "Poćwicz jeszcze trochę! 📚";
     };
 
     return (
-        <SafeAreaView style={styles.safeArea}>
-            <ScrollView contentContainerStyle={styles.container}>
-                <View style={styles.header}>
-                    <Text style={styles.headerTitle}>Wyniki Testu</Text>
-                </View>
+        <SafeAreaView style={[styles.container, themeStyles.container]}>
+            <View style={styles.content}>
+                <View style={[styles.card, themeStyles.card]}>
+                    <Text style={[styles.title, themeStyles.text]}>Test Ukończony!</Text>
 
-                <View style={styles.card}>
-                    {/* ... (решта JSX без змін) ... */}
-                    <Ionicons name={feedback.icon as any} size={80} color={feedback.color} />
-                    <Text style={[styles.feedbackMessage, { color: feedback.color }]}>
-                        {feedback.message}
-                    </Text>
-                    <Text style={styles.scoreText}>
-                        Twój wynik to:
-                    </Text>
-                    <Text style={styles.scoreValue}>
+                    <Text style={[styles.scoreText, themeStyles.scoreText]}>
                         {score} / {total}
                     </Text>
-                    <Text style={styles.percentageText}>
+
+                    <Text style={[styles.percentageText, themeStyles.text]}>
                         ({percentage}%)
                     </Text>
+
+                    <Text style={[styles.feedbackText, themeStyles.text]}>
+                        {getFeedback()}
+                    </Text>
+
+                    {/* --- ✅ 8. ПОВЕРТАЄМО БЛОК XP --- */}
+                    <View style={styles.xpContainer}>
+                        {isDoubleXp && (
+                            <Text style={[styles.xpBonusText, themeStyles.xpText]}>
+                                BONUS: PODWÓJNE XP! 🔥
+                            </Text>
+                        )}
+                        <Text style={[styles.xpText, themeStyles.xpText]}>
+                            + {xpGained} XP
+                        </Text>
+                    </View>
+
                 </View>
 
-                <TouchableOpacity style={styles.buttonRetry} onPress={handleRetry}>
-                    <Ionicons name="refresh-outline" size={24} color="#FFFFFF" />
-                    <Text style={styles.buttonText}>Spróbuj jeszcze raz</Text>
-                </TouchableOpacity>
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity style={[styles.button, themeStyles.button]} onPress={handleRetry}>
+                        <Ionicons name="refresh-outline" size={20} color={COLORS.white} />
+                        <Text style={[styles.buttonText, themeStyles.buttonText]}>Spróbuj ponownie</Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity style={styles.buttonFinish} onPress={handleFinish}>
-                    <Ionicons name="home-outline" size={24} color="#00796B" />
-                    <Text style={[styles.buttonText, { color: '#00796B' }]}>Zakończ</Text>
-                </TouchableOpacity>
-            </ScrollView>
+                    <TouchableOpacity
+                        style={[styles.button, themeStyles.secondaryButton]}
+                        onPress={handleFinish}
+                    >
+                        <Ionicons name="checkmark-done-outline" size={20} color={themeStyles.secondaryButtonText.color} />
+                        <Text style={[styles.buttonText, themeStyles.secondaryButtonText]}>Zakończ</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
         </SafeAreaView>
     );
 }
 
-// ... (Стилі 'styles' залишаються без змін) ...
+// --- ✅ 9. ПОВЕРТАЄМО СТИЛІ ДЛЯ XP ---
 const styles = StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: '#F0F4F8', },
-    container: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20, },
-    header: { marginBottom: 30, },
-    headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#263238', },
-    card: { backgroundColor: '#FFFFFF', borderRadius: 20, padding: 30, alignItems: 'center', width: '100%', marginBottom: 40, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, },
-    feedbackMessage: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginTop: 15, marginBottom: 25, },
-    scoreText: { fontSize: 18, color: '#546E7A', },
-    scoreValue: { fontSize: 52, fontWeight: 'bold', color: '#37474F', marginVertical: 5, },
-    percentageText: { fontSize: 20, color: '#78909C', },
-    buttonRetry: { flexDirection: 'row', backgroundColor: '#00BCD4', paddingVertical: 15, paddingHorizontal: 30, borderRadius: 30, alignItems: 'center', justifyContent: 'center', width: '90%', marginBottom: 15, elevation: 3, },
-    buttonFinish: { flexDirection: 'row', backgroundColor: '#B2EBF2', paddingVertical: 15, paddingHorizontal: 30, borderRadius: 30, alignItems: 'center', justifyContent: 'center', width: '90%', },
-    buttonText: { color: '#FFFFFF', fontSize: 18, fontWeight: 'bold', marginLeft: 10, },
+    container: {
+        flex: 1,
+    },
+    content: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: PADDING.medium,
+    },
+    card: {
+        width: '100%',
+        borderRadius: 20,
+        padding: PADDING.large,
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
+    },
+    title: {
+        fontSize: FONT_SIZES.title,
+        fontWeight: 'bold',
+        marginBottom: MARGIN.medium,
+    },
+    scoreText: {
+        fontSize: 64,
+        fontWeight: 'bold',
+        marginBottom: MARGIN.small,
+    },
+    percentageText: {
+        fontSize: FONT_SIZES.large,
+        fontWeight: '500',
+        marginBottom: MARGIN.large,
+    },
+    feedbackText: {
+        fontSize: FONT_SIZES.xlarge,
+        fontWeight: '600',
+        textAlign: 'center',
+        marginBottom: MARGIN.large,
+    },
+    // (Стилі XP додано сюди)
+    xpContainer: {
+        alignItems: 'center',
+        marginTop: MARGIN.medium,
+    },
+    xpBonusText: {
+        fontSize: FONT_SIZES.medium,
+        fontWeight: 'bold',
+        marginBottom: MARGIN.small,
+    },
+    xpText: {
+        fontSize: FONT_SIZES.large,
+        fontWeight: 'bold',
+    },
+    buttonContainer: {
+        width: '100%',
+        marginTop: MARGIN.large,
+    },
+    button: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: PADDING.medium,
+        borderRadius: 25,
+        marginBottom: MARGIN.medium,
+        elevation: 2,
+    },
+    buttonText: {
+        fontSize: FONT_SIZES.medium,
+        fontWeight: 'bold',
+        marginLeft: MARGIN.small,
+    },
 });
-
-export default ResultsScreen;

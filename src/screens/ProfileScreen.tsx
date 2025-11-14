@@ -11,6 +11,8 @@ import { IAchievement, ACHIEVEMENTS } from '../config/achievements';
 import AchievementBadge from '../Components/AchievementBadge';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, FONT_SIZES, PADDING, MARGIN } from '../styles/theme';
+// --- ✅ 1. ІМПОРТУЄМО З НОВОГО ФАЙЛУ ---
+import { getAvatarImage } from '../utils/avatarUtils';
 
 // Інтерфейс для даних користувача
 interface UserData {
@@ -23,17 +25,8 @@ interface UserData {
     coins: number;
 }
 
-// Функція отримання аватара
-const getAvatarImage = (avatarName?: string) => {
-    switch (avatarName) {
-        case 'avatar1':
-            return require('../assets/avatar/avatar1.png');
-        case 'avatar2':
-            return require('../assets/avatar/avatar2.png');
-        default:
-            return require('../assets/avatar/avatar2.png');
-    }
-};
+// --- ❌ 2. ВИДАЛЯЄМО СТАРУ ФУНКЦІЮ getAvatarImage ---
+// (Вона тепер у avatarUtils)
 
 // Компонент рядка меню
 const ProfileMenuItem = ({ icon, title, onPress, themeStyles }) => (
@@ -54,7 +47,7 @@ function ProfileScreen() {
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
 
-    // Динамічні стилі (без змін)
+    // (themeStyles, useEffect, allAchievementsData, handleLogout, renderXpBar... - без змін)
     const themeStyles = {
         container: { backgroundColor: isDarkMode ? COLORS.backgroundDark : '#F0F4F8' },
         card: { backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.white },
@@ -68,7 +61,6 @@ function ProfileScreen() {
         xpBarBackground: { backgroundColor: isDarkMode ? '#121212' : '#E0E0E0' },
     };
 
-    // useEffect (без змін)
     useEffect(() => {
         if (!currentUser) {
             setLoading(false);
@@ -86,7 +78,6 @@ function ProfileScreen() {
         return () => { userSub(); achSub(); };
     }, [currentUser]);
 
-    // Список досягнень (без змін)
     const allAchievementsData = useMemo(() => {
         return Object.keys(ACHIEVEMENTS).map(id => ({
             ...ACHIEVEMENTS[id],
@@ -95,11 +86,17 @@ function ProfileScreen() {
         }));
     }, [unlockedAchievements]);
 
-    const handleLogout = async () => { /* ... (код без змін) ... */ };
+    const handleLogout = async () => {
+        try {
+            await auth().signOut();
+        } catch (error) {
+            console.error("Błąd wylogowania:", error);
+            Alert.alert("Błąd", "Wystąpił błąd podczas wylogowywania.");
+        }
+    };
 
-    // Рендер XP-бару (без змін)
     const renderXpBar = () => {
-        if (!userData || userData.xpToNextLevel === 0) return null;
+        if (!userData || !userData.xpToNextLevel || userData.xpToNextLevel === 0) return null;
         const progress = (userData.xp / userData.xpToNextLevel) * 100;
         return (
             <View>
@@ -121,20 +118,16 @@ function ProfileScreen() {
 
     return (
         <SafeAreaView style={[styles.safeArea, themeStyles.container]}>
-            {/* ✅ ScrollView тепер має гнучкий contentContainer */}
             <ScrollView
                 contentContainerStyle={styles.scrollContainer}
                 showsVerticalScrollIndicator={false}
             >
-                {/* ✅ Ця обгортка з flex: 1 "розтягує" вміст */}
                 <View style={styles.contentWrapper}>
-
-                    {/* --- ВЕРХНІЙ ВМІСТ --- */}
                     <View style={styles.mainContent}>
                         {userData && (
                             <View style={styles.headerContainer}>
                                 <Image
-                                    source={getAvatarImage(userData.avatar)}
+                                    source={getAvatarImage(userData.avatar)} // <-- Використовуємо імпортовану функцію
                                     style={styles.avatar}
                                 />
                                 <Text style={[styles.userName, themeStyles.levelCardText]}>
@@ -160,6 +153,12 @@ function ProfileScreen() {
                         <View style={[styles.menuGroup, themeStyles.card]}>
                             <ProfileMenuItem icon="person-outline" title="Dane użytkownika" onPress={() => navigation.navigate('UserDetails')} themeStyles={themeStyles} />
                             <ProfileMenuItem icon="stats-chart-outline" title="Statystyki Treningów" onPress={() => navigation.navigate('StatsScreen')} themeStyles={themeStyles} />
+                            <ProfileMenuItem
+                                icon="cart-outline"
+                                title="Sklep"
+                                onPress={() => navigation.navigate('Store')} // <-- Кнопка магазину
+                                themeStyles={themeStyles}
+                            />
                         </View>
 
                         <View style={[styles.achievementsGroup, themeStyles.card]}>
@@ -175,7 +174,6 @@ function ProfileScreen() {
                         </View>
                     </View>
 
-                    {/* --- НИЖНІЙ ВМІСТ (КНОПКА) --- */}
                     <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                         <Ionicons name="log-out-outline" size={22} color={COLORS.white} />
                         <Text style={styles.logoutButtonText}>Wyloguj się</Text>
@@ -186,21 +184,18 @@ function ProfileScreen() {
     );
 }
 
+// (Стилі 'styles' залишаються без змін)
 const styles = StyleSheet.create({
     safeArea: { flex: 1 },
-
-    // ✅ 'scrollContainer' тепер має flexGrow: 1, щоб дозволити скрол, ЯКЩО потрібно
     scrollContainer: {
         flexGrow: 1,
         padding: PADDING.medium,
     },
-    // ✅ 'contentWrapper' змушує вміст розтягнутися на весь екран
     contentWrapper: {
         flex: 1,
         justifyContent: 'space-between',
-        minHeight: '100%', // Гарантує, що він займе принаймні висоту екрану
+        minHeight: '100%',
     },
-    // 'mainContent' - це просто контейнер для верхньої частини
     mainContent: {
         width: '100%',
         alignItems: 'center',
@@ -294,7 +289,6 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         padding: PADDING.medium,
         elevation: 3,
-        // (marginBottom прибрано, 'space-between' подбає про відступ)
     },
     sectionTitle: {
         fontSize: FONT_SIZES.large,
@@ -311,8 +305,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         elevation: 2,
-        marginTop: MARGIN.large, // Відступ від верхнього вмісту
-        marginBottom: MARGIN.small, // Відступ від низу екрану
+        marginTop: MARGIN.large,
+        marginBottom: MARGIN.small,
         alignSelf: 'center',
         width: '80%',
     },

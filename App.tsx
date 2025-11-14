@@ -35,10 +35,12 @@ import FriendsScreen from './src/screens/FriendsScreen';
 import DuelSetupScreen from './src/screens/DuelSetupScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import ActivityScreen from './src/screens/ActivityScreen'; // Ekran Aktywności
-import MatchstickEquationGame from './src/screens/MatchstickEquationGame'; // ✅ НОВА ГРА
+import MatchstickEquationGame from './src/screens/MatchstickEquationGame';
 
-// ✅ ДОДАНО НОВИЙ ТРЕНАЖЕР
 import MoreLessTrainerScreen4 from './src/screens/MoreLessTrainerScreen4';
+
+// --- ✅ 1. ІМПОРТУЄМО НОВИЙ ЕКРАН ---
+import StoreScreen from './src/screens/StoreScreen';
 
 // --- Typy ---
 export type AuthStackParamList = {
@@ -62,7 +64,7 @@ export type MainAppStackParamList = {
     MultiplicationTrainer: { grade: number; topic: string; subTopic: string };
     PlusMinusTrainer: { grade: number; topic: string; subTopic: string };
     DivisionTrainer: { grade: number; topic: string; subTopic: string };
-    MoreLessTrainer4: { grade: number; topic: string; subTopic: string }; // ✅ ДОДАНО
+    MoreLessTrainer4: { grade: number; topic: string; subTopic: string };
     Results: {
         score: number;
         total: number;
@@ -83,10 +85,17 @@ export type TheoryStackParamList = {
 
 export type GamesStackParamList = {
     GamesMain: undefined;
-    MatchstickGame: undefined; // ✅ УНІФІКОВАНА НАЗВА ГРИ
+    MatchstickGame: undefined;
 };
 export type FriendsStackParamList = { Friends: undefined; DuelSetup: { friendId: string; friendEmail: string }; };
-export type ProfileStackParamList = { ProfileMain: undefined; UserDetails: undefined; StatsScreen: undefined; };
+
+// --- ✅ 2. ОНОВЛЮЄМО ТИП СТЕКУ ПРОФІЛЮ ---
+export type ProfileStackParamList = {
+    ProfileMain: undefined;
+    UserDetails: undefined;
+    StatsScreen: undefined;
+    Store: undefined; // <-- Додано
+};
 export type ActivityStackParamList = { ActivityMain: undefined; };
 
 export type AppTabParamList = {
@@ -112,7 +121,6 @@ function HomeStackNavigator() {
     return (
         <MainStack.Navigator initialRouteName="Main">
             <MainStack.Screen name="Main" component={MainScreen} options={{ headerShown: false }} />
-            {/* Ekrany Praktyki */}
             <MainStack.Screen name="GradeSelection" component={GradeSelectionScreen} options={{ title: 'Praktyka - Wybierz klasę' }} />
             <MainStack.Screen name="TopicList" component={TopicListScreen} options={({ route }) => ({ title: `Klasa ${route.params.grade} - Działy` })} />
             <MainStack.Screen name="SubTopicList" component={SubTopicListScreen} options={({ route }) => ({ title: route.params.topic })} />
@@ -120,16 +128,12 @@ function HomeStackNavigator() {
             <MainStack.Screen name="MultiplicationTrainer" component={MultiplicationTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
             <MainStack.Screen name="PlusMinusTrainer" component={PlusMinusTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
             <MainStack.Screen name="DivisionTrainer" component={DivisionTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
-
-            {/* ✅ ДОДАНО НОВИЙ ТРЕНАЖЕР */}
             <MainStack.Screen
                 name="MoreLessTrainer4"
                 component={MoreLessTrainerScreen4}
                 options={({ route }) => ({ title: route.params.subTopic })}
             />
-
             <MainStack.Screen name="Results" component={ResultsScreen} options={{ title: 'Wyniki Testu' }} />
-            {/* Ekrany Teorii - dostępne z HomeStack */}
             <MainStack.Screen name="TheoryGradeSelection" component={TheoryGradeSelectionScreen} options={{ title: 'Teoria - Wybierz Klasę' }} />
             <MainStack.Screen name="TheoryTopicList" component={TheoryScreen} options={({ route }) => ({ title: `Działy (Klasa ${route.params.grade})` })} />
             <MainStack.Screen name="TheorySubTopicList" component={TheorySubTopicListScreen} options={({ route }) => ({ title: route.params.topic })} />
@@ -138,18 +142,15 @@ function HomeStackNavigator() {
     );
 }
 
-// --- Games Stack ---
 function GamesStackNavigator() {
     return (
         <GamesStackNav.Navigator>
             <GamesStackNav.Screen name="GamesMain" component={GamesScreen} options={{ title: 'Gry' }} />
-            {/* ✅ ДОДАЄМО ЕКРАН НОВОЇ ГРИ */}
             <GamesStackNav.Screen name="MatchstickGame" component={MatchstickEquationGame} options={{ title: 'Równania z Zapałkami' }} />
         </GamesStackNav.Navigator>
     );
 }
 
-// --- Friends Stack ---
 function FriendsStackNavigator() {
     return (
         <FriendsStackNav.Navigator>
@@ -166,11 +167,14 @@ function ProfileStackNavigator() {
             <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} options={{ title: 'Profil', headerShown: false }} />
             <ProfileStack.Screen name="UserDetails" component={UserDetailsScreen} options={{ title: 'Dane użytkownika' }} />
             <ProfileStack.Screen name="StatsScreen" component={StatsScreen} options={{ title: 'Moje Statystyki' }} />
+
+            {/* --- ✅ 3. ДОДАЄМО ЕКРАН ДО НАВІГАЦІЇ --- */}
+            <ProfileStack.Screen name="Store" component={StoreScreen} options={{ title: 'Sklep' }} />
+
         </ProfileStack.Navigator>
     );
 }
 
-// --- Activity Stack ---
 function ActivityStackNavigator() {
     return (
         <ActivityStackNav.Navigator>
@@ -179,7 +183,7 @@ function ActivityStackNavigator() {
     );
 }
 
-// --- Funkcja Tab Navigator ---
+// (Решта файлу App.tsx без змін)
 function MainAppTabNavigator() {
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
@@ -229,7 +233,6 @@ function MainAppTabNavigator() {
     );
 }
 
-// --- Auth Stack ---
 function AuthNavigator() {
     return (
         <AuthStack.Navigator>
@@ -239,7 +242,6 @@ function AuthNavigator() {
     );
 }
 
-// --- Główny komponent App ---
 function App(): React.JSX.Element {
     const [initializing, setInitializing] = useState(true);
     const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
