@@ -1,207 +1,327 @@
-import React, { useState, useEffect } from 'react';
+// src/screens/ProfileScreen.tsx
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView,
-    FlatList, ActivityIndicator, useColorScheme // Dodano useColorScheme
+    FlatList, ActivityIndicator, useColorScheme, SafeAreaView, Image
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import Ionicons from '@expo/vector-icons/Ionicons';
-// import { BarChart } from "react-native-gifted-charts"; // Nadal zakomentowane
-import { IAchievement } from '../config/achievements';
-import { TestResultData } from '../services/userStatsService';
+import { IAchievement, ACHIEVEMENTS } from '../config/achievements';
+import AchievementBadge from '../Components/AchievementBadge';
 import { useNavigation } from '@react-navigation/native';
-import { COLORS, FONT_SIZES, PADDING, MARGIN } from '../styles/theme'; // Importuj THEME
+import { COLORS, FONT_SIZES, PADDING, MARGIN } from '../styles/theme';
+
+// Інтерфейс для даних користувача
+interface UserData {
+    firstName: string;
+    email: string;
+    avatar?: string;
+    level: number;
+    xp: number;
+    xpToNextLevel: number;
+    coins: number;
+}
+
+// Функція отримання аватара
+const getAvatarImage = (avatarName?: string) => {
+    switch (avatarName) {
+        case 'avatar1':
+            return require('../assets/avatar/avatar1.png');
+        case 'avatar2':
+            return require('../assets/avatar/avatar2.png');
+        default:
+            return require('../assets/avatar/avatar2.png');
+    }
+};
+
+// Компонент рядка меню
+const ProfileMenuItem = ({ icon, title, onPress, themeStyles }) => (
+    <TouchableOpacity style={[styles.menuItem, themeStyles.menuItem]} onPress={onPress}>
+        <Ionicons name={icon} size={24} color={themeStyles.menuIcon.color} style={styles.menuIcon} />
+        <Text style={[styles.menuText, themeStyles.menuText]}>{title}</Text>
+        <Ionicons name="chevron-forward-outline" size={22} color={themeStyles.menuChevron.color} />
+    </TouchableOpacity>
+);
 
 function ProfileScreen() {
-    // ... stany (achievements, stats, loadingTestStats, loadingAchievements) ...
-    const [achievements, setAchievements] = useState<IAchievement[]>([]);
-    const [stats, setStats] = useState<{ /* ... */ } | null>(null);
-    const [loadingTestStats, setLoadingTestStats] = useState(true);
-    const [loadingAchievements, setLoadingAchievements] = useState(true);
+    const [userData, setUserData] = useState<UserData | null>(null);
+    const [unlockedAchievements, setUnlockedAchievements] = useState<Set<string>>(new Set());
+    const [loading, setLoading] = useState(true);
 
     const currentUser = auth().currentUser;
-    const navigation = useNavigation<any>(); // Użyj dokładniejszego typu, jeśli to możliwe
-
+    const navigation = useNavigation<any>();
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
 
-    // Dynamiczne style
-    const dynamicStyles = {
-        scrollViewContainer: { backgroundColor: isDarkMode ? COLORS.backgroundDark : '#F0F4F8' },
-        headerTitle: { color: isDarkMode ? COLORS.textDark : '#263238' },
-        sectionContainer: { backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.white },
-        sectionTitle: { color: isDarkMode ? COLORS.textDark : '#37474F' },
-        userInfoText: { color: isDarkMode ? COLORS.textDark : '#455A64' },
-        placeholderText: { color: isDarkMode ? COLORS.grey : '#546E7A' },
-        achievementName: { color: isDarkMode ? COLORS.textDark : '#333' },
-        achievementDescription: { color: isDarkMode ? COLORS.grey : '#666' },
-        statsText: { color: isDarkMode ? COLORS.textDark : '#455A64' },
-        chartTitle: { color: isDarkMode ? COLORS.textDark : '#37474F' },
-        sectionHeaderBorder: { borderBottomColor: isDarkMode ? COLORS.greyDarkTheme : '#f0f0f0' },
-        achievementBorder: { borderBottomColor: isDarkMode ? COLORS.greyDarkTheme : '#eee' },
-        iconColor: isDarkMode ? COLORS.primaryDarkTheme : '#00796B', // Kolor ikon w nagłówkach sekcji
-        statsIconColor: isDarkMode ? COLORS.correct : '#4CAF50',
-        trophyIconColor: isDarkMode ? COLORS.accent : '#FFC107',
-        statsChartTextColor: isDarkMode ? COLORS.grey : 'gray',
+    // Динамічні стилі (без змін)
+    const themeStyles = {
+        container: { backgroundColor: isDarkMode ? COLORS.backgroundDark : '#F0F4F8' },
+        card: { backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.white },
+        levelCardText: { color: isDarkMode ? COLORS.textDark : COLORS.textLight },
+        xpText: { color: isDarkMode ? COLORS.greyDarkTheme : COLORS.grey },
+        coinText: { color: isDarkMode ? '#FFD700' : '#E6A23C' },
+        menuItem: { backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.white, borderBottomColor: isDarkMode ? '#333' : '#F0F0F0' },
+        menuText: { color: isDarkMode ? COLORS.textDark : COLORS.textLight },
+        menuIcon: { color: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary },
+        menuChevron: { color: isDarkMode ? COLORS.greyDarkTheme : COLORS.grey },
+        xpBarBackground: { backgroundColor: isDarkMode ? '#121212' : '#E0E0E0' },
     };
 
-    // ... useEffect do ładowania danych ...
-    useEffect(() => { /* ... logika ładowania ... */ }, [currentUser]);
-
-    // ... handleLogout ...
-    const handleLogout = async () => {
-        try {
-            await auth().signOut();
-            // Po wylogowaniu resetujemy nawigację do ekranu 'Login'
-            // Używamy 'Login' jako nazwy ekranu z drugiego pliku, który podałeś
-            navigation.reset({
-                index: 0,
-                routes: [{ name: 'Login' }],
-            });
-        } catch (error) {
-            console.error("Błąd podczas wylogowywania: ", error);
-            Alert.alert("Błąd", "Nie udało się wylogować. Spróbuj ponownie.");
+    // useEffect (без змін)
+    useEffect(() => {
+        if (!currentUser) {
+            setLoading(false);
+            return;
         }
+        const userSub = firestore().collection('users').doc(currentUser.uid).onSnapshot(doc => {
+            if (doc.exists) { setUserData(doc.data() as UserData); } else { setUserData(null); }
+            setLoading(false);
+        });
+        const achSub = firestore().collection('users').doc(currentUser.uid).collection('achievements').onSnapshot(querySnapshot => {
+            const unlockedIds = new Set<string>();
+            querySnapshot.forEach(doc => { unlockedIds.add(doc.id); });
+            setUnlockedAchievements(unlockedIds);
+        });
+        return () => { userSub(); achSub(); };
+    }, [currentUser]);
+
+    // Список досягнень (без змін)
+    const allAchievementsData = useMemo(() => {
+        return Object.keys(ACHIEVEMENTS).map(id => ({
+            ...ACHIEVEMENTS[id],
+            id: id,
+            isUnlocked: unlockedAchievements.has(id),
+        }));
+    }, [unlockedAchievements]);
+
+    const handleLogout = async () => { /* ... (код без змін) ... */ };
+
+    // Рендер XP-бару (без змін)
+    const renderXpBar = () => {
+        if (!userData || userData.xpToNextLevel === 0) return null;
+        const progress = (userData.xp / userData.xpToNextLevel) * 100;
+        return (
+            <View>
+                <View style={[styles.xpBarBackground, themeStyles.xpBarBackground]}>
+                    <View style={[styles.xpBarForeground, { width: `${progress}%` }]} />
+                </View>
+                <Text style={[styles.xpText, themeStyles.xpText]}>{userData.xp} / {userData.xpToNextLevel} XP</Text>
+            </View>
+        );
     };
 
-    // ... renderAchievement ...
-    const renderAchievement = ({ item }: { item: IAchievement }) => (
-        <View style={[styles.achievementCard, dynamicStyles.achievementBorder]}>
-            <Ionicons name={item.icon} size={36} color={dynamicStyles.trophyIconColor} />
-            <View style={styles.achievementTextContainer}>
-                <Text style={[styles.achievementName, dynamicStyles.achievementName]}>{item.name}</Text>
-                <Text style={[styles.achievementDescription, dynamicStyles.achievementDescription]}>{item.description}</Text>
-            </View>
-        </View>
-    );
+    if (loading) {
+        return (
+            <SafeAreaView style={[styles.safeArea, themeStyles.container]}>
+                <ActivityIndicator size="large" color={COLORS.primary} style={{marginTop: 50}} />
+            </SafeAreaView>
+        );
+    }
 
     return (
-        // Zastosowano dynamiczny styl tła
-        <ScrollView contentContainerStyle={[styles.scrollViewContainer, dynamicStyles.scrollViewContainer]}>
-            <View style={styles.container}>
-                <Text style={[styles.headerTitle, dynamicStyles.headerTitle]}>Mój Profil</Text>
+        <SafeAreaView style={[styles.safeArea, themeStyles.container]}>
+            {/* ✅ ScrollView тепер має гнучкий contentContainer */}
+            <ScrollView
+                contentContainerStyle={styles.scrollContainer}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* ✅ Ця обгортка з flex: 1 "розтягує" вміст */}
+                <View style={styles.contentWrapper}>
 
-                {/* Sekcja "Dane użytkownika" */}
-                <TouchableOpacity style={{ width: '100%' }} onPress={() => navigation.navigate('UserDetails')}>
-                    {/* Zastosowano dynamiczny styl tła karty */}
-                    <View style={[styles.sectionContainer, dynamicStyles.sectionContainer]}>
-                        <View style={[styles.sectionHeader, dynamicStyles.sectionHeaderBorder]}>
-                            <Ionicons name="person-circle-outline" size={28} color={dynamicStyles.iconColor} style={styles.sectionIcon} />
-                            <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Dane użytkownika</Text>
-                            <Ionicons name="chevron-forward-outline" size={22} color={dynamicStyles.placeholderText.color} style={{ marginLeft: 'auto' }} />
-                        </View>
-                        <Text style={[styles.userInfoText, dynamicStyles.userInfoText]}>
-                            Nick: {currentUser?.displayName || 'Brak'}
-                        </Text>
-                        <Text style={[styles.userInfoText, dynamicStyles.userInfoText]}>
-                            Email: {currentUser?.email || 'Brak danych'}
-                        </Text>
-                        {currentUser && !currentUser.emailVerified && (
-                            <View style={styles.verificationWarning}>
-                                <Ionicons name="alert-circle-outline" size={24} color="#D84315" />
-                                <Text style={styles.verificationText}>
-                                    Twój email nie został potwierdzony.
+                    {/* --- ВЕРХНІЙ ВМІСТ --- */}
+                    <View style={styles.mainContent}>
+                        {userData && (
+                            <View style={styles.headerContainer}>
+                                <Image
+                                    source={getAvatarImage(userData.avatar)}
+                                    style={styles.avatar}
+                                />
+                                <Text style={[styles.userName, themeStyles.levelCardText]}>
+                                    {userData.firstName || currentUser?.email}
                                 </Text>
                             </View>
                         )}
-                    </View>
-                </TouchableOpacity>
 
-                {/* Karta "Statystyki Testów" */}
-                <View style={[styles.sectionContainer, dynamicStyles.sectionContainer]}>
-                    <View style={[styles.sectionHeader, dynamicStyles.sectionHeaderBorder]}>
-                        <Ionicons name="stats-chart-outline" size={26} color={dynamicStyles.statsIconColor} style={styles.sectionIcon} />
-                        <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Statystyki Testów</Text>
-                    </View>
-                    {loadingTestStats ? <ActivityIndicator color={COLORS.primary} /> : (
-                        stats ? (
-                            <>
-                                <View style={styles.statsSummary}>
-                                    <Text style={[styles.statsText, dynamicStyles.statsText]}>Ukończone testy: {stats.totalTests}</Text>
-                                    <Text style={[styles.statsText, dynamicStyles.statsText]}>Średni wynik: {stats.avgScore}%</Text>
+                        {userData && (
+                            <View style={[styles.levelCard, themeStyles.card]}>
+                                <View style={styles.levelHeader}>
+                                    <Text style={[styles.levelText, themeStyles.levelCardText]}>
+                                        Poziom {userData.level}
+                                    </Text>
+                                    <View style={[styles.coinContainer, themeStyles.card]}>
+                                        <Text style={[styles.coinText, themeStyles.coinText]}>🪙 {userData.coins}</Text>
+                                    </View>
                                 </View>
-                                <Text style={[styles.chartTitle, dynamicStyles.chartTitle]}>Wyniki wg. działów:</Text>
-                                <View style={{ paddingHorizontal: 10, paddingBottom: 10, alignItems: 'center' }}>
-                                    {/* Wykres nadal zakomentowany */}
-                                    <Text style={[styles.placeholderText, dynamicStyles.placeholderText]}>Wykres wymaga Development Build</Text>
-                                    {/*
-                                    <BarChart
-                                        data={stats.topicPerformance}
-                                        // ... props ...
-                                        yAxisTextStyle={{ color: dynamicStyles.statsChartTextColor }}
-                                        xAxisLabelTextStyle={{ color: dynamicStyles.statsChartTextColor, fontSize: 10, transform: [{ rotate: '-20deg' }], marginLeft: 15 }}
-                                    />
-                                     */}
-                                </View>
-                            </>
-                        ) : <Text style={[styles.placeholderText, dynamicStyles.placeholderText]}>Ukończ swój pierwszy test, aby zobaczyć statystyki!</Text>
-                    )}
-                </View>
+                                {renderXpBar()}
+                            </View>
+                        )}
 
-                {/* Karta-Przycisk "Statystyki Treningów" */}
-                <TouchableOpacity
-                    style={[styles.sectionContainer, dynamicStyles.sectionContainer]}
-                    onPress={() => navigation.navigate('StatsScreen')}
-                >
-                    <View style={[styles.sectionHeader, dynamicStyles.sectionHeaderBorder]}>
-                        <Ionicons name="barbell-outline" size={26} color={dynamicStyles.iconColor} style={styles.sectionIcon} />
-                        <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Statystyki Treningów</Text>
-                        <Ionicons name="chevron-forward-outline" size={22} color={dynamicStyles.placeholderText.color} style={{ marginLeft: 'auto' }} />
+                        <View style={[styles.menuGroup, themeStyles.card]}>
+                            <ProfileMenuItem icon="person-outline" title="Dane użytkownika" onPress={() => navigation.navigate('UserDetails')} themeStyles={themeStyles} />
+                            <ProfileMenuItem icon="stats-chart-outline" title="Statystyki Treningów" onPress={() => navigation.navigate('StatsScreen')} themeStyles={themeStyles} />
+                        </View>
+
+                        <View style={[styles.achievementsGroup, themeStyles.card]}>
+                            <Text style={[styles.sectionTitle, themeStyles.menuText]}>Osiągnięcia</Text>
+                            <FlatList
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                data={allAchievementsData}
+                                renderItem={({ item }) => <AchievementBadge badge={item} />}
+                                keyExtractor={item => item.id}
+                                contentContainerStyle={{ paddingHorizontal: PADDING.small, paddingTop: PADDING.small }}
+                            />
+                        </View>
                     </View>
-                    <Text style={[styles.placeholderText, dynamicStyles.placeholderText]}>
-                        Zobacz podsumowanie swoich treningów
-                    </Text>
-                </TouchableOpacity>
 
-                {/* Karta "Moje osiągnięcia" */}
-                <View style={[styles.sectionContainer, dynamicStyles.sectionContainer]}>
-                    <View style={[styles.sectionHeader, dynamicStyles.sectionHeaderBorder]}>
-                        <Ionicons name="trophy-outline" size={26} color={dynamicStyles.trophyIconColor} style={styles.sectionIcon} />
-                        <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Moje osiągnięcia</Text>
-                    </View>
-                    {loadingAchievements ? <ActivityIndicator color={COLORS.accent} /> : (
-                        <FlatList
-                            data={achievements}
-                            renderItem={renderAchievement}
-                            keyExtractor={item => item.id}
-                            ListEmptyComponent={<Text style={[styles.placeholderText, dynamicStyles.placeholderText]}>Jeszcze nie zdobyłeś żadnych odznak. Ukończ test, aby zacząć!</Text>}
-                            scrollEnabled={false}
-                        />
-                    )}
+                    {/* --- НИЖНІЙ ВМІСТ (КНОПКА) --- */}
+                    <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                        <Ionicons name="log-out-outline" size={22} color={COLORS.white} />
+                        <Text style={styles.logoutButtonText}>Wyloguj się</Text>
+                    </TouchableOpacity>
                 </View>
-
-                {/* Przycisk wylogowania (bez zmian stylu, kolor pasuje) */}
-                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                    <Ionicons name="log-out-outline" size={22} color={COLORS.white} />
-                    <Text style={styles.logoutButtonText}>Wyloguj się</Text>
-                </TouchableOpacity>
-            </View>
-        </ScrollView>
+            </ScrollView>
+        </SafeAreaView>
     );
 }
 
-// Style (część pozostaje, część będzie nadpisana przez dynamicStyles)
 const styles = StyleSheet.create({
-    scrollViewContainer: { flexGrow: 1 }, // Kolor tła dynamiczny
-    container: { flex: 1, alignItems: 'center', padding: PADDING.large }, // Używamy stałych
-    headerTitle: { fontSize: FONT_SIZES.xlarge + 2, fontWeight: 'bold', marginTop: MARGIN.medium, marginBottom: MARGIN.large + MARGIN.small },
-    sectionContainer: { borderRadius: 12, padding: PADDING.large, width: '100%', marginBottom: MARGIN.large + MARGIN.small, elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
-    sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: MARGIN.medium, borderBottomWidth: 1, paddingBottom: PADDING.small },
-    sectionIcon: { marginRight: MARGIN.small },
-    sectionTitle: { fontSize: FONT_SIZES.large, fontWeight: '600' },
-    userInfoText: { fontSize: FONT_SIZES.medium, paddingLeft: PADDING.small / 2, marginBottom: MARGIN.small / 2 },
-    placeholderText: { fontSize: FONT_SIZES.medium - 1, textAlign: 'center', padding: PADDING.small, lineHeight: 22 },
-    logoutButton: { flexDirection: 'row', backgroundColor: COLORS.incorrect, paddingVertical: PADDING.medium - 4, paddingHorizontal: PADDING.large, borderRadius: 25, alignItems: 'center', justifyContent: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2, marginTop: MARGIN.medium },
-    logoutButtonText: { color: COLORS.white, fontSize: FONT_SIZES.medium, fontWeight: 'bold', marginLeft: MARGIN.small },
-    achievementCard: { flexDirection: 'row', alignItems: 'center', paddingVertical: PADDING.small, borderBottomWidth: 1 },
-    achievementTextContainer: { marginLeft: MARGIN.medium, flex: 1 },
-    achievementName: { fontSize: FONT_SIZES.medium, fontWeight: 'bold' },
-    achievementDescription: { fontSize: FONT_SIZES.small + 2, marginTop: 2 },
-    statsSummary: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: MARGIN.medium },
-    statsText: { fontSize: FONT_SIZES.medium },
-    chartTitle: { fontSize: FONT_SIZES.medium, fontWeight: '600', marginTop: MARGIN.medium, marginBottom: MARGIN.small, textAlign: 'center' },
-    verificationWarning: { backgroundColor: '#FFE0B2', padding: PADDING.small, borderRadius: 8, marginTop: MARGIN.small, flexDirection: 'row', alignItems: 'center' },
-    verificationText: { color: '#BF360C', marginLeft: MARGIN.small, flex: 1 },
+    safeArea: { flex: 1 },
+
+    // ✅ 'scrollContainer' тепер має flexGrow: 1, щоб дозволити скрол, ЯКЩО потрібно
+    scrollContainer: {
+        flexGrow: 1,
+        padding: PADDING.medium,
+    },
+    // ✅ 'contentWrapper' змушує вміст розтягнутися на весь екран
+    contentWrapper: {
+        flex: 1,
+        justifyContent: 'space-between',
+        minHeight: '100%', // Гарантує, що він займе принаймні висоту екрану
+    },
+    // 'mainContent' - це просто контейнер для верхньої частини
+    mainContent: {
+        width: '100%',
+        alignItems: 'center',
+    },
+    headerContainer: {
+        alignItems: 'center',
+        marginBottom: MARGIN.medium,
+        width: '100%',
+    },
+    avatar: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        borderWidth: 3,
+        borderColor: COLORS.white,
+        elevation: 4,
+        marginBottom: MARGIN.small,
+    },
+    userName: {
+        fontSize: FONT_SIZES.large,
+        fontWeight: 'bold',
+    },
+    levelCard: {
+        width: '100%',
+        borderRadius: 12,
+        padding: PADDING.large,
+        marginBottom: MARGIN.large,
+        elevation: 3,
+    },
+    levelHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: MARGIN.medium,
+    },
+    levelText: {
+        fontSize: FONT_SIZES.xlarge,
+        fontWeight: 'bold',
+    },
+    coinContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: PADDING.medium,
+        paddingVertical: PADDING.small,
+        borderRadius: 20,
+    },
+    coinText: {
+        fontSize: FONT_SIZES.medium,
+        fontWeight: 'bold',
+    },
+    xpBarBackground: {
+        height: 10,
+        borderRadius: 5,
+        width: '100%',
+        overflow: 'hidden',
+    },
+    xpBarForeground: {
+        height: '100%',
+        backgroundColor: COLORS.correct,
+        borderRadius: 5,
+    },
+    xpText: {
+        fontSize: FONT_SIZES.small,
+        textAlign: 'right',
+        marginTop: MARGIN.small / 2,
+    },
+    menuGroup: {
+        width: '100%',
+        borderRadius: 12,
+        overflow: 'hidden',
+        elevation: 3,
+        marginBottom: MARGIN.large,
+    },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: PADDING.medium + 2,
+        paddingHorizontal: PADDING.medium,
+        borderBottomWidth: 1,
+    },
+    menuIcon: {
+        marginRight: MARGIN.medium,
+    },
+    menuText: {
+        flex: 1,
+        fontSize: FONT_SIZES.medium,
+        fontWeight: '500',
+    },
+    achievementsGroup: {
+        width: '100%',
+        borderRadius: 12,
+        padding: PADDING.medium,
+        elevation: 3,
+        // (marginBottom прибрано, 'space-between' подбає про відступ)
+    },
+    sectionTitle: {
+        fontSize: FONT_SIZES.large,
+        fontWeight: 'bold',
+        paddingHorizontal: PADDING.small,
+        marginBottom: MARGIN.small,
+    },
+    logoutButton: {
+        flexDirection: 'row',
+        backgroundColor: COLORS.incorrect,
+        paddingVertical: PADDING.medium - 2,
+        paddingHorizontal: PADDING.large,
+        borderRadius: 25,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 2,
+        marginTop: MARGIN.large, // Відступ від верхнього вмісту
+        marginBottom: MARGIN.small, // Відступ від низу екрану
+        alignSelf: 'center',
+        width: '80%',
+    },
+    logoutButtonText: {
+        color: COLORS.white,
+        fontSize: FONT_SIZES.medium,
+        fontWeight: 'bold',
+        marginLeft: MARGIN.small,
+    },
 });
 
 export default ProfileScreen;

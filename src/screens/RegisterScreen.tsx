@@ -12,11 +12,11 @@ import { COLORS, FONT_SIZES, PADDING, MARGIN } from "../styles/theme"; // Імп
 
 type RegisterScreenProps = NativeStackScreenProps<AuthStackParamList, "Register">;
 
-const AVAILABLE_CLASSES = ['4', '5', '6', '7']; // Допустимі класи
+const AVAILABLE_CLASSES = ['4', '5', '6', '7'];
 
 function RegisterScreen({ navigation }: RegisterScreenProps) {
     const [firstName, setFirstName] = useState("");
-    const [selectedClass, setSelectedClass] = useState<string | null>(null); // Стан для обраного класу
+    const [selectedClass, setSelectedClass] = useState<string | null>(null);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -41,23 +41,31 @@ function RegisterScreen({ navigation }: RegisterScreenProps) {
             const userCredential = await auth().createUserWithEmailAndPassword(email, password);
             const user = userCredential.user;
             if (user) {
-                // Змінено className на userClass
+                // ✅ --- ОНОВЛЕНО ТУТ ---
+                // Додаємо поля для системи рівнів та монет
                 await firestore().collection("users").doc(user.uid).set({
                     email: user.email?.toLowerCase(),
                     firstName: firstName.trim(),
-                    userClass: selectedClass, // Зберігаємо обраний клас
+                    userClass: selectedClass,
                     createdAt: firestore.FieldValue.serverTimestamp(),
                     friends: [],
+
+                    // --- Нові поля ---
+                    level: 1,         // Початковий рівень
+                    xp: 0,            // Початковий досвід
+                    xpToNextLevel: 100, // Досвіду до 2-го рівня
+                    coins: 0,           // Початкові монети
                 });
+                // --- КІНЕЦЬ ОНОВЛЕННЯ ---
+
                 await user.updateProfile({
-                    displayName: firstName.trim(), // Використовуємо firstName для displayName
+                    displayName: firstName.trim(),
                 });
                 await user.sendEmailVerification();
                 Alert.alert(
                     "Rejestracja udana!",
                     "Sprawdź skrzynkę pocztową, aby potwierdzić adres email."
                 );
-                // Навігація тут залишається - користувач побачить екран логіну
             }
         } catch (error: any) {
             if (error.code === "auth/email-already-in-use") {
@@ -102,7 +110,7 @@ function RegisterScreen({ navigation }: RegisterScreenProps) {
                             returnKeyType="next"
                         />
 
-                        {/* --- ЗАМІНА ПОЛЯ ВВОДУ КЛАСУ --- */}
+                        {/* --- Вибір класу --- */}
                         <Text style={styles.label}>Wybierz klasę:</Text>
                         <View style={styles.classSelectorContainer}>
                             {AVAILABLE_CLASSES.map((cls) => (
@@ -123,7 +131,7 @@ function RegisterScreen({ navigation }: RegisterScreenProps) {
                                 </TouchableOpacity>
                             ))}
                         </View>
-                        {/* --- КІНЕЦЬ ЗАМІНИ --- */}
+                        {/* --- Кінець вибору класу --- */}
 
                         <TextInput
                             style={styles.input}
@@ -179,9 +187,9 @@ function RegisterScreen({ navigation }: RegisterScreenProps) {
     );
 }
 
-// Використовуємо стилі з твого файлу + додаємо нові для кнопок класу
+// ... (Стилі залишаються без змін) ...
 const styles = StyleSheet.create({
-    keyboardAvoidingView: { flex: 1, backgroundColor: "#EEF2FF" }, // Фон зі старого файлу
+    keyboardAvoidingView: { flex: 1, backgroundColor: "#EEF2FF" },
     scrollContainer: { flexGrow: 1, justifyContent: "center", padding: 20, paddingBottom: 40 },
     card: { backgroundColor: "#FFFFFF", borderRadius: 20, padding: 24, shadowColor: "#000", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 6, elevation: 6 },
     title: { fontSize: 30, fontWeight: "800", color: "#111827", marginBottom: 8, textAlign: "center" },
@@ -193,10 +201,8 @@ const styles = StyleSheet.create({
     footer: { flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 22 },
     footerText: { fontSize: 15, color: "#6B7280" },
     footerLink: { fontSize: 15, color: "#2563EB", fontWeight: "600", marginLeft: 6 },
-
-    // Нові стилі для вибору класу
     label: {
-        fontSize: FONT_SIZES.medium -1, // Трохи менше
+        fontSize: FONT_SIZES.medium -1,
         color: COLORS.grey,
         marginBottom: MARGIN.small,
         marginLeft: 5,
@@ -204,29 +210,29 @@ const styles = StyleSheet.create({
     },
     classSelectorContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between', // Розтягнути кнопки
-        marginBottom: MARGIN.medium + 4, // Трохи більший відступ
+        justifyContent: 'space-between',
+        marginBottom: MARGIN.medium + 4,
     },
     classButton: {
         paddingVertical: PADDING.small,
-        paddingHorizontal: PADDING.medium + 2, // Трохи ширші
-        borderWidth: 1.5, // Трохи товща рамка
-        borderColor: '#B0BEC5', // Сіра рамка
+        paddingHorizontal: PADDING.medium + 2,
+        borderWidth: 1.5,
+        borderColor: '#B0BEC5',
         borderRadius: 20,
-        minWidth: 60, // Мінімальна ширина
+        minWidth: 60,
         alignItems: 'center'
     },
     classButtonSelected: {
-        backgroundColor: COLORS.primary, // Колір primary при виборі
-        borderColor: COLORS.primary, // Рамка того ж кольору
+        backgroundColor: COLORS.primary,
+        borderColor: COLORS.primary,
     },
     classButtonText: {
-        color: '#546E7A', // Сірий текст
+        color: '#546E7A',
         fontSize: FONT_SIZES.medium,
         fontWeight: '600',
     },
     classButtonTextSelected: {
-        color: COLORS.white, // Білий текст при виборі
+        color: COLORS.white,
     },
 });
 

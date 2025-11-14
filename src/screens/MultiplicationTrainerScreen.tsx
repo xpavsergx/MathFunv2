@@ -1,91 +1,61 @@
+// src/screens/MultiplicationTrainerScreen.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    TextInput,
-    Button,
-    Platform,
-    Keyboard,
-    ImageBackground,
-    Animated,
-    StatusBar,
+    View, Text, StyleSheet, TextInput, Button,
+    Platform, Keyboard, ImageBackground, Animated, StatusBar,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-
-// Importy Firebase
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+// ✅ 1. Імпортуємо сервіс XP
+import { awardXpAndCoins } from '../services/xpService';
 
-// ✅ ZMIANA: Definiujemy ID tego ćwiczenia w jednym miejscu
 const EXERCISE_ID = "multiplicationTrainer";
-const TASKS_LIMIT = 100; // Ustawiamy limit zadań
+const TASKS_LIMIT = 100;
 
 const MultiplicationTrainerScreen = () => {
+    // ... (всі стани залишаються без змін) ...
     const [number, setNumber] = useState<number>(0);
     const [other, setOther] = useState<number>(0);
-
     const [correctTens, setCorrectTens] = useState<number>(0);
     const [correctOnes, setCorrectOnes] = useState<number>(0);
-
     const [decomp1, setDecomp1] = useState<string>('');
     const [decomp2, setDecomp2] = useState<string>('');
     const [partial1, setPartial1] = useState<string>('');
     const [partial2, setPartial2] = useState<string>('');
     const [final, setFinal] = useState<string>('');
-
     const [resultMessage, setResultMessage] = useState<string>('');
     const [showValidation, setShowValidation] = useState<boolean>(false);
-    const [validationState, setValidationState] = useState({
-        decomp1: false,
-        decomp2: false,
-        partial1: false,
-        partial2: false,
-        final: false,
-    });
-
+    const [validationState, setValidationState] = useState({ decomp1: false, decomp2: false, partial1: false, partial2: false, final: false });
     const [readyForNext, setReadyForNext] = useState<boolean>(false);
-
-    // ✅ ZMIANA: Te liczniki są teraz TYLKO dla bieżącej sesji. Zawsze startują od 0.
     const [correctCount, setCorrectCount] = useState<number>(0);
     const [wrongCount, setWrongCount] = useState<number>(0);
     const [taskCount, setTaskCount] = useState<number>(0);
-
     const [seconds, setSeconds] = useState<number>(0);
     const [startTime, setStartTime] = useState<number>(0);
-
     const [isGameFinished, setIsGameFinished] = useState<boolean>(false);
-
-    // ✅ ZMIANA: Usunęliśmy stan 'isLoading'.
-
     const backgroundColor = useRef(new Animated.Value(0)).current;
     const arrowOpacity1 = useRef(new Animated.Value(0)).current;
     const arrowOpacity2 = useRef(new Animated.Value(0)).current;
 
-    // ✅ ZMIANA: Przywróciliśmy prosty useEffect. Uruchamia się raz i odpala 'nextTask'.
     useEffect(() => {
-        nextTask(); // To wywoła nextTask() po raz pierwszy i ustawi taskCount na 1
+        nextTask();
     }, []);
 
-    // ✅ ZMIANA: nextTask *nie* wczytuje ani *nie* zapisuje licznika zadań w bazie.
-    // Działa tylko na lokalnym stanie.
     const nextTask = () => {
-        // Sprawdzamy, czy użytkownik nie wykonał już 100 zadań (w tej sesji)
+        // ... (Логіка nextTask без змін) ...
         if (taskCount >= TASKS_LIMIT) {
-            setIsGameFinished(true); // Ustawiamy flagę końca gry
+            setIsGameFinished(true);
             setResultMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
             setReadyForNext(false);
             return;
         }
-
         const n = Math.floor(Math.random() * 89) + 11;
         const o = Math.floor(Math.random() * 8) + 2;
-
         setNumber(n);
         setOther(o);
         setCorrectTens(Math.floor(n / 10) * 10);
         setCorrectOnes(n % 10);
-
         setDecomp1('');
         setDecomp2('');
         setPartial1('');
@@ -93,48 +63,26 @@ const MultiplicationTrainerScreen = () => {
         setFinal('');
         setResultMessage('');
         setShowValidation(false);
-        setValidationState({
-            decomp1: false,
-            decomp2: false,
-            partial1: false,
-            partial2: false,
-            final: false,
-        });
+        setValidationState({ decomp1: false, decomp2: false, partial1: false, partial2: false, final: false });
         setReadyForNext(false);
         setSeconds(0);
-
         setStartTime(Date.now());
-
         backgroundColor.setValue(0);
         arrowOpacity1.setValue(0);
         arrowOpacity2.setValue(0);
-
-        // Zwiększamy licznik zadań (tylko w tej sesji)
         setTaskCount(prevCount => prevCount + 1);
     };
 
-    // ✅ ZMIANA: handleButton zapisuje teraz wyniki do subkolekcji
     const handleButton = () => {
         Keyboard.dismiss();
-
         const currentUser = auth().currentUser;
-        if (!currentUser) {
-            console.warn('Użytkownik nie jest zalogowany. Wynik nie zostanie zapisany.');
-        }
-
-        // ✅ ZMIANA: Przygotowujemy referencję do dedykowanego dokumentu w subkolekcji
-        const statsDocRef = currentUser ? firestore()
-            .collection('users')
-            .doc(currentUser.uid)
-            .collection('exerciseStats')
-            .doc(EXERCISE_ID) : null;
+        const statsDocRef = currentUser ? firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID) : null;
 
         const numDecomp1 = decomp1 ? Number(decomp1) : null;
         const numDecomp2 = decomp2 ? Number(decomp2) : null;
         const numPartial1 = partial1 ? Number(partial1) : null;
         const numPartial2 = partial2 ? Number(partial2) : null;
         const numFinal = final ? Number(final) : null;
-
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
 
         if (numFinal === null) {
@@ -154,61 +102,43 @@ const MultiplicationTrainerScreen = () => {
             partial2: numPartial2 !== null ? numPartial2 === correctPart2 : false,
             final: numFinal === correctFinal,
         };
-
         setValidationState(vState);
         setShowValidation(true);
 
-        const allOk =
-            vState.final &&
-            (numDecomp1 === null || vState.decomp1) &&
-            (numDecomp2 === null || vState.decomp2) &&
-            (numPartial1 === null || vState.partial1) &&
-            (numPartial2 === null || vState.partial2);
+        const allOk = vState.final && (numDecomp1 === null || vState.decomp1) && (numDecomp2 === null || vState.decomp2) && (numPartial1 === null || vState.partial1) && (numPartial2 === null || vState.partial2);
 
         if (allOk) {
             setSeconds(elapsed);
-
-            Animated.timing(backgroundColor, {
-                toValue: 1,
-                duration: 500,
-                useNativeDriver: false,
-            }).start();
-
-            if (vState.decomp1)
-                Animated.timing(arrowOpacity1, { toValue: 1, duration: 500, useNativeDriver: true }).start();
-            if (vState.decomp2)
-                Animated.timing(arrowOpacity2, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+            Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
+            if (vState.decomp1) Animated.timing(arrowOpacity1, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+            if (vState.decomp2) Animated.timing(arrowOpacity2, { toValue: 1, duration: 500, useNativeDriver: true }).start();
 
             setResultMessage(`Brawo! 🎉 Poprawna odpowiedź: ${correctFinal}`);
-            setCorrectCount(prev => prev + 1); // Aktualizujemy licznik lokalny
+            setCorrectCount(prev => prev + 1);
             setReadyForNext(true);
 
-            // ✅ ZMIANA: Zapisujemy POPRAWNĄ odpowiedź w dedykowanym dokumencie
-            // Używamy .set z { merge: true } - stworzy dokument/kolekcję, jeśli nie istnieje
-            // i doda +1 do łącznej puli w bazie.
+            // ✅ 2. Викликаємо нарахування XP та монет
+            awardXpAndCoins(5, 1); // 5 XP, 1 монета
+
             if (statsDocRef) {
                 statsDocRef.set({
                     totalCorrect: firestore.FieldValue.increment(1)
                 }, { merge: true }).catch(error => console.error("Błąd zapisu poprawnej odpowiedzi:", error));
             }
-
         } else {
+            // ... (Логіка помилки без змін) ...
             Animated.sequence([
                 Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
                 Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
             ]).start();
             setResultMessage('Coś się nie zgadza. Spróbuj ponownie!');
-            setWrongCount(prev => prev + 1); // Aktualizujemy licznik lokalny
-
-            // ✅ ZMIANA: Zapisujemy BŁĘDNĄ odpowiedź w dedykowanym dokumencie
+            setWrongCount(prev => prev + 1);
             if (statsDocRef) {
                 statsDocRef.set({
                     totalWrong: firestore.FieldValue.increment(1)
                 }, { merge: true }).catch(error => console.error("Błąd zapisu błędnej odpowiedzi:", error));
             }
         }
-
-        if (readyForNext) nextTask();
     };
 
     const getValidationStyle = (fieldKey: keyof typeof validationState) => {
@@ -216,26 +146,15 @@ const MultiplicationTrainerScreen = () => {
         return validationState[fieldKey] ? styles.correct : styles.error;
     };
 
-    // To zostaje bez zmian
-    useEffect(() => {
-        if (Platform.OS === 'android') {
-            StatusBar.setTranslucent(true);
-            StatusBar.setBackgroundColor('transparent');
-        }
-    }, []);
+    // ... (useEffect для StatusBar видалено, якщо він був) ...
 
-    // ✅ ZMIANA: Usunęliśmy 'if (isLoading) { ... }'
-    // Komponent od razu renderuje widok gry.
     return (
         <View style={{ flex: 1 }}>
-            <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-
             <ImageBackground
                 source={require('../assets/background.jpg')}
                 style={StyleSheet.absoluteFillObject}
                 resizeMode="cover"
             />
-
             <KeyboardAwareScrollView
                 contentContainerStyle={styles.container}
                 enableOnAndroid={true}
@@ -243,21 +162,13 @@ const MultiplicationTrainerScreen = () => {
                 keyboardShouldPersistTaps="handled"
             >
                 <Animated.View style={[styles.card, { backgroundColor: 'transparent' }]}>
-                    <View
-                        style={{
-                            ...StyleSheet.absoluteFillObject,
-                            backgroundColor: 'rgba(255,255,255,0.4)',
-                            borderRadius: 20,
-                        }}
-                    />
-
+                    <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: 20 }} />
                     <Text style={styles.title}>Trener mnożenia</Text>
-
                     {!isGameFinished && (
                         <>
                             <Text style={styles.task}>{number} × {other} = ?</Text>
                             <Text style={styles.label}>Liczba do rozłożenia: {number}</Text>
-
+                            {/* ... (решта JSX без змін) ... */}
                             <View style={styles.inputRow}>
                                 <TextInput style={getValidationStyle('decomp1')} keyboardType="numeric" value={decomp1} onChangeText={setDecomp1} placeholder="dziesiątki" placeholderTextColor="#aaa" />
                                 <TextInput style={getValidationStyle('decomp2')} keyboardType="numeric" value={decomp2} onChangeText={setDecomp2} placeholder="jedności" placeholderTextColor="#aaa" />
@@ -286,7 +197,6 @@ const MultiplicationTrainerScreen = () => {
                             />
                         </>
                     )}
-
                     <View style={styles.buttonContainer}>
                         <Button
                             title={readyForNext ? "Dalej" : "Sprawdź"}
@@ -295,21 +205,7 @@ const MultiplicationTrainerScreen = () => {
                             disabled={isGameFinished}
                         />
                     </View>
-
-                    {resultMessage ? (
-                        <Text
-                            style={[
-                                styles.result,
-                                (resultMessage.startsWith('Brawo') || resultMessage.startsWith('Gratulacje'))
-                                    ? styles.correctText
-                                    : styles.errorText,
-                            ]}
-                        >
-                            {resultMessage}
-                        </Text>
-                    ) : null}
-
-                    {/* Licznik pokazuje teraz postęp sesji (lokalny) */}
+                    {resultMessage ? ( <Text style={[ styles.result, (resultMessage.startsWith('Brawo') || resultMessage.startsWith('Gratulacje')) ? styles.correctText : styles.errorText ]}> {resultMessage} </Text> ) : null}
                     <Text style={styles.counter}>
                         Zadanie: {taskCount > TASKS_LIMIT ? TASKS_LIMIT : taskCount} / {TASKS_LIMIT}
                         {'\n'}
@@ -321,26 +217,15 @@ const MultiplicationTrainerScreen = () => {
     );
 };
 
+// ... (Стилі 'styles' залишаються без змін) ...
 const styles = StyleSheet.create({
-    // ✅ ZMIANA: Usunęliśmy style 'loadingContainer' i 'loadingText'
-
-    // Reszta stylów bez zmian
     container: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-    card: {
-        width: '100%',
-        maxWidth: 450,
-        borderRadius: 20,
-        padding: 30,
-        alignItems: 'center',
-    },
+    card: { width: '100%', maxWidth: 450, borderRadius: 20, padding: 30, alignItems: 'center' },
     title: { fontSize: 28, fontWeight: 'bold', marginBottom: 20, color: '#333' },
     task: { fontSize: 32, fontWeight: 'bold', marginBottom: 20, color: '#007AFF' },
     label: { fontSize: 18, marginBottom: 15, color: '#555' },
     inputRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', width: '100%', marginBottom: 10 },
-    input: {
-        width: 120, height: 60, borderWidth: 2, borderColor: '#ccc', borderRadius: 10,
-        textAlign: 'center', fontSize: 22, backgroundColor: '#fafafa', marginHorizontal: 10,
-    },
+    input: { width: 120, height: 60, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#fafafa', marginHorizontal: 10 },
     finalInput: { width: 150, marginTop: 10 },
     operator: { fontSize: 24, fontWeight: 'bold', marginHorizontal: 10 },
     multiplyBy: { fontSize: 24, fontWeight: 'bold', color: '#555', marginVertical: 5 },
@@ -349,14 +234,8 @@ const styles = StyleSheet.create({
     buttonContainer: { marginTop: 25, width: '80%', borderRadius: 10, overflow: 'hidden' },
     result: { fontSize: 18, fontWeight: 'bold', marginTop: 20, textAlign: 'center' },
     counter: { fontSize: 18, marginTop: 10, color: '#555', textAlign: 'center' },
-    correct: {
-        width: 120, height: 60, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22,
-        backgroundColor: '#d4edda', borderColor: '#28a745', color: '#155724', marginHorizontal: 10,
-    },
-    error: {
-        width: 120, height: 60, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22,
-        backgroundColor: '#f8d7da', borderColor: '#dc3545', color: '#721c24', marginHorizontal: 10,
-    },
+    correct: { width: 120, height: 60, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#d4edda', borderColor: '#28a745', color: '#155724', marginHorizontal: 10 },
+    error: { width: 120, height: 60, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#f8d7da', borderColor: '#dc3545', color: '#721c24', marginHorizontal: 10 },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
 });
