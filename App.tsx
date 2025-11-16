@@ -9,6 +9,9 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import Toast from 'react-native-toast-message';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
+// --- ✅ 1. ІМПОРТУЄМО GESTURE HANDLER ---
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 // --- Importujemy style ---
 import { COLORS } from './src/styles/theme';
 
@@ -36,18 +39,14 @@ import DuelSetupScreen from './src/screens/DuelSetupScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import ActivityScreen from './src/screens/ActivityScreen'; // Ekran Aktywności
 import MatchstickEquationGame from './src/screens/MatchstickEquationGame';
-
 import MoreLessTrainerScreen4 from './src/screens/MoreLessTrainerScreen4';
-
-// --- ✅ 1. ІМПОРТУЄМО НОВИЙ ЕКРАН ---
 import StoreScreen from './src/screens/StoreScreen';
 
-// --- Typy ---
+// --- Typy (без змін, як у вашому файлі) ---
 export type AuthStackParamList = {
     Login: undefined;
     Register: undefined;
 };
-
 export type MainAppStackParamList = {
     Main: undefined;
     GradeSelection: undefined;
@@ -75,29 +74,24 @@ export type MainAppStackParamList = {
     TheorySubTopicList: { grade: string; topic: string };
     TheoryDetail: { grade: string; topic: string; subTopic: string };
 };
-
 export type TheoryStackParamList = {
     TheoryGradeSelection: undefined;
     TheoryTopicList: { grade: string };
     TheorySubTopicList: { grade: string; topic: string };
     TheoryDetail: { grade: string; topic: string; subTopic: string };
 };
-
 export type GamesStackParamList = {
     GamesMain: undefined;
     MatchstickGame: undefined;
 };
 export type FriendsStackParamList = { Friends: undefined; DuelSetup: { friendId: string; friendEmail: string }; };
-
-// --- ✅ 2. ОНОВЛЮЄМО ТИП СТЕКУ ПРОФІЛЮ ---
 export type ProfileStackParamList = {
     ProfileMain: undefined;
     UserDetails: undefined;
     StatsScreen: undefined;
-    Store: undefined; // <-- Додано
+    Store: undefined;
 };
 export type ActivityStackParamList = { ActivityMain: undefined; };
-
 export type AppTabParamList = {
     HomeStack: undefined;
     GamesStack: undefined;
@@ -106,7 +100,7 @@ export type AppTabParamList = {
     Profil: undefined;
 };
 
-// --- Nawigatory ---
+// --- Nawigatory (без змін, як у вашому файлі) ---
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainAppStackParamList>();
 const GamesStackNav = createNativeStackNavigator<GamesStackParamList>();
@@ -115,8 +109,7 @@ const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 const ActivityStackNav = createNativeStackNavigator<ActivityStackParamList>();
 const Tab = createBottomTabNavigator<AppTabParamList>();
 
-// --- Funkcje Stack Navigator ---
-
+// --- Funkcje Stack Navigator (без змін, як у вашому файлі) ---
 function HomeStackNavigator() {
     return (
         <MainStack.Navigator initialRouteName="Main">
@@ -141,7 +134,6 @@ function HomeStackNavigator() {
         </MainStack.Navigator>
     );
 }
-
 function GamesStackNavigator() {
     return (
         <GamesStackNav.Navigator>
@@ -150,7 +142,6 @@ function GamesStackNavigator() {
         </GamesStackNav.Navigator>
     );
 }
-
 function FriendsStackNavigator() {
     return (
         <FriendsStackNav.Navigator>
@@ -159,22 +150,16 @@ function FriendsStackNavigator() {
         </FriendsStackNav.Navigator>
     );
 }
-
-// --- Profile Stack ---
 function ProfileStackNavigator() {
     return (
         <ProfileStack.Navigator>
             <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} options={{ title: 'Profil', headerShown: false }} />
             <ProfileStack.Screen name="UserDetails" component={UserDetailsScreen} options={{ title: 'Dane użytkownika' }} />
             <ProfileStack.Screen name="StatsScreen" component={StatsScreen} options={{ title: 'Moje Statystyki' }} />
-
-            {/* --- ✅ 3. ДОДАЄМО ЕКРАН ДО НАВІГАЦІЇ --- */}
             <ProfileStack.Screen name="Store" component={StoreScreen} options={{ title: 'Sklep' }} />
-
         </ProfileStack.Navigator>
     );
 }
-
 function ActivityStackNavigator() {
     return (
         <ActivityStackNav.Navigator>
@@ -182,8 +167,6 @@ function ActivityStackNavigator() {
         </ActivityStackNav.Navigator>
     );
 }
-
-// (Решта файлу App.tsx без змін)
 function MainAppTabNavigator() {
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
@@ -191,7 +174,6 @@ function MainAppTabNavigator() {
     const activeColor = isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary;
     const inactiveColor = isDarkMode ? COLORS.greyDarkTheme : COLORS.grey;
     const borderTopColor = isDarkMode ? COLORS.greyDarkTheme : '#E0E0E0';
-
     const customTabBarStyle = {
         backgroundColor: tabBarBackground,
         borderTopColor: borderTopColor,
@@ -200,7 +182,6 @@ function MainAppTabNavigator() {
         height: Platform.OS === 'ios' ? 90 : 65,
         paddingBottom: Platform.OS === 'ios' ? 34 : 0,
     };
-
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
@@ -232,7 +213,6 @@ function MainAppTabNavigator() {
         </Tab.Navigator>
     );
 }
-
 function AuthNavigator() {
     return (
         <AuthStack.Navigator>
@@ -242,6 +222,7 @@ function AuthNavigator() {
     );
 }
 
+// --- App() (ОНОВЛЕНО) ---
 function App(): React.JSX.Element {
     const [initializing, setInitializing] = useState(true);
     const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
@@ -265,12 +246,14 @@ function App(): React.JSX.Element {
     }
 
     return (
-        <>
+        // --- ✅ 2. ОГОРТАЄМО УСЕ В GESTUREHANDLER ---
+        // (та додаємо flex: 1)
+        <GestureHandlerRootView style={{ flex: 1 }}>
             <NavigationContainer>
                 {user ? <MainAppTabNavigator /> : <AuthNavigator />}
             </NavigationContainer>
             <Toast />
-        </>
+        </GestureHandlerRootView>
     );
 }
 

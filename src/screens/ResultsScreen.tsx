@@ -6,18 +6,18 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { MainAppStackParamList } from '../../App';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { COLORS, FONT_SIZES, PADDING, MARGIN } from '../styles/theme';
-// --- ✅ 1. ВИПРАВЛЕНИЙ ІМПОРТ ---
-// Ми імпортуємо *як модуль*, щоб уникнути помилок 'undefined'
 import * as XpModule from '../services/xpService';
 import auth from '@react-native-firebase/auth';
 
-// --- ✅ 2. ОНОВЛЮЄМО ТИП ---
+// --- ✅ 1. ІМПОРТУЄМО СЕРВІС ДОСЯГНЕНЬ ---
+import { checkAchievementsOnTestComplete } from '../services/achievementService';
+
 type ResultsScreenRouteProp = RouteProp<{
     params: {
         score: number;
         total: number;
         originalTestParams: MainAppStackParamList['Test'];
-        isDoubleXp?: boolean; // <-- 'isDoubleXp' ПОВЕРНУВСЯ
+        isDoubleXp?: boolean;
     };
 }, 'params'>;
 
@@ -25,25 +25,22 @@ export default function ResultsScreen() {
     const navigation = useNavigation<any>();
     const route = useRoute<ResultsScreenRouteProp>();
 
-    // --- ✅ 3. ОТРИМУЄМО 'isDoubleXp' ---
     const { score, total, originalTestParams, isDoubleXp = false } = route.params;
 
     const percentage = Math.round((score / total) * 100);
     const currentUser = auth().currentUser;
 
-    // --- ✅ 4. ПОВЕРТАЄМО 'xpGained' ---
     const [xpGained, setXpGained] = useState(0);
 
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
 
-    // Динамічні стилі (з вашого файлу)
+    // (Динамічні стилі без змін)
     const themeStyles = {
         container: { backgroundColor: isDarkMode ? COLORS.backgroundDark : COLORS.backgroundLight },
         card: { backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.white },
         text: { color: isDarkMode ? COLORS.textDark : COLORS.textLight },
         scoreText: { color: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary },
-        // ✅ 5. ПОВЕРТАЄМО СТИЛЬ 'xpText' ---
         xpText: { color: isDarkMode ? '#FFD700' : '#E6A23C' },
         button: { backgroundColor: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary },
         buttonText: { color: COLORS.white },
@@ -51,9 +48,10 @@ export default function ResultsScreen() {
         secondaryButtonText: { color: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary },
     };
 
-    // --- ✅ 6. ПОВЕРТАЄМО ЛОГІКУ XP ---
+    // (useEffect - оновлено)
     useEffect(() => {
         if (currentUser) {
+            // --- 1. Логіка XP (без змін) ---
             let baseActiveXp = score * 5;
             let basePassiveXp = Math.round(percentage / 10);
 
@@ -65,12 +63,17 @@ export default function ResultsScreen() {
             const totalXp = baseActiveXp + basePassiveXp;
             setXpGained(totalXp);
 
-            // --- ✅ 7. ВИПРАВЛЕНИЙ ВИКЛИК ФУНКЦІЇ ---
-            // Використовуємо 'XpModule.xpService.addXP'
             XpModule.xpService.addXP(currentUser.uid, totalXp, baseActiveXp, basePassiveXp);
-        }
-    }, [currentUser, score, total, isDoubleXp]); // (Залежності виправлено)
 
+            // --- ✅ 2. ВИКЛИКАЄМО ПЕРЕВІРКУ ДОСЯГНЕНЬ ---
+            // Ми передаємо score, total та 'topic', який беремо з 'originalTestParams'
+            const topic = originalTestParams.topic || 'unknown'; // (Беремо тему з оригінальних параметрів)
+            checkAchievementsOnTestComplete(score, total, topic);
+
+        }
+    }, [currentUser, score, total, isDoubleXp, originalTestParams]); // (Додано originalTestParams в залежності)
+
+    // (Решта файлу без змін)
     const handleRetry = () => {
         navigation.replace('Test', originalTestParams);
     };
@@ -110,7 +113,6 @@ export default function ResultsScreen() {
                         {getFeedback()}
                     </Text>
 
-                    {/* --- ✅ 8. ПОВЕРТАЄМО БЛОК XP --- */}
                     <View style={styles.xpContainer}>
                         {isDoubleXp && (
                             <Text style={[styles.xpBonusText, themeStyles.xpText]}>
@@ -143,7 +145,7 @@ export default function ResultsScreen() {
     );
 }
 
-// --- ✅ 9. ПОВЕРТАЄМО СТИЛІ ДЛЯ XP ---
+// (Стилі без змін)
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -186,7 +188,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: MARGIN.large,
     },
-    // (Стилі XP додано сюди)
     xpContainer: {
         alignItems: 'center',
         marginTop: MARGIN.medium,

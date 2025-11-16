@@ -7,7 +7,6 @@ import { MainAppStackParamList } from '../../App';
 import questionsDatabase from '../data/questionsDb.json';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-// --- ✅ 1. ДОДАНО ІМПОРТ Ionicons ---
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 interface Question {
@@ -21,7 +20,6 @@ interface Question {
     theorySnippet: string;
 }
 
-// --- ✅ 2. ДОДАНО ІНТЕРФЕЙС ІНВЕНТАРЯ ---
 interface Inventory {
     hint5050?: number;
     doubleXp?: number;
@@ -56,22 +54,22 @@ function TestScreen({ route, navigation }: TestScreenProps) {
     const [showFeedback, setShowFeedback] = useState(false);
     const [timeLeft, setTimeLeft] = useState(ASSESSMENT_TIME_SECONDS);
 
-    // --- ✅ 3. ДОДАНО СТАНИ ДЛЯ ПІДСИЛЕНЬ ---
+    // (Стани для підсилень)
     const [inventory, setInventory] = useState<Inventory>({});
     const [isPowerupLoading, setIsPowerupLoading] = useState(true);
     const [isDoubleXpActive, setIsDoubleXpActive] = useState(false);
     const [hintUsedForThisQuestion, setHintUsedForThisQuestion] = useState(false);
-    const [disabledAnswers, setDisabledAnswers] = useState<number[]>([]); // Використовуємо індекси
+    const [disabledAnswers, setDisabledAnswers] = useState<number[]>([]);
 
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const scoreRef = useRef(score);
-    const currentUser = auth().currentUser; // <-- ✅ Додано currentUser
+    const currentUser = auth().currentUser;
 
     useEffect(() => {
         scoreRef.current = score;
     }, [score]);
 
-    // --- ✅ 4. ДОДАНО useEffect ДЛЯ ЗАВАНТАЖЕННЯ ІНВЕНТАРЯ ---
+    // (useEffect для завантаження інвентаря - БЕЗ ЗМІН)
     useEffect(() => {
         if (!currentUser) {
             setIsPowerupLoading(false);
@@ -92,7 +90,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
     }, [currentUser]);
 
 
-    // (Оригінальний useEffect для завантаження питань - БЕЗ ЗМІН)
+    // (useEffect для завантаження питань - БЕZ ЗМІН)
     useEffect(() => {
         const loadQuestions = async () => {
             setLoading(true);
@@ -151,7 +149,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         loadQuestions();
     }, [grade, topic, subTopic, mode, testType, duelId]);
 
-    // (Оригінальний useEffect для таймера - БЕЗ ЗМІН)
+    // (useEffect для таймера - БЕЗ ЗМІН)
     useEffect(() => {
         if (mode === 'assess' && questions.length > 0 && !loading) {
             timerRef.current = setInterval(() => {
@@ -169,7 +167,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         }
     }, [mode, questions.length, loading]);
 
-    // --- ✅ 5. ОНОВЛЕНО 'finishTest' (додано 'isDoubleXp') ---
+    // ('finishTest' - БЕЗ ЗМІН, передає isDoubleXpActive)
     const finishTest = async (finalScore: number) => {
         if (timerRef.current) clearInterval(timerRef.current);
         const currentUser = auth().currentUser;
@@ -196,12 +194,12 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         });
     };
 
-    // (Оригінальний 'handleAnswerSelect' - БЕЗ ЗМІН)
+    // ('handleAnswerSelect' - БЕЗ ЗМІН)
     const handleAnswerSelect = (index: number) => {
         if (!isAnswerSubmitted) setSelectedAnswerIndex(index);
     };
 
-    // --- ✅ 6. ОНОВЛЕНО 'handleNextQuestion' (додано скидання підсилень) ---
+    // ('handleNextQuestion' - БЕЗ ЗМІН, скидає підсилення)
     const handleNextQuestion = () => {
         if (currentQuestionIndex + 1 < questions.length) {
             setCurrentQuestionIndex(prev => prev + 1);
@@ -216,7 +214,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         }
     };
 
-    // (Оригінальний 'handleSubmitAnswer' - БЕЗ ЗМІН)
+    // ('handleSubmitAnswer' - БЕЗ ЗМІН)
     const handleSubmitAnswer = () => {
         const currentQ = questions[currentQuestionIndex];
         if (selectedAnswerIndex === null && currentQ.type === 'practice') {
@@ -244,7 +242,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         }
     };
 
-    // --- ✅ 7. ДОДАНО ЛОГІКУ ПІДСИЛЕНЬ ---
+    // (Логіка підсилень 'handleUseHint5050' - БЕЗ ЗМІН)
     const handleUseHint5050 = async () => {
         if (!currentUser || hintUsedForThisQuestion || (inventory.hint5050 || 0) <= 0) {
             Alert.alert("Brak wskazówek", "Nie masz więcej wskazówek 50/50.");
@@ -273,6 +271,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         }
     };
 
+    // (Логіка підсилень 'handleUseDoubleXp' - БЕЗ ЗМІН)
     const handleUseDoubleXp = async () => {
         if (!currentUser || isDoubleXpActive || (inventory.doubleXp || 0) <= 0) {
             Alert.alert("Brak bonusu", "Nie masz więcej bonusów XP.");
@@ -330,7 +329,6 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                     {currentQuestion.options.map((option, index) => {
                         const isSelected = selectedAnswerIndex === index;
                         const isCorrect = currentQuestion.correctAnswerIndex === index;
-                        // --- ✅ 8. ДОДАНО ПЕРЕВІРКУ ПІДКАЗКИ ---
                         const isDisabledByHint = disabledAnswers.includes(index);
 
                         let buttonStyle: any = styles.optionButton;
@@ -343,15 +341,12 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                             } else if (isSelected) {
                                 buttonStyle = [styles.optionButton, styles.incorrectOption];
                             }
-                                // --- ✅ 9. ДОДАНО ЛОГІКУ "ПОКАЗУВАТИ ПРАВИЛЬНУ" ---
-                            // (Застосовуємо 'disabled' до інших неправильних відповідей)
                             else if (!isCorrect) {
                                 buttonStyle = [styles.optionButton, styles.disabledOption];
                             }
                         } else if (isSelected) {
                             buttonStyle = [styles.optionButton, styles.selectedOption];
                         } else if (isDisabledByHint) {
-                            // Стиль для відключених підказкою
                             buttonStyle = [styles.optionButton, styles.disabledOption];
                         }
 
@@ -360,7 +355,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                                 key={index}
                                 style={buttonStyle}
                                 onPress={() => handleAnswerSelect(index)}
-                                disabled={isAnswerSubmitted || isDisabledByHint} // <-- Оновлено 'disabled'
+                                disabled={isAnswerSubmitted || isDisabledByHint}
                             >
                                 <Text style={textStyle}>{option}</Text>
                             </TouchableOpacity>
@@ -370,8 +365,8 @@ function TestScreen({ route, navigation }: TestScreenProps) {
             )}
 
             {/* --- ✅ 10. ДОДАНО БЛОК ПІДСИЛЕНЬ --- */}
-            {/* (Показуємо, якщо це не режим навчання, не теорія, і відповідь ще не дана) */}
-            {mode !== 'learn' && currentQuestion.type === 'practice' && !isAnswerSubmitted && (
+            {/* (✅ ЗМІНА: Тепер показуємо в УСІХ режимах, якщо це практика і відповідь не дана) */}
+            {currentQuestion.type === 'practice' && !isAnswerSubmitted && (
                 <View style={styles.powerUpContainer}>
                     <TouchableOpacity
                         style={[
@@ -390,7 +385,8 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                     <TouchableOpacity
                         style={[
                             styles.powerUpButton,
-                            (doubleXpCount <= 0 || isDoubleXpActive || isPowerupLoading) && styles.powerUpDisabled
+                            (doubleXpCount <= 0 || isDoubleXpActive || isPowerupLoading) && styles.powerUpDisabled,
+                            {borderColor: '#FF9800'} // Додатковий стиль для 'doubleXp'
                         ]}
                         disabled={doubleXpCount <= 0 || isDoubleXpActive || isPowerupLoading}
                         onPress={handleUseDoubleXp}
@@ -438,7 +434,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
     );
 }
 
-// --- ✅ 11. ОНОВЛЕНІ СТИЛІ ---
+// (Стилі - БЕЗ ЗМІН)
 const styles = StyleSheet.create({
     scrollView: { flex:1, backgroundColor:'#f0f8ff' },
     container: { flexGrow:1, padding:20 },
@@ -453,7 +449,6 @@ const styles = StyleSheet.create({
     selectedOption: { borderColor:'#00BCD4', borderWidth:2.5, backgroundColor:'#e0f7fa' },
     correctOption: { backgroundColor:'#c8e6c9', borderColor:'#4caf50', borderWidth:2.5 },
     incorrectOption: { backgroundColor:'#ffcdd2', borderColor:'#f44336', borderWidth:2.5 },
-    // (Новий стиль для сірих кнопок)
     disabledOption: { backgroundColor: '#BDBDBD', borderColor: '#9E9E9E', opacity: 0.7 },
     optionText: { fontSize:17, color:'#455a64', textAlign:'center' },
     correctOptionText: { fontWeight:'bold', color:'#2e7d32' },
@@ -469,13 +464,11 @@ const styles = StyleSheet.create({
     feedbackTextBold: { fontSize:16, color:'#555', marginBottom:8, fontWeight:'bold' },
     feedbackTextNormal: { fontWeight:'normal' },
     timerText: { fontSize:18, fontWeight:'bold', color:'#d32f2f', textAlign:'center', marginBottom:15 },
-
-    // --- Нові стилі для підсилень (додано) ---
     powerUpContainer: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        marginTop: 5, // Зменшено відступ
-        marginBottom: 10, // Додано відступ знизу
+        marginTop: 5,
+        marginBottom: 10,
     },
     powerUpButton: {
         flexDirection: 'row',
