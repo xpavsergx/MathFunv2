@@ -20,9 +20,9 @@ type QuestionsDatabase = {
     [grade: string]: { [topic: string]: { [subTopic: string]: any[] } };
 };
 
-// --- 1. ZMIANA: KÓŁKA SĄ MNIEJSZE ---
+// --- Stała bez zmian ---
 const { width } = Dimensions.get('window');
-const CIRCLE_DIAMETER = width / 2.5; // Kółka mają ~40% szerokości ekranu
+const CIRCLE_DIAMETER = width / 2.5;
 
 function TopicListScreen({ route, navigation }: TopicListProps) {
     const { grade } = route.params;
@@ -37,6 +37,7 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
         return Object.keys(topicsForGrade);
     }, [db, grade]);
 
+    // --- ✅ Logika nawigacji nietknięta (nawiguje do SubTopicList) ---
     const handleTopicPress = (topic: string) => {
         navigation.navigate('SubTopicList', { grade: grade, topic: topic });
     };
@@ -53,8 +54,7 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
         </TouchableOpacity>
     );
 
-    // --- 2. ZMIANA: Usunięto 'renderContent', nowa logika jest w JSX ---
-
+    // --- Cały JSX zostaje bez zmian ---
     return (
         <ImageBackground
             source={backgroundImage}
@@ -70,24 +70,21 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
                             Brak działów dla tej klasy.
                         </Text>
                     ) : (
-                        // --- 3. ZMIANA: Nowy układ "węża" (snake layout) ---
                         <View style={styles.pathContainer}>
                             {topics.map((topic, index) => (
                                 <View
                                     key={topic}
                                     style={[
                                         styles.circleContainer,
-                                        // Stosujemy naprzemienne wyrównanie
                                         index % 2 === 0
-                                            ? styles.circleContainerLeft // Parzyste (0, 2, 4...) idą na lewo
-                                            : styles.circleContainerRight // Nieparzyste (1, 3, 5...) idą na prawo
+                                            ? styles.circleContainerLeft
+                                            : styles.circleContainerRight
                                     ]}
                                 >
                                     {renderCircleButton(topic, index)}
                                 </View>
                             ))}
                         </View>
-                        // --- Koniec zmiany ---
                     )}
                 </ScrollView>
             </View>
@@ -95,7 +92,7 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
     );
 }
 
-// --- 4. ZMIANA: Całkowicie nowe style dla układu "węża" ---
+// --- ✅ ZMIANY WPROWADZONE TYLKO TUTAJ (STYLE) ---
 const styles = StyleSheet.create({
     backgroundImage: {
         flex: 1,
@@ -129,11 +126,11 @@ const styles = StyleSheet.create({
     // Nowy kontener na całą ścieżkę
     pathContainer: {
         width: '100%',
-        paddingHorizontal: 20, // Zapewnia margines dla kółek na krawędziach
+        paddingHorizontal: 60, // <-- ZMIANA: Z 20 na 60 (węższy "wąż")
     },
     // Kontener na pojedyncze kółko, aby umożliwić wyrównanie
     circleContainer: {
-        marginBottom: 20, // Odstęp między kółkami
+        marginBottom: 20, // Odstęp między kółkami (bez nachodzenia)
     },
     circleContainerLeft: {
         alignSelf: 'flex-start', // Wyrównaj do lewej
@@ -141,9 +138,9 @@ const styles = StyleSheet.create({
     circleContainerRight: {
         alignSelf: 'flex-end',   // Wyrównaj do prawej
     },
-    // Styl kółka (używa nowej, mniejszej stałej CIRCLE_DIAMETER)
+    // Styl kółka
     topicButton: {
-        backgroundColor: '#3A7D44',
+        backgroundColor: '#00BCD4', // <-- ZMIANA: Z zielonego na niebieski
         width: CIRCLE_DIAMETER,
         height: CIRCLE_DIAMETER,
         borderRadius: CIRCLE_DIAMETER / 2,
@@ -156,14 +153,13 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
     },
-    // Styl tekstu (z większą czcionką)
+    // Styl tekstu
     topicButtonText: {
         color: '#FFFFFF',
-        fontSize: 18, // Zwiększono z 14
+        fontSize: 18,
         fontWeight: '700',
         textAlign: 'center',
     },
 });
 
 export default TopicListScreen;
-

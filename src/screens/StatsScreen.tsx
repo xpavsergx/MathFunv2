@@ -35,6 +35,8 @@ const getTrainerName = (id: string) => {
             return 'Trener Dzielenia';
         case 'addSubtractTrainer':
             return 'Dodawanie i Odejmowanie';
+        case 'moreLessTrainer':
+            return 'O ile więcej, o ile mniej';
         default:
             return id;
     }
