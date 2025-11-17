@@ -1,65 +1,76 @@
-// src/components/AchievementBadge.tsx
+// src/Components/AchievementBadge.tsx
+
 import React from 'react';
 import { View, Text, StyleSheet, useColorScheme } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { COLORS, FONT_SIZES, MARGIN } from '../styles/theme';
-import { IAchievement } from '../config/achievements'; // Переконайся, що шлях правильний
+import { COLORS, FONT_SIZES } from '../styles/theme';
 
-interface BadgeProps {
-    badge: IAchievement & { isUnlocked: boolean };
+// --- ✅ 1. ОНОВЛЮЄМО ІНТЕРФЕЙС ---
+// Тепер ми очікуємо 'iconName'
+interface AchievementBadgeProps {
+    badge: {
+        id: string;
+        title: string;
+        description: string;
+        isUnlocked: boolean;
+        iconName: keyof typeof Ionicons.glyphMap; // Очікуємо назву іконки
+    };
 }
 
-const AchievementBadge = ({ badge }: BadgeProps) => {
-    const isDarkMode = useColorScheme() === 'dark';
+const AchievementBadge: React.FC<AchievementBadgeProps> = ({ badge }) => {
+    const { title, isUnlocked, iconName } = badge;
+    const colorScheme = useColorScheme();
+    const isDarkMode = colorScheme === 'dark';
 
-    const theme = {
-        lockedBg: isDarkMode ? '#333' : '#E0E0E0',
-        lockedIcon: isDarkMode ? '#555' : '#BDBDBD',
-        unlockedBg: isDarkMode ? COLORS.cardDark : '#FFFDE7',
-        unlockedIcon: COLORS.accent, // Помаранчевий/золотий
-        text: isDarkMode ? COLORS.textDark : COLORS.textLight,
-    };
+    // Динамічні кольори
+    const unlockedColor = isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary;
+    const lockedColor = isDarkMode ? COLORS.greyDarkTheme : COLORS.grey;
+    const iconColor = isUnlocked ? unlockedColor : lockedColor;
+    const textColor = isDarkMode ? COLORS.textDark : COLORS.textLight;
 
     return (
         <View style={styles.container}>
-            <View style={[
-                styles.iconContainer,
-                { backgroundColor: badge.isUnlocked ? theme.unlockedBg : theme.lockedBg }
-            ]}>
+            <View style={[styles.iconContainer, {
+                backgroundColor: isUnlocked ? (isDarkMode ? '#333' : '#E0F7FA') : (isDarkMode ? '#222' : '#F0F0F0'),
+                borderColor: iconColor,
+            }]}>
                 <Ionicons
-                    name={badge.isUnlocked ? badge.icon : 'lock-closed'}
-                    size={32}
-                    color={badge.isUnlocked ? theme.unlockedIcon : theme.lockedIcon}
+                    // --- ✅ 2. ВИКОРИСТОВУЄМО ДИНАМІЧНУ ІКОНКУ ---
+                    name={isUnlocked ? iconName : "lock-closed-outline"}
+                    size={30}
+                    color={iconColor}
                 />
             </View>
-            <Text style={[styles.title, { color: theme.text }]} numberOfLines={2}>
-                {badge.isUnlocked ? badge.name : '???'}
+            <Text
+                style={[styles.title, { color: isUnlocked ? textColor : lockedColor }]}
+                numberOfLines={1}
+            >
+                {title}
             </Text>
         </View>
     );
 };
 
+// (Стилі можна трохи покращити для кращого вигляду)
 const styles = StyleSheet.create({
     container: {
-        width: 80, // Фіксована ширина для елемента галереї
-        marginHorizontal: MARGIN.small / 2,
+        width: 90, // Фіксована ширина
         alignItems: 'center',
+        marginHorizontal: 8,
     },
     iconContainer: {
         width: 64,
         height: 64,
-        borderRadius: 32, // Круг
+        borderRadius: 32, // Робимо круглим
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: MARGIN.small,
-        elevation: 2,
-        borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.05)',
+        borderWidth: 2,
+        marginBottom: 8,
     },
     title: {
         fontSize: FONT_SIZES.small,
-        textAlign: 'center',
         fontWeight: '500',
+        textAlign: 'center',
     },
 });
 

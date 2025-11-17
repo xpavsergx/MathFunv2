@@ -2,121 +2,106 @@
 
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-import { MainAppStackParamList } from '@/App';
+import { checkAndGrantAchievements } from './achievementService';
 
-export interface TestResultData {
-    grade: number;
-    topic: string;
-    subTopic?: string;
-    testType: MainAppStackParamList['Test']['testType'];
-    score: number;
-    total: number;
-    percentage: number;
-    completedAt: firestore.FieldValue | firestore.Timestamp;
-};
-
-export const saveTestResult = async (params: MainAppStackParamList['Test'], score: number, total: number): Promise<void> => {
-    try {
-        const user = auth().currentUser;
-        if (!user) {
-            console.error("[Stats] User not logged in. Cannot save test result.");
-            return;
-        }
-        if (total === 0) {
-            console.log("[Stats] Test has 0 questions. Skipping save.");
-            return;
-        }
-
-        console.log(`[Stats] Attempting to save test result for user ${user.uid}...`);
-
-        const resultData: Omit<TestResultData, 'completedAt'> & { completedAt: firestore.FieldValue } = {
-            grade: params.grade,
-            topic: params.topic,
-            subTopic: params.subTopic,
-            testType: params.testType,
-            score,
-            total,
-            percentage: Math.round((score / total) * 100),
-            completedAt: firestore.FieldValue.serverTimestamp(),
-        };
-
-        // Логуємо дані, які будемо записувати
-        console.log("[Stats] Data to be saved:", JSON.stringify(resultData, null, 2));
-
-        await firestore()
-            .collection('users')
-            .doc(user.uid)
-            .collection('testResults')
-            .add(resultData);
-
-        console.log(`[Stats] SUCCESS: Test result saved for user ${user.uid}`);
-
-    } catch (error) {
-        // Логуємо будь-яку помилку від Firestore
-        console.error("[Stats] FIRESTORE_ERROR: Error saving test result:", error);
-    }
-};
-
-export interface WeakTopicInfo {
-    grade: number;
-    topic: string;
-    subTopic: string;
-    averageScore: number;
+// --- ✅ 1. ОНОВЛЮЄМО ІНТЕРФЕЙС ---
+export interface UserStats {
+    testsCompleted?: number;
+    correctAnswersTotal?: number;
+    flawlessTests?: number;
+    duelsWon?: number;
+    friendsCount?: number;
+    // --- Додані поля ---
+    duelsPlayed?: number;
+    duelsLost?: number;
+    duelsDraw?: number;
 }
 
-export const findWeakestTopic = async (): Promise<WeakTopicInfo | null> => {
+function getUserDocRef(userId?: string) {
+    const uid = userId || auth().currentUser?.uid;
+    if (!uid) return null;
+    return firestore().collection('users').doc(uid);
+}
+
+/**
+ * Оновлює статистику користувача у Firestore.
+ * (Функція без змін, але тепер вона підтримує нові поля)
+ */
+export async function incrementUserStats(statsToIncrement: { [key in keyof UserStats]?: number }) {
     const user = auth().currentUser;
-    if (!user) return null;
+    if (!user) return;
+
+    const userDocRef = getUserDocRef(user.uid);
+    if (!userDocRef) return;
 
     try {
-        const snapshot = await firestore()
-            .collection('users')
-            .doc(user.uid)
-            .collection('testResults')
-            .where('testType', '==', 'subTopic')
-            .limit(100)
-            .get();
-
-        if (snapshot.empty) return null;
-
-        const results: TestResultData[] = snapshot.docs.map(doc => doc.data() as TestResultData);
-
-        const performanceBySubTopic: { [key: string]: { sum: number; count: number; grade: number; topic: string } } = {};
-
-        results.forEach(res => {
-            if (!res.subTopic) return;
-            const key = `${res.grade}|${res.topic}|${res.subTopic}`;
-            if (!performanceBySubTopic[key]) {
-                performanceBySubTopic[key] = { sum: 0, count: 0, grade: res.grade, topic: res.topic };
-            }
-            performanceBySubTopic[key].sum += res.percentage;
-            performanceBySubTopic[key].count += 1;
-        });
-
-        let weakestTopic: WeakTopicInfo | null = null;
-        let lowestScore = 101;
-
-        for (const key in performanceBySubTopic) {
-            const stats = performanceBySubTopic[key];
-            if (stats.count >= 2) {
-                const averageScore = stats.sum / stats.count;
-                if (averageScore < lowestScore && averageScore < 75) {
-                    lowestScore = averageScore;
-                    const [grade, topic, subTopic] = key.split('|');
-                    weakestTopic = {
-                        grade: Number(grade),
-                        topic,
-                        subTopic,
-                        averageScore: Math.round(averageScore),
-                    };
-                }
+        const updateData: { [key: string]: any } = {};
+        for (const key in statsToIncrement) {
+            const value = statsToIncrement[key as keyof UserStats];
+            if (value !== undefined) {
+                updateData[key] = firestore.FieldValue.increment(value);
             }
         }
 
-        return weakestTopic;
+        if (Object.keys(updateData).length === 0) {
+            return; // Немає чого оновлювати
+        }
+
+        await userDocRef.set(updateData, { merge: true });
+
+        // Запускаємо перевірку досягнень
+        checkAndGrantAchievements(user.uid).catch(err => {
+            console.error("Фонова перевірка досягнень не вдалася:", err);
+        });
 
     } catch (error) {
-        console.error("Error finding weakest topic:", error);
+        console.error("Помилка при оновленні статистики:", error);
+    }
+}
+
+// --- ✅ 2. НОВА ФУНКЦІЯ ДЛЯ СТАТИСТИКИ ДУЕЛІ ---
+/**
+ * Оновлює статистику дуелей (перемога, поразка, нічия).
+ * Викликається з DuelResultScreen.
+ */
+export async function updateDuelStats(result: 'win' | 'lose' | 'draw') {
+    const user = auth().currentUser;
+    if (!user) return;
+
+    let statsToUpdate: { [key in keyof UserStats]?: number } = {
+        duelsPlayed: 1, // Кожна дуель - це +1 зіграна
+    };
+
+    if (result === 'win') {
+        statsToUpdate.duelsWon = 1;
+    } else if (result === 'lose') {
+        statsToUpdate.duelsLost = 1;
+    } else if (result === 'draw') {
+        statsToUpdate.duelsDraw = 1;
+    }
+
+    // Використовуємо існуючу функцію, щоб не дублювати логіку
+    // Вона також автоматично викличе перевірку досягнень (напр. "Виграти 1 дуель")
+    await incrementUserStats(statsToUpdate);
+}
+
+
+/**
+ * Отримує поточну статистику користувача.
+ * (Функція без змін)
+ */
+export async function getUserStats(): Promise<UserStats | null> {
+    const userDocRef = getUserDocRef();
+    if (!userDocRef) return null;
+
+    try {
+        const doc = await userDocRef.get();
+        if (doc.exists) {
+            return doc.data() as UserStats;
+        }
+        return null;
+    } catch (error) {
+        console.error("Помилка отримання статистики:", error);
         return null;
     }
-};
+}

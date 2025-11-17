@@ -1,5 +1,6 @@
 // src/services/xpService.ts
 import firestore from '@react-native-firebase/firestore';
+import { checkAndGrantAchievements } from './achievementService'; // 👈 1. ІМПОРТ
 
 // Розрахунок XP для наступного рівня (100, 200, 300...)
 const calculateXpToNextLevel = (level: number) => {
@@ -17,13 +18,12 @@ const addXP = async (userId: string, totalXp: number, activeXp: number, passiveX
     if (!userId || totalXp === 0) return;
 
     const userRef = firestore().collection('users').doc(userId);
+    let levelIncreased = false; // Прапорець, що рівень змінився
 
     try {
         await firestore().runTransaction(async (transaction) => {
             const userDoc = await transaction.get(userRef);
             if (!userDoc.exists) {
-                // Якщо документ не існує, ми не можемо його оновити.
-                // Можливо, варто створити його, але це може бути ознакою іншої проблеми.
                 console.warn(`User document ${userId} not found. Cannot add XP.`);
                 return;
             }
@@ -36,13 +36,12 @@ const addXP = async (userId: string, totalXp: number, activeXp: number, passiveX
             let newXp = currentXp + totalXp;
             let newLevel = currentLevel;
 
-            // Перевірка підвищення рівня (можливо, кілька разів)
+            // Перевірка підвищення рівня
             while (newXp >= xpToNextLevel) {
-                newXp = newXp - xpToNextLevel; // Віднімаємо поріг старого рівня
-                newLevel += 1; // Підвищуємо рівень
-                xpToNextLevel = calculateXpToNextLevel(newLevel); // Розраховуємо новий поріг
-
-                // (Тут можна додати логіку для "Level Up" нотифікації)
+                newXp = newXp - xpToNextLevel;
+                newLevel += 1;
+                xpToNextLevel = calculateXpToNextLevel(newLevel);
+                levelIncreased = true; // Позначаємо, що був Level Up
             }
 
             // Оновлюємо документ користувача
@@ -50,11 +49,20 @@ const addXP = async (userId: string, totalXp: number, activeXp: number, passiveX
                 xp: newXp,
                 level: newLevel,
                 xpToNextLevel: xpToNextLevel,
-                totalXpGained: firestore.FieldValue.increment(totalXp), // Загальна статистика
+                totalXpGained: firestore.FieldValue.increment(totalXp),
             });
         });
 
-        // (Тут можна також оновити статистику 'userStatsService', якщо потрібно)
+        // --- 👇 ГОЛОВНА ІНТЕГРАЦІЯ ---
+        // 2. Викликаємо перевірку ТІЛЬКИ ЯКЩО змінився рівень
+        //    Або можна викликати завжди, якщо є досягнення за XP.
+        //    Давай для простоти викликати завжди, коли додається XP.
+        //    (Або, що краще, якщо був Level Up)
+        if (levelIncreased) {
+            checkAndGrantAchievements(userId).catch(err => {
+                console.error("Фонова перевірка досягнень (Level Up) не вдалася:", err);
+            });
+        }
 
     } catch (error) {
         console.error("Błąd podczas dodawania XP:", error);

@@ -9,8 +9,11 @@ import { COLORS, FONT_SIZES, PADDING, MARGIN } from '../styles/theme';
 import * as XpModule from '../services/xpService';
 import auth from '@react-native-firebase/auth';
 
-// --- ✅ 1. ІМПОРТУЄМО СЕРВІС ДОСЯГНЕНЬ ---
-import { checkAchievementsOnTestComplete } from '../services/achievementService';
+// --- ✅ 1. ІМПОРТУЄМО ПРАВИЛЬНИЙ СЕРВІС СТАТИСТИКИ ---
+import { incrementUserStats } from '../services/userStatsService';
+
+// --- ❌ 2. ВИДАЛЯЄМО СТАРИЙ ІМПОРТ ---
+// import { checkAchievementsOnTestComplete } from '../services/achievementService'; // (ВИДАЛЕНО)
 
 type ResultsScreenRouteProp = RouteProp<{
     params: {
@@ -35,7 +38,6 @@ export default function ResultsScreen() {
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
 
-    // (Динамічні стилі без змін)
     const themeStyles = {
         container: { backgroundColor: isDarkMode ? COLORS.backgroundDark : COLORS.backgroundLight },
         card: { backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.white },
@@ -48,10 +50,12 @@ export default function ResultsScreen() {
         secondaryButtonText: { color: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary },
     };
 
-    // (useEffect - оновлено)
+    // --- ✅ 3. ОНОВЛЮЄМО useEffect ---
     useEffect(() => {
         if (currentUser) {
-            // --- 1. Логіка XP (без змін) ---
+
+            // --- Логіка XP (залишається, вона правильна) ---
+            // Вона АВТОМАТИЧНО перевірить досягнення за РІВЕНЬ
             let baseActiveXp = score * 5;
             let basePassiveXp = Math.round(percentage / 10);
 
@@ -59,26 +63,33 @@ export default function ResultsScreen() {
                 baseActiveXp = baseActiveXp * 2;
                 basePassiveXp = basePassiveXp * 2;
             }
-
             const totalXp = baseActiveXp + basePassiveXp;
             setXpGained(totalXp);
-
             XpModule.xpService.addXP(currentUser.uid, totalXp, baseActiveXp, basePassiveXp);
 
-            // --- ✅ 2. ВИКЛИКАЄМО ПЕРЕВІРКУ ДОСЯГНЕНЬ ---
-            // Ми передаємо score, total та 'topic', який беремо з 'originalTestParams'
-            const topic = originalTestParams.topic || 'unknown'; // (Беремо тему з оригінальних параметрів)
-            checkAchievementsOnTestComplete(score, total, topic);
+            // --- Логіка Статистики (НОВА) ---
+            // Вона АВТОМАТИЧНО перевірить досягнення за СТАТИСТИКУ
+            // (Ми оновлюємо статистику, лише якщо це не дуель,
+            // або якщо ми хочемо, щоб дуелі теж зараховувались - тоді це правильно)
+            incrementUserStats({
+                testsCompleted: 1,
+                correctAnswersTotal: score,
+                // Додаємо 1 до "бездоганних тестів", лише якщо рахунок 100%
+                flawlessTests: (score === total && total > 0) ? 1 : 0,
+            });
 
+            // --- ❌ 4. ВИДАЛЯЄМО СТАРИЙ КОД, ЩО СПРИЧИНЯВ ПОМИЛКУ ---
+            // const topic = ... (ВИДАЛЕНО)
+            // checkAchievementsOnTestComplete(...); // (ВИДАЛЕНО)
         }
-    }, [currentUser, score, total, isDoubleXp, originalTestParams]); // (Додано originalTestParams в залежності)
+    }, [currentUser, score, total, isDoubleXp, originalTestParams]); // (Залежності залишаємо)
 
-    // (Решта файлу без змін)
     const handleRetry = () => {
         navigation.replace('Test', originalTestParams);
     };
 
     const handleFinish = () => {
+        // Логіка повернення до списку підтем
         navigation.navigate('HomeStack', {
             screen: 'SubTopicList',
             params: {
@@ -100,19 +111,15 @@ export default function ResultsScreen() {
             <View style={styles.content}>
                 <View style={[styles.card, themeStyles.card]}>
                     <Text style={[styles.title, themeStyles.text]}>Test Ukończony!</Text>
-
                     <Text style={[styles.scoreText, themeStyles.scoreText]}>
                         {score} / {total}
                     </Text>
-
                     <Text style={[styles.percentageText, themeStyles.text]}>
                         ({percentage}%)
                     </Text>
-
                     <Text style={[styles.feedbackText, themeStyles.text]}>
                         {getFeedback()}
                     </Text>
-
                     <View style={styles.xpContainer}>
                         {isDoubleXp && (
                             <Text style={[styles.xpBonusText, themeStyles.xpText]}>
@@ -123,7 +130,6 @@ export default function ResultsScreen() {
                             + {xpGained} XP
                         </Text>
                     </View>
-
                 </View>
 
                 <View style={styles.buttonContainer}>
@@ -131,7 +137,6 @@ export default function ResultsScreen() {
                         <Ionicons name="refresh-outline" size={20} color={COLORS.white} />
                         <Text style={[styles.buttonText, themeStyles.buttonText]}>Spróbuj ponownie</Text>
                     </TouchableOpacity>
-
                     <TouchableOpacity
                         style={[styles.button, themeStyles.secondaryButton]}
                         onPress={handleFinish}

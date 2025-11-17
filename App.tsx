@@ -1,6 +1,7 @@
 // App.tsx
 
 import React, { useState, useEffect } from 'react';
+// --- ✅ Виправлено імпорт (додано дефіс) ---
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -8,14 +9,22 @@ import { ActivityIndicator, View, StyleSheet, useColorScheme, Platform } from 'r
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Toast from 'react-native-toast-message';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
-
-// --- ✅ 1. ІМПОРТУЄМО GESTURE HANDLER ---
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
-// --- Importujemy style ---
 import { COLORS } from './src/styles/theme';
 
-// --- Ekrany ---
+// --- ✅ Імпортуємо типи з окремого файлу ---
+import {
+    AuthStackParamList,
+    MainAppStackParamList,
+    TheoryStackParamList,
+    GamesStackParamList,
+    FriendsStackParamList,
+    ProfileStackParamList,
+    ActivityStackParamList,
+    AppTabParamList
+} from './src/navigation/types';
+
+// --- Імпорти екранів ---
 import MainScreen from './src/screens/MainScreen';
 import GradeSelectionScreen from './src/screens/GradeSelectionScreen';
 import TopicListScreen from './src/screens/TopicListScreen';
@@ -30,77 +39,22 @@ import RegisterScreen from './src/screens/RegisterScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import UserDetailsScreen from './src/screens/UserDetailsScreen';
 import TheoryGradeSelectionScreen from './src/screens/TheoryGradeSelectionScreen';
-import TheoryScreen from './src/screens/TheoryScreen'; // Lista tematów teorii
+import TheoryScreen from './src/screens/TheoryScreen';
 import TheorySubTopicListScreen from './src/screens/TheorySubTopicListScreen';
 import TheoryDetailScreen from './src/screens/TheoryDetailScreen';
-import GamesScreen from './src/screens/GamesScreen'; // Ekran Gier
+import GamesScreen from './src/screens/GamesScreen';
 import FriendsScreen from './src/screens/FriendsScreen';
 import DuelSetupScreen from './src/screens/DuelSetupScreen';
 import StatsScreen from './src/screens/StatsScreen';
-import ActivityScreen from './src/screens/ActivityScreen'; // Ekran Aktywności
+import ActivityScreen from './src/screens/ActivityScreen';
 import MatchstickEquationGame from './src/screens/MatchstickEquationGame';
 import MoreLessTrainerScreen4 from './src/screens/MoreLessTrainerScreen4';
 import StoreScreen from './src/screens/StoreScreen';
+import DuelResultScreen from './src/screens/DuelResultScreen';
+// --- ✅ Додано нову гру ---
+import SpeedyCountGame from './src/screens/SpeedyCountGame';
 
-// --- Typy (без змін, як у вашому файлі) ---
-export type AuthStackParamList = {
-    Login: undefined;
-    Register: undefined;
-};
-export type MainAppStackParamList = {
-    Main: undefined;
-    GradeSelection: undefined;
-    TopicList: { grade: number };
-    SubTopicList: { grade: number; topic: string };
-    Test: {
-        grade: number;
-        topic: string;
-        subTopic?: string;
-        mode?: 'learn' | 'assess' | 'duel';
-        testType?: 'subTopic' | 'mainTopic' | 'duel' | 'gradeRandom' | 'gradeAssessment';
-        duelId?: string;
-    };
-    MultiplicationTrainer: { grade: number; topic: string; subTopic: string };
-    PlusMinusTrainer: { grade: number; topic: string; subTopic: string };
-    DivisionTrainer: { grade: number; topic: string; subTopic: string };
-    MoreLessTrainer4: { grade: number; topic: string; subTopic: string };
-    Results: {
-        score: number;
-        total: number;
-        originalTestParams: MainAppStackParamList['Test'];
-    };
-    TheoryGradeSelection: undefined;
-    TheoryTopicList: { grade: string };
-    TheorySubTopicList: { grade: string; topic: string };
-    TheoryDetail: { grade: string; topic: string; subTopic: string };
-};
-export type TheoryStackParamList = {
-    TheoryGradeSelection: undefined;
-    TheoryTopicList: { grade: string };
-    TheorySubTopicList: { grade: string; topic: string };
-    TheoryDetail: { grade: string; topic: string; subTopic: string };
-};
-export type GamesStackParamList = {
-    GamesMain: undefined;
-    MatchstickGame: undefined;
-};
-export type FriendsStackParamList = { Friends: undefined; DuelSetup: { friendId: string; friendEmail: string }; };
-export type ProfileStackParamList = {
-    ProfileMain: undefined;
-    UserDetails: undefined;
-    StatsScreen: undefined;
-    Store: undefined;
-};
-export type ActivityStackParamList = { ActivityMain: undefined; };
-export type AppTabParamList = {
-    HomeStack: undefined;
-    GamesStack: undefined;
-    FriendsStack: undefined;
-    ActivityStack: undefined;
-    Profil: undefined;
-};
-
-// --- Nawigatory (без змін, як у вашому файлі) ---
+// --- Nawigatory ---
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainAppStackParamList>();
 const GamesStackNav = createNativeStackNavigator<GamesStackParamList>();
@@ -109,12 +63,12 @@ const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 const ActivityStackNav = createNativeStackNavigator<ActivityStackParamList>();
 const Tab = createBottomTabNavigator<AppTabParamList>();
 
-// --- Funkcje Stack Navigator (без змін, як у вашому файлі) ---
+// --- Функції Stack Navigator ---
 function HomeStackNavigator() {
     return (
         <MainStack.Navigator initialRouteName="Main">
             <MainStack.Screen name="Main" component={MainScreen} options={{ headerShown: false }} />
-            <MainStack.Screen name="GradeSelection" component={GradeSelectionScreen} options={{ title: 'Praktyka - Wybierz klasę' }} />
+            <MainStack.Screen name="GradeSelection" component={GradeSelectionScreen} options={{ title: 'Praktyка - Wybierz klasę' }} />
             <MainStack.Screen name="TopicList" component={TopicListScreen} options={({ route }) => ({ title: `Klasa ${route.params.grade} - Działy` })} />
             <MainStack.Screen name="SubTopicList" component={SubTopicListScreen} options={({ route }) => ({ title: route.params.topic })} />
             <MainStack.Screen name="Test" component={TestScreen} options={({ route }) => ({ title: (route.params.subTopic || route.params.topic || 'Test') })} />
@@ -127,6 +81,11 @@ function HomeStackNavigator() {
                 options={({ route }) => ({ title: route.params.subTopic })}
             />
             <MainStack.Screen name="Results" component={ResultsScreen} options={{ title: 'Wyniki Testu' }} />
+            <MainStack.Screen
+                name="DuelResult"
+                component={DuelResultScreen}
+                options={{ title: 'Wynik Pojedynku', headerShown: false }}
+            />
             <MainStack.Screen name="TheoryGradeSelection" component={TheoryGradeSelectionScreen} options={{ title: 'Teoria - Wybierz Klasę' }} />
             <MainStack.Screen name="TheoryTopicList" component={TheoryScreen} options={({ route }) => ({ title: `Działy (Klasa ${route.params.grade})` })} />
             <MainStack.Screen name="TheorySubTopicList" component={TheorySubTopicListScreen} options={({ route }) => ({ title: route.params.topic })} />
@@ -134,14 +93,22 @@ function HomeStackNavigator() {
         </MainStack.Navigator>
     );
 }
+
 function GamesStackNavigator() {
     return (
         <GamesStackNav.Navigator>
             <GamesStackNav.Screen name="GamesMain" component={GamesScreen} options={{ title: 'Gry' }} />
             <GamesStackNav.Screen name="MatchstickGame" component={MatchstickEquationGame} options={{ title: 'Równania z Zapałkami' }} />
+            {/* --- ✅ Додано нову гру --- */}
+            <GamesStackNav.Screen
+                name="SpeedyCountGame"
+                component={SpeedyCountGame}
+                options={{ title: 'Szybkie Liczenie', headerShown: false }}
+            />
         </GamesStackNav.Navigator>
     );
 }
+
 function FriendsStackNavigator() {
     return (
         <FriendsStackNav.Navigator>
@@ -222,7 +189,7 @@ function AuthNavigator() {
     );
 }
 
-// --- App() (ОНОВЛЕНО) ---
+// --- App() ---
 function App(): React.JSX.Element {
     const [initializing, setInitializing] = useState(true);
     const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
@@ -246,8 +213,6 @@ function App(): React.JSX.Element {
     }
 
     return (
-        // --- ✅ 2. ОГОРТАЄМО УСЕ В GESTUREHANDLER ---
-        // (та додаємо flex: 1)
         <GestureHandlerRootView style={{ flex: 1 }}>
             <NavigationContainer>
                 {user ? <MainAppTabNavigator /> : <AuthNavigator />}
@@ -257,6 +222,7 @@ function App(): React.JSX.Element {
     );
 }
 
+// --- Стилі ---
 const styles = StyleSheet.create({
     loadingContainer: {
         flex: 1,

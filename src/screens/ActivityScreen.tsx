@@ -8,11 +8,12 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { formatDistanceToNow } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { acceptFriendRequest, rejectFriendRequest } from '../services/friendService';
+// --- ✅ 1. ІМПОРТУЄМО ОБИДВІ ФУНКЦІЇ ВІДХИЛЕННЯ ---
+import { acceptFriendRequest, rejectFriendRequest, rejectDuelRequest } from '../services/friendService';
 import { findWeakestTopic, WeakTopicInfo } from '../services/userStatsService';
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
-// Оновлюємо інтерфейс сповіщення, додаючи поля для дуелі
+// (Інтерфейс Notification - без змін)
 export interface Notification {
     id: string;
     type: 'achievement' | 'friend_request' | 'friend_accepted' | 'duel_request';
@@ -23,13 +24,13 @@ export interface Notification {
     read: boolean;
     fromUserId?: string;
     fromUserNickname?: string;
-    // Дані для дуелі
     duelId?: string;
     grade?: number;
     topic?: string;
 }
 
 function ActivityScreen() {
+    // (Стани та хуки - без змін)
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
     const [weakestTopic, setWeakestTopic] = useState<WeakTopicInfo | null>(null);
@@ -54,7 +55,6 @@ function ActivityScreen() {
             setLoading(false);
             return;
         }
-
         const subscriber = firestore()
             .collection('users')
             .doc(currentUser.uid)
@@ -69,20 +69,18 @@ function ActivityScreen() {
                 setNotifications(fetchedNotifications);
                 setLoading(false);
             });
-
         return () => subscriber();
     }, [currentUser]);
 
+    // (handleAcceptFriend, handleRejectFriend, handlePracticeWeakTopic, handleStartDuel - без змін)
     const handleAcceptFriend = async (notification: Notification) => {
         if (!notification.fromUserId || !notification.fromUserNickname) return;
         await acceptFriendRequest(notification.fromUserId, notification.fromUserNickname, notification.id);
     };
-
     const handleRejectFriend = async (notification: Notification) => {
         if (!currentUser || !notification.id) return;
         await rejectFriendRequest(notification.id);
     };
-
     const handlePracticeWeakTopic = () => {
         if (weakestTopic) {
             navigation.navigate('HomeStack', {
@@ -97,19 +95,16 @@ function ActivityScreen() {
             });
         }
     };
-
-    // Нова логіка для прийняття виклику на дуель
     const handleStartDuel = (notification: Notification) => {
         if (!notification.duelId || !notification.grade || !notification.topic) {
             Alert.alert("Błąd", "Brak pełnych informacji o pojedynku. Spróbuj ponownie.");
             return;
         }
-        // Переходимо на екран тестування в режимі дуелі
         navigation.navigate('HomeStack', {
             screen: 'Test',
             params: {
                 mode: 'duel',
-                testType: 'duel', // Новий тип тесту спеціально для дуелей
+                testType: 'duel',
                 duelId: notification.duelId,
                 grade: notification.grade,
                 topic: notification.topic,
@@ -117,13 +112,19 @@ function ActivityScreen() {
         });
     };
 
+    // --- ✅ 2. НОВА ФУНКЦІЯ (для відхилення дуелі) ---
+    const handleRejectDuel = async (notification: Notification) => {
+        if (!notification.duelId || !notification.fromUserId) {
+            Alert.alert("Błąd", "Brak informacji o pojedynku, aby go odrzucić.");
+            return;
+        }
+        await rejectDuelRequest(notification.id, notification.duelId, notification.fromUserId);
+    };
+
+
+    // --- ✅ 3. ОНОВЛЕНИЙ RENDER ITEM (показує кнопки для дуелей) ---
     const renderItem = ({ item }: { item: Notification }) => (
-        <TouchableOpacity
-            // Робимо картку клікабельною тільки для дуелей
-            onPress={() => item.type === 'duel_request' ? handleStartDuel(item) : null}
-            disabled={item.type !== 'duel_request'}
-            style={[styles.notificationCard, !item.read && styles.unreadCard]}
-        >
+        <View style={[styles.notificationCard, !item.read && styles.unreadCard]}>
             <Ionicons name={item.icon} size={30} color={item.type === 'achievement' ? '#FFC107' : (item.type === 'duel_request' ? '#F44336' : '#00BCD4')} style={styles.icon} />
             <View style={styles.textContainer}>
                 <Text style={styles.title}>{item.title}</Text>
@@ -132,6 +133,8 @@ function ActivityScreen() {
                     {item.createdAt ? formatDistanceToNow(item.createdAt.toDate(), { addSuffix: true, locale: pl }) : 'chwilę temu'}
                 </Text>
             </View>
+
+            {/* Кнопки для ЗАПИТІВ У ДРУЗІ */}
             {item.type === 'friend_request' && (
                 <View style={styles.buttonGroup}>
                     <TouchableOpacity style={styles.actionButton} onPress={() => handleAcceptFriend(item)}>
@@ -142,9 +145,22 @@ function ActivityScreen() {
                     </TouchableOpacity>
                 </View>
             )}
-        </TouchableOpacity>
+
+            {/* Кнопки для ВИКЛИКІВ НА ДУЕЛЬ */}
+            {item.type === 'duel_request' && (
+                <View style={styles.buttonGroup}>
+                    <TouchableOpacity style={styles.actionButton} onPress={() => handleStartDuel(item)}>
+                        <Text style={styles.buttonTextAccept}>Podejmij</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.actionButton} onPress={() => handleRejectDuel(item)}>
+                        <Text style={styles.buttonTextReject}>Odrzuć</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+        </View>
     );
 
+    // (ListHeader - без змін)
     const ListHeader = () => (
         <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Twój osobisty trener</Text>
@@ -179,6 +195,7 @@ function ActivityScreen() {
     );
 }
 
+// --- ✅ 4. ОНОВЛЕНІ СТИЛІ (додано текстові кнопки) ---
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f0f4f8' },
     sectionContainer: { padding: 15, backgroundColor: '#fff', marginBottom: 10 },
@@ -197,8 +214,20 @@ const styles = StyleSheet.create({
     body: { fontSize: 14, color: '#666', marginTop: 2 },
     timestamp: { fontSize: 12, color: '#999', marginTop: 5 },
     emptyText: { textAlign: 'center', marginTop: 20, fontSize: 16, color: '#888' },
-    buttonGroup: { flexDirection: 'row' },
-    actionButton: { padding: 5 }
+    buttonGroup: { flexDirection: 'column' }, // (Змінено на 'column' для текстових кнопок)
+    actionButton: { padding: 5, alignItems: 'center' },
+    buttonTextAccept: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#4CAF50', // Зелений
+        paddingVertical: 4
+    },
+    buttonTextReject: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#F44336', // Червоний
+        paddingVertical: 4
+    }
 });
 
 export default ActivityScreen;

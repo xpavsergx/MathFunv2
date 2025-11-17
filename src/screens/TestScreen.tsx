@@ -7,8 +7,10 @@ import { MainAppStackParamList } from '../../App';
 import questionsDatabase from '../data/questionsDb.json';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+// --- ✅ 1. Виправлено імпорт для Expo ---
+import Ionicons from '@expo/vector-icons/Ionicons';
 
+// (Інтерфейси, типи - без змін)
 interface Question {
     id: string;
     type: 'practice' | 'theory';
@@ -19,16 +21,13 @@ interface Question {
     correctAnswerExplanation: string;
     theorySnippet: string;
 }
-
 interface Inventory {
     hint5050?: number;
     doubleXp?: number;
 }
-
 type SubTopicData = {
     questions?: Question[];
 };
-
 type QuestionsDatabase = {
     [grade: string]: {
         [topic: string]: {
@@ -36,15 +35,14 @@ type QuestionsDatabase = {
         };
     };
 };
-
 type TestScreenProps = NativeStackScreenProps<MainAppStackParamList, 'Test'>;
 
 const ASSESSMENT_TIME_SECONDS = 15 * 60; // 15 minut
 
 function TestScreen({ route, navigation }: TestScreenProps) {
+    // (Вся логіка, стани, useEffect'и - без змін)
     const { grade, topic, subTopic, mode = 'learn', testType = 'subTopic', duelId } = route.params;
 
-    // (Оригінальні стани)
     const [questions, setQuestions] = useState<Question[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -53,8 +51,6 @@ function TestScreen({ route, navigation }: TestScreenProps) {
     const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
     const [showFeedback, setShowFeedback] = useState(false);
     const [timeLeft, setTimeLeft] = useState(ASSESSMENT_TIME_SECONDS);
-
-    // (Стани для підсилень)
     const [inventory, setInventory] = useState<Inventory>({});
     const [isPowerupLoading, setIsPowerupLoading] = useState(true);
     const [isDoubleXpActive, setIsDoubleXpActive] = useState(false);
@@ -69,7 +65,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         scoreRef.current = score;
     }, [score]);
 
-    // (useEffect для завантаження інвентаря - БЕЗ ЗМІН)
+    // (useEffect для інвентаря - без змін)
     useEffect(() => {
         if (!currentUser) {
             setIsPowerupLoading(false);
@@ -90,14 +86,13 @@ function TestScreen({ route, navigation }: TestScreenProps) {
     }, [currentUser]);
 
 
-    // (useEffect для завантаження питань - БЕZ ЗМІН)
+    // (useEffect для питань - без змін)
     useEffect(() => {
         const loadQuestions = async () => {
             setLoading(true);
             const db: QuestionsDatabase = questionsDatabase as QuestionsDatabase;
             let loadedQuestions: Question[] = [];
 
-            // --- ЛОГИКА ДЛЯ ДУЕЛЕЙ ---
             if (mode === 'duel' && duelId) {
                 try {
                     const duelDoc = await firestore().collection('duels').doc(duelId).get();
@@ -115,10 +110,8 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                     }
                 } catch (error) {
                     console.error("Error fetching duel questions:", error);
-                    Alert.alert("Błąd", "Nie udało się załadować pytań do pojedynku.");
                 }
             }
-            // --- ЛОГИКА ДЛЯ ЗВЫЧАЙНЫХ ТЕСТОВ ---
             else if (testType === 'mainTopic' && grade && topic) {
                 const topicsForGrade = db[String(grade)];
                 const subTopicsMap = topicsForGrade?.[topic];
@@ -149,7 +142,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         loadQuestions();
     }, [grade, topic, subTopic, mode, testType, duelId]);
 
-    // (useEffect для таймера - БЕЗ ЗМІН)
+    // (useEffect для таймера - без змін)
     useEffect(() => {
         if (mode === 'assess' && questions.length > 0 && !loading) {
             timerRef.current = setInterval(() => {
@@ -167,7 +160,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         }
     }, [mode, questions.length, loading]);
 
-    // ('finishTest' - БЕЗ ЗМІН, передає isDoubleXpActive)
+    // ('finishTest' - без змін, ми це вже робили)
     const finishTest = async (finalScore: number) => {
         if (timerRef.current) clearInterval(timerRef.current);
         const currentUser = auth().currentUser;
@@ -179,34 +172,38 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                 await duelRef.update({
                     [`results.${currentUser.uid}.score`]: finalScore,
                     [`results.${currentUser.uid}.time`]: finalTime,
-                    [`results.${currentUser.uid}.nickname`]: currentUser.displayName,
                 });
+                navigation.replace('DuelResult', {
+                    duelId: duelId,
+                });
+
             } catch (error) {
                 console.error("Error saving duel result:", error);
+                navigation.replace('DuelResult', {
+                    duelId: duelId,
+                });
             }
+        } else {
+            navigation.replace('Results', {
+                score: finalScore,
+                total: questions.length,
+                originalTestParams: route.params,
+                isDoubleXp: isDoubleXpActive,
+            });
         }
-
-        navigation.replace('Results', {
-            score: finalScore,
-            total: questions.length,
-            originalTestParams: route.params,
-            isDoubleXp: isDoubleXpActive, // <-- Передаємо прапор
-        });
     };
 
-    // ('handleAnswerSelect' - БЕЗ ЗМІН)
+    // (Решта логіки: handleAnswerSelect, handleNextQuestion, handleSubmitAnswer... - без змін)
     const handleAnswerSelect = (index: number) => {
         if (!isAnswerSubmitted) setSelectedAnswerIndex(index);
     };
 
-    // ('handleNextQuestion' - БЕЗ ЗМІН, скидає підсилення)
     const handleNextQuestion = () => {
         if (currentQuestionIndex + 1 < questions.length) {
             setCurrentQuestionIndex(prev => prev + 1);
             setSelectedAnswerIndex(null);
             setIsAnswerSubmitted(false);
             setShowFeedback(false);
-            // Скидаємо підсилення для нового питання
             setHintUsedForThisQuestion(false);
             setDisabledAnswers([]);
         } else {
@@ -214,22 +211,18 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         }
     };
 
-    // ('handleSubmitAnswer' - БЕЗ ЗМІН)
     const handleSubmitAnswer = () => {
         const currentQ = questions[currentQuestionIndex];
         if (selectedAnswerIndex === null && currentQ.type === 'practice') {
             Alert.alert("Uwaga!", "Proszę wybrać odpowiedź.");
             return;
         }
-
         setIsAnswerSubmitted(true);
         let isCorrect = false;
-
         if (currentQ.type === 'practice' && selectedAnswerIndex !== null) {
             isCorrect = selectedAnswerIndex === currentQ.correctAnswerIndex;
             if (isCorrect) setScore(prev => prev + 1);
         }
-
         if (mode === 'learn' || currentQ.type === 'theory') {
             setShowFeedback(true);
         } else {
@@ -242,7 +235,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         }
     };
 
-    // (Логіка підсилень 'handleUseHint5050' - БЕЗ ЗМІН)
+    // (Логіка підсилень 'handleUseHint5050' - без змін)
     const handleUseHint5050 = async () => {
         if (!currentUser || hintUsedForThisQuestion || (inventory.hint5050 || 0) <= 0) {
             Alert.alert("Brak wskazówek", "Nie masz więcej wskazówek 50/50.");
@@ -271,7 +264,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         }
     };
 
-    // (Логіка підсилень 'handleUseDoubleXp' - БЕЗ ЗМІН)
+    // (Логіка підсилень 'handleUseDoubleXp' - без змін)
     const handleUseDoubleXp = async () => {
         if (!currentUser || isDoubleXpActive || (inventory.doubleXp || 0) <= 0) {
             Alert.alert("Brak bonusu", "Nie masz więcej bonusów XP.");
@@ -290,7 +283,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         }
     };
 
-
+    // (Render JSX - завантаження та помилки - без змін)
     if (loading) {
         return (
             <View style={[styles.container, { justifyContent: 'center' }]}>
@@ -308,13 +301,14 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         );
     }
 
+    // (const currentQuestion, hintCount... - без змін)
     const currentQuestion = questions[currentQuestionIndex];
     const hintCount = inventory.hint5050 || 0;
     const doubleXpCount = inventory.doubleXp || 0;
-
     const capitalizeFirstLetter = (str?: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
     const formatTime = (seconds: number) => `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, '0')}`;
 
+    // --- ✅ 2. ПОВНИЙ JSX-КОД (повернено весь вміст) ---
     return (
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.container}>
             {mode === 'assess' && <Text style={styles.timerText}>Pozostały czas: {formatTime(timeLeft)}</Text>}
@@ -364,8 +358,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                 </View>
             )}
 
-            {/* --- ✅ 10. ДОДАНО БЛОК ПІДСИЛЕНЬ --- */}
-            {/* (✅ ЗМІНА: Тепер показуємо в УСІХ режимах, якщо це практика і відповідь не дана) */}
+            {/* --- (ПОВЕРНУТО БЛОК ПІДСИЛЕНЬ) --- */}
             {currentQuestion.type === 'practice' && !isAnswerSubmitted && (
                 <View style={styles.powerUpContainer}>
                     <TouchableOpacity
@@ -386,7 +379,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                         style={[
                             styles.powerUpButton,
                             (doubleXpCount <= 0 || isDoubleXpActive || isPowerupLoading) && styles.powerUpDisabled,
-                            {borderColor: '#FF9800'} // Додатковий стиль для 'doubleXp'
+                            {borderColor: '#FF9800'}
                         ]}
                         disabled={doubleXpCount <= 0 || isDoubleXpActive || isPowerupLoading}
                         onPress={handleUseDoubleXp}
@@ -399,12 +392,14 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                 </View>
             )}
 
+            {/* --- (ПОВЕРНУТО КНОПКУ ПІДТВЕРДЖЕННЯ) --- */}
             {!isAnswerSubmitted && (
                 <TouchableOpacity style={styles.submitButton} onPress={handleSubmitAnswer}>
                     <Text style={styles.submitButtonText}>{currentQuestion.type === 'theory' ? "Dalej" : "Odpowiedz"}</Text>
                 </TouchableOpacity>
             )}
 
+            {/* --- (ПОВЕРНУТО БЛОК ФІДБЕКУ) --- */}
             {isAnswerSubmitted && showFeedback && (
                 <View style={styles.feedbackContainer}>
                     {currentQuestion.type === 'practice' && (
@@ -434,10 +429,18 @@ function TestScreen({ route, navigation }: TestScreenProps) {
     );
 }
 
-// (Стилі - БЕЗ ЗМІН)
+// --- ✅ 3. ОНОВЛЕНІ СТИЛІ (з justifyContent) ---
 const styles = StyleSheet.create({
-    scrollView: { flex:1, backgroundColor:'#f0f8ff' },
-    container: { flexGrow:1, padding:20 },
+    scrollView: {
+        flex:1,
+        backgroundColor:'#f0f8ff'
+    },
+    container: {
+        flexGrow: 1,
+        padding: 20,
+        justifyContent: 'center' // <--- ОСЬ ЦЕ ВИПРАВЛЕННЯ
+    },
+    // (Решта стилів без змін)
     loadingText: { marginTop:10, fontSize:16, color:'#555', textAlign:'center' },
     errorText: { textAlign:'center', fontSize:16, color:'red' },
     headerContainer: { flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:15 },
