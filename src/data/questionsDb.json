@@ -3,31 +3,34 @@
     "LICZBY I DZIAŁANIA": {
       "Rachunki pamięciowe - dodawanie i odejmowanie": {
         "theoryTitle": "Sprytne dodawanie i odejmowanie w pamięci",
+        "isTrainer": true,
+        "practiceKeys": ["Dodawanie i odejmowanie"],
         "questions": []
       },
       "Mnożenie i dzielenie (cd.)": {
+        "theoryTitle": "Sprytne mnożenie i dzielenie",
         "isTrainer": true,
+        "practiceKeys": ["Mnożenie", "Dzielenie"],
         "questions": []
       },
       "O ile więcej, o ile mniej": {
+        "theoryTitle": "Jak policzyć o ile więcej i o ile mniej",
         "isTrainer": true,
+        "practiceKeys": ["O ile więcej, o ile mniej"],
         "questions": []
       },
       "Ile razy więcej, ile razy mniej": {
-        "theoryTitle": "Porównywanie liczb: ile razy więcej lub mniej?",
-        "theoryContent": [],
-        "questions": [
-          { "id": "irwirm_4_q1", "type": "practice", "difficulty": "łatwe", "questionText": "Krzysiek ma 6 autek, a Paweł ma 2 razy więcej. Ile autek ma Paweł?", "options": ["8", "12", "3", "10"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Świetnie! Skoro Paweł ma '2 razy więcej', mnożymy liczbę autek Krzyśka przez 2: 6 x 2 = 12 autek.", "theorySnippet": "Gdy ktoś ma 'X razy więcej', mnożymy jego liczbę przez X, aby znaleźć większą ilość." },
-          { "id": "irwirm_4_q2", "type": "practice", "difficulty": "łatwe", "questionText": "Ania ma 15 cukierków, a jej brat Janek ma 3 razy mniej. Ile cukierków ma Janek?", "options": ["12", "18", "5", "45"], "correctAnswerIndex": 2, "correctAnswerExplanation": "Doskonale! Jeśli Janek ma '3 razy mniej', dzielimy liczbę cukierków Ani przez 3: 15 / 3 = 5 cukierków.", "theorySnippet": "Gdy ktoś ma 'X razy mniej', dzielimy jego liczbę przez X, aby znaleźć mniejszą ilość." },
-          { "id": "irwirm_4_q3", "type": "practice", "difficulty": "łatwe", "questionText": "W jednym pudełku są 4 kredki. W drugim pudełku jest 5 razy więcej kredek. Ile kredek jest w drugim pudełku?", "options": ["9", "20", "1", "24"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Zgadza się! '5 razy więcej' oznacza, że mnożymy: 4 kredki x 5 = 20 kredek.", "theorySnippet": "Pamiętaj: 'razy więcej' często oznacza mnożenie!" },
-          { "id": "irwirm_4_q4", "type": "practice", "difficulty": "średnie", "questionText": "Tata Zosi ma 36 lat. Zosia jest 4 razy młodsza od taty. Ile lat ma Zosia?", "options": ["32", "40", "9", "10"], "correctAnswerIndex": 2, "correctAnswerExplanation": "Super! Skoro Zosia jest '4 razy młodsza', dzielimy wiek taty przez 4: 36 / 4 = 9 lat.", "theorySnippet": "Gdy ktoś jest 'X razy młodszy' lub coś jest 'X razy krótsze', dzielimy większą wartość przez X." },
-          { "id": "irwirm_4_q5", "type": "practice", "difficulty": "średnie", "questionText": "W czerwonym koszyku jest 8 jabłek. W zielonym koszyku jest 2 razy więcej jabłek niż w czerwonym. Ile jabłek jest w obu koszykach razem?", "options": ["16", "10", "24", "18"], "correctAnswerIndex": 2, "correctAnswerExplanation": "Najpierw zielony koszyk: 8 x 2 = 16 jabłek. Potem razem: 8 (czerwony) + 16 (zielony) = 24 jabłka. Dwa kroki do sukcesu!", "theorySnippet": "Czasem trzeba wykonać jedno działanie, aby znaleźć potrzebną liczbę, a potem drugie, aby odpowiedzieć на pytanie." },
-          { "id": "irwirm_4_q6", "type": "practice", "difficulty": "średnie", "questionText": "Długopis kosztuje 3 zł. Album na zdjęcia jest 7 razy droższy. Ile kosztuje album?", "options": ["10 zł", "21 zł", "4 zł", "18 zł"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Świetna robota! '7 razy droższy' oznacza, że mnożymy cenę długopisu przez 7: 3 zł x 7 = 21 zł.", "theorySnippet": "Gdy coś jest 'X razy droższe' lub 'X razy większe', mnożymy mniejszą wartość przez X." },
-          { "id": "irwirm_4_q7", "type": "practice", "difficulty": "średnie", "questionText": "W jednym wazonie jest 20 kwiatów, a w drugim jest 4 razy mniej. O ile więcej kwiatów jest w pierwszym wazonie niż w drugim?", "options": ["o 5", "o 15", "o 16", "o 24"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Najpierw drugi wazon: 20 / 4 = 5 kwiatów. Potem różnica: 20 - 5 = 15. W pierwszym wazonie jest o 15 kwiatów więcej. Gratulacje!", "theorySnippet": "Aby dowiedzieć się 'o ile więcej/mniej', najpierw znajdź obie ilości, a potem oblicz ich różnicę (odejmij mniejszą od większej)." },
-          { "id": "irwirm_4_q8", "type": "practice", "difficulty": "trudne", "questionText": "Mama upiekła 24 ciasteczka. Zjadła 6, a resztę podzieliła po równo między 3 dzieci. Ile ciasteczek dostało każde dziecko?", "options": ["6", "8", "18", "5"], "correctAnswerIndex": 0, "correctAnswerExplanation": "Najpierw, ile zostało po mamie: 24 - 6 = 18 ciasteczek. Potem dzielimy resztę na 3 dzieci: 18 / 3 = 6 ciasteczek dla każdego. Pycha!", "theorySnippet": "Uważnie czytaj zadania! Czasem trzeba odjąć, zanim zaczniesz dzielić." },
-          { "id": "irwirm_4_q9", "type": "practice", "difficulty": "trudne", "questionText": "Pociąg ma 8 wagonów, a w każdym wagonie jest 10 przedziałów. W każdym przedziale może usiąść 6 osób. Ilu pasażerów zmieści się w pociągu?", "options": ["48", "140", "480", "108"], "correctAnswerIndex": 2, "correctAnswerExplanation": "Wow, to jak zagadka detektywistyczna! Najpierw przedziały w jednym wagonie: 10. Miejsc w jednym wagonie: 10 x 6 = 60 osób. Miejsc w całym pociągu: 60 osób/wagon x 8 wagonów = 480 osób. Super!", "theorySnippet": "Gdy masz kilka poziomów grup (wagony -> przedziały -> osoby), mnożysz liczby krok po kroku, aby znaleźć całkowitą ilość." },
-          { "id": "irwirm_4_q10", "type": "practice", "difficulty": "trudne", "questionText": "Ewa przeczytała książkę w 5 dni, czytając codziennie tyle samo stron. Cała książka ma 150 stron. Ile stron czytała Ewa każdego dnia?", "options": ["25", "30", "35", "40"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Fantastycznie! Aby dowiedzieć się, ile stron czytała dziennie, dzielimy całkowitą liczbę stron przez liczbę dni: 150 stron / 5 dni = 30 stron dziennie.", "theorySnippet": "Jeśli coś jest robione równomiernie przez pewien czas, dzielimy całość przez ten czas, aby znaleźć ile przypada na jedną jednostkę czasu." }
-        ]
+        "theoryTitle": "Jak policzyć ile razy więcej i ile razy mniej",
+        "isTrainer": true,
+        "practiceKeys": [],
+        "showInPractice": false,
+        "questions": []
+      },
+      "Ile razy więcej, ile razy mniej2": {
+        "theoryTitle": "Jak policzyć ile razy więcej i ile razy mniej",
+        "isTrainer": true,
+        "practiceKeys": ["Ile razy więcej, ile razy mniej"],
+        "questions": []
       },
       "Dzielenie z resztą": {
         "theoryTitle": "Co to jest reszta z dzielenia?",
@@ -59,28 +62,6 @@
           { "id": "kisl_4_q8", "type": "practice", "difficulty": "trudne", "questionText": "Sześcian jakiej liczby to 64?", "options": ["2", "8", "6", "4"], "correctAnswerIndex": 3, "correctAnswerExplanation": "Wspaniale! Musimy znaleźć liczbę, która pomnożona przez siebie trzy razy da 64. Spróbujmy: 2x2x2=8 (za mało), 3x3x3=27 (za mało), 4x4x4 = 16x4 = 64. To jest 4!", "theorySnippet": "Szukanie liczby, której sześcian znamy, to jak szukanie krawędzi sześcianu, znając jego objętość." },
           { "id": "kisl_4_q9", "type": "practice", "difficulty": "trudne", "questionText": "Ile wynosi suma kwadratu liczby 5 i sześcianu liczby 2?", "options": ["16", "29", "33", "100"], "correctAnswerIndex": 2, "correctAnswerExplanation": "Super zadanie! Kwadrat liczby 5 to 5² = 5 x 5 = 25. Sześcian liczby 2 to 2³ = 2 x 2 x 2 = 8. Suma: 25 + 8 = 33.", "theorySnippet": "Najpierw oblicz potęgi (kwadraty i sześciany), a dopiero potem wykonaj dodawanie lub odejmowanie." },
           { "id": "kisl_4_q10", "type": "practice", "difficulty": "trudne", "questionText": "Jeżeli bok kwadratu ma długość 6 cm, jakie jest jego pole? (Pole kwadratu to bok razy bok)", "options": ["12 cm²", "24 cm²", "36 cm²", "60 cm²"], "correctAnswerIndex": 2, "correctAnswerExplanation": "Brawo! Pole kwadratu to długość boku podniesiona do kwadratu. Jeśli bok ma 6 cm, to pole wynosi 6 cm x 6 cm = 36 cm² (centymetrów kwadratowych).", "theorySnippet": "Pole kwadratu o boku 'a' to a². To dlatego drugą potęgę nazywamy 'kwadratem' liczby!" }
-        ]
-      },"Ile razy więcej, ile razy mniej": {
-        "theoryTitle": "Porównujemy: ile RAZY więcej lub mniej?",
-        "theoryContent": [
-          { "type": "paragraph", "text": "Cześć! Czasem chcemy wiedzieć nie tylko 'o ile coś jest większe', ale 'ile RAZY jest większe'. Tu do gry wkracza mnożenie i dzielenie!" },
-          { "type": "subHeader", "text": "Gdy coś jest 'X razy większe'" },
-          { "type": "paragraph", "text": "Jeśli Zosia ma 2 jabłka, a Kasia ma 3 RAZY WIĘCEJ jabłek niż Zosia, to Kasia ma 2 x 3 = 6 jabłek. Mnożymy!" },
-          { "type": "subHeader", "text": "Gdy coś jest 'X razy mniejsze'" },
-          { "type": "paragraph", "text": "Jeśli Bartek ma 12 autek, a Tomek ma 4 RAZY MNIEJ autek niż Bartek, to Tomek ma 12 / 4 = 3 autka. Dzielimy!" },
-          { "type": "listItem", "text": "Pamiętaj: 'o ile więcej/mniej' to dodawanie/odejmowanie. 'Ile razy więcej/mniej' to mnożenie/dzielenie." }
-        ],
-        "questions": [
-          { "id": "irwirm_4_q1", "type": "practice", "difficulty": "łatwe", "questionText": "Krzysiek ma 6 autek, a Paweł ma 2 razy więcej. Ile autek ma Paweł?", "options": ["8", "12", "3", "10"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Świetnie! Skoro Paweł ma '2 razy więcej', mnożymy liczbę autek Krzyśka przez 2: 6 x 2 = 12 autek.", "theorySnippet": "Gdy ktoś ma 'X razy więcej', mnożymy jego liczbę przez X, aby znaleźć większą ilość." },
-          { "id": "irwirm_4_q2", "type": "practice", "difficulty": "łatwe", "questionText": "Ania ma 15 cukierków, a jej brat Janek ma 3 razy mniej. Ile cukierków ma Janek?", "options": ["12", "18", "5", "45"], "correctAnswerIndex": 2, "correctAnswerExplanation": "Doskonale! Jeśli Janek ma '3 razy mniej', dzielimy liczbę cukierków Ani przez 3: 15 / 3 = 5 cukierków.", "theorySnippet": "Gdy ktoś ma 'X razy mniej', dzielimy jego liczbę przez X, aby znaleźć mniejszą ilość." },
-          { "id": "irwirm_4_q3", "type": "practice", "difficulty": "łatwe", "questionText": "W jednym pudełku są 4 kredki. W drugim pudełku jest 5 razy więcej kredek. Ile kredek jest w drugim pudełku?", "options": ["9", "20", "1", "24"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Zgadza się! '5 razy więcej' oznacza, że mnożymy: 4 kredki x 5 = 20 kredek.", "theorySnippet": "Pamiętaj: 'razy więcej' często oznacza mnożenie!" },
-          { "id": "irwirm_4_q4", "type": "practice", "difficulty": "średnie", "questionText": "Tata Zosi ma 36 lat. Zosia jest 4 razy młodsza od taty. Ile lat ma Zosia?", "options": ["32", "40", "9", "10"], "correctAnswerIndex": 2, "correctAnswerExplanation": "Super! Skoro Zosia jest '4 razy młodsza', dzielimy wiek taty przez 4: 36 / 4 = 9 lat.", "theorySnippet": "Gdy ktoś jest 'X razy młodszy' lub coś jest 'X razy krótsze', dzielimy większą wartość przez X." },
-          { "id": "irwirm_4_q5", "type": "practice", "difficulty": "średnie", "questionText": "W czerwonym koszyku jest 8 jabłek. W zielonym koszyku jest 2 razy więcej jabłek niż w czerwonym. Ile jabłek jest w obu koszykach razem?", "options": ["16", "10", "24", "18"], "correctAnswerIndex": 2, "correctAnswerExplanation": "Najpierw zielony koszyk: 8 x 2 = 16 jabłek. Potem razem: 8 (czerwony) + 16 (zielony) = 24 jabłka. Dwa kroki do sukcesu!", "theorySnippet": "Czasem trzeba wykonać jedno działanie, aby znaleźć potrzebną liczbę, a potem drugie, aby odpowiedzieć на pytanie." },
-          { "id": "irwirm_4_q6", "type": "practice", "difficulty": "średnie", "questionText": "Długopis kosztuje 3 zł. Album na zdjęcia jest 7 razy droższy. Ile kosztuje album?", "options": ["10 zł", "21 zł", "4 zł", "18 zł"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Świetna robota! '7 razy droższy' oznacza, że mnożymy cenę długopisu przez 7: 3 zł x 7 = 21 zł.", "theorySnippet": "Gdy coś jest 'X razy droższe' lub 'X razy większe', mnożymy mniejszą wartość przez X." },
-          { "id": "irwirm_4_q7", "type": "practice", "difficulty": "średnie", "questionText": "W jednym wazonie jest 20 kwiatów, a w drugim jest 4 razy mniej. O ile więcej kwiatów jest w pierwszym wazonie niż w drugim?", "options": ["o 5", "o 15", "o 16", "o 24"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Najpierw drugi wazon: 20 / 4 = 5 kwiatów. Potem różnica: 20 - 5 = 15. W pierwszym wazonie jest o 15 kwiatów więcej. Gratulacje!", "theorySnippet": "Aby dowiedzieć się 'o ile więcej/mniej', najpierw znajdź obie ilości, a potem oblicz ich różnicę (odejmij mniejszą od większej)." },
-          { "id": "irwirm_4_q8", "type": "practice", "difficulty": "trudne", "questionText": "Mama upiekła 24 ciasteczka. Zjadła 6, a resztę podzieliła po równo między 3 dzieci. Ile ciasteczek dostało każde dziecko?", "options": ["6", "8", "18", "5"], "correctAnswerIndex": 0, "correctAnswerExplanation": "Najpierw, ile zostało po mamie: 24 - 6 = 18 ciasteczek. Potem dzielimy resztę na 3 dzieci: 18 / 3 = 6 ciasteczek dla każdego. Pycha!", "theorySnippet": "Uważnie czytaj zadania! Czasem trzeba odjąć, zanim zaczniesz dzielić." },
-          { "id": "irwirm_4_q9", "type": "practice", "difficulty": "trudne", "questionText": "Pociąg ma 8 wagonów, a w każdym wagonie jest 10 przedziałów. W każdym przedziale może usiąść 6 osób. Ilu pasażerów zmieści się w pociągu?", "options": ["48", "140", "480", "108"], "correctAnswerIndex": 2, "correctAnswerExplanation": "Wow, to jak zagadka detektywistyczna! Najpierw przedziały w jednym wagonie: 10. Miejsc w jednym wagonie: 10 x 6 = 60 osób. Miejsc w całym pociągu: 60 osób/wagon x 8 wagonów = 480 osób. Super!", "theorySnippet": "Gdy masz kilka poziomów grup (wagony -> przedziały -> osoby), mnożysz liczby krok po kroku, aby znaleźć całkowitą ilość." },
-          { "id": "irwirm_4_q10", "type": "practice", "difficulty": "trudne", "questionText": "Ewa przeczytała książkę w 5 dni, czytając codziennie tyle samo stron. Cała książka ma 150 stron. Ile stron czytała Ewa każdego dnia?", "options": ["25", "30", "35", "40"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Fantastycznie! Aby dowiedzieć się, ile stron czytała dziennie, dzielimy całkowitą liczbę stron przez liczbę dni: 150 stron / 5 dni = 30 stron dziennie.", "theorySnippet": "Jeśli coś jest robione równomiernie przez pewien czas, dzielimy całość przez ten czas, aby znaleźć ile przypada na jedną jednostkę czasu." }
         ]
       },
       "Dzielenie z resztą": {

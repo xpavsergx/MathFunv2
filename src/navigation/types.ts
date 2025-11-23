@@ -1,6 +1,6 @@
 // src/navigation/types.ts
 
-// --- ✅ 1. МИ ВИНОСИМО ВСІ ТИПИ СЮДИ ---
+// --- ✅ Все типы экранов выносим сюда ---
 
 export type AuthStackParamList = {
     Login: undefined;
@@ -10,7 +10,7 @@ export type AuthStackParamList = {
 export type GamesStackParamList = {
     GamesMain: undefined;
     MatchstickGame: undefined;
-    SpeedyCountGame: undefined; // <-- Додано новий екран
+    SpeedyCountGame: undefined; // <-- Новый экран
 };
 
 export type MainAppStackParamList = {
@@ -30,6 +30,10 @@ export type MainAppStackParamList = {
     PlusMinusTrainer: { grade: number; topic: string; subTopic: string };
     DivisionTrainer: { grade: number; topic: string; subTopic: string };
     MoreLessTrainer4: { grade: number; topic: string; subTopic: string };
+
+    // ✅ Новый экран тренажёра
+    HowManyTimesTrainerScreen4: { grade: number; topic: string; subTopic: string };
+
     Results: {
         score: number;
         total: number;
@@ -48,11 +52,6 @@ export type TheoryStackParamList = {
     TheoryTopicList: { grade: string };
     TheorySubTopicList: { grade: string; topic: string };
     TheoryDetail: { grade: string; topic: string; subTopic: string };
-};
-
-export type GamesStackParamList = {
-    GamesMain: undefined;
-    MatchstickGame: undefined;
 };
 
 export type FriendsStackParamList = {

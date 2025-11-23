@@ -1,7 +1,4 @@
-// App.tsx
-
 import React, { useState, useEffect } from 'react';
-// --- ✅ Виправлено імпорт (додано дефіс) ---
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -12,7 +9,6 @@ import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { COLORS } from './src/styles/theme';
 
-// --- ✅ Імпортуємо типи з окремого файлу ---
 import {
     AuthStackParamList,
     MainAppStackParamList,
@@ -24,7 +20,7 @@ import {
     AppTabParamList
 } from './src/navigation/types';
 
-// --- Імпорти екранів ---
+// --- Экранные импорты ---
 import MainScreen from './src/screens/MainScreen';
 import GradeSelectionScreen from './src/screens/GradeSelectionScreen';
 import TopicListScreen from './src/screens/TopicListScreen';
@@ -33,6 +29,8 @@ import TestScreen from './src/screens/TestScreen';
 import MultiplicationTrainerScreen from './src/screens/MultiplicationTrainerScreen';
 import PlusMinusTrainerScreen from './src/screens/PlusMinusTrainerScreen';
 import DivisionTrainerScreen from './src/screens/DivisionTrainerScreen';
+import MoreLessTrainerScreen4 from './src/screens/MoreLessTrainerScreen4';
+import HowManyTimesTrainerScreen4 from './src/screens/HowManyTimesTrainerScreen4'; // ✅ новый тренажёр
 import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
@@ -48,13 +46,10 @@ import DuelSetupScreen from './src/screens/DuelSetupScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import ActivityScreen from './src/screens/ActivityScreen';
 import MatchstickEquationGame from './src/screens/MatchstickEquationGame';
-import MoreLessTrainerScreen4 from './src/screens/MoreLessTrainerScreen4';
 import StoreScreen from './src/screens/StoreScreen';
 import DuelResultScreen from './src/screens/DuelResultScreen';
-// --- ✅ Додано нову гру ---
 import SpeedyCountGame from './src/screens/SpeedyCountGame';
 
-// --- Nawigatory ---
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainAppStackParamList>();
 const GamesStackNav = createNativeStackNavigator<GamesStackParamList>();
@@ -63,12 +58,11 @@ const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 const ActivityStackNav = createNativeStackNavigator<ActivityStackParamList>();
 const Tab = createBottomTabNavigator<AppTabParamList>();
 
-// --- Функції Stack Navigator ---
 function HomeStackNavigator() {
     return (
         <MainStack.Navigator initialRouteName="Main">
             <MainStack.Screen name="Main" component={MainScreen} options={{ headerShown: false }} />
-            <MainStack.Screen name="GradeSelection" component={GradeSelectionScreen} options={{ title: 'Praktyка - Wybierz klasę' }} />
+            <MainStack.Screen name="GradeSelection" component={GradeSelectionScreen} options={{ title: 'Praktyka - Wybierz klasę' }} />
             <MainStack.Screen name="TopicList" component={TopicListScreen} options={({ route }) => ({ title: `Klasa ${route.params.grade} - Działy` })} />
             <MainStack.Screen name="SubTopicList" component={SubTopicListScreen} options={({ route }) => ({ title: route.params.topic })} />
             <MainStack.Screen name="Test" component={TestScreen} options={({ route }) => ({ title: (route.params.subTopic || route.params.topic || 'Test') })} />
@@ -78,6 +72,11 @@ function HomeStackNavigator() {
             <MainStack.Screen
                 name="MoreLessTrainer4"
                 component={MoreLessTrainerScreen4}
+                options={({ route }) => ({ title: route.params.subTopic })}
+            />
+            <MainStack.Screen
+                name="HowManyTimesTrainerScreen4" // ✅ новый тренажёр
+                component={HowManyTimesTrainerScreen4}
                 options={({ route }) => ({ title: route.params.subTopic })}
             />
             <MainStack.Screen name="Results" component={ResultsScreen} options={{ title: 'Wyniki Testu' }} />
@@ -99,7 +98,6 @@ function GamesStackNavigator() {
         <GamesStackNav.Navigator>
             <GamesStackNav.Screen name="GamesMain" component={GamesScreen} options={{ title: 'Gry' }} />
             <GamesStackNav.Screen name="MatchstickGame" component={MatchstickEquationGame} options={{ title: 'Równania z Zapałkami' }} />
-            {/* --- ✅ Додано нову гру --- */}
             <GamesStackNav.Screen
                 name="SpeedyCountGame"
                 component={SpeedyCountGame}
@@ -117,6 +115,7 @@ function FriendsStackNavigator() {
         </FriendsStackNav.Navigator>
     );
 }
+
 function ProfileStackNavigator() {
     return (
         <ProfileStack.Navigator>
@@ -127,6 +126,7 @@ function ProfileStackNavigator() {
         </ProfileStack.Navigator>
     );
 }
+
 function ActivityStackNavigator() {
     return (
         <ActivityStackNav.Navigator>
@@ -134,6 +134,7 @@ function ActivityStackNavigator() {
         </ActivityStackNav.Navigator>
     );
 }
+
 function MainAppTabNavigator() {
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
@@ -180,6 +181,7 @@ function MainAppTabNavigator() {
         </Tab.Navigator>
     );
 }
+
 function AuthNavigator() {
     return (
         <AuthStack.Navigator>
@@ -189,7 +191,6 @@ function AuthNavigator() {
     );
 }
 
-// --- App() ---
 function App(): React.JSX.Element {
     const [initializing, setInitializing] = useState(true);
     const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
@@ -222,7 +223,6 @@ function App(): React.JSX.Element {
     );
 }
 
-// --- Стилі ---
 const styles = StyleSheet.create({
     loadingContainer: {
         flex: 1,
