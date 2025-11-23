@@ -360,7 +360,11 @@ const styles = StyleSheet.create({
     safeArea: { flex: 1 },
     scrollContainer: {
         flexGrow: 1,
-        padding: PADDING.medium,
+        paddingHorizontal: PADDING.medium, // Zachowujemy boczne wcięcia
+        paddingBottom: PADDING.medium,    // Zachowujemy dolne wcięcie
+
+        // ZWIĘKSZONY GÓRNY ODSTĘP
+        paddingTop: PADDING.large * 2, // Możesz dostosować tę wartość (np. * 2, * 3)
     },
     mainInfoCard: {
         width: '100%',

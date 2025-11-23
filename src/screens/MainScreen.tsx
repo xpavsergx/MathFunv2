@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     scrollContent: { paddingBottom: MARGIN.large * 2 },
     header: {
         paddingHorizontal: PADDING.large,
-        paddingTop: Platform.OS === 'ios' ? PADDING.large * 2 : PADDING.large,
+        paddingTop: Platform.OS === 'ios' ? PADDING.large * 3 : PADDING.large * 2, // ZMIENIONA WARTOŚĆ
         paddingBottom: PADDING.medium,
     },
     headerTitle: { fontSize: FONT_SIZES.title, fontWeight: 'bold', },

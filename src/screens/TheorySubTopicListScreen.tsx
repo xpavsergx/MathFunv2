@@ -1,20 +1,34 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    FlatList,
+    TouchableOpacity,
+    Dimensions, // Dodano Dimensions do obliczenia rozmiaru koła
+    ImageBackground, // Dodano ImageBackground, aby uzyskać tło
+    ScrollView, // Zmieniono z FlatList na ScrollView + renderContent
+} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { TheoryStackParamList } from '../../App'; // Імпортуємо типи з App.tsx
-import questionsDatabase from '../data/questionsDb.json'; // Шлях до бази питань
+import { TheoryStackParamList } from '../../App';
+import questionsDatabase from '../data/questionsDb.json';
 
-// Тип для частини бази даних, що стосується підтем конкретного розділу
+// --- Obliczenia rozmiaru koła ---
+const { width } = Dimensions.get('window');
+// Rozmiar koła dla 2 kolumn, z marginesami 20px po bokach i 20px pomiędzy.
+const PADDING_HORIZONTAL = 20;
+const GAP_BETWEEN_CIRCLES = 20;
+const CIRCLE_DIAMETER = (width - PADDING_HORIZONTAL * 2 - GAP_BETWEEN_CIRCLES) / 2;
+// ---------------------------------
+
+// Typy bez zmian...
 type TopicData = {
-    [subTopic: string]: any; // Нас цікавлять ключі-назви підтем
-    // Або, якщо ми змінимо структуру questionsDb.json:
-    // [subTopic: string]: { theoryTitle?: string; theoryContent?: any[]; questions?: any[] };
+    [subTopic: string]: any;
 };
 
-// Тип для questionsDb.json в цілому
 type QuestionsDatabaseType = {
     [grade: string]: {
-        [topic: string]: TopicData; // Розділ містить об'єкт підтем
+        [topic: string]: TopicData;
     };
 };
 
@@ -22,20 +36,17 @@ type TheorySubTopicListScreenProps = NativeStackScreenProps<TheoryStackParamList
 
 function TheorySubTopicListScreen({ route, navigation }: TheorySubTopicListScreenProps) {
     const { grade, topic } = route.params;
-    const db: QuestionsDatabaseType = questionsDatabase as QuestionsDatabaseType; // Приведення типу
+    const db: QuestionsDatabaseType = questionsDatabase as QuestionsDatabaseType;
 
     const subTopics = useMemo(() => {
         const gradeData = db[grade];
         if (!gradeData) return [];
         const topicData = gradeData[topic];
         if (!topicData) return [];
-        // Отримуємо ключі (назви підтем) з об'єкта topicData
-        // Це передбачає, що кожна підтема є ключем в об'єкті 'topicData'
         return Object.keys(topicData);
     }, [db, grade, topic]);
 
     const handleSubTopicPress = (subTopic: string) => {
-        // Навігуємо на екран з детальною теорією для обраної підтеми
         navigation.navigate('TheoryDetail', {
             grade: grade,
             topic: topic,
@@ -43,73 +54,149 @@ function TheorySubTopicListScreen({ route, navigation }: TheorySubTopicListScree
         });
     };
 
-    const renderSubTopicItem = ({ item }: { item: string }) => (
+    // Zmieniona funkcja renderująca na styl kółek
+    const renderCircleButton = (item: string, index: number) => (
         <TouchableOpacity
-            style={styles.itemContainer}
+            key={`circle-${item}-${index}`}
+            style={styles.topicButton}
             onPress={() => handleSubTopicPress(item)}
+            activeOpacity={0.85}
         >
-            <Text style={styles.itemText}>{item}</Text>
+            <Text style={styles.topicButtonText}>{item}</Text>
         </TouchableOpacity>
     );
 
+    // Nowa funkcja renderująca treść w układzie 1-2-1-2 (z SubTopicListScreen.tsx)
+    const renderContent = () => {
+        const layoutGroups = [];
+        let currentIndex = 0;
+        const totalTopics = subTopics.length;
+
+        // Używamy oryginalnej logiki grupowania 1-2-1-2...
+        while (currentIndex < totalTopics) {
+            if (currentIndex < totalTopics) {
+                // Rząd z jednym kołem
+                layoutGroups.push(
+                    <View key={`group-${currentIndex}`} style={styles.singleCircleRow}>
+                        {renderCircleButton(subTopics[currentIndex], currentIndex)}
+                    </View>
+                );
+                currentIndex++;
+            }
+
+            if (currentIndex < totalTopics && currentIndex + 1 < totalTopics) {
+                // Rząd z dwoma kołami
+                layoutGroups.push(
+                    <View key={`group-${currentIndex}-two`} style={styles.twoCircleRow}>
+                        {renderCircleButton(subTopics[currentIndex], currentIndex)}
+                        {renderCircleButton(subTopics[currentIndex + 1], currentIndex + 1)}
+                    </View>
+                );
+                currentIndex += 2;
+            } else if (currentIndex < totalTopics) {
+                // Rząd z jednym kołem (jeśli jest nieparzysta reszta)
+                layoutGroups.push(
+                    <View key={`group-${currentIndex}`} style={styles.singleCircleRow}>
+                        {renderCircleButton(subTopics[currentIndex], currentIndex)}
+                    </View>
+                );
+                currentIndex++;
+            }
+        }
+
+        return layoutGroups;
+    };
+
+
     return (
-        <View style={styles.container}>
-            <Text style={styles.header}>Podtematy dla: {topic}</Text>
-            {subTopics.length > 0 ? (
-                <FlatList
-                    data={subTopics}
-                    renderItem={renderSubTopicItem}
-                    keyExtractor={(item) => `${grade}-${topic}-${item}`}
-                    contentContainerStyle={styles.listContentContainer}
-                />
-            ) : (
-                <Text style={styles.emptyText}>Brak dostępnych podtematów teorii dla tego działu.</Text>
-            )}
-        </View>
+        <ImageBackground
+            source={require('../assets/books1.png')} // Zmienić na ścieżkę do tła
+            style={styles.backgroundImage}
+            resizeMode="cover"
+        >
+            <View style={styles.overlay}>
+                <Text style={styles.headerText}>Podtematy dla: {topic}</Text>
+
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    {subTopics.length === 0 ? (
+                        <Text style={styles.emptyText}>
+                            Brak dostępnych podtematów teorii dla tego działu.
+                        </Text>
+                    ) : (
+                        renderContent()
+                    )}
+                </ScrollView>
+            </View>
+        </ImageBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    // --- STYLES Z SUBTOPICLISTSCREEN.TSX ---
+    backgroundImage: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
+        width: '100%',
+        height: '100%',
     },
-    header: {
-        fontSize: 18, // Трохи менший, ніж головний заголовок розділів
-        fontWeight: 'bold',
-        color: '#444',
-        padding: 15,
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+        paddingHorizontal: PADDING_HORIZONTAL,
+        paddingTop: 20,
+        paddingBottom: 10,
+    },
+    headerText: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#111827',
         textAlign: 'center',
-        backgroundColor: '#e9ecef', // Трохи інший фон для підзаголовка
-        borderBottomWidth: 1,
-        borderBottomColor: '#ddd',
-    },
-    listContentContainer: {
-        paddingVertical: 10,
-    },
-    itemContainer: {
-        backgroundColor: '#ffffff',
-        paddingVertical: 16,
-        paddingHorizontal: 15,
-        marginVertical: 5,
-        marginHorizontal: 12,
-        borderRadius: 8,
-        elevation: 1,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.15,
-        shadowRadius: 1.00,
-    },
-    itemText: {
-        fontSize: 16,
-        color: '#555',
+        marginBottom: 20,
     },
     emptyText: {
         textAlign: 'center',
         marginTop: 50,
         fontSize: 16,
-        color: '#777',
+        color: '#6B7280'
     },
+    scrollContent: {
+        paddingVertical: 10,
+        alignItems: 'center',
+        paddingBottom: 40,
+    },
+    singleCircleRow: {
+        marginBottom: 20,
+        // Centrowanie w rzędzie z jednym kołem
+        alignItems: 'center',
+    },
+    twoCircleRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: width - PADDING_HORIZONTAL * 2,
+        marginBottom: 20,
+    },
+    topicButton: {
+        backgroundColor: '#00BCD4', // Zmieniono na turkusowy/cyjan (bardziej "teoretyczny" kolor)
+        width: CIRCLE_DIAMETER,
+        height: CIRCLE_DIAMETER,
+        borderRadius: CIRCLE_DIAMETER / 2,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
+        padding: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    topicButtonText: {
+        color: '#FFFFFF',
+        fontSize: 18,
+        fontWeight: '700',
+        textAlign: 'center',
+        // Używamy mniejszej czcionki, aby zmieściły się długie nazwy tematów
+        fontSize: 18,
+    },
+    // --- USUNIĘTO NIEUŻYWANE STYLE Z POPRZEDNIEJ TEORII (itemContainer, itemText itp.) ---
 });
 
 export default TheorySubTopicListScreen;

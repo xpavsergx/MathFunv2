@@ -6,6 +6,8 @@ import questionsDatabase from '../data/questionsDb.json';
 import RachunkiMemoryBlock from '../Components/RachunkiMemoryBlock';
 import MultiplyDivideBlock from '../Components/MultiplyDivideBlock';
 import OileExplanationBlock from '../Components/OileExplanationBlock';
+import TimesMoreLessBlock from '../Components/TimesMoreLessBlock';
+import DivisionRemainderBlock from '../Components/DivisionRemainderBlock';
 
 type TheoryContentItem = {
     type: "paragraph" | "subHeader" | "listItem" | "example";
@@ -40,7 +42,9 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
         (
             subTopic === "Rachunki pamięciowe - dodawanie i odejmowanie" ||
             subTopic === "Mnożenie i dzielenie (cd.)" ||
-            subTopic === "O ile więcej, o ile mniej"
+            subTopic === "O ile więcej, o ile mniej" ||
+            subTopic === "Ile razy więcej, ile razy mniej" ||
+            subTopic === "Dzielenie z resztą"
         );
 
     if (isSpecialMemoryTopic) {
@@ -54,6 +58,12 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
                 )}
                 {subTopic === "O ile więcej, o ile mniej" && (
                     <OileExplanationBlock />
+                )}
+                {subTopic === "Ile razy więcej, ile razy mniej" && (
+                    <TimesMoreLessBlock />
+                )}
+                {subTopic === "Dzielenie z resztą" && ( // 👈 NOWY BLOK
+                    <DivisionRemainderBlock />
                 )}
             </ScrollView>
         );

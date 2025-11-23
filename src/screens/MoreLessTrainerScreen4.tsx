@@ -17,6 +17,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import { awardXpAndCoins } from '../services/xpService';
 
 const EXERCISE_ID = "moreLessTrainer";
 const TASKS_LIMIT = 100;
@@ -117,6 +118,7 @@ const MoreLessTrainerScreen4 = () => {
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setResultMessage('Świetnie! ✅');
             setReadyForNext(true);
+            awardXpAndCoins(5, 1); // Przyznanie np. 5 XP i 1 monety
 
         } else {
             if (hasAnsweredCurrent !== answer) {
