@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
     View,
     Text,
@@ -16,7 +16,7 @@ type SubTopicDataForTest = {
     questions?: any[];
     isTrainer?: boolean;
     practiceKeys?: string[];
-    showInPractice?: boolean; // 🔥 Новое поле
+    showInPractice?: boolean;
 };
 
 type QuestionsDatabaseType = {
@@ -42,13 +42,15 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     const { grade, topic } = route.params;
     const db: QuestionsDatabaseType = questionsDatabase as QuestionsDatabaseType;
 
+    // 🔥 Карта экранов-тренажёров
     const trainerScreenMap: Record<string, keyof MainAppStackParamList> = {
         'Mnożenie': 'MultiplicationTrainer',
         'Dzielenie': 'DivisionTrainer',
         'Dodawanie i odejmowanie': 'PlusMinusTrainer',
         'O ile więcej, o ile mniej': 'MoreLessTrainer4',
         'Ile razy więcej, ile razy mniej': 'HowManyTimesTrainerScreen4',
-        'Dzielenie z resztą': 'DivisionRemainderTrainer',
+        'Dzielenie z resztą': 'DivisionWithRemainderScreen4',
+        'Kwadraty i sześciany liczb': 'SquaresCubesTrainerScreen4',
     };
 
     const getTrainerScreen = (key: string) =>
@@ -65,10 +67,8 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
             const subTopic = subTopicsMap[subKey];
             if (!subTopic) return;
 
-            // 🔥 Игнорируем если showInPractice === false
             if (subTopic.showInPractice === false) return;
 
-            // Если есть practiceKeys → добавляем их
             if (subTopic.isTrainer && subTopic.practiceKeys?.length) {
                 subTopic.practiceKeys.forEach(pk => {
                     result.push({
@@ -77,9 +77,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
                         displayName: pk,
                     });
                 });
-            }
-            // Если есть вопросы → добавляем subTopicKey
-            else if (subTopic.questions?.length) {
+            } else if (subTopic.questions?.length) {
                 result.push({
                     key: subKey,
                     subTopicKey: subKey,

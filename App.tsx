@@ -49,6 +49,9 @@ import MatchstickEquationGame from './src/screens/MatchstickEquationGame';
 import StoreScreen from './src/screens/StoreScreen';
 import DuelResultScreen from './src/screens/DuelResultScreen';
 import SpeedyCountGame from './src/screens/SpeedyCountGame';
+import DivisionWithRemainderScreen4 from './src/screens/DivisionWithRemainderScreen4';
+import SquaresCubesTrainerScreen4 from './src/screens/SquaresCubesTrainerScreen4';
+
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainAppStackParamList>();
@@ -79,6 +82,18 @@ function HomeStackNavigator() {
                 component={HowManyTimesTrainerScreen4}
                 options={({ route }) => ({ title: route.params.subTopic })}
             />
+            <MainStack.Screen
+                name="DivisionWithRemainderScreen4"
+                component={DivisionWithRemainderScreen4}
+                options={({ route }) => ({ title: route.params.subTopic })}
+            />
+            <MainStack.Screen
+                name="SquaresCubesTrainerScreen4"
+                component={SquaresCubesTrainerScreen4}
+                options={({ route }) => ({ title: route.params.subTopic })}
+            />
+
+
             <MainStack.Screen name="Results" component={ResultsScreen} options={{ title: 'Wyniki Testu' }} />
             <MainStack.Screen
                 name="DuelResult"
