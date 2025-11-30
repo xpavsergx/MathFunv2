@@ -1,147 +1,281 @@
-// src/Components/OileExplanationBlock.tsx
+import React, { useState, useEffect } from 'react';
+import {
+    View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator,
+} from 'react-native';
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 
-const OileExplanationBlock = () => {
-    const [showTheory, setShowTheory] = useState(true);
-    const [exampleIndex, setExampleIndex] = useState(0);
-    const [scale] = useState(new Animated.Value(1));
+// 🔥 KLUCZ DOKUMENTU Z FIREBASE
+const LESSON_ID = 'oileWiecejoileMniej';
+// 🔥 Ustawione na 5 (indeksy 0 do 5).
+// Baza ma: 2 intro + 4 steps + final result. W sumie 7 elementów.
+// Jeśli 'tip' (widoczny jako pole Mapy) nie jest oddzielnym krokiem, a jest częścią 'finalBlock', to MAX_STEPS = 5
+// Jeśli 'tip' jest częścią kroku finalnego (co jest najlepszą praktyką w tym projekcie), to:
+// Intro (2) + Steps (4) + FinalBlock(1) = 7 elementów.
+// MAX_STEPS = 6 (indeksy 0 do 6).
+const MAX_STEPS = 5;
 
-    const examples = [
-        {
-            question: 'Ala ma 8 jabłek. Basia ma o 3 jabłka więcej. Ile jabłek ma Basia?',
-            explanation: 'Skoro ma **o 3 więcej**, dodajemy:\n\n8 + 3 = 11',
-            answer: 'Basia ma 11 jabłek.',
-        },
-        {
-            question: 'Karol ma 15 zł. Michał ma o 5 zł mniej. Ile ma Michał?',
-            explanation: 'Skoro ma **o 5 mniej**, odejmujemy:\n\n15 - 5 = 10',
-            answer: 'Michał ma 10 zł.',
-        },
-        {
-            question: 'W klasie jest 12 dziewczynek, a chłopców o 4 więcej. Ilu jest chłopców?',
-            explanation: 'Dodajemy:\n\n12 + 4 = 16',
-            answer: 'Jest 16 chłopców.',
-        },
-    ];
+export default function OileExplanationBlock() {
+    const [step, setStep] = useState(0);
+    const [lessonData, setLessonData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-    const animateCard = () => {
-        Animated.sequence([
-            Animated.timing(scale, { toValue: 1.05, duration: 200, useNativeDriver: true, easing: Easing.out(Easing.ease) }),
-            Animated.timing(scale, { toValue: 1, duration: 200, useNativeDriver: true, easing: Easing.in(Easing.ease) }),
-        ]).start();
+    const handleNextStep = () => {
+        setStep((prev) => (prev < MAX_STEPS ? prev + 1 : prev));
     };
 
-    const handleNextExample = () => {
-        const next = (exampleIndex + 1) % examples.length;
-        setExampleIndex(next);
-        animateCard();
-    };
+    // --- LOGIKA POBIERANIA DANYCH Z FIREBASE ---
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const doc = await firestore()
+                    .collection('lessons')
+                    .doc(LESSON_ID)
+                    .get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data) {
+                        // Przekształcenie Map z Firebase na Array
+                        setLessonData({
+                            ...data,
+                            intro: Object.values(data.intro || {}),
+                            steps: Object.values(data.steps || {}),
+                        });
+                    }
+                } else {
+                    console.warn(`Nie znaleziono dokumentu dla ${LESSON_ID}.`);
+                    setLessonData(null);
+                }
+            } catch (error) {
+                console.error('Błąd ładowania danych Firestore:', error);
+                setLessonData(null);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    return (
-        <View style={styles.container}>
-            <Text style={styles.header}>🧠 O ile więcej / o ile mniej</Text>
+        const prepareAndFetch = async () => {
+            if (!auth().currentUser) {
+                try {
+                    await auth().signInAnonymously();
+                } catch (error) {
+                    console.error('Failed to sign in anonymously:', error);
+                    setLoading(false);
+                    return;
+                }
+            }
+            fetchData();
+        };
 
-            {showTheory ? (
-                <View style={styles.theoryBlock}>
-                    <Text style={styles.theoryText}>
-                        W matematyce, słowo **"o"** oznacza, że coś jest **większe lub mniejsze** w porównaniu do innej wartości.
-                    </Text>
-                    <Text style={styles.theoryText}>
-                        Jeśli mamy **"o X więcej"** → dodajemy liczbę.\n\n
-                        Jeśli mamy **"o X mniej"** → odejmujemy liczbę.
-                    </Text>
+        prepareAndFetch();
+    }, []);
+    // ---------------------------------------------
 
-                    <TouchableOpacity style={styles.button} onPress={() => setShowTheory(false)}>
-                        <Ionicons name="play" size={20} color="#fff" />
-                        <Text style={styles.buttonText}>Zobacz przykłady</Text>
-                    </TouchableOpacity>
-                </View>
+
+    // FUNKCJA WIZUALNIE PODKREŚLAJĄCA LICZBY
+    const highlightNumbers = (text: string) => {
+        const parts = text.split(/(\d+)/g);
+        return parts.map((part, index) =>
+            /\d+/.test(part) ? (
+                <Text key={index} style={styles.numberHighlight}>
+                    {part}
+                </Text>
             ) : (
-                <Animated.View style={[styles.card, { transform: [{ scale }] }]}>
-                    <Text style={styles.questionText}>{examples[exampleIndex].question}</Text>
-                    <Text style={styles.explanationText}>{examples[exampleIndex].explanation}</Text>
-                    <Text style={styles.answerText}>{examples[exampleIndex].answer}</Text>
+                <Text key={index}>{part}</Text>
+            )
+        );
+    };
 
-                    <TouchableOpacity style={styles.button} onPress={handleNextExample}>
-                        <Ionicons name="refresh" size={20} color="#fff" />
-                        <Text style={styles.buttonText}>Następny przykład</Text>
+
+    // FUNKCJA GENERUJĄCA KOLEJNE KROKI LEKCJI
+    const getSteps = () => {
+        if (!lessonData) return [];
+
+        const introLines = lessonData.intro;
+        const stepLines = lessonData.steps;
+
+        // --- 1. KROK 0, 1 (Blok Wprowadzający) ---
+        const introBlock = (
+            <View key="intro" style={styles.introBlock}>
+                {introLines.map((line: string, index: number) => {
+                    const isFirstLine = index === 0;
+                    return (
+                        <Text
+                            key={`intro-${index}`}
+                            style={[styles.intro, isFirstLine && styles.introBold]}
+                        >
+                            {highlightNumbers(line)}
+                        </Text>
+                    );
+                })}
+            </View>
+        );
+
+
+        // --- 2. Kroki Właściwe (Steps 2, 3, 4, 5) ---
+        // Pamiętaj, że w Firebase masz 4 elementy w 'steps' (0 do 3)
+        const calculationSteps = stepLines.map((stepText: string, index: number) => (
+            <Text key={`step-${index}`} style={styles.stepText}>
+                {highlightNumbers(stepText)}
+            </Text>
+        ));
+
+
+        // --- 3. Krok Końcowy (Final Block, index 6) ---
+        const finalBlock = (
+            <View key="final" style={styles.finalBlock}>
+                <Text style={styles.finalResult}>
+                    {highlightNumbers(lessonData.finalResult || '')}
+                </Text>
+                {/* TIP jest teraz polem w dokumencie, więc go renderujemy */}
+                <Text style={styles.tip}>{highlightNumbers(lessonData.tip || '')}</Text>
+            </View>
+        );
+
+
+        const allSteps = [introBlock, ...calculationSteps, finalBlock];
+        return allSteps.slice(0, step + 1);
+    };
+
+    // --- Renderowanie stanu ładowania/błędu ---
+    if (loading) {
+        return (
+            <View style={[styles.wrapper, styles.loadingWrapper]}>
+                <ActivityIndicator size="large" color="#FF8F00" />
+                <Text style={[styles.intro, {marginTop: 10}]}>Ładowanie danych...</Text>
+            </View>
+        );
+    }
+
+    if (!lessonData || lessonData.intro.length === 0) {
+        return (
+            <View style={[styles.wrapper, styles.loadingWrapper]}>
+                <Text style={[styles.intro, {color: '#D84315'}]}>Błąd: Nie znaleziono danych lekcji w Firestore dla ID: {LESSON_ID}.</Text>
+            </View>
+        );
+    }
+
+    // --- Renderowanie głównej treści krok po kroku ---
+    return (
+        <View style={styles.wrapper}>
+            <View style={styles.container}>
+                <Text style={styles.title}>
+                    {lessonData?.title || 'O ile więcej, o ile mniej'}
+                </Text>
+
+                <ScrollView
+                    style={styles.scrollArea}
+                    contentContainerStyle={styles.scrollContent}
+                >
+                    {getSteps()}
+                </ScrollView>
+
+                {step < MAX_STEPS && (
+                    <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+                        <Text style={styles.buttonText}>Dalej ➜</Text>
                     </TouchableOpacity>
-                </Animated.View>
-            )}
+                )}
+            </View>
         </View>
     );
-};
+}
 
 const styles = StyleSheet.create({
-    container: {
-        padding: 16,
-        backgroundColor: '#E3F2FD',
-        borderRadius: 12,
-        margin: 16,
+    wrapper: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        backgroundColor: '#FAFAFA',
+        paddingTop: 20,
     },
-    header: {
-        fontSize: 20,
+    loadingWrapper: {
+        height: 300,
+        padding: 20,
+    },
+    container: {
+        backgroundColor: '#FFF8E1',
+        borderRadius: 12,
+        padding: 20,
+        alignItems: 'center',
+        width: '90%',
+        elevation: 3,
+        maxWidth: 600,
+    },
+    title: {
+        fontSize: 22,
         fontWeight: 'bold',
-        color: '#1E88E5',
-        marginBottom: 16,
+        color: '#FF8F00',
+        marginBottom: 10,
         textAlign: 'center',
     },
-    theoryBlock: {
-        backgroundColor: '#FFFDE7',
-        padding: 16,
-        borderRadius: 8,
+    scrollArea: {
+        maxHeight: 450,
+        width: '100%',
     },
-    theoryText: {
-        fontSize: 16,
+    scrollContent: {
+        alignItems: 'center',
+        paddingBottom: 50,
+    },
+    introBlock: {
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    intro: {
+        fontSize: 18,
         color: '#424242',
-        marginBottom: 12,
-        lineHeight: 24,
+        textAlign: 'center',
+        marginBottom: 6,
+    },
+    introBold: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#D84315',
+        marginBottom: 10,
+    },
+    stepText: {
+        fontSize: 20,
+        textAlign: 'center',
+        marginVertical: 8,
+        color: '#5D4037',
+    },
+    numberHighlight: {
+        color: '#1976D2',
+        fontWeight: 'bold',
+        fontSize: 22,
+    },
+    finalBlock: {
+        alignItems: 'center',
+        marginTop: 10,
+        paddingTop: 10,
+        borderTopWidth: 1,
+        borderTopColor: '#FFD54F',
+    },
+    finalResult: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#D84315',
+        textAlign: 'center',
+        marginTop: 10,
+    },
+    tip: {
+        fontSize: 16,
+        marginTop: 10,
+        color: '#00796B',
+        fontStyle: 'italic',
+        textAlign: 'center',
     },
     button: {
-        flexDirection: 'row',
-        backgroundColor: '#1E88E5',
-        padding: 10,
+        backgroundColor: '#FFD54F',
+        paddingHorizontal: 24,
+        paddingVertical: 10,
         borderRadius: 25,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 16,
+        marginTop: 20,
     },
     buttonText: {
-        color: '#fff',
+        fontSize: 18,
+        color: '#5D4037',
         fontWeight: 'bold',
-        marginLeft: 8,
-    },
-    card: {
-        backgroundColor: '#FFFFFF',
-        padding: 20,
-        borderRadius: 12,
-        elevation: 3,
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 2 },
-    },
-    questionText: {
-        fontSize: 17,
-        fontWeight: '600',
-        color: '#37474F',
-        marginBottom: 12,
-    },
-    explanationText: {
-        fontSize: 15,
-        color: '#546E7A',
-        marginBottom: 10,
-        lineHeight: 22,
-    },
-    answerText: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#2E7D32',
-        marginBottom: 16,
     },
 });
-
-export default OileExplanationBlock;

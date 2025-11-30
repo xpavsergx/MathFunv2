@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator,
+    ImageBackground, // Dodano import ImageBackground
 } from 'react-native';
 
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
-// ZMIANA: Nowe ID dokumentu
+// Ustawienie klucza dokumentu
 const LESSON_ID = 'remainder';
-const MAX_STEPS = 4; // Dostosuj do liczby linii w Firestore (introLines + stepLines + 1)
+// Wartość MAX_STEPS zależy od zawartości Firebase (liczba linii intro + liczba linii steps + final block)
+const MAX_STEPS = 4;
 
 export default function DivisionRemainderBlock() {
     const [step, setStep] = useState(0);
@@ -28,7 +30,15 @@ export default function DivisionRemainderBlock() {
                     .doc(LESSON_ID)
                     .get();
                 if (doc.exists) {
-                    setLessonData(doc.data() || {});
+                    const data = doc.data();
+                    if (data) {
+                        // Spójne parsowanie danych: zakłada, że intro i steps to mapy w Firebase
+                        setLessonData({
+                            ...data,
+                            intro: Object.values(data.intro || {}),
+                            steps: Object.values(data.steps || {}),
+                        });
+                    }
                 } else {
                     console.warn(`Nie znaleziono dokumentu dla ${LESSON_ID}.`);
                     setLessonData(null);
@@ -73,8 +83,8 @@ export default function DivisionRemainderBlock() {
     const getSteps = () => {
         if (!lessonData) return [];
 
-        const introLines = Array.isArray(lessonData.intro) ? lessonData.intro : [];
-        const stepLines = Array.isArray(lessonData.steps) ? lessonData.steps : [];
+        const introLines = lessonData.intro;
+        const stepLines = lessonData.steps;
 
         // --- 1. KROK 0 (Blok Wprowadzający) ---
         const introBlock = (
@@ -135,50 +145,77 @@ export default function DivisionRemainderBlock() {
     }
 
     return (
-        <View style={styles.wrapper}>
-            <View style={styles.container}>
-                <Text style={styles.title}>
-                    {lessonData?.title || 'Dzielenie z resztą'}
-                </Text>
+        // 🚀 Krok 1: Wstawienie tła ImageBackground
+        <ImageBackground
+            source={require('../assets/tloTeorii.png')}
+            style={styles.backgroundImage}
+            resizeMode="cover"
+        >
+            {/* 🚀 Krok 2: Użycie warstwy overlay do pozycjonowania i centrowania */}
+            <View style={styles.overlay}>
+                {/* 🚀 Krok 3: Kontener teorii (żółty/biały blok) */}
+                <View style={styles.container}>
+                    <Text style={styles.title}>
+                        {lessonData?.title || 'Dzielenie z resztą'}
+                    </Text>
 
-                <ScrollView
-                    style={styles.scrollArea}
-                    contentContainerStyle={styles.scrollContent}
-                >
-                    {getSteps()}
-                </ScrollView>
+                    <ScrollView
+                        style={styles.scrollArea}
+                        contentContainerStyle={styles.scrollContent}
+                    >
+                        {getSteps()}
+                    </ScrollView>
 
-                {step < MAX_STEPS && (
-                    <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-                        <Text style={styles.buttonText}>Dalej ➜</Text>
-                    </TouchableOpacity>
-                )}
+                    {step < MAX_STEPS && (
+                        <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+                            <Text style={styles.buttonText}>Dalej ➜</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
-        </View>
+        </ImageBackground>
     );
 }
 
-// ... (Sekcja styles pozostaje identyczna jak w TimesMoreLessBlock.tsx)
-
 const styles = StyleSheet.create({
-    wrapper: {
+    // --- NOWE/ZModyfikowane Style ---
+    backgroundImage: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+    },
+    overlay: {
+        flex: 1, // Wypełnia całe tło
+        alignItems: 'center',
+        // Zmieniono na 'flex-start', aby zawartość zaczynała się od góry
+        justifyContent: 'flex-start',
+        paddingTop: 20,
+    },
+    wrapper: { // Zostawiono dla stanu ładowania, ale bez tła
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#FAFAFA',
-    },
-    loadingWrapper: {
-        height: 300,
-        padding: 20,
+        paddingTop: 20,
     },
     container: {
-        backgroundColor: '#FFF8E1',
+        // 🔥 Dodano flex: 1, aby żółty/biały blok rozciągał się na całą wysokość pod nagłówkiem
+        flex: 1,
+        // Zmieniono kolor na półprzezroczysty, aby tło graficzne przebijało
+        backgroundColor: 'rgba(255, 255, 255, 0.85)',
         borderRadius: 12,
         padding: 20,
         alignItems: 'center',
         width: '90%',
         elevation: 3,
         maxWidth: 600,
+        marginBottom: 20, // Mały margines od dolnego paska nawigacji
+    },
+
+    // --- ISTNIEJĄCE STYLE ---
+    loadingWrapper: {
+        height: 300,
+        padding: 20,
     },
     title: {
         fontSize: 22,
@@ -188,7 +225,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     scrollArea: {
-        maxHeight: 450,
+        // Usunięto maxHeight: 450, bo container ma flex: 1, scrollArea musi rosnąć elastycznie
         width: '100%',
     },
     scrollContent: {

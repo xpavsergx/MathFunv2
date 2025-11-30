@@ -8,6 +8,7 @@ import MultiplyDivideBlock from '../Components/MultiplyDivideBlock';
 import OileExplanationBlock from '../Components/OileExplanationBlock';
 import TimesMoreLessBlock from '../Components/TimesMoreLessBlock';
 import DivisionRemainderBlock from '../Components/DivisionRemainderBlock';
+import SquaresCubesBlock from '../Components/SquaresCubesBlock';
 
 type TheoryContentItem = {
     type: "paragraph" | "subHeader" | "listItem" | "example";
@@ -44,7 +45,8 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
             subTopic === "Mnożenie i dzielenie (cd.)" ||
             subTopic === "O ile więcej, o ile mniej" ||
             subTopic === "Ile razy więcej, ile razy mniej" ||
-            subTopic === "Dzielenie z resztą"
+            subTopic === "Dzielenie z resztą" ||
+            subTopic === "Kwadraty i sześciany liczb"
         );
 
     if (isSpecialMemoryTopic) {
@@ -64,6 +66,10 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
                 )}
                 {subTopic === "Dzielenie z resztą" && ( // 👈 NOWY BLOK
                     <DivisionRemainderBlock />
+                )}
+                {/* 🔥 DODAJ WYZWALANIE NOWEGO KOMPONENTU */}
+                {subTopic === "Kwadraty i sześciany liczb" && (
+                    <SquaresCubesBlock />
                 )}
             </ScrollView>
         );

@@ -37,6 +37,8 @@ const getTrainerName = (id: string) => {
             return 'Dodawanie i Odejmowanie';
         case 'moreLessTrainer':
             return 'O ile więcej, o ile mniej';
+        case 'howManyTimesTrainer':
+            return 'Ile razy więcej, ile razy mniej';
         default:
             return id;
     }

@@ -160,6 +160,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#FAFAFA',
+        paddingTop: 20,
     },
     loadingWrapper: {
         height: 300,
