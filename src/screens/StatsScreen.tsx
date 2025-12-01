@@ -39,6 +39,10 @@ const getTrainerName = (id: string) => {
             return 'O ile więcej, o ile mniej';
         case 'howManyTimesTrainer':
             return 'Ile razy więcej, ile razy mniej';
+        case 'divisionWithRemainder':
+            return 'Dzielenie z resztą';
+        case 'squaresCubesTrainer':
+            return 'Kwadraty i sześciany liczb';
         default:
             return id;
     }
