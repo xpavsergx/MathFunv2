@@ -33,7 +33,10 @@ type SubTopicButton = {
     displayName?: string;
 };
 
-type SubTopicListProps = NativeStackScreenProps<MainAppStackParamList, 'SubTopicList'>;
+type SubTopicListProps = NativeStackScreenProps<
+    MainAppStackParamList,
+    'SubTopicList'
+>;
 
 const { width } = Dimensions.get('window');
 const CIRCLE_DIAMETER = (width - 40 - 20) / 2;
@@ -42,7 +45,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     const { grade, topic } = route.params;
     const db: QuestionsDatabaseType = questionsDatabase as QuestionsDatabaseType;
 
-    // 🔥 Карта экранов-тренажёров
+    // 🔥 Исправленный trainerScreenMap
     const trainerScreenMap: Record<string, keyof MainAppStackParamList> = {
         'Mnożenie': 'MultiplicationTrainer',
         'Dzielenie': 'DivisionTrainer',
@@ -51,6 +54,9 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         'Ile razy więcej, ile razy mniej': 'HowManyTimesTrainerScreen4',
         'Dzielenie z resztą': 'DivisionWithRemainderScreen4',
         'Kwadraty i sześciany liczb': 'SquaresCubesTrainerScreen4',
+
+        // ✔ Правильно: ключ должен быть Sprint
+        'Sprint': 'MathSprintScreen',
     };
 
     const getTrainerScreen = (key: string) =>
@@ -124,7 +130,8 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
 
         while (index < n) {
             const remaining = n - index;
-            const isSingle = (layoutGroups.length % 2 === 0) || remaining === 1;
+            const isSingle =
+                layoutGroups.length % 2 === 0 || remaining === 1;
 
             if (isSingle) {
                 layoutGroups.push(
@@ -177,32 +184,34 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255, 255, 255, 0.7)',
         paddingHorizontal: 20,
         paddingTop: 20,
-        paddingBottom: 10
+        paddingBottom: 10,
     },
     headerText: {
         fontSize: 20,
         fontWeight: '700',
         color: '#111827',
         textAlign: 'center',
-        marginBottom: 20
+        marginBottom: 20,
     },
     emptyText: {
         textAlign: 'center',
         marginTop: 50,
         fontSize: 16,
-        color: '#6B7280'
+        color: '#6B7280',
     },
     scrollContent: {
         paddingVertical: 10,
         alignItems: 'center',
-        paddingBottom: 40
+        paddingBottom: 40,
     },
-    singleCircleRow: { marginBottom: 20 },
+    singleCircleRow: {
+        marginBottom: 20,
+    },
     twoCircleRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         width: width - 40,
-        marginBottom: 20
+        marginBottom: 20,
     },
     topicButton: {
         backgroundColor: '#3A7D44',
@@ -212,14 +221,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 5,
-        padding: 8
+        padding: 8,
     },
     topicButtonText: {
         color: '#FFFFFF',
         fontSize: 18,
         fontWeight: '700',
-        textAlign: 'center'
-    }
+        textAlign: 'center',
+    },
 });
 
 export default SubTopicListScreen;

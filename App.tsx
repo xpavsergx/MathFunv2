@@ -7,8 +7,10 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import Toast from 'react-native-toast-message';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 import { COLORS } from './src/styles/theme';
 
+// --- Типы ---
 import {
     AuthStackParamList,
     MainAppStackParamList,
@@ -17,10 +19,10 @@ import {
     FriendsStackParamList,
     ProfileStackParamList,
     ActivityStackParamList,
-    AppTabParamList
+    AppTabParamList,
 } from './src/navigation/types';
 
-// --- Экранные импорты ---
+// --- Экраны ---
 import MainScreen from './src/screens/MainScreen';
 import GradeSelectionScreen from './src/screens/GradeSelectionScreen';
 import TopicListScreen from './src/screens/TopicListScreen';
@@ -30,7 +32,10 @@ import MultiplicationTrainerScreen from './src/screens/MultiplicationTrainerScre
 import PlusMinusTrainerScreen from './src/screens/PlusMinusTrainerScreen';
 import DivisionTrainerScreen from './src/screens/DivisionTrainerScreen';
 import MoreLessTrainerScreen4 from './src/screens/MoreLessTrainerScreen4';
-import HowManyTimesTrainerScreen4 from './src/screens/HowManyTimesTrainerScreen4'; // ✅ новый тренажёр
+import HowManyTimesTrainerScreen4 from './src/screens/HowManyTimesTrainerScreen4';
+import DivisionWithRemainderScreen4 from './src/screens/DivisionWithRemainderScreen4';
+import SquaresCubesTrainerScreen4 from './src/screens/SquaresCubesTrainerScreen4';
+
 import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
@@ -40,19 +45,22 @@ import TheoryGradeSelectionScreen from './src/screens/TheoryGradeSelectionScreen
 import TheoryScreen from './src/screens/TheoryScreen';
 import TheorySubTopicListScreen from './src/screens/TheorySubTopicListScreen';
 import TheoryDetailScreen from './src/screens/TheoryDetailScreen';
+
 import GamesScreen from './src/screens/GamesScreen';
 import FriendsScreen from './src/screens/FriendsScreen';
 import DuelSetupScreen from './src/screens/DuelSetupScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import ActivityScreen from './src/screens/ActivityScreen';
 import MatchstickEquationGame from './src/screens/MatchstickEquationGame';
+import SpeedyCountGame from './src/screens/SpeedyCountGame';
+import MathSprintScreen from './src/screens/MathSprintScreen';
 import StoreScreen from './src/screens/StoreScreen';
 import DuelResultScreen from './src/screens/DuelResultScreen';
-import SpeedyCountGame from './src/screens/SpeedyCountGame';
-import DivisionWithRemainderScreen4 from './src/screens/DivisionWithRemainderScreen4';
-import SquaresCubesTrainerScreen4 from './src/screens/SquaresCubesTrainerScreen4';
+// import MultiplicationRunnerScreen from './src/screens/MultiplicationRunnerScreen';
 
 
+
+// --- Навигация ---
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainAppStackParamList>();
 const GamesStackNav = createNativeStackNavigator<GamesStackParamList>();
@@ -61,45 +69,37 @@ const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 const ActivityStackNav = createNativeStackNavigator<ActivityStackParamList>();
 const Tab = createBottomTabNavigator<AppTabParamList>();
 
+
+// ======================
+//     HOME STACK
+// ======================
 function HomeStackNavigator() {
     return (
         <MainStack.Navigator initialRouteName="Main">
             <MainStack.Screen name="Main" component={MainScreen} options={{ headerShown: false }} />
+
+            {/* Практика */}
             <MainStack.Screen name="GradeSelection" component={GradeSelectionScreen} options={{ title: 'Praktyka - Wybierz klasę' }} />
             <MainStack.Screen name="TopicList" component={TopicListScreen} options={({ route }) => ({ title: `Klasa ${route.params.grade} - Działy` })} />
             <MainStack.Screen name="SubTopicList" component={SubTopicListScreen} options={({ route }) => ({ title: route.params.topic })} />
-            <MainStack.Screen name="Test" component={TestScreen} options={({ route }) => ({ title: (route.params.subTopic || route.params.topic || 'Test') })} />
+            <MainStack.Screen name="Test" component={TestScreen} options={({ route }) => ({ title: route.params.subTopic })} />
+
+            {/* Тренажеры */}
             <MainStack.Screen name="MultiplicationTrainer" component={MultiplicationTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
             <MainStack.Screen name="PlusMinusTrainer" component={PlusMinusTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
             <MainStack.Screen name="DivisionTrainer" component={DivisionTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
-            <MainStack.Screen
-                name="MoreLessTrainer4"
-                component={MoreLessTrainerScreen4}
-                options={({ route }) => ({ title: route.params.subTopic })}
-            />
-            <MainStack.Screen
-                name="HowManyTimesTrainerScreen4" // ✅ новый тренажёр
-                component={HowManyTimesTrainerScreen4}
-                options={({ route }) => ({ title: route.params.subTopic })}
-            />
-            <MainStack.Screen
-                name="DivisionWithRemainderScreen4"
-                component={DivisionWithRemainderScreen4}
-                options={({ route }) => ({ title: route.params.subTopic })}
-            />
-            <MainStack.Screen
-                name="SquaresCubesTrainerScreen4"
-                component={SquaresCubesTrainerScreen4}
-                options={({ route }) => ({ title: route.params.subTopic })}
-            />
+            <MainStack.Screen name="MoreLessTrainer4" component={MoreLessTrainerScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
+            <MainStack.Screen name="HowManyTimesTrainerScreen4" component={HowManyTimesTrainerScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
+            <MainStack.Screen name="DivisionWithRemainderScreen4" component={DivisionWithRemainderScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
+            <MainStack.Screen name="SquaresCubesTrainerScreen4" component={SquaresCubesTrainerScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
 
+            {/* Math Sprint УДАЛЁН ОТСЮДА */}
 
+            {/* Остальное */}
             <MainStack.Screen name="Results" component={ResultsScreen} options={{ title: 'Wyniki Testu' }} />
-            <MainStack.Screen
-                name="DuelResult"
-                component={DuelResultScreen}
-                options={{ title: 'Wynik Pojedynku', headerShown: false }}
-            />
+            <MainStack.Screen name="DuelResult" component={DuelResultScreen} options={{ title: 'Wynik Pojedynku', headerShown: false }} />
+
+            {/* Теория */}
             <MainStack.Screen name="TheoryGradeSelection" component={TheoryGradeSelectionScreen} options={{ title: 'Teoria - Wybierz Klasę' }} />
             <MainStack.Screen name="TheoryTopicList" component={TheoryScreen} options={({ route }) => ({ title: `Działy (Klasa ${route.params.grade})` })} />
             <MainStack.Screen name="TheorySubTopicList" component={TheorySubTopicListScreen} options={({ route }) => ({ title: route.params.topic })} />
@@ -108,20 +108,33 @@ function HomeStackNavigator() {
     );
 }
 
+
+// ======================
+//     GAMES STACK
+// ======================
 function GamesStackNavigator() {
     return (
         <GamesStackNav.Navigator>
             <GamesStackNav.Screen name="GamesMain" component={GamesScreen} options={{ title: 'Gry' }} />
             <GamesStackNav.Screen name="MatchstickGame" component={MatchstickEquationGame} options={{ title: 'Równania z Zapałkami' }} />
+            <GamesStackNav.Screen name="SpeedyCountGame" component={SpeedyCountGame} options={{ title: 'Szybkie Liczenie', headerShown: false }} />
+            <GamesStackNav.Screen name="MathSprintGame" component={MathSprintScreen} options={{ title: 'Math Sprint', headerShown: false }} />
+
+            {/* Новый экран Multiplication Runner
             <GamesStackNav.Screen
-                name="SpeedyCountGame"
-                component={SpeedyCountGame}
-                options={{ title: 'Szybkie Liczenie', headerShown: false }}
-            />
+                name="MultiplicationRunner"
+                component={MultiplicationRunnerScreen}
+                options={{ title: 'Multiplication Runner', headerShown: false }}
+            /> */}
         </GamesStackNav.Navigator>
     );
 }
 
+
+
+// ======================
+//     FRIENDS
+// ======================
 function FriendsStackNavigator() {
     return (
         <FriendsStackNav.Navigator>
@@ -131,6 +144,10 @@ function FriendsStackNavigator() {
     );
 }
 
+
+// ======================
+//     PROFILE
+// ======================
 function ProfileStackNavigator() {
     return (
         <ProfileStack.Navigator>
@@ -142,6 +159,10 @@ function ProfileStackNavigator() {
     );
 }
 
+
+// ======================
+//     ACTIVITY
+// ======================
 function ActivityStackNavigator() {
     return (
         <ActivityStackNav.Navigator>
@@ -150,42 +171,47 @@ function ActivityStackNavigator() {
     );
 }
 
+
+// ======================
+//     TAB NAVIGATION
+// ======================
 function MainAppTabNavigator() {
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
+
     const tabBarBackground = isDarkMode ? COLORS.cardDark : COLORS.white;
     const activeColor = isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary;
     const inactiveColor = isDarkMode ? COLORS.greyDarkTheme : COLORS.grey;
-    const borderTopColor = isDarkMode ? COLORS.greyDarkTheme : '#E0E0E0';
-    const customTabBarStyle = {
-        backgroundColor: tabBarBackground,
-        borderTopColor: borderTopColor,
-        borderTopWidth: StyleSheet.hairlineWidth,
-        elevation: 8,
-        height: Platform.OS === 'ios' ? 90 : 65,
-        paddingBottom: Platform.OS === 'ios' ? 34 : 0,
-    };
+
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
                 tabBarIcon: ({ focused, color, size }) => {
                     let iconName: keyof typeof Ionicons.glyphMap = 'help-circle';
+
                     if (route.name === 'HomeStack') iconName = focused ? 'home' : 'home-outline';
                     else if (route.name === 'GamesStack') iconName = focused ? 'game-controller' : 'game-controller-outline';
                     else if (route.name === 'FriendsStack') iconName = focused ? 'people' : 'people-outline';
                     else if (route.name === 'ActivityStack') iconName = focused ? 'notifications' : 'notifications-outline';
                     else if (route.name === 'Profil') iconName = focused ? 'person-circle' : 'person-circle-outline';
+
                     return <Ionicons name={iconName} size={size} color={color} />;
                 },
                 tabBarActiveTintColor: activeColor,
                 tabBarInactiveTintColor: inactiveColor,
                 headerShown: false,
-                tabBarStyle: customTabBarStyle,
+                tabBarStyle: {
+                    backgroundColor: tabBarBackground,
+                    borderTopColor: isDarkMode ? COLORS.greyDarkTheme : '#E0E0E0',
+                    borderTopWidth: StyleSheet.hairlineWidth,
+                    elevation: 10,
+                    height: Platform.OS === 'ios' ? 90 : 65,
+                    paddingBottom: Platform.OS === 'ios' ? 30 : 5,
+                },
                 tabBarLabelStyle: {
                     fontWeight: '500',
                     fontSize: 11,
-                    paddingBottom: Platform.OS === 'ios' ? 0 : 5,
-                }
+                },
             })}
         >
             <Tab.Screen name="HomeStack" component={HomeStackNavigator} options={{ title: 'Główna' }} />
@@ -197,6 +223,10 @@ function MainAppTabNavigator() {
     );
 }
 
+
+// ======================
+//       AUTH
+// ======================
 function AuthNavigator() {
     return (
         <AuthStack.Navigator>
@@ -206,6 +236,10 @@ function AuthNavigator() {
     );
 }
 
+
+// ======================
+//        APP ROOT
+// ======================
 function App(): React.JSX.Element {
     const [initializing, setInitializing] = useState(true);
     const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
@@ -233,11 +267,16 @@ function App(): React.JSX.Element {
             <NavigationContainer>
                 {user ? <MainAppTabNavigator /> : <AuthNavigator />}
             </NavigationContainer>
+
             <Toast />
         </GestureHandlerRootView>
     );
 }
 
+
+// ======================
+//      STYLES
+// ======================
 const styles = StyleSheet.create({
     loadingContainer: {
         flex: 1,

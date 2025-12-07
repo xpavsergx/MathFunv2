@@ -1,23 +1,30 @@
 // src/screens/GamesScreen.tsx
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, ScrollView, Dimensions } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    useColorScheme,
+    ScrollView,
+    Dimensions,
+} from 'react-native';
+
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { GamesStackParamList } from '../../App'; // (Або з './src/navigation/types')
+
+import { GamesStackParamList } from '../navigation/types';
+
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS, FONT_SIZES, PADDING, MARGIN } from '../styles/theme';
 
-type GamesScreenNavigationProp = NativeStackNavigationProp<GamesStackParamList, 'GamesMain'>;
-
-// --- ✅ ЗБІЛЬШЕНО ШИРИНУ КАРТКИ ---
+// --- Размеры карточек ---
 const { width } = Dimensions.get('window');
-// Зменшуємо марджин між картками
 const CARD_MARGIN = MARGIN.small;
-// Нова ширина: (Ширина - Внутрішній відступ * 2 - Марджин між картками) / 2
 const CARD_WIDTH = (width - PADDING.medium * 2 - CARD_MARGIN) / 2;
 
-// --- Універсальний компонент картки для АКТИВНИХ ІГОР ---
+// ---------- Карточки ----------
 interface GameCardProps {
     title: string;
     description: string;
@@ -27,40 +34,65 @@ interface GameCardProps {
     themeStyles: any;
 }
 
-const ActiveGameCard: React.FC<GameCardProps> = ({ title, description, iconName, color, onPress, themeStyles }) => (
-    <TouchableOpacity style={[styles.card, styles.activeCard, themeStyles.card]} onPress={onPress}>
+const ActiveGameCard: React.FC<GameCardProps> = ({
+                                                     title,
+                                                     description,
+                                                     iconName,
+                                                     color,
+                                                     onPress,
+                                                     themeStyles,
+                                                 }) => (
+    <TouchableOpacity
+        style={[styles.card, styles.activeCard, themeStyles.card]}
+        onPress={onPress}
+    >
         <Ionicons name={iconName} size={35} color={color} style={styles.icon} />
         <Text style={[styles.cardTitle, themeStyles.text]}>{title}</Text>
-        <Text style={[styles.cardDescription, themeStyles.description]}>{description}</Text>
-        <Ionicons name="arrow-forward-circle-outline" size={26} color={color} style={styles.cardChevron} />
+        <Text style={[styles.cardDescription, themeStyles.description]}>
+            {description}
+        </Text>
+        <Ionicons
+            name="arrow-forward-circle-outline"
+            size={26}
+            color={color}
+            style={styles.cardChevron}
+        />
     </TouchableOpacity>
 );
 
-// --- Компонент для ІГОР В РОЗРОБЦІ (Неактивні) ---
-interface InDevelopmentCardProps {
+interface DevCardProps {
     title: string;
     iconName: keyof typeof Ionicons.glyphMap;
     themeStyles: any;
 }
 
-const InDevelopmentCard: React.FC<InDevelopmentCardProps> = ({ title, iconName, themeStyles }) => (
+const InDevelopmentCard: React.FC<DevCardProps> = ({
+                                                       title,
+                                                       iconName,
+                                                       themeStyles,
+                                                   }) => (
     <View style={[styles.card, styles.devCard, themeStyles.devCard]}>
         <Ionicons name={iconName} size={35} color={COLORS.grey} style={styles.icon} />
         <Text style={[styles.cardTitle, themeStyles.devTitle]}>{title}</Text>
         <Text style={[styles.devText, themeStyles.devText]}>W Trakcie Opracowania</Text>
-        <Ionicons name="lock-closed-outline" size={26} color={COLORS.grey} style={styles.cardChevron} />
+        <Ionicons
+            name="lock-closed-outline"
+            size={26}
+            color={COLORS.grey}
+            style={styles.cardChevron}
+        />
     </View>
 );
 
+// ---------- Основной экран ----------
+type Nav = NativeStackNavigationProp<GamesStackParamList, 'GamesMain'>;
 
 function GamesScreen() {
-    const navigation = useNavigation<GamesScreenNavigationProp>();
+    const navigation = useNavigation<Nav>();
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
 
-    // --- ✅ ОНОВЛЕННЯ 1: ФОН ---
     const themeStyles = {
-        // Використовуємо світло-сірий для Light Mode
         container: { backgroundColor: isDarkMode ? COLORS.backgroundDark : '#F7F7F7' },
         card: { backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.white },
         text: { color: isDarkMode ? COLORS.textDark : COLORS.textLight },
@@ -74,9 +106,9 @@ function GamesScreen() {
     return (
         <ScrollView style={[styles.container, themeStyles.container]} contentContainerStyle={styles.scrollContent}>
 
+            {/* ---- Активные игры ---- */}
             <Text style={[styles.sectionTitle, themeStyles.sectionTitle]}>💪 Gry Aktywne</Text>
 
-            {/* --- БЛОК АКТИВНИХ ІГОР --- */}
             <View style={styles.gamesGrid}>
                 <ActiveGameCard
                     title="Równania z Zapałkami"
@@ -95,14 +127,33 @@ function GamesScreen() {
                     onPress={() => navigation.navigate('SpeedyCountGame')}
                     themeStyles={themeStyles}
                 />
+
+                <ActiveGameCard
+                    title="Math Sprint"
+                    description="Sprint matematyczny: 30, 45, 60 sekund."
+                    iconName="flash-outline"
+                    color={COLORS.primary}
+                    onPress={() => navigation.navigate('MathSprintGame')}
+                    themeStyles={themeStyles}
+                />
+                {/* <ActiveGameCard
+                    title="Multiplication Runner"
+                    description="Biegaj i zbieraj poprawne odpowiedzi na działania matematyczne."
+                    iconName="flash-outline"
+                    color={COLORS.primary}
+                    onPress={() => navigation.navigate('MultiplicationRunner')}
+                    themeStyles={themeStyles}
+                /> */}
             </View>
 
-            {/* --- Роздільник --- */}
+            {/* ---- Разделитель ---- */}
             <View style={styles.separator} />
 
-            <Text style={[styles.sectionTitle, themeStyles.sectionTitle]}>🚧 Gry w Trakcie Opracowania</Text>
+            {/* ---- Игры в разработке ---- */}
+            <Text style={[styles.sectionTitle, themeStyles.sectionTitle]}>
+                🚧 Gry w Trakcie Opracowania
+            </Text>
 
-            {/* --- БЛОК ІГОР У РОЗРОБЦІ --- */}
             <View style={styles.gamesGrid}>
                 <InDevelopmentCard
                     title="Pamięć Liczbowa"
@@ -122,20 +173,14 @@ function GamesScreen() {
                     themeStyles={themeStyles}
                 />
             </View>
-
         </ScrollView>
     );
 }
 
-// --- ✅ ОНОВЛЕНІ СТИЛІ (Авторозмір) ---
+// ---------- Стили ----------
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        // Фон буде визначено в themeStyles.container
-    },
-    scrollContent: {
-        padding: PADDING.medium,
-    },
+    container: { flex: 1 },
+    scrollContent: { padding: PADDING.medium },
     sectionTitle: {
         fontSize: FONT_SIZES.large,
         fontWeight: 'bold',
@@ -148,26 +193,22 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginBottom: MARGIN.large,
     },
-    // Стилі для обох типів карток
     card: {
         width: CARD_WIDTH,
-        minHeight: 180, // ✅ АВТОМАТИЧНЕ ДОПАСУВАННЯ: мінімальна висота, але може рости
-        padding: PADDING.medium, // Збільшено відступ
+        minHeight: 180,
+        padding: PADDING.medium,
         borderRadius: 12,
-        marginBottom: MARGIN.medium, // Збільшено марджин
-        elevation: 4, // Трохи сильніша тінь
+        marginBottom: MARGIN.medium,
+        elevation: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.15,
         shadowRadius: 4,
-        justifyContent: 'space-between',
     },
-    // Стилі для активної картки
     activeCard: {
         borderBottomWidth: 4,
         borderBottomColor: COLORS.accent,
     },
-    // Стилі для картки в розробці
     devCard: {
         opacity: 0.7,
         borderBottomWidth: 4,
@@ -178,14 +219,14 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start',
     },
     cardTitle: {
-        fontSize: FONT_SIZES.medium + 2, // Трохи збільшено
+        fontSize: FONT_SIZES.medium + 2,
         fontWeight: 'bold',
     },
     cardDescription: {
         fontSize: FONT_SIZES.medium - 1,
         lineHeight: 18,
-        flex: 1, // Дозволяє йому займати стільки місця, скільки потрібно
         marginTop: MARGIN.small,
+        flex: 1,
     },
     cardChevron: {
         alignSelf: 'flex-end',
@@ -201,7 +242,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.lightGrey,
         marginVertical: MARGIN.medium,
         opacity: 0.5,
-    }
+    },
 });
 
 export default GamesScreen;

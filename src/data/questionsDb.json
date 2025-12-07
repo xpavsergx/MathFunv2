@@ -40,6 +40,13 @@
         "showInPractice": true,
         "questions": []
       },
+      "Sprint": {
+        "theoryTitle": "",
+        "isTrainer": true,
+        "practiceKeys": ["Sprint"],
+        "showInPractice": true,
+        "questions": []
+      },
       "Zadania tekstowe, cz. 1": {
         "theoryTitle": "Rozwiązujemy zadania tekstowe - pierwsze kroki!",
         "theoryContent": [
