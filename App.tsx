@@ -14,7 +14,6 @@ import { COLORS } from './src/styles/theme';
 import {
     AuthStackParamList,
     MainAppStackParamList,
-    TheoryStackParamList,
     GamesStackParamList,
     FriendsStackParamList,
     ProfileStackParamList,
@@ -36,6 +35,9 @@ import HowManyTimesTrainerScreen4 from './src/screens/HowManyTimesTrainerScreen4
 import DivisionWithRemainderScreen4 from './src/screens/DivisionWithRemainderScreen4';
 import SquaresCubesTrainerScreen4 from './src/screens/SquaresCubesTrainerScreen4';
 
+// 🔥 Новый экран тренажера
+import OrderOperationsTrainerScreen4 from './src/screens/OrderOperationsTrainerScreen4';
+
 import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
@@ -56,9 +58,6 @@ import SpeedyCountGame from './src/screens/SpeedyCountGame';
 import MathSprintScreen from './src/screens/MathSprintScreen';
 import StoreScreen from './src/screens/StoreScreen';
 import DuelResultScreen from './src/screens/DuelResultScreen';
-// import MultiplicationRunnerScreen from './src/screens/MultiplicationRunnerScreen';
-
-
 
 // --- Навигация ---
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -68,7 +67,6 @@ const FriendsStackNav = createNativeStackNavigator<FriendsStackParamList>();
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 const ActivityStackNav = createNativeStackNavigator<ActivityStackParamList>();
 const Tab = createBottomTabNavigator<AppTabParamList>();
-
 
 // ======================
 //     HOME STACK
@@ -93,7 +91,8 @@ function HomeStackNavigator() {
             <MainStack.Screen name="DivisionWithRemainderScreen4" component={DivisionWithRemainderScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
             <MainStack.Screen name="SquaresCubesTrainerScreen4" component={SquaresCubesTrainerScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
 
-            {/* Math Sprint УДАЛЁН ОТСЮДА */}
+            {/* 🔥 Новый экран */}
+            <MainStack.Screen name="OrderOperationsTrainerScreen4" component={OrderOperationsTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic || 'Trener' })} />
 
             {/* Остальное */}
             <MainStack.Screen name="Results" component={ResultsScreen} options={{ title: 'Wyniki Testu' }} />
@@ -108,7 +107,6 @@ function HomeStackNavigator() {
     );
 }
 
-
 // ======================
 //     GAMES STACK
 // ======================
@@ -119,18 +117,9 @@ function GamesStackNavigator() {
             <GamesStackNav.Screen name="MatchstickGame" component={MatchstickEquationGame} options={{ title: 'Równania z Zapałkami' }} />
             <GamesStackNav.Screen name="SpeedyCountGame" component={SpeedyCountGame} options={{ title: 'Szybkie Liczenie', headerShown: false }} />
             <GamesStackNav.Screen name="MathSprintGame" component={MathSprintScreen} options={{ title: 'Math Sprint', headerShown: false }} />
-
-            {/* Новый экран Multiplication Runner
-            <GamesStackNav.Screen
-                name="MultiplicationRunner"
-                component={MultiplicationRunnerScreen}
-                options={{ title: 'Multiplication Runner', headerShown: false }}
-            /> */}
         </GamesStackNav.Navigator>
     );
 }
-
-
 
 // ======================
 //     FRIENDS
@@ -143,7 +132,6 @@ function FriendsStackNavigator() {
         </FriendsStackNav.Navigator>
     );
 }
-
 
 // ======================
 //     PROFILE
@@ -159,7 +147,6 @@ function ProfileStackNavigator() {
     );
 }
 
-
 // ======================
 //     ACTIVITY
 // ======================
@@ -170,7 +157,6 @@ function ActivityStackNavigator() {
         </ActivityStackNav.Navigator>
     );
 }
-
 
 // ======================
 //     TAB NAVIGATION
@@ -223,7 +209,6 @@ function MainAppTabNavigator() {
     );
 }
 
-
 // ======================
 //       AUTH
 // ======================
@@ -235,7 +220,6 @@ function AuthNavigator() {
         </AuthStack.Navigator>
     );
 }
-
 
 // ======================
 //        APP ROOT
@@ -272,7 +256,6 @@ function App(): React.JSX.Element {
         </GestureHandlerRootView>
     );
 }
-
 
 // ======================
 //      STYLES

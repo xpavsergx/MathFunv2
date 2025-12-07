@@ -262,7 +262,7 @@ function MainScreen() {
                         </Text>
                     </View>
                     <Animated.Image
-                        source={require('../assets/images/logo.png')}
+                        source={require('../assets/images/logo1.png')}
                         style={[styles.bannerImage, animatedMascotStyle]}
                     />
                 </View>

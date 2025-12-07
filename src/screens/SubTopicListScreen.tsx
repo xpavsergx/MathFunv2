@@ -12,6 +12,9 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainAppStackParamList } from '../../App';
 import questionsDatabase from '../data/questionsDb.json';
 
+// --- Импорт твоего тренажера ---
+import OrderOperationsTrainerScreen4 from '../screens/OrderOperationsTrainerScreen4';
+
 type SubTopicDataForTest = {
     questions?: any[];
     isTrainer?: boolean;
@@ -45,7 +48,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     const { grade, topic } = route.params;
     const db: QuestionsDatabaseType = questionsDatabase as QuestionsDatabaseType;
 
-    // 🔥 Исправленный trainerScreenMap
+    // 🔥 Исправленный trainerScreenMap с точными ключами
     const trainerScreenMap: Record<string, keyof MainAppStackParamList> = {
         'Mnożenie': 'MultiplicationTrainer',
         'Dzielenie': 'DivisionTrainer',
@@ -55,7 +58,9 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         'Dzielenie z resztą': 'DivisionWithRemainderScreen4',
         'Kwadraty i sześciany liczb': 'SquaresCubesTrainerScreen4',
 
-        // ✔ Правильно: ключ должен быть Sprint
+        // ✅ Точно совпадает с practiceKeys
+        'Kolejność wykonywania działań': 'OrderOperationsTrainerScreen4',
+
         'Sprint': 'MathSprintScreen',
     };
 
