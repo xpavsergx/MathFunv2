@@ -260,7 +260,6 @@ const NumberLineTrainerScreen4 = () => {
                     <View style={styles.centerContent}>
                         <Animated.View style={[styles.card, { backgroundColor: 'transparent' }]}>
                             <View style={styles.overlayBackground} />
-                            <Text style={styles.title}>Trener</Text>
                             <Text style={styles.title}>Oś Liczbowa</Text>
                             <Text style={styles.taskLabel}>Jaką liczbę ukryto pod znakiem zapytania?</Text>
                             {taskData && <NumberLineRenderer task={taskData} />}
