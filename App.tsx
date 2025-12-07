@@ -36,9 +36,12 @@ import DivisionWithRemainderScreen4 from './src/screens/DivisionWithRemainderScr
 import SquaresCubesTrainerScreen4 from './src/screens/SquaresCubesTrainerScreen4';
 import OrderOperationsTrainerScreen4 from './src/screens/OrderOperationsTrainerScreen4';
 
-// 🔥 TEKSTOWE
+// 🔥 ЗАДАЧИ ТЕКСТОВЫЕ
 import WordProblemsLevel1Screen4 from './src/screens/WordProblemsLevel1Screen4';
-import WordProblemsLevel2Screen4 from './src/screens/WordProblemsLevel2Screen4'; // ✅ DODANO IMPORT
+import WordProblemsLevel2Screen4 from './src/screens/WordProblemsLevel2Screen4';
+
+// 🔥 НОВЫЙ ТРЕНАЖЕР ОСИ ЛИЧБОВОЙ
+import NumberLineTrainerScreen4 from './src/screens/NumberLineTrainerScreen4'; // ✅ DODANO
 
 import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -94,11 +97,12 @@ function HomeStackNavigator() {
             <MainStack.Screen name="SquaresCubesTrainerScreen4" component={SquaresCubesTrainerScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
             <MainStack.Screen name="OrderOperationsTrainerScreen4" component={OrderOperationsTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic || 'Trener' })} />
 
-            {/* 🔥 EKRANY ZADAŃ TEKSTOWYCH */}
+            {/* EKRANY ZADAŃ TEKSTOWYCH */}
             <MainStack.Screen name="WordProblemsLevel1Screen4" component={WordProblemsLevel1Screen4} options={({ route }) => ({ title: route.params?.subTopic || 'Zadania tekstowe' })} />
-
-            {/* ✅ DODANO NOWY EKRAN TUTAJ 👇 */}
             <MainStack.Screen name="WordProblemsLevel2Screen4" component={WordProblemsLevel2Screen4} options={({ route }) => ({ title: route.params?.subTopic || 'Zadania tekstowe (Poz. 2)' })} />
+
+            {/* ✅ NOWY EKRAN OSI LICZBOWEJ 👇 */}
+            <MainStack.Screen name="NumberLineTrainerScreen4" component={NumberLineTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic || 'Oś liczbowa' })} />
 
             {/* Остальное */}
             <MainStack.Screen name="Results" component={ResultsScreen} options={{ title: 'Wyniki Testu' }} />

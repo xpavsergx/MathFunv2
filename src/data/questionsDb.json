@@ -63,26 +63,10 @@
       },
       "Oś liczbowa": {
         "theoryTitle": "Podróże po osi liczbowej!",
-        "theoryContent": [
-          { "type": "paragraph", "text": "Oś liczbowa to taka długa, prosta droga, na której mieszkają wszystkie liczby! W samym jej środku jest Król Zero. Oś pomaga nam zrozumieć, które liczby są większe, a które mniejsze." },
-          { "type": "subHeader", "text": "Co warto wiedzieć o osi?" },
-          { "type": "listItem", "text": "Liczby na prawo od zera to liczby dodatnie (np. 1, 2, 3...). Są jak kroki w przód! Im dalej w prawo, tym liczba większa." },
-          { "type": "listItem", "text": "Liczby na lewo od zera to liczby ujemne (np. -1, -2, -3...). To jak kroki w tył! Im dalej w lewo, tym liczba mniejsza (i bardziej 'zimna'!)." },
-          { "type": "listItem", "text": "Każda liczba ma swoje wyjątkowe miejsce na osi." },
-          { "type": "example", "text": "Pomyśl: liczba 5 jest większa niż 2, bo na osi leży bardziej na prawo. A liczba -5 jest mniejsza niż -2, bo leży bardziej na lewo." }
-        ],
-        "questions": [
-          { "id": "ol_4_q1", "type": "practice", "difficulty": "łatwe", "questionText": "Na osi liczbowej, która liczba leży dalej od zera: 5 czy -7?", "options": ["5", "-7", "Obie tak samo daleko", "Zero"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Świetnie! Liczba -7 jest 7 jednostek od zera, a 5 jest 5 jednostek od zera. Więc -7 leży dalej.", "theorySnippet": "Oś liczbowa pomaga nam zobaczyć, które liczby są większe, a które mniejsze, i jak daleko są od zera." },
-          { "id": "ol_4_q2", "type": "practice", "difficulty": "łatwe", "questionText": "Jaka liczba na osi liczbowej znajduje się dokładnie pośrodku między 2 a 6?", "options": ["3", "4", "5", "3.5"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Dokładnie! Między 2 a 6 są liczby 3, 4, 5. Środkowa z nich to 4.", "theorySnippet": "Aby znaleźć liczbę pośrodku dwóch innych na osi, możesz policzyć 'kroki' lub znaleźć ich średnią." },
-          { "id": "ol_4_q3", "type": "practice", "difficulty": "łatwe", "questionText": "Która z tych liczb jest największa: -5, 0, 3, -2?", "options": ["-5", "0", "3", "-2"], "correctAnswerIndex": 2, "correctAnswerExplanation": "Super! Na osi liczbowej liczby rosną w prawo. Z podanych liczb, 3 leży najbardziej na prawo.", "theorySnippet": "Na osi liczbowej, im bardziej liczba jest na prawo, tym jest większa. Im bardziej na lewo, tym mniejsza." },
-          { "id": "ol_4_q4", "type": "practice", "difficulty": "średnie", "questionText": "Na osi liczbowej zaznaczono punkt A odpowiadający liczbie -3. Jaka liczba odpowiada punktowi B, który jest o 5 jednostek na prawo od A?", "options": ["-8", "2", "8", "-2"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Bardzo dobrze! Jeśli idziemy o 5 jednostek w prawo od -3, to dodajemy 5: -3 + 5 = 2.", "theorySnippet": "Ruch na osi liczbowej w prawo to dodawanie, a w lewo to odejmowanie." },
-          { "id": "ol_4_q5", "type": "practice", "difficulty": "średnie", "questionText": "Jaka jest odległość na osi liczbowej między liczbami -4 a 3?", "options": ["1", "7", "-1", "-7"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Znakomicie! Od -4 do 0 są 4 jednostki, a od 0 do 3 są 3 jednostki. Razem 4 + 3 = 7 jednostek.", "theorySnippet": "Odległość między dwiema liczbami na osi to liczba jednostek (kroków) między nimi. Zawsze jest dodatnia!" },
-          { "id": "ol_4_q6", "type": "practice", "difficulty": "średnie", "questionText": "Liczba przeciwna do 9 to:", "options": ["9", "-9", "1/9", "0"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Trafiony! Liczba przeciwna do danej liczby ma ten sam 'dystans' od zera, ale po drugiej stronie osi. Czyli -9.", "theorySnippet": "Liczby przeciwne leżą w tej samej odległości od zera na osi liczbowej, ale po przeciwnych stronach. Ich suma wynosi 0." },
-          { "id": "ol_4_q7", "type": "practice", "difficulty": "średnie", "questionText": "Jeżeli na osi liczbowej punkt X to 10, a punkt Y jest o 15 jednostek na lewo od X. Jaka liczba odpowiada Y?", "options": ["25", "5", "-5", "-25"], "correctAnswerIndex": 2, "correctAnswerExplanation": "Dokładnie! 'Na lewo' oznacza odejmowanie. 10 - 15 = -5. Punkt Y to -5.", "theorySnippet": "Pamiętaj: na osi liczbowej w prawo to '+', a w lewo to '-'." },
-          { "id": "ol_4_q8", "type": "practice", "difficulty": "trudne", "questionText": "Ile liczb całkowitych znajduje się na osi liczbowej między -2 a 3 (nie licząc -2 i 3)?", "options": ["3", "4", "5", "2"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Świetnie! Liczby całkowite między -2 a 3 to: -1, 0, 1, 2. Są to 4 liczby.", "theorySnippet": "Liczby całkowite to ..., -3, -2, -1, 0, 1, 2, 3, ... (bez ułamków). 'Między' oznacza, że nie liczymy liczb granicznych." },
-          { "id": "ol_4_q9", "type": "practice", "difficulty": "trudne", "questionText": "Na osi liczbowej zaznaczono liczby: -10, 5, -2, 0, 8. Uporządkuj je od najmniejszej do największej.", "options": ["0, -2, 5, 8, -10", "-10, -2, 0, 5, 8", "8, 5, 0, -2, -10", "-2, -10, 0, 5, 8"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Brawo! Najbardziej na lewo jest -10, potem -2, potem 0, potem 5, i najbardziej na prawo 8.", "theorySnippet": "Porządkowanie liczb na osi to jak ustawianie ich od lewej (najmniejsze) do prawej (największe)." },
-          { "id": "ol_4_q10", "type": "practice", "difficulty": "trudne", "questionText": "Punkt K na osi liczbowej ma współrzędną -6. Punkt L jest obrazem punktu K w symetrii względem punktu 0. Jaka jest współrzędna punktu L?", "options": ["-6", "0", "6", "12"], "correctAnswerIndex": 2, "correctAnswerExplanation": "Genialnie! Obraz punktu w symetrii względem zera to liczba przeciwna. Liczba przeciwna do -6 to 6.", "theorySnippet": "Symetria względem zera na osi liczbowej oznacza znalezienie liczby przeciwnej (z przeciwnym znakiem)." }
-        ]
+        "isTrainer": true,
+        "practiceKeys": ["Oś liczbowa"],
+        "showInPractice": true,
+        "questions": []
       }
     },
     "SYSTEM ZAPISYWANIA LICZB": {

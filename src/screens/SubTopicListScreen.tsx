@@ -56,13 +56,14 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         'Kwadraty i sześciany liczb': 'SquaresCubesTrainerScreen4',
         'Kolejność wykonywania działań': 'OrderOperationsTrainerScreen4',
 
-        // ✅ Poziom 1
+        // ✅ Zadania tekstowe
         ' Zadania tekstowe. POZIOM 1 ': 'WordProblemsLevel1Screen4',
         'Zadania tekstowe. POZIOM 1': 'WordProblemsLevel1Screen4',
-
-        // ✅ NOWOŚĆ: Poziom 2 (dodajemy obie wersje na wypadek spacji w JSON)
         ' Zadania tekstowe. POZIOM 2 ': 'WordProblemsLevel2Screen4',
         'Zadania tekstowe. POZIOM 2': 'WordProblemsLevel2Screen4',
+
+        // ✅ NOWOŚĆ: Oś liczbowa (musi pasować do practiceKeys w JSON)
+        'Oś liczbowa': 'NumberLineTrainerScreen4',
 
         'Sprint': 'MathSprintScreen',
     };
@@ -88,7 +89,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
                     result.push({
                         key: pk,
                         subTopicKey: subKey,
-                        displayName: pk.trim(), // Usuwamy spacje dla ładnego wyglądu
+                        displayName: pk.trim(),
                     });
                 });
             } else if (subTopic.questions?.length) {
