@@ -34,9 +34,11 @@ import MoreLessTrainerScreen4 from './src/screens/MoreLessTrainerScreen4';
 import HowManyTimesTrainerScreen4 from './src/screens/HowManyTimesTrainerScreen4';
 import DivisionWithRemainderScreen4 from './src/screens/DivisionWithRemainderScreen4';
 import SquaresCubesTrainerScreen4 from './src/screens/SquaresCubesTrainerScreen4';
-
-// 🔥 Новый экран тренажера
 import OrderOperationsTrainerScreen4 from './src/screens/OrderOperationsTrainerScreen4';
+
+// 🔥 TEKSTOWE
+import WordProblemsLevel1Screen4 from './src/screens/WordProblemsLevel1Screen4';
+import WordProblemsLevel2Screen4 from './src/screens/WordProblemsLevel2Screen4'; // ✅ DODANO IMPORT
 
 import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -90,9 +92,13 @@ function HomeStackNavigator() {
             <MainStack.Screen name="HowManyTimesTrainerScreen4" component={HowManyTimesTrainerScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
             <MainStack.Screen name="DivisionWithRemainderScreen4" component={DivisionWithRemainderScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
             <MainStack.Screen name="SquaresCubesTrainerScreen4" component={SquaresCubesTrainerScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
-
-            {/* 🔥 Новый экран */}
             <MainStack.Screen name="OrderOperationsTrainerScreen4" component={OrderOperationsTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic || 'Trener' })} />
+
+            {/* 🔥 EKRANY ZADAŃ TEKSTOWYCH */}
+            <MainStack.Screen name="WordProblemsLevel1Screen4" component={WordProblemsLevel1Screen4} options={({ route }) => ({ title: route.params?.subTopic || 'Zadania tekstowe' })} />
+
+            {/* ✅ DODANO NOWY EKRAN TUTAJ 👇 */}
+            <MainStack.Screen name="WordProblemsLevel2Screen4" component={WordProblemsLevel2Screen4} options={({ route }) => ({ title: route.params?.subTopic || 'Zadania tekstowe (Poz. 2)' })} />
 
             {/* Остальное */}
             <MainStack.Screen name="Results" component={ResultsScreen} options={{ title: 'Wyniki Testu' }} />

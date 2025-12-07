@@ -12,9 +12,6 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainAppStackParamList } from '../../App';
 import questionsDatabase from '../data/questionsDb.json';
 
-// --- Импорт твоего тренажера ---
-import OrderOperationsTrainerScreen4 from '../screens/OrderOperationsTrainerScreen4';
-
 type SubTopicDataForTest = {
     questions?: any[];
     isTrainer?: boolean;
@@ -48,7 +45,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     const { grade, topic } = route.params;
     const db: QuestionsDatabaseType = questionsDatabase as QuestionsDatabaseType;
 
-    // 🔥 Исправленный trainerScreenMap с точными ключами
+    // 🔥 MAPOWANIE TRENERÓW 🔥
     const trainerScreenMap: Record<string, keyof MainAppStackParamList> = {
         'Mnożenie': 'MultiplicationTrainer',
         'Dzielenie': 'DivisionTrainer',
@@ -57,15 +54,21 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         'Ile razy więcej, ile razy mniej': 'HowManyTimesTrainerScreen4',
         'Dzielenie z resztą': 'DivisionWithRemainderScreen4',
         'Kwadraty i sześciany liczb': 'SquaresCubesTrainerScreen4',
-
-        // ✅ Точно совпадает с practiceKeys
         'Kolejność wykonywania działań': 'OrderOperationsTrainerScreen4',
+
+        // ✅ Poziom 1
+        ' Zadania tekstowe. POZIOM 1 ': 'WordProblemsLevel1Screen4',
+        'Zadania tekstowe. POZIOM 1': 'WordProblemsLevel1Screen4',
+
+        // ✅ NOWOŚĆ: Poziom 2 (dodajemy obie wersje na wypadek spacji w JSON)
+        ' Zadania tekstowe. POZIOM 2 ': 'WordProblemsLevel2Screen4',
+        'Zadania tekstowe. POZIOM 2': 'WordProblemsLevel2Screen4',
 
         'Sprint': 'MathSprintScreen',
     };
 
     const getTrainerScreen = (key: string) =>
-        trainerScreenMap[key] ?? 'MultiplicationTrainer';
+        trainerScreenMap[key] ?? 'MultiplicationTrainer'; // Domyślny, jeśli nie znaleziono
 
     const subTopicsWithQuestions = useMemo<SubTopicButton[]>(() => {
         const topicsForGrade = db[String(grade)];
@@ -85,7 +88,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
                     result.push({
                         key: pk,
                         subTopicKey: subKey,
-                        displayName: pk,
+                        displayName: pk.trim(), // Usuwamy spacje dla ładnego wyglądu
                     });
                 });
             } else if (subTopic.questions?.length) {
@@ -108,6 +111,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
             ? getTrainerScreen(item.key)
             : 'Test';
 
+        // @ts-ignore
         navigation.navigate(targetScreen, {
             grade,
             topic,
@@ -171,7 +175,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
                 <ScrollView contentContainerStyle={styles.scrollContent}>
                     {subTopicsWithQuestions.length === 0 ? (
                         <Text style={styles.emptyText}>
-                            Brak podtematów z pytaniami dla tego działu.
+                            Brak dostępnych ćwiczeń w tym dziale.
                         </Text>
                     ) : (
                         renderContent()
@@ -230,7 +234,7 @@ const styles = StyleSheet.create({
     },
     topicButtonText: {
         color: '#FFFFFF',
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: '700',
         textAlign: 'center',
     },
