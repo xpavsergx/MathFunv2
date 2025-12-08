@@ -12,213 +12,355 @@ import {
     Image,
     Dimensions,
     TouchableOpacity,
+    Modal,
+    Platform,
+    KeyboardAvoidingView,
+    TouchableWithoutFeedback,
+    ScrollView,
+    InteractionManager
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import Svg, { Path } from 'react-native-svg';
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { awardXpAndCoins } from '../../../services/xpService';
 
 const EXERCISE_ID = "squaresCubesTrainer";
-const TASKS_LIMIT = 100;
-const screenWidth = Dimensions.get('window').width;
-const iconSize = screenWidth * 0.28;
+const TASKS_LIMIT = 50;
+
+const { width: screenWidth } = Dimensions.get('window');
+const isSmallDevice = screenWidth < 380;
+
+// --- КОМПОНЕНТ РИСОВАЛКИ (БРУДНОПИС) ---
+const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
+    const [paths, setPaths] = useState<string[]>([]);
+    const [currentPath, setCurrentPath] = useState('');
+
+    const handleClear = () => { setPaths([]); setCurrentPath(''); };
+
+    const onTouchMove = (evt: any) => {
+        const { locationX, locationY } = evt.nativeEvent;
+        if (!currentPath) setCurrentPath(`M${locationX},${locationY}`);
+        else setCurrentPath(`${currentPath} L${locationX},${locationY}`);
+    };
+
+    const onTouchEnd = () => {
+        if (currentPath) { setPaths([...paths, currentPath]); setCurrentPath(''); }
+    };
+
+    return (
+        <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
+            <View style={styles.modalOverlay}>
+                <View style={styles.drawingContainer}>
+                    <View style={styles.drawingHeader}>
+                        <TouchableOpacity onPress={handleClear} style={styles.headerButton}>
+                            <Text style={styles.headerButtonText}>🗑️ Wyczyść</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.drawingTitle}>Brudnopis</Text>
+                        <TouchableOpacity onPress={onClose} style={styles.headerButton}>
+                            <Text style={styles.headerButtonText}>❌ Zamknij</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <View style={styles.problemPreviewContainer}>
+                        <Text style={styles.problemPreviewLabel}>Zadanie:</Text>
+                        <Text style={styles.problemPreviewTextSmall}>{problemText}</Text>
+                    </View>
+                    <View style={styles.canvas} onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderGrant={(evt) => { const { locationX, locationY } = evt.nativeEvent; setCurrentPath(`M${locationX},${locationY}`); }} onResponderMove={onTouchMove} onResponderRelease={onTouchEnd}>
+                        <Svg height="100%" width="100%">
+                            {paths.map((d, index) => (<Path key={index} d={d} stroke="#000" strokeWidth={3} fill="none" />))}
+                            <Path d={currentPath} stroke="#000" strokeWidth={3} fill="none" />
+                        </Svg>
+                    </View>
+                </View>
+            </View>
+        </Modal>
+    );
+};
 
 const SquaresCubesTrainerScreen4 = () => {
+    // --- STATE LOGIC ---
     const [baseNumber, setBaseNumber] = useState<number>(0);
     const [power, setPower] = useState<2 | 3>(2);
     const [answer, setAnswer] = useState<string>('');
-    const [resultMessage, setResultMessage] = useState<string>('');
-    const [finalCorrect, setFinalCorrect] = useState<boolean>(false);
+
+    // --- STATE UI & VALIDATION ---
+    const [correctInput, setCorrectInput] = useState<boolean | null>(null);
     const [readyForNext, setReadyForNext] = useState<boolean>(false);
     const [correctCount, setCorrectCount] = useState<number>(0);
     const [wrongCount, setWrongCount] = useState<number>(0);
-    const [seconds, setSeconds] = useState<number>(0);
-    const [startTime, setStartTime] = useState<number>(0);
     const [taskCount, setTaskCount] = useState<number>(0);
-    const [isGameFinished, setIsGameFinished] = useState<boolean>(false);
-    const [showHint, setShowHint] = useState<boolean>(false);
     const [firstAttempt, setFirstAttempt] = useState<boolean>(true);
-    const [correctInput, setCorrectInput] = useState<boolean | null>(null);
-    const [lastWrongAnswer, setLastWrongAnswer] = useState<string>(''); // сохраняем последний неправильный
+
+    const [message, setMessage] = useState('');
+    const [showScratchpad, setShowScratchpad] = useState(false);
+    const [showHint, setShowHint] = useState(false);
+    const [hintText, setHintText] = useState('');
+    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
     const backgroundColor = useRef(new Animated.Value(0)).current;
 
+    useEffect(() => {
+        const k1 = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+        const k2 = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+        nextTask();
+        return () => { k1.remove(); k2.remove(); };
+    }, []);
+
     const nextTask = () => {
         if (taskCount >= TASKS_LIMIT) {
-            setIsGameFinished(true);
-            setResultMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
+            setMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
             setReadyForNext(false);
             return;
         }
 
         const newPower: 2 | 3 = Math.random() > 0.5 ? 2 : 3;
+        // Для квадратов: 1..20
+        // Для кубов: 1..5 (чтобы не было слишком сложно для устного счета)
         const newBase = newPower === 2
             ? Math.floor(Math.random() * 20) + 1
             : Math.floor(Math.random() * 5) + 1;
 
         setBaseNumber(newBase);
         setPower(newPower);
+
+        // --- Подсказка ---
+        let hint = "";
+        if (newPower === 2) hint = `${newBase} · ${newBase}`;
+        else hint = `${newBase} · ${newBase} · ${newBase}`;
+        setHintText(hint);
+
         setAnswer('');
-        setResultMessage('');
-        setFinalCorrect(false);
+        setMessage('');
         setReadyForNext(false);
-        setSeconds(0);
-        setStartTime(Date.now());
         setFirstAttempt(true);
         setCorrectInput(null);
         setShowHint(false);
-        setLastWrongAnswer('');
-
         setTaskCount(prev => prev + 1);
         backgroundColor.setValue(0);
     };
 
-    useEffect(() => { nextTask(); }, []);
-
+    const toggleScratchpad = () => setShowScratchpad(prev => !prev);
     const toggleHint = () => setShowHint(prev => !prev);
-
-    const getHintText = () => {
-        if (power === 2) return `${baseNumber} × ${baseNumber}`;
-        if (power === 3) return `${baseNumber} × ${baseNumber} × ${baseNumber}`;
-        return '';
-    };
 
     const handleCheck = () => {
         Keyboard.dismiss();
-        if (!answer) { setResultMessage('Wpisz odpowiedź!'); return; }
 
-        const numAnswer = Number(answer);
-        const correctResult = Math.pow(baseNumber, power);
-        const isCorrect = numAnswer === correctResult;
-
-        setFinalCorrect(isCorrect);
-        setSeconds(Math.floor((Date.now() - startTime) / 1000));
-
-        const currentUser = auth().currentUser;
-        const statsDocRef = currentUser
-            ? firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
-            : null;
-
-        if (isCorrect) {
-            setCorrectInput(true);
-            setCorrectCount(prev => prev + 1);
-            statsDocRef?.set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-            Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
-            setResultMessage('Świetnie! ✅');
-            setReadyForNext(true);
-            awardXpAndCoins(5, 1);
-        } else {
-            setCorrectInput(false);
-            setWrongCount(prev => prev + 1);
-            statsDocRef?.set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-
-            if (firstAttempt) {
-                setResultMessage('Błąd! Spróbuj ponownie!');
-                setAnswer('');
-                setFirstAttempt(false);
-            } else {
-                setResultMessage(`Błąd! Poprawne: ${correctResult}`);
-                setLastWrongAnswer(answer); // сохраняем введённое
-                setReadyForNext(true);
-                setFirstAttempt(true);
+        requestAnimationFrame(() => {
+            if (!answer) {
+                setMessage('Wpisz odpowiedź!');
+                return;
             }
 
-            Animated.sequence([
-                Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
-                Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
-            ]).start();
-        }
+            const numAnswer = Number(answer.replace(',', '.'));
+            const correctResult = Math.pow(baseNumber, power);
+            const isCorrect = Math.abs(numAnswer - correctResult) < 1e-9;
+
+            setCorrectInput(isCorrect);
+
+            if (isCorrect) {
+                Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
+                setCorrectCount(prev => prev + 1);
+                setMessage('Świetnie! ✅');
+                setReadyForNext(true);
+                setShowHint(false);
+
+                InteractionManager.runAfterInteractions(() => {
+                    awardXpAndCoins(5, 1);
+                    const currentUser = auth().currentUser;
+                    if (currentUser) {
+                        firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                            .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+                    }
+                });
+            } else {
+                Animated.sequence([
+                    Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
+                    Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
+                ]).start();
+
+                if (firstAttempt) {
+                    setMessage('Błąd! Spróbuj ponownie.');
+                    setAnswer(''); // Очищаем для второй попытки
+                    setFirstAttempt(false);
+                } else {
+                    setMessage(`Błąd! Poprawnie: ${correctResult}`);
+                    setReadyForNext(true);
+                }
+
+                setWrongCount(prev => prev + 1);
+                InteractionManager.runAfterInteractions(() => {
+                    const currentUser = auth().currentUser;
+                    if (currentUser) {
+                        firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                            .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+                    }
+                });
+            }
+        });
     };
 
-    const getValidationStyle = () => correctInput === null
-        ? styles.input
-        : correctInput ? styles.correctFinal : styles.errorFinal;
+    const getValidationStyle = () => {
+        if (correctInput === null) return styles.input;
+        return correctInput ? styles.correctFinal : styles.errorFinal;
+    };
+
+    const bgInterpolation = backgroundColor.interpolate({
+        inputRange: [-1, 0, 1],
+        outputRange: ['rgba(255, 0, 0, 0.2)', 'rgba(255, 255, 255, 0)', 'rgba(0, 255, 0, 0.2)']
+    });
+
+    // Текст для предпросмотра в рисовалке
+    const problemString = `${baseNumber}${power === 2 ? '²' : '³'}`;
 
     return (
-        <View style={{ flex: 1 }}>
-            <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-            <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={{ flex: 1 }}>
+                <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+                <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: bgInterpolation }]} pointerEvents="none" />
 
-            <KeyboardAwareScrollView contentContainerStyle={styles.container} enableOnAndroid extraScrollHeight={100} keyboardShouldPersistTaps="handled">
-                <View style={{ position: 'absolute', top: 5, right: 5, alignItems: 'center', zIndex: 10 }}>
-                    <TouchableOpacity onPress={toggleHint}>
-                        <Image source={require('../../../assets/question.png')} style={{ width: 90, height: 90 }} />
-                    </TouchableOpacity>
-                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#007AFF', textAlign: 'center' }}>Pomoc</Text>
-                    {showHint && (
-                        <View style={{ marginTop: 5, padding: 10, backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 10, maxWidth: 260 }}>
-                            <Text style={{ textAlign: 'center', fontSize: 14 }}>{getHintText()}</Text>
+                <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardContainer}>
+
+                    {!isKeyboardVisible && (
+                        <View style={styles.topButtons}>
+                            <TouchableOpacity onPress={toggleScratchpad} style={styles.topBtnItem}>
+                                <Image source={require('../../../assets/pencil.png')} style={styles.iconTop} />
+                                <Text style={styles.buttonLabel}>Brudnopis</Text>
+                            </TouchableOpacity>
+
+                            <View style={styles.topBtnItem}>
+                                <TouchableOpacity onPress={toggleHint}>
+                                    <Image source={require('../../../assets/question.png')} style={styles.iconTop} />
+                                </TouchableOpacity>
+                                <Text style={styles.buttonLabel}>Pomoc</Text>
+                            </View>
                         </View>
                     )}
-                </View>
 
-                <Animated.View style={[styles.card, { backgroundColor: 'transparent' }]}>
-                    <View style={styles.overlayBackground} />
-                    <Text style={styles.title}>Trener</Text>
-                    <Text style={styles.title}>Kwadraty i sześciany liczb</Text>
+                    {showHint && !isKeyboardVisible && (
+                        <View style={styles.hintBox}>
+                            <Text style={styles.hintTitle}>Rozpisanie:</Text>
+                            <Text style={styles.hintText}>{hintText}</Text>
+                        </View>
+                    )}
 
-                    {!isGameFinished && (
-                        <>
-                            <Text style={styles.task}>Oblicz:</Text>
-                            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-start', marginBottom: 15 }}>
-                                <Text style={styles.baseNumber}>{baseNumber}</Text>
-                                <Text style={styles.power}>{power}</Text>
+                    <DrawingModal visible={showScratchpad} onClose={toggleScratchpad} problemText={problemString} />
+
+                    <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
+                        <View style={styles.card}>
+                            <View style={styles.overlayBackground} />
+
+                            <Text style={styles.taskLabel}>TRENER: POTĘGI</Text>
+
+                            {/* --- ОТОБРАЖЕНИЕ ЧИСЛА СО СТЕПЕНЬЮ --- */}
+                            <View style={styles.mathDisplay}>
+                                <Text style={styles.baseText}>{baseNumber}</Text>
+                                <Text style={styles.powerText}>{power}</Text>
                             </View>
 
+                            <Text style={styles.subTitle}>Wpisz wynik</Text>
+
                             <TextInput
-                                style={[getValidationStyle(), styles.finalInput]}
+                                style={getValidationStyle()}
                                 keyboardType="numeric"
-                                value={answer || lastWrongAnswer}
+                                value={answer}
                                 onChangeText={setAnswer}
-                                placeholder="Odpowiedź"
+                                placeholder="wynik"
                                 placeholderTextColor="#aaa"
+                                editable={!readyForNext}
                             />
 
                             <View style={styles.buttonContainer}>
                                 <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
                             </View>
 
-                            <Text style={styles.counterTextSmall}>Zadanie: {taskCount > TASKS_LIMIT ? TASKS_LIMIT : taskCount} / {TASKS_LIMIT} ⏱ {seconds}s</Text>
+                            <Text style={styles.counterTextSmall}>
+                                Zadanie: {taskCount > TASKS_LIMIT ? TASKS_LIMIT : taskCount} / {TASKS_LIMIT}
+                            </Text>
 
-                            {resultMessage && (
-                                <Text style={[styles.result, finalCorrect ? styles.correctText : styles.errorText]}>{resultMessage}</Text>
-                            )}
-                        </>
+                            {message ? <Text style={[styles.result, message.includes('Świetnie') ? styles.correctText : styles.errorText]}>{message}</Text> : null}
+                        </View>
+                    </ScrollView>
+
+                    {!isKeyboardVisible && (
+                        <View style={styles.iconsBottom}>
+                            <Image source={require('../../../assets/happy.png')} style={styles.iconSame} />
+                            <Text style={styles.counterTextIcons}>{correctCount}</Text>
+                            <Image source={require('../../../assets/sad.png')} style={styles.iconSame} />
+                            <Text style={styles.counterTextIcons}>{wrongCount}</Text>
+                        </View>
                     )}
-                </Animated.View>
 
-                <View style={styles.iconsBottom}>
-                    <Image source={require('../../../assets/happy.png')} style={styles.iconSame} />
-                    <Text style={styles.counterTextIcons}>{correctCount}</Text>
-                    <Image source={require('../../../assets/sad.png')} style={styles.iconSame} />
-                    <Text style={styles.counterTextIcons}>{wrongCount}</Text>
-                </View>
-            </KeyboardAwareScrollView>
-        </View>
+                </KeyboardAvoidingView>
+            </View>
+        </TouchableWithoutFeedback>
     );
 };
 
+// Styles
+const iconSize = screenWidth * 0.25;
+const inputWidth = isSmallDevice ? screenWidth * 0.5 : 220;
+const inputFontSize = 22;
+
 const styles = StyleSheet.create({
-    container: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-    card: { width: '100%', maxWidth: 450, borderRadius: 20, padding: 30, alignItems: 'center' },
+    keyboardContainer: { flex: 1, justifyContent: 'center' },
+    centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 20 },
+
+    // Top Buttons
+    topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
+    topBtnItem: { alignItems: 'center', marginLeft: 15 },
+    iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
+    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255, 255, 255, 0.8)', textShadowRadius: 3 },
+
+    // Hint Box
+    hintBox: {
+        position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF'
+    },
+    hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
+    hintText: { fontSize: 16, color: '#333', lineHeight: 22, textAlign: 'center' },
+
+    // Card
+    card: { width: '95%', maxWidth: 480, borderRadius: 20, padding: 20, alignItems: 'center', marginTop: 20, alignSelf: 'center' },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
-    title: { fontSize: 24, fontWeight: '700', marginBottom: 20, color: '#333', textAlign: 'center' },
-    task: { fontSize: 22, fontWeight: '700', marginBottom: 10, color: '#007AFF', textAlign: 'center' },
-    baseNumber: { fontSize: 36, fontWeight: '700', color: '#007AFF', marginRight: 2 },
-    power: { fontSize: 20, fontWeight: '700', color: '#007AFF', marginTop: 6 },
-    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
-    input: { width: 220, height: 56, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#fafafa', marginBottom: 15 },
-    finalInput: { width: 220 },
-    buttonContainer: { marginTop: 20, width: '80%', borderRadius: 10, overflow: 'hidden' },
+
+    // Headings & Math Display
+    taskLabel: { fontSize: 18, fontWeight: '700', marginBottom: 15, color: '#007AFF', textAlign: 'center', textTransform: 'uppercase' },
+
+    mathDisplay: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', marginBottom: 15 },
+    baseText: { fontSize: 50, fontWeight: 'bold', color: '#333' },
+    powerText: { fontSize: 26, fontWeight: 'bold', color: '#333', marginTop: 6 }, // Немного опущен вниз относительно верха строки
+
+    subTitle: { fontSize: 16, marginBottom: 20, color: '#555', textAlign: 'center' },
+
+    // Inputs
+    input: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#fafafa', marginBottom: 15, color: '#333' },
+    correctFinal: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#28a745', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#d4edda', marginBottom: 15, color: '#155724' },
+    errorFinal: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#dc3545', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#f8d7da', marginBottom: 15, color: '#721c24' },
+
+    buttonContainer: { marginTop: 10, width: '80%', borderRadius: 10, overflow: 'hidden' },
     result: { fontSize: 18, fontWeight: '700', marginTop: 20, textAlign: 'center' },
+    correctText: { color: '#28a745' },
+    errorText: { color: '#dc3545' },
+
+    // Counter
+    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
+
+    // Bottom Icons
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: iconSize, height: iconSize, resizeMode: 'contain', marginHorizontal: 10 },
     counterTextIcons: { fontSize: Math.max(14, iconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
-    correctFinal: { width: 220, height: 56, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#d4edda', borderColor: '#28a745', color: '#155724', marginBottom: 15 },
-    errorFinal: { width: 220, height: 56, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#f8d7da', borderColor: '#dc3545', color: '#721c24', marginBottom: 15 },
-    correctText: { color: '#28a745' },
-    errorText: { color: '#dc3545' },
+
+    // Modal
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+    drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
+    drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, backgroundColor: '#f0f0f0', borderBottomWidth: 1, borderBottomColor: '#ccc' },
+    drawingTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+    headerButton: { padding: 5 },
+    headerButtonText: { fontSize: 16, color: '#007AFF' },
+    problemPreviewContainer: { backgroundColor: '#f9f9f9', padding: 10, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#eee', width: '100%' },
+    problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
+    problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
+    canvas: { flex: 1, backgroundColor: '#ffffff' },
 });
 
 export default SquaresCubesTrainerScreen4;

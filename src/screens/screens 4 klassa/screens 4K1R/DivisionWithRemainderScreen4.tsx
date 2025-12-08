@@ -12,44 +12,109 @@ import {
     Image,
     Dimensions,
     TouchableOpacity,
+    Modal,
+    Platform,
+    KeyboardAvoidingView,
+    TouchableWithoutFeedback,
+    ScrollView,
+    InteractionManager
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import Svg, { Path } from 'react-native-svg';
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { awardXpAndCoins } from '../../../services/xpService';
 
 const EXERCISE_ID = "divisionWithRemainder";
-const TASKS_LIMIT = 100;
-const screenWidth = Dimensions.get('window').width;
-const iconSize = screenWidth * 0.28;
+const TASKS_LIMIT = 50; // Лимит 50, как в других тренажерах
 
-const DivisionWithRemainderScreen4 = () => {
+const { width: screenWidth } = Dimensions.get('window');
+const isSmallDevice = screenWidth < 380;
+
+// --- КОМПОНЕНТ РИСОВАЛКИ (БРУДНОПИС) ---
+const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
+    const [paths, setPaths] = useState<string[]>([]);
+    const [currentPath, setCurrentPath] = useState('');
+
+    const handleClear = () => { setPaths([]); setCurrentPath(''); };
+
+    const onTouchMove = (evt: any) => {
+        const { locationX, locationY } = evt.nativeEvent;
+        if (!currentPath) setCurrentPath(`M${locationX},${locationY}`);
+        else setCurrentPath(`${currentPath} L${locationX},${locationY}`);
+    };
+
+    const onTouchEnd = () => {
+        if (currentPath) { setPaths([...paths, currentPath]); setCurrentPath(''); }
+    };
+
+    return (
+        <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
+            <View style={styles.modalOverlay}>
+                <View style={styles.drawingContainer}>
+                    <View style={styles.drawingHeader}>
+                        <TouchableOpacity onPress={handleClear} style={styles.headerButton}>
+                            <Text style={styles.headerButtonText}>🗑️ Wyczyść</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.drawingTitle}>Brudnopis</Text>
+                        <TouchableOpacity onPress={onClose} style={styles.headerButton}>
+                            <Text style={styles.headerButtonText}>❌ Zamknij</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <View style={styles.problemPreviewContainer}>
+                        <Text style={styles.problemPreviewLabel}>Zadanie:</Text>
+                        <Text style={styles.problemPreviewTextSmall}>{problemText}</Text>
+                    </View>
+                    <View style={styles.canvas} onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderGrant={(evt) => { const { locationX, locationY } = evt.nativeEvent; setCurrentPath(`M${locationX},${locationY}`); }} onResponderMove={onTouchMove} onResponderRelease={onTouchEnd}>
+                        <Svg height="100%" width="100%">
+                            {paths.map((d, index) => (<Path key={index} d={d} stroke="#000" strokeWidth={3} fill="none" />))}
+                            <Path d={currentPath} stroke="#000" strokeWidth={3} fill="none" />
+                        </Svg>
+                    </View>
+                </View>
+            </View>
+        </Modal>
+    );
+};
+
+const DivisionWithRemainderScreen = () => {
+    // --- STATE ---
     const [dividend, setDividend] = useState<number>(0);
     const [divisor, setDivisor] = useState<number>(0);
+
+    // Inputs
     const [quotient, setQuotient] = useState<string>('');
     const [remainder, setRemainder] = useState<string>('');
-    const [resultMessage, setResultMessage] = useState<string>('');
-    const [finalCorrect, setFinalCorrect] = useState<boolean>(false);
-    const [readyForNext, setReadyForNext] = useState<boolean>(false);
-    const [correctCount, setCorrectCount] = useState<number>(0);
-    const [wrongCount, setWrongCount] = useState<number>(0);
-    const [seconds, setSeconds] = useState<number>(0);
-    const [startTime, setStartTime] = useState<number>(0);
-    const [taskCount, setTaskCount] = useState<number>(0);
-    const [isGameFinished, setIsGameFinished] = useState<boolean>(false);
-    const [showHint, setShowHint] = useState<boolean>(false);
-    const [firstAttempt, setFirstAttempt] = useState<boolean>(true);
 
+    // Validation
     const [correctQuotientInput, setCorrectQuotientInput] = useState<boolean | null>(null);
     const [correctRemainderInput, setCorrectRemainderInput] = useState<boolean | null>(null);
 
+    // Game Logic
+    const [readyForNext, setReadyForNext] = useState<boolean>(false);
+    const [correctCount, setCorrectCount] = useState<number>(0);
+    const [wrongCount, setWrongCount] = useState<number>(0);
+    const [taskCount, setTaskCount] = useState<number>(0);
+    const [firstAttempt, setFirstAttempt] = useState<boolean>(true);
+
+    // UI State
+    const [message, setMessage] = useState('');
+    const [showScratchpad, setShowScratchpad] = useState(false);
+    const [showHint, setShowHint] = useState(false);
+    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
     const backgroundColor = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        const k1 = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+        const k2 = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+        nextTask();
+        return () => { k1.remove(); k2.remove(); };
+    }, []);
 
     const nextTask = () => {
         if (taskCount >= TASKS_LIMIT) {
-            setIsGameFinished(true);
-            setResultMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
+            setMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
             setReadyForNext(false);
             return;
         }
@@ -61,179 +126,265 @@ const DivisionWithRemainderScreen4 = () => {
         setDivisor(newDivisor);
         setQuotient('');
         setRemainder('');
-        setResultMessage('');
-        setFinalCorrect(false);
+        setMessage('');
         setReadyForNext(false);
-        setSeconds(0);
-        setStartTime(Date.now());
-        setTaskCount(prev => prev + 1);
         setFirstAttempt(true);
         setCorrectQuotientInput(null);
         setCorrectRemainderInput(null);
+        setShowHint(false);
+        setTaskCount(prev => prev + 1);
         backgroundColor.setValue(0);
     };
 
-    useEffect(() => { nextTask(); }, []);
+    const toggleScratchpad = () => setShowScratchpad(prev => !prev);
+    const toggleHint = () => setShowHint(prev => !prev);
 
-    const getHintText = () => {
-        return `${dividend} = ${divisor} × ? + reszta`;
-    };
+    const getHintText = () => `${dividend} = ${divisor} × ? + reszta`;
 
     const handleCheck = () => {
         Keyboard.dismiss();
-        if (!quotient || !remainder) {
-            setResultMessage('Wpisz odpowiedź i resztę!');
-            return;
-        }
 
-        const numQuotient = Number(quotient);
-        const numRemainder = Number(remainder);
-
-        const correctQuotient = Math.floor(dividend / divisor);
-        const correctRemainder = dividend % divisor;
-
-        const isQuotientCorrect = numQuotient === correctQuotient;
-        const isRemainderCorrect = numRemainder === correctRemainder;
-        const isCorrect = isQuotientCorrect && isRemainderCorrect;
-
-        setFinalCorrect(isCorrect);
-        setSeconds(Math.floor((Date.now() - startTime) / 1000));
-
-        const currentUser = auth().currentUser;
-        const statsDocRef = currentUser
-            ? firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
-            : null;
-
-        if (isCorrect) {
-            setCorrectQuotientInput(true);
-            setCorrectRemainderInput(true);
-            setCorrectCount(prev => prev + 1);
-            statsDocRef?.set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-
-            Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
-            setResultMessage('Świetnie! ✅');
-            setReadyForNext(true);
-            awardXpAndCoins(5, 1);
-            setFirstAttempt(true);
-        } else {
-            if (firstAttempt) {
-                // Первая ошибка: очищаем поля и подсвечиваем
-                setCorrectQuotientInput(isQuotientCorrect ? true : false);
-                setCorrectRemainderInput(isRemainderCorrect ? true : false);
-                setResultMessage('Błąd! Spróbuj ponownie!');
-                setQuotient('');
-                setRemainder('');
-                setFirstAttempt(false);
-            } else {
-                // Вторая ошибка: поля красные, показываем правильный ответ
-                setCorrectQuotientInput(false);
-                setCorrectRemainderInput(false);
-                setResultMessage(`Błąd! Poprawne: ${correctQuotient} reszta ${correctRemainder}`);
-                setReadyForNext(true);
-                setFirstAttempt(true);
+        requestAnimationFrame(() => {
+            if (!quotient || !remainder) {
+                setMessage('Wpisz wynik i resztę!');
+                return;
             }
 
-            setWrongCount(prev => prev + 1);
-            statsDocRef?.set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+            const numQuotient = Number(quotient);
+            const numRemainder = Number(remainder);
+            const correctQuotient = Math.floor(dividend / divisor);
+            const correctRemainder = dividend % divisor;
 
-            Animated.sequence([
-                Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
-                Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
-            ]).start();
-        }
+            const isQuotientCorrect = numQuotient === correctQuotient;
+            const isRemainderCorrect = numRemainder === correctRemainder;
+            const isCorrect = isQuotientCorrect && isRemainderCorrect;
+
+            // Обновляем UI состояния валидации
+            setCorrectQuotientInput(isQuotientCorrect);
+            setCorrectRemainderInput(isRemainderCorrect);
+
+            if (isCorrect) {
+                Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
+                setCorrectCount(prev => prev + 1);
+                setMessage('Świetnie! ✅');
+                setReadyForNext(true);
+                setShowHint(false);
+
+                InteractionManager.runAfterInteractions(() => {
+                    awardXpAndCoins(5, 1);
+                    const currentUser = auth().currentUser;
+                    if (currentUser) {
+                        firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                            .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+                    }
+                });
+            } else {
+                Animated.sequence([
+                    Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
+                    Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
+                ]).start();
+
+                if (firstAttempt) {
+                    setMessage('Błąd! Spróbuj ponownie.');
+                    // Если ошибка, очищаем только неверные поля для удобства, или оставляем красными
+                    if (!isQuotientCorrect) setQuotient('');
+                    if (!isRemainderCorrect) setRemainder('');
+                    setFirstAttempt(false);
+                } else {
+                    setMessage(`Błąd! Poprawne: ${correctQuotient} r ${correctRemainder}`);
+                    setReadyForNext(true);
+                }
+
+                setWrongCount(prev => prev + 1);
+                InteractionManager.runAfterInteractions(() => {
+                    const currentUser = auth().currentUser;
+                    if (currentUser) {
+                        firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                            .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+                    }
+                });
+            }
+        });
     };
 
     const getValidationStyle = (field: 'quotient' | 'remainder') => {
-        const value = field === 'quotient' ? correctQuotientInput : correctRemainderInput;
-        if (value === null) return styles.input;
-        return value ? styles.correctFinal : styles.errorFinal;
+        const isCorrect = field === 'quotient' ? correctQuotientInput : correctRemainderInput;
+        if (isCorrect === null) return styles.input;
+        return isCorrect ? styles.correctFinal : styles.errorFinal;
     };
 
-    return (
-        <View style={{ flex: 1 }}>
-            <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-            <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+    const bgInterpolation = backgroundColor.interpolate({
+        inputRange: [-1, 0, 1],
+        outputRange: ['rgba(255, 0, 0, 0.2)', 'rgba(255, 255, 255, 0)', 'rgba(0, 255, 0, 0.2)']
+    });
 
-            <KeyboardAwareScrollView contentContainerStyle={styles.container} enableOnAndroid extraScrollHeight={100} keyboardShouldPersistTaps="handled">
-                <View style={{ position: 'absolute', top: 5, right: 5, alignItems: 'center', zIndex: 10 }}>
-                    <TouchableOpacity onPress={() => setShowHint(!showHint)}>
-                        <Image source={require('../../../assets/question.png')} style={{ width: 90, height: 90 }} />
-                    </TouchableOpacity>
-                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#007AFF', textAlign: 'center' }}>Pomoc</Text>
-                    {showHint && (
-                        <View style={{ marginTop: 5, padding: 10, backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 10, maxWidth: 260 }}>
-                            <Text style={{ textAlign: 'center', fontSize: 14 }}>{getHintText()}</Text>
+    const problemString = `${dividend} : ${divisor}`;
+
+    return (
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={{ flex: 1 }}>
+                <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+                <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: bgInterpolation }]} pointerEvents="none" />
+
+                <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardContainer}>
+
+                    {!isKeyboardVisible && (
+                        <View style={styles.topButtons}>
+                            <TouchableOpacity onPress={toggleScratchpad} style={styles.topBtnItem}>
+                                <Image source={require('../../../assets/pencil.png')} style={styles.iconTop} />
+                                <Text style={styles.buttonLabel}>Brudnopis</Text>
+                            </TouchableOpacity>
+
+                            <View style={styles.topBtnItem}>
+                                <TouchableOpacity onPress={toggleHint}>
+                                    <Image source={require('../../../assets/question.png')} style={styles.iconTop} />
+                                </TouchableOpacity>
+                                <Text style={styles.buttonLabel}>Pomoc</Text>
+                            </View>
                         </View>
                     )}
-                </View>
 
-                <Animated.View style={[styles.card, { backgroundColor: 'transparent' }]}>
-                    <View style={styles.overlayBackground} />
-                    <Text style={styles.title}>Trener</Text>
-                    <Text style={styles.title}>Dzielenia z resztą</Text>
+                    {showHint && !isKeyboardVisible && (
+                        <View style={styles.hintBox}>
+                            <Text style={styles.hintTitle}>Podpowiedź:</Text>
+                            <Text style={styles.hintText}>{getHintText()}</Text>
+                        </View>
+                    )}
 
-                    {!isGameFinished && (
-                        <>
-                            <Text style={styles.task}>Wykonaj działanie z resztą:</Text>
-                            <Text style={styles.task}>{dividend} : {divisor} = ?</Text>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '60%', marginTop: 10 }}>
-                                <TextInput
-                                    style={[getValidationStyle('quotient'), { flex: 1, marginRight: 5 }]}
-                                    keyboardType="numeric"
-                                    value={quotient}
-                                    onChangeText={setQuotient}
-                                    placeholder="Iloraz"
-                                    placeholderTextColor="#aaa"
-                                />
-                                <TextInput
-                                    style={[getValidationStyle('remainder'), { flex: 1, marginLeft: 5 }]}
-                                    keyboardType="numeric"
-                                    value={remainder}
-                                    onChangeText={setRemainder}
-                                    placeholder="Reszta"
-                                    placeholderTextColor="#aaa"
-                                />
+                    <DrawingModal visible={showScratchpad} onClose={toggleScratchpad} problemText={problemString} />
+
+                    <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
+                        <View style={styles.card}>
+                            <View style={styles.overlayBackground} />
+
+                            <Text style={styles.taskLabel}>Trener Dzielenia z resztą</Text>
+                            <Text style={styles.taskTextMain}>{problemString} = ?</Text>
+
+                            <Text style={styles.subTitle}>Wpisz wynik i resztę</Text>
+
+                            <View style={styles.mathContainer}>
+                                <View style={styles.inputGroup}>
+                                    <TextInput
+                                        style={getValidationStyle('quotient')}
+                                        keyboardType="numeric"
+                                        value={quotient}
+                                        onChangeText={setQuotient}
+                                        placeholder="wynik"
+                                        placeholderTextColor="#aaa"
+                                        editable={!readyForNext}
+                                    />
+                                    <Text style={styles.labelBottom}>wynik</Text>
+                                </View>
+
+                                <Text style={styles.rText}>r</Text>
+
+                                <View style={styles.inputGroup}>
+                                    <TextInput
+                                        style={getValidationStyle('remainder')}
+                                        keyboardType="numeric"
+                                        value={remainder}
+                                        onChangeText={setRemainder}
+                                        placeholder="reszta"
+                                        placeholderTextColor="#aaa"
+                                        editable={!readyForNext}
+                                    />
+                                    <Text style={styles.labelBottom}>reszta</Text>
+                                </View>
                             </View>
+
                             <View style={styles.buttonContainer}>
                                 <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
                             </View>
-                            <Text style={styles.counterTextSmall}>Zadanie: {taskCount > TASKS_LIMIT ? TASKS_LIMIT : taskCount} / {TASKS_LIMIT} ⏱ {seconds}s</Text>
-                        </>
+
+                            <Text style={styles.counterTextSmall}>
+                                Zadanie: {taskCount > TASKS_LIMIT ? TASKS_LIMIT : taskCount} / {TASKS_LIMIT}
+                            </Text>
+
+                            {message ? <Text style={[styles.result, message.includes('Świetnie') ? styles.correctText : styles.errorText]}>{message}</Text> : null}
+                        </View>
+                    </ScrollView>
+
+                    {!isKeyboardVisible && (
+                        <View style={styles.iconsBottom}>
+                            <Image source={require('../../../assets/happy.png')} style={styles.iconSame} />
+                            <Text style={styles.counterTextIcons}>{correctCount}</Text>
+                            <Image source={require('../../../assets/sad.png')} style={styles.iconSame} />
+                            <Text style={styles.counterTextIcons}>{wrongCount}</Text>
+                        </View>
                     )}
 
-                    {resultMessage && (
-                        <Text style={[styles.result, finalCorrect ? styles.correctText : styles.errorText]}>{resultMessage}</Text>
-                    )}
-                </Animated.View>
-
-                <View style={styles.iconsBottom}>
-                    <Image source={require('../../../assets/happy.png')} style={styles.iconSame} />
-                    <Text style={styles.counterTextIcons}>{correctCount}</Text>
-                    <Image source={require('../../../assets/sad.png')} style={styles.iconSame} />
-                    <Text style={styles.counterTextIcons}>{wrongCount}</Text>
-                </View>
-            </KeyboardAwareScrollView>
-        </View>
+                </KeyboardAvoidingView>
+            </View>
+        </TouchableWithoutFeedback>
     );
 };
 
+// Styles
+const iconSize = screenWidth * 0.25;
+const inputWidth = isSmallDevice ? screenWidth * 0.35 : 120; // Чуть шире поля
+const inputFontSize = 22;
+
 const styles = StyleSheet.create({
-    container: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-    card: { width: '100%', maxWidth: 450, borderRadius: 20, padding: 30, alignItems: 'center' },
+    keyboardContainer: { flex: 1, justifyContent: 'center' },
+    centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 20 },
+
+    // Top Buttons
+    topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
+    topBtnItem: { alignItems: 'center', marginLeft: 15 },
+    iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
+    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255, 255, 255, 0.8)', textShadowRadius: 3 },
+
+    // Hint Box
+    hintBox: {
+        position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF'
+    },
+    hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
+    hintText: { fontSize: 16, color: '#333', lineHeight: 22, textAlign: 'center' },
+
+    // Card
+    card: { width: '95%', maxWidth: 480, borderRadius: 20, padding: 20, alignItems: 'center', marginTop: 20, alignSelf: 'center' },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
-    title: { fontSize: 24, fontWeight: '700', marginBottom: 20, color: '#333', textAlign: 'center' },
-    task: { fontSize: 22, fontWeight: '700', marginBottom: 10, color: '#007AFF', textAlign: 'center' },
-    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
-    input: { width: 100, height: 56, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#fafafa', marginBottom: 15 },
-    buttonContainer: { marginTop: 20, width: '80%', borderRadius: 10, overflow: 'hidden' },
+
+    taskLabel: { fontSize: 18, fontWeight: '700', marginBottom: 5, color: '#007AFF', textAlign: 'center', textTransform: 'uppercase' },
+    taskTextMain: { fontSize: isSmallDevice ? 32 : 40, fontWeight: 'bold', marginBottom: 10, color: '#333', textAlign: 'center' },
+    subTitle: { fontSize: 16, marginBottom: 20, color: '#555', textAlign: 'center' },
+
+    // Math Layout
+    mathContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20, width: '100%' },
+    inputGroup: { alignItems: 'center' },
+    rText: { fontSize: 24, fontWeight: 'bold', color: '#555', marginHorizontal: 10, marginTop: -20 }, // marginTop чтобы выровнять по центру с input
+    labelBottom: { fontSize: 12, color: '#888', marginTop: 4 },
+
+    // Inputs
+    input: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#fafafa', color: '#333' },
+    correctFinal: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#28a745', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#d4edda', color: '#155724' },
+    errorFinal: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#dc3545', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#f8d7da', color: '#721c24' },
+
+    buttonContainer: { marginTop: 10, width: '80%', borderRadius: 10, overflow: 'hidden' },
     result: { fontSize: 18, fontWeight: '700', marginTop: 20, textAlign: 'center' },
+    correctText: { color: '#28a745' },
+    errorText: { color: '#dc3545' },
+
+    // Counter
+    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
+
+    // Bottom Icons
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: iconSize, height: iconSize, resizeMode: 'contain', marginHorizontal: 10 },
     counterTextIcons: { fontSize: Math.max(14, iconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
-    correctFinal: { width: 100, height: 56, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#d4edda', borderColor: '#28a745', color: '#155724', marginBottom: 15 },
-    errorFinal: { width: 100, height: 56, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#f8d7da', borderColor: '#dc3545', color: '#721c24', marginBottom: 15 },
-    correctText: { color: '#28a745' },
-    errorText: { color: '#dc3545' },
+
+    // Modal
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+    drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
+    drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, backgroundColor: '#f0f0f0', borderBottomWidth: 1, borderBottomColor: '#ccc' },
+    drawingTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+    headerButton: { padding: 5 },
+    headerButtonText: { fontSize: 16, color: '#007AFF' },
+    problemPreviewContainer: { backgroundColor: '#f9f9f9', padding: 10, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#eee', width: '100%' },
+    problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
+    problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
+    canvas: { flex: 1, backgroundColor: '#ffffff' },
 });
 
-export default DivisionWithRemainderScreen4;
+export default DivisionWithRemainderScreen;
