@@ -10,7 +10,7 @@
       "Mnożenie i dzielenie (cd.)": {
         "theoryTitle": "Sprytne mnożenie i dzielenie",
         "isTrainer": true,
-        "practiceKeys": ["Mnożenie", "Dzielenie"],
+        "practiceKeys": ["Mnożenie i dzielenie"],
         "questions": []
       },
       "O ile więcej, o ile mniej": {
@@ -67,6 +67,460 @@
         "practiceKeys": ["Oś liczbowa"],
         "showInPractice": true,
         "questions": []
+      },
+      "Sprawdzian końcowy": {
+        "isTrainer": false,
+        "showInPractice": true,
+        "questions": [
+          {
+            "id": "final_q1",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz w pamięci: 64 + 28",
+            "options": [
+              "82",
+              "92",
+              "84",
+              "94"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "60 + 20 = 80, 4 + 8 = 12, razem 80 + 12 = 92."
+          },
+          {
+            "id": "final_q2",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Znajdź liczbę o 15 mniejszą od 62.",
+            "options": [
+              "47",
+              "57",
+              "45",
+              "53"
+            ],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Należy wykonać odejmowanie: 62 - 15 = 47."
+          },
+          {
+            "id": "final_q3",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz iloczyn: 9 · 7",
+            "options": [
+              "56",
+              "63",
+              "54",
+              "72"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Z tabliczki mnożenia: 9 · 7 = 63."
+          },
+          {
+            "id": "final_q4",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Znajdź liczbę 6 razy większą od 8.",
+            "options": [
+              "14",
+              "42",
+              "48",
+              "56"
+            ],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "„6 razy większa” oznacza mnożenie: 6 · 8 = 48."
+          },
+          {
+            "id": "final_q5",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Wykonaj dzielenie: 72 : 8",
+            "options": [
+              "8",
+              "7",
+              "9",
+              "6"
+            ],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Z tabliczki mnożenia: 9 · 8 = 72, więc 72 : 8 = 9."
+          },
+          {
+            "id": "final_q6",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Która z liczb po podzieleniu przez 5 daje resztę 3?",
+            "options": [
+              "10",
+              "13",
+              "14",
+              "25"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "13 : 5 = 2 i reszta 3."
+          },
+          {
+            "id": "final_q7",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jak zapisać działanie 4 · 4 · 4 za pomocą potęgowania?",
+            "options": [
+              "3⁴",
+              "4³",
+              "4 · 3",
+              "4 + 4 + 4"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Mnożymy czwórkę przez siebie 3 razy, więc jest to 4 do potęgi 3 (4³)."
+          },
+          {
+            "id": "final_q8",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Oblicz wartość wyrażenia: 6²",
+            "options": [
+              "12",
+              "36",
+              "8",
+              "3"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "6² to 6 · 6, czyli 36."
+          },
+          {
+            "id": "final_q9",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Pamiętając o kolejności działań, oblicz: 20 - 10 : 2",
+            "options": [
+              "5",
+              "15",
+              "10",
+              "25"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Najpierw dzielenie: 10 : 2 = 5. Potem odejmowanie: 20 - 5 = 15."
+          },
+          {
+            "id": "final_q10",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Oblicz: 5 + 3 · 4",
+            "options": [
+              "32",
+              "17",
+              "23",
+              "12"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Najpierw mnożenie: 3 · 4 = 12. Potem dodawanie: 5 + 12 = 17."
+          },
+          {
+            "id": "final_q11",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Adam ma 15 naklejek. Bartek ma o 5 naklejek więcej niż Adam. Czarek ma 2 razy mniej naklejek niż Bartek. Ile naklejek ma Czarek?",
+            "options": [
+              "10",
+              "20",
+              "30",
+              "15"
+            ],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Adam = 15. Bartek = 15 + 5 = 20. Czarek = 20 : 2 = 10."
+          },
+          {
+            "id": "final_q12",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Punkt A na osi liczbowej to 20. Punkt B leży o 8 jednostek w prawo od A. Jaką współrzędną ma punkt B?",
+            "options": [
+              "12",
+              "28",
+              "24",
+              "16"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "W prawo oznacza dodawanie: 20 + 8 = 28."
+          },
+          {
+            "id": "final_q13",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile jest liczb dwucyfrowych mniejszych od 15?",
+            "options": [
+              "4",
+              "5",
+              "6",
+              "14"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Liczby dwucyfrowe mniejsze od 15 to: 10, 11, 12, 13, 14. Jest ich 5."
+          },
+          {
+            "id": "final_q14",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ewa czytała książkę od strony 20 do strony 35 (włącznie). Ile stron przeczytała?",
+            "options": [
+              "15",
+              "16",
+              "14",
+              "25"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "35 - 20 + 1 = 16 stron."
+          },
+          {
+            "id": "final_q15",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ania, Basia i Kasia zbierały grzyby. Ania zebrała 12, Basia 15, a Kasia 8. Ile grzybów zebrały razem?",
+            "options": [
+              "25",
+              "30",
+              "35",
+              "40"
+            ],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "12 + 15 + 8 = 35."
+          },
+          {
+            "id": "final_q16",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Rozwiąż równanie: 4 · ? = 36",
+            "options": [
+              "8",
+              "7",
+              "9",
+              "6"
+            ],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Szukamy liczby, która pomnożona przez 4 da 36. To 9."
+          },
+          {
+            "id": "final_q17",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Zosia kupiła 3 zeszyty po 5 zł każdy i długopis za 7 zł. Ile zapłaciła?",
+            "options": [
+              "15 zł",
+              "21 zł",
+              "22 zł",
+              "12 zł"
+            ],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Zeszyty: 3 · 5 = 15 zł. Razem: 15 + 7 = 22 zł."
+          },
+          {
+            "id": "final_q18",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Co jest prawdą?",
+            "options": [
+              "5² = 10",
+              "4³ = 12",
+              "3² = 9",
+              "2³ = 6"
+            ],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "3² to 3 · 3, czyli 9. Pozostałe to błędy (mylenie potęgowania z mnożeniem)."
+          },
+          {
+            "id": "final_q19",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz: 100 - 45",
+            "options": [
+              "55",
+              "65",
+              "45",
+              "50"
+            ],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "100 - 40 = 60, 60 - 5 = 55."
+          },
+          {
+            "id": "final_q20",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Suma trzech liczb wynosi 50. Pierwsza to 15, druga to 10. Jaka jest trzecia liczba?",
+            "options": [
+              "35",
+              "25",
+              "15",
+              "20"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "15 + 10 = 25. Trzecia liczba to 50 - 25 = 25."
+          },
+          {
+            "id": "final_q21",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 3 + 4 · 5?",
+            "options": [
+              "35",
+              "23",
+              "20",
+              "12"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Kolejność działań: najpierw mnożenie. 4 · 5 = 20. Potem dodawanie: 3 + 20 = 23."
+          },
+          {
+            "id": "final_q22",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Tata ma 36 lat, a syn 9. Ile razy tata jest starszy od syna?",
+            "options": [
+              "3 razy",
+              "4 razy",
+              "27 razy",
+              "5 razy"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Pytanie 'ile razy' oznacza dzielenie. 36 : 9 = 4."
+          },
+          {
+            "id": "final_q23",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Suma dwóch liczb wynosi 100. Jeden ze składników to 35. Drugi składnik to:",
+            "options": [
+              "65",
+              "75",
+              "135",
+              "55"
+            ],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "100 - 35 = 65."
+          },
+          {
+            "id": "final_q24",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile wynosi kwadrat liczby 10 (10²)?",
+            "options": [
+              "20",
+              "100",
+              "200",
+              "1010"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "10² to 10 · 10 = 100."
+          },
+          {
+            "id": "final_q25",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Jaki jest wynik dzielenia z resztą: 23 : 5?",
+            "options": [
+              "4 r 3",
+              "5 r 2",
+              "4 r 1",
+              "3 r 8"
+            ],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "4 · 5 = 20. 23 - 20 = 3 reszty. Wynik to 4 reszta 3."
+          },
+          {
+            "id": "final_q26",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz sumę: 120 + 180",
+            "options": [
+              "200",
+              "300",
+              "400",
+              "290"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "100 + 100 = 200, 20 + 80 = 100. Razem 300."
+          },
+          {
+            "id": "final_q27",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka liczba ukrywa się pod znakiem zapytania? ? - 20 = 50",
+            "options": [
+              "30",
+              "70",
+              "100",
+              "25"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Aby znaleźć odjemną, dodajemy różnicę do odjemnika: 50 + 20 = 70."
+          },
+          {
+            "id": "final_q28",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Masz 3 banknoty po 20 zł. Ile masz łącznie pieniędzy?",
+            "options": [
+              "50 zł",
+              "60 zł",
+              "100 zł",
+              "23 zł"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "3 · 20 zł = 60 zł."
+          },
+          {
+            "id": "final_q29",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Jesteś na osi liczbowej w punkcie 50. Przesuwasz się w lewo o 15 jednostek. Gdzie jesteś?",
+            "options": [
+              "35",
+              "65",
+              "45",
+              "40"
+            ],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Ruch w lewo oznacza odejmowanie. 50 - 15 = 35."
+          },
+          {
+            "id": "final_q30",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz iloczyn: 15 · 4",
+            "options": [
+              "45",
+              "50",
+              "60",
+              "55"
+            ],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "10 · 4 = 40, 5 · 4 = 20. Razem 60."
+          },
+          {
+            "id": "final_q31",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Która z tych liczb jest parzysta?",
+            "options": [
+              "21",
+              "33",
+              "48",
+              "15"
+            ],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Liczba parzysta dzieli się przez 2 bez reszty (kończy się na 0, 2, 4, 6 lub 8). Jest to 48."
+          },
+          {
+            "id": "final_q32",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Na jednej półce jest 20 książek, a na drugiej o 5 więcej. Ile książek jest na obu półkach razem?",
+            "options": [
+              "25",
+              "45",
+              "40",
+              "35"
+            ],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Półka pierwsza: 20. Półka druga: 20 + 5 = 25. Razem: 20 + 25 = 45."
+          }
+        ]
       }
     },
     "SYSTEM ZAPISYWANIA LICZB": {

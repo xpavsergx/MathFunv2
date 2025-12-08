@@ -27,9 +27,9 @@ import GradeSelectionScreen from './src/screens/GradeSelectionScreen';
 import TopicListScreen from './src/screens/TopicListScreen';
 import SubTopicListScreen from './src/screens/SubTopicListScreen';
 import TestScreen from './src/screens/TestScreen';
-import MultiplicationTrainerScreen from './src/screens/screens 4 klassa/screens 4K1R/MultiplicationTrainerScreen';
+import MultiplicationTrainerScreen from './src/screens/screens 4 klassa/screens 4K1R/MultiplicationDivisionTrainerScreen';
 import PlusMinusTrainerScreen from './src/screens/screens 4 klassa/screens 4K1R/PlusMinusTrainerScreen';
-import DivisionTrainerScreen from './src/screens/screens 4 klassa/screens 4K1R/DivisionTrainerScreen';
+
 import MoreLessTrainerScreen4 from './src/screens/screens 4 klassa/screens 4K1R/MoreLessTrainerScreen4';
 import HowManyTimesTrainerScreen4 from './src/screens/screens 4 klassa/screens 4K1R/HowManyTimesTrainerScreen4';
 import DivisionWithRemainderScreen4 from './src/screens/screens 4 klassa/screens 4K1R/DivisionWithRemainderScreen4';
@@ -41,7 +41,7 @@ import WordProblemsLevel1Screen4 from './src/screens/screens 4 klassa/screens 4K
 import WordProblemsLevel2Screen4 from './src/screens/screens 4 klassa/screens 4K1R/WordProblemsLevel2Screen4';
 
 // 🔥 НОВЫЙ ТРЕНАЖЕР ОСИ ЛИЧБОВОЙ
-import NumberLineTrainerScreen4 from './src/screens/screens 4 klassa/screens 4K1R/NumberLineTrainerScreen4'; // ✅ DODANO
+import NumberLineTrainerScreen4 from './src/screens/screens 4 klassa/screens 4K1R/NumberLineTrainerScreen4';
 
 import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -90,7 +90,8 @@ function HomeStackNavigator() {
             {/* Тренажеры */}
             <MainStack.Screen name="MultiplicationTrainer" component={MultiplicationTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
             <MainStack.Screen name="PlusMinusTrainer" component={PlusMinusTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
-            <MainStack.Screen name="DivisionTrainer" component={DivisionTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
+            {/* ❌ DivisionTrainer USUNIĘTY STĄD */}
+
             <MainStack.Screen name="MoreLessTrainer4" component={MoreLessTrainerScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
             <MainStack.Screen name="HowManyTimesTrainerScreen4" component={HowManyTimesTrainerScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
             <MainStack.Screen name="DivisionWithRemainderScreen4" component={DivisionWithRemainderScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
@@ -101,7 +102,7 @@ function HomeStackNavigator() {
             <MainStack.Screen name="WordProblemsLevel1Screen4" component={WordProblemsLevel1Screen4} options={({ route }) => ({ title: route.params?.subTopic || 'Zadania tekstowe' })} />
             <MainStack.Screen name="WordProblemsLevel2Screen4" component={WordProblemsLevel2Screen4} options={({ route }) => ({ title: route.params?.subTopic || 'Zadania tekstowe (Poz. 2)' })} />
 
-            {/* ✅ NOWY EKRAN OSI LICZBOWEJ 👇 */}
+            {/* ✅ NOWY EKRAN OSI LICZBOWEJ */}
             <MainStack.Screen name="NumberLineTrainerScreen4" component={NumberLineTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic || 'Oś liczbowa' })} />
 
             {/* Остальное */}

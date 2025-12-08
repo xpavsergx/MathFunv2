@@ -48,7 +48,9 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     // 🔥 MAPOWANIE TRENERÓW 🔥
     const trainerScreenMap: Record<string, keyof MainAppStackParamList> = {
         'Mnożenie': 'MultiplicationTrainer',
-        'Dzielenie': 'DivisionTrainer',
+        // ✅ ИЗМЕНЕНО: Теперь Dzielenie ведет на MultiplicationTrainer, так как экраны объединены
+        'Dzielenie': 'MultiplicationTrainer',
+
         'Dodawanie i odejmowanie': 'PlusMinusTrainer',
         'O ile więcej, o ile mniej': 'MoreLessTrainer4',
         'Ile razy więcej, ile razy mniej': 'HowManyTimesTrainerScreen4',

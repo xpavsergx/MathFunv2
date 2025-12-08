@@ -7,10 +7,9 @@ import { MainAppStackParamList } from '../../App';
 import questionsDatabase from '../data/questionsDb.json';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-// --- ✅ 1. Виправлено імпорт для Expo ---
 import Ionicons from '@expo/vector-icons/Ionicons';
 
-// (Інтерфейси, типи - без змін)
+// --- ТИПИ ---
 interface Question {
     id: string;
     type: 'practice' | 'theory';
@@ -37,11 +36,13 @@ type QuestionsDatabase = {
 };
 type TestScreenProps = NativeStackScreenProps<MainAppStackParamList, 'Test'>;
 
-const ASSESSMENT_TIME_SECONDS = 15 * 60; // 15 minut
+const ASSESSMENT_TIME_SECONDS = 15 * 60; // 15 хвилин
 
 function TestScreen({ route, navigation }: TestScreenProps) {
-    // (Вся логіка, стани, useEffect'и - без змін)
-    const { grade, topic, subTopic, mode = 'learn', testType = 'subTopic', duelId } = route.params;
+    const { grade, topic, subTopic, mode: initialMode, testType = 'subTopic', duelId } = route.params;
+
+    // 🔥 ПРИНУДИТЕЛЬНЫЙ РЕЖИМ ЭКЗАМЕНА ДЛЯ КОНТРОЛЬНОЙ
+    const mode = subTopic === 'Sprawdzian końcowy' ? 'assess' : (initialMode || 'learn');
 
     const [questions, setQuestions] = useState<Question[]>([]);
     const [loading, setLoading] = useState(true);
@@ -65,7 +66,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         scoreRef.current = score;
     }, [score]);
 
-    // (useEffect для інвентаря - без змін)
+    // --- ЗАГРУЗКА ИНВЕНТАРЯ ---
     useEffect(() => {
         if (!currentUser) {
             setIsPowerupLoading(false);
@@ -85,8 +86,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         return () => unsubscribe();
     }, [currentUser]);
 
-
-    // (useEffect для питань - без змін)
+    // --- ЗАГРУЗКА ВОПРОСОВ ---
     useEffect(() => {
         const loadQuestions = async () => {
             setLoading(true);
@@ -106,7 +106,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                         );
                         loadedQuestions = allQuestionsFromDb.filter(q => questionIds.includes(q.id));
                     } else {
-                        Alert.alert("Błąd", "Nie znaleziono pojedynku. Być może został anulowany.");
+                        Alert.alert("Błąd", "Nie znaleziono pojedynku.");
                     }
                 } catch (error) {
                     console.error("Error fetching duel questions:", error);
@@ -124,8 +124,17 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                         if (loadedQuestions.length > 20) loadedQuestions = loadedQuestions.slice(0, 20);
                     }
                 }
-            } else if (testType === 'subTopic' && grade && topic && subTopic) {
-                loadedQuestions = db[String(grade)]?.[topic]?.[subTopic]?.questions || [];
+            }
+            else if (testType === 'subTopic' && grade && topic && subTopic) {
+                const rawQuestions = db[String(grade)]?.[topic]?.[subTopic]?.questions || [];
+
+                // 🔥 ЛОГИКА ДЛЯ КОНТРОЛЬНОЙ
+                if (subTopic === 'Sprawdzian końcowy') {
+                    const shuffled = [...rawQuestions].sort(() => Math.random() - 0.5);
+                    loadedQuestions = shuffled.slice(0, 20);
+                } else {
+                    loadedQuestions = rawQuestions;
+                }
             }
 
             setQuestions(loadedQuestions);
@@ -142,7 +151,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         loadQuestions();
     }, [grade, topic, subTopic, mode, testType, duelId]);
 
-    // (useEffect для таймера - без змін)
+    // --- ТАЙМЕР ---
     useEffect(() => {
         if (mode === 'assess' && questions.length > 0 && !loading) {
             timerRef.current = setInterval(() => {
@@ -160,7 +169,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         }
     }, [mode, questions.length, loading]);
 
-    // ('finishTest' - без змін, ми це вже робили)
+    // --- ФИНИШ ---
     const finishTest = async (finalScore: number) => {
         if (timerRef.current) clearInterval(timerRef.current);
         const currentUser = auth().currentUser;
@@ -173,15 +182,10 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                     [`results.${currentUser.uid}.score`]: finalScore,
                     [`results.${currentUser.uid}.time`]: finalTime,
                 });
-                navigation.replace('DuelResult', {
-                    duelId: duelId,
-                });
-
+                navigation.replace('DuelResult', { duelId: duelId });
             } catch (error) {
                 console.error("Error saving duel result:", error);
-                navigation.replace('DuelResult', {
-                    duelId: duelId,
-                });
+                navigation.replace('DuelResult', { duelId: duelId });
             }
         } else {
             navigation.replace('Results', {
@@ -193,7 +197,6 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         }
     };
 
-    // (Решта логіки: handleAnswerSelect, handleNextQuestion, handleSubmitAnswer... - без змін)
     const handleAnswerSelect = (index: number) => {
         if (!isAnswerSubmitted) setSelectedAnswerIndex(index);
     };
@@ -218,24 +221,30 @@ function TestScreen({ route, navigation }: TestScreenProps) {
             return;
         }
         setIsAnswerSubmitted(true);
+
         let isCorrect = false;
         if (currentQ.type === 'practice' && selectedAnswerIndex !== null) {
             isCorrect = selectedAnswerIndex === currentQ.correctAnswerIndex;
             if (isCorrect) setScore(prev => prev + 1);
         }
+
+        // --- ЛОГИКА ПЕРЕХОДА ---
         if (mode === 'learn' || currentQ.type === 'theory') {
+            // В режиме обучения показываем объяснение
             setShowFeedback(true);
         } else {
+            // 🔥 В РЕЖИМЕ ЭКЗАМЕНА (SPRAWDZIAN) — МГНОВЕННЫЙ ПЕРЕХОД
+            // Убрали setTimeout, теперь "зависания" не будет
             const nextIndex = currentQuestionIndex + 1;
             if (nextIndex >= questions.length) {
                 finishTest(isCorrect ? score + 1 : score);
             } else {
-                setTimeout(() => handleNextQuestion(), 1000);
+                handleNextQuestion(); // <-- Сразу следующий вопрос!
             }
         }
     };
 
-    // (Логіка підсилень 'handleUseHint5050' - без змін)
+    // --- POWER-UPS ---
     const handleUseHint5050 = async () => {
         if (!currentUser || hintUsedForThisQuestion || (inventory.hint5050 || 0) <= 0) {
             Alert.alert("Brak wskazówek", "Nie masz więcej wskazówek 50/50.");
@@ -244,27 +253,17 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         setHintUsedForThisQuestion(true);
         const currentQuestion = questions[currentQuestionIndex];
         const correctAnswerIndex = currentQuestion.correctAnswerIndex;
-
-        const incorrectIndexes = currentQuestion.options
-            .map((opt, index) => index)
-            .filter(index => index !== correctAnswerIndex);
-
+        const incorrectIndexes = currentQuestion.options.map((opt, index) => index).filter(index => index !== correctAnswerIndex);
         const shuffledIncorrect = incorrectIndexes.sort(() => 0.5 - Math.random());
         const indexesToDisable = shuffledIncorrect.slice(0, 2);
-
         setDisabledAnswers(indexesToDisable);
-
         const newHintCount = (inventory.hint5050 || 0) - 1;
         setInventory(prev => ({ ...prev, hint5050: newHintCount }));
         try {
-            await firestore().collection('users').doc(currentUser.uid)
-                .update({ 'inventory.hint5050': firestore.FieldValue.increment(-1) });
-        } catch (error) {
-            console.error("Błąd aktualizacji wskazówek:", error);
-        }
+            await firestore().collection('users').doc(currentUser.uid).update({ 'inventory.hint5050': firestore.FieldValue.increment(-1) });
+        } catch (error) { console.error(error); }
     };
 
-    // (Логіка підсилень 'handleUseDoubleXp' - без змін)
     const handleUseDoubleXp = async () => {
         if (!currentUser || isDoubleXpActive || (inventory.doubleXp || 0) <= 0) {
             Alert.alert("Brak bonusu", "Nie masz więcej bonusów XP.");
@@ -274,16 +273,11 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         const newDoubleXpCount = (inventory.doubleXp || 0) - 1;
         setInventory(prev => ({ ...prev, doubleXp: newDoubleXpCount }));
         try {
-            await firestore().collection('users').doc(currentUser.uid)
-                .update({ 'inventory.doubleXp': firestore.FieldValue.increment(-1) });
-            Alert.alert("Aktywowano!", "Podwójne XP zostało aktywowane na ten test!");
-        } catch (error) {
-            console.error("Błąd aktualizacji bonusu XP:", error);
-            setIsDoubleXpActive(false);
-        }
+            await firestore().collection('users').doc(currentUser.uid).update({ 'inventory.doubleXp': firestore.FieldValue.increment(-1) });
+            Alert.alert("Aktywowano!", "Podwójne XP zostało aktywowane!");
+        } catch (error) { console.error(error); setIsDoubleXpActive(false); }
     };
 
-    // (Render JSX - завантаження та помилки - без змін)
     if (loading) {
         return (
             <View style={[styles.container, { justifyContent: 'center' }]}>
@@ -296,165 +290,158 @@ function TestScreen({ route, navigation }: TestScreenProps) {
     if (!questions || questions.length === 0) {
         return (
             <View style={[styles.container, { justifyContent: 'center' }]}>
-                <Text style={styles.errorText}>Pytania do tego tematu nie zostały jeszcze dodane lub wystąpił błąd ładowania.</Text>
+                <Text style={styles.errorText}>Pytania do tego tematu nie zostały jeszcze dodane.</Text>
             </View>
         );
     }
 
-    // (const currentQuestion, hintCount... - без змін)
     const currentQuestion = questions[currentQuestionIndex];
     const hintCount = inventory.hint5050 || 0;
     const doubleXpCount = inventory.doubleXp || 0;
     const capitalizeFirstLetter = (str?: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
     const formatTime = (seconds: number) => `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, '0')}`;
 
-    // --- ✅ 2. ПОВНИЙ JSX-КОД (повернено весь вміст) ---
+    // --- UI ---
     return (
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.container}>
-            {mode === 'assess' && <Text style={styles.timerText}>Pozostały czas: {formatTime(timeLeft)}</Text>}
-            <View style={styles.headerContainer}>
-                <Text style={styles.questionCounter}>Pytanie {currentQuestionIndex + 1} z {questions.length}</Text>
-                {currentQuestion.difficulty && <Text style={styles.difficultyText}>Poziom: {capitalizeFirstLetter(currentQuestion.difficulty)}</Text>}
-            </View>
-            <Text style={styles.questionText}>{currentQuestion.questionText}</Text>
+        <View style={{ flex: 1, backgroundColor: '#f0f8ff' }}>
 
-            {currentQuestion.type === 'practice' && (
-                <View style={styles.optionsContainer}>
-                    {currentQuestion.options.map((option, index) => {
-                        const isSelected = selectedAnswerIndex === index;
-                        const isCorrect = currentQuestion.correctAnswerIndex === index;
-                        const isDisabledByHint = disabledAnswers.includes(index);
+            {mode === 'assess' && (
+                <View style={styles.timerHeader}>
+                    <Ionicons name="timer-outline" size={24} color="#d32f2f" />
+                    <Text style={styles.timerText}> {formatTime(timeLeft)}</Text>
+                </View>
+            )}
 
-                        let buttonStyle: any = styles.optionButton;
-                        let textStyle: any = styles.optionText;
+            <ScrollView style={styles.scrollView} contentContainerStyle={styles.container}>
 
-                        if (isAnswerSubmitted) {
-                            if (isCorrect) {
-                                buttonStyle = [styles.optionButton, styles.correctOption];
-                                textStyle = [styles.optionText, styles.correctOptionText];
-                            } else if (isSelected) {
-                                buttonStyle = [styles.optionButton, styles.incorrectOption];
-                            }
-                            else if (!isCorrect) {
+                <View style={styles.headerContainer}>
+                    <Text style={styles.questionCounter}>Pytanie {currentQuestionIndex + 1} z {questions.length}</Text>
+                    {currentQuestion.difficulty && <Text style={styles.difficultyText}>Poziom: {capitalizeFirstLetter(currentQuestion.difficulty)}</Text>}
+                </View>
+
+                <Text style={styles.questionText}>{currentQuestion.questionText}</Text>
+
+                {currentQuestion.type === 'practice' && (
+                    <View style={styles.optionsContainer}>
+                        {currentQuestion.options.map((option, index) => {
+                            const isSelected = selectedAnswerIndex === index;
+                            const isDisabledByHint = disabledAnswers.includes(index);
+
+                            let buttonStyle: any = styles.optionButton;
+
+                            if (isSelected) {
+                                buttonStyle = [styles.optionButton, styles.selectedOption];
+                            } else if (isDisabledByHint) {
                                 buttonStyle = [styles.optionButton, styles.disabledOption];
                             }
-                        } else if (isSelected) {
-                            buttonStyle = [styles.optionButton, styles.selectedOption];
-                        } else if (isDisabledByHint) {
-                            buttonStyle = [styles.optionButton, styles.disabledOption];
-                        }
 
-                        return (
-                            <TouchableOpacity
-                                key={index}
-                                style={buttonStyle}
-                                onPress={() => handleAnswerSelect(index)}
-                                disabled={isAnswerSubmitted || isDisabledByHint}
-                            >
-                                <Text style={textStyle}>{option}</Text>
-                            </TouchableOpacity>
-                        );
-                    })}
-                </View>
-            )}
+                            if (mode === 'learn' && isAnswerSubmitted) {
+                                const isCorrect = currentQuestion.correctAnswerIndex === index;
+                                if (isCorrect) buttonStyle = [styles.optionButton, styles.correctOption];
+                                else if (isSelected) buttonStyle = [styles.optionButton, styles.incorrectOption];
+                            }
 
-            {/* --- (ПОВЕРНУТО БЛОК ПІДСИЛЕНЬ) --- */}
-            {currentQuestion.type === 'practice' && !isAnswerSubmitted && (
-                <View style={styles.powerUpContainer}>
-                    <TouchableOpacity
-                        style={[
-                            styles.powerUpButton,
-                            (hintCount <= 0 || hintUsedForThisQuestion || isPowerupLoading) && styles.powerUpDisabled
-                        ]}
-                        disabled={hintCount <= 0 || hintUsedForThisQuestion || isPowerupLoading}
-                        onPress={handleUseHint5050}
-                    >
-                        <Ionicons name="sparkles-outline" size={20} color="#00796B" />
-                        <Text style={styles.powerUpText}>
-                            50/50 ({hintCount})
+                            return (
+                                <TouchableOpacity
+                                    key={index}
+                                    style={buttonStyle}
+                                    onPress={() => handleAnswerSelect(index)}
+                                    disabled={isAnswerSubmitted || isDisabledByHint}
+                                >
+                                    <Text style={styles.optionText}>{option}</Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+                )}
+
+                {currentQuestion.type === 'practice' && !isAnswerSubmitted && (
+                    <View style={styles.powerUpContainer}>
+                        <TouchableOpacity
+                            style={[styles.powerUpButton, (hintCount <= 0 || hintUsedForThisQuestion || isPowerupLoading) && styles.powerUpDisabled]}
+                            disabled={hintCount <= 0 || hintUsedForThisQuestion || isPowerupLoading}
+                            onPress={handleUseHint5050}
+                        >
+                            <Ionicons name="sparkles-outline" size={20} color="#00796B" />
+                            <Text style={styles.powerUpText}>50/50 ({hintCount})</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.powerUpButton, (doubleXpCount <= 0 || isDoubleXpActive || isPowerupLoading) && styles.powerUpDisabled, {borderColor: '#FF9800'}]}
+                            disabled={doubleXpCount <= 0 || isDoubleXpActive || isPowerupLoading}
+                            onPress={handleUseDoubleXp}
+                        >
+                            <Ionicons name="flash-outline" size={20} color="#FF9800" />
+                            <Text style={[styles.powerUpText, {color: "#FF9800"}]}>XP x2 ({doubleXpCount})</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+
+                {!isAnswerSubmitted && (
+                    <TouchableOpacity style={styles.submitButton} onPress={handleSubmitAnswer}>
+                        <Text style={styles.submitButtonText}>
+                            {currentQuestion.type === 'theory' ? "Dalej" : "Odpowiedz"}
                         </Text>
                     </TouchableOpacity>
+                )}
 
-                    <TouchableOpacity
-                        style={[
-                            styles.powerUpButton,
-                            (doubleXpCount <= 0 || isDoubleXpActive || isPowerupLoading) && styles.powerUpDisabled,
-                            {borderColor: '#FF9800'}
-                        ]}
-                        disabled={doubleXpCount <= 0 || isDoubleXpActive || isPowerupLoading}
-                        onPress={handleUseDoubleXp}
-                    >
-                        <Ionicons name="flash-outline" size={20} color="#FF9800" />
-                        <Text style={[styles.powerUpText, {color: "#FF9800"}]}>
-                            XP x2 ({doubleXpCount})
+                {mode === 'learn' && isAnswerSubmitted && showFeedback && (
+                    <View style={styles.feedbackContainer}>
+                        <Text style={[styles.feedbackTitle, selectedAnswerIndex === currentQuestion.correctAnswerIndex ? styles.correctFeedbackTitle : styles.incorrectFeedbackTitle]}>
+                            {selectedAnswerIndex === currentQuestion.correctAnswerIndex ? "Poprawnie!" : "Niepoprawnie!"}
                         </Text>
-                    </TouchableOpacity>
-                </View>
-            )}
-
-            {/* --- (ПОВЕРНУТО КНОПКУ ПІДТВЕРДЖЕННЯ) --- */}
-            {!isAnswerSubmitted && (
-                <TouchableOpacity style={styles.submitButton} onPress={handleSubmitAnswer}>
-                    <Text style={styles.submitButtonText}>{currentQuestion.type === 'theory' ? "Dalej" : "Odpowiedz"}</Text>
-                </TouchableOpacity>
-            )}
-
-            {/* --- (ПОВЕРНУТО БЛОК ФІДБЕКУ) --- */}
-            {isAnswerSubmitted && showFeedback && (
-                <View style={styles.feedbackContainer}>
-                    {currentQuestion.type === 'practice' && (
-                        <>
-                            <Text style={[styles.feedbackTitle, selectedAnswerIndex === currentQuestion.correctAnswerIndex ? styles.correctFeedbackTitle : styles.incorrectFeedbackTitle]}>
-                                {selectedAnswerIndex === currentQuestion.correctAnswerIndex ? "Poprawnie!" : "Niepoprawnie!"}
-                            </Text>
-                            <Text style={styles.feedbackTextBold}>
-                                Prawidłowa odpowiedź: <Text style={styles.feedbackTextNormal}>{currentQuestion.options[currentQuestion.correctAnswerIndex]}</Text>
-                            </Text>
-                        </>
-                    )}
-                    <Text style={styles.feedbackHeader}>Wyjaśnienie:</Text>
-                    <Text style={styles.feedbackText}>{currentQuestion.correctAnswerExplanation}</Text>
-                    {currentQuestion.theorySnippet && (
-                        <>
-                            <Text style={styles.feedbackHeader}>Wskazówka teoretyczna:</Text>
-                            <Text style={styles.feedbackText}>{currentQuestion.theorySnippet}</Text>
-                        </>
-                    )}
-                    <TouchableOpacity style={styles.nextButton} onPress={handleNextQuestion}>
-                        <Text style={styles.submitButtonText}>{currentQuestionIndex + 1 < questions.length ? "Następne pytanie" : "Zakończ test"}</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
-        </ScrollView>
+                        <Text style={styles.feedbackTextBold}>
+                            Prawidłowa odpowiedź: <Text style={styles.feedbackTextNormal}>{currentQuestion.options[currentQuestion.correctAnswerIndex]}</Text>
+                        </Text>
+                        <Text style={styles.feedbackHeader}>Wyjaśnienie:</Text>
+                        <Text style={styles.feedbackText}>{currentQuestion.correctAnswerExplanation}</Text>
+                        <TouchableOpacity style={styles.nextButton} onPress={handleNextQuestion}>
+                            <Text style={styles.submitButtonText}>{currentQuestionIndex + 1 < questions.length ? "Następne pytanie" : "Zakończ test"}</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+            </ScrollView>
+        </View>
     );
 }
 
-// --- ✅ 3. ОНОВЛЕНІ СТИЛІ (з justifyContent) ---
 const styles = StyleSheet.create({
     scrollView: {
-        flex:1,
-        backgroundColor:'#f0f8ff'
+        flex: 1,
     },
     container: {
         flexGrow: 1,
         padding: 20,
-        justifyContent: 'center' // <--- ОСЬ ЦЕ ВИПРАВЛЕННЯ
+        paddingBottom: 40,
     },
-    // (Решта стилів без змін)
+    timerHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#ffebee',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ffcdd2',
+    },
+    timerText: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#d32f2f',
+        marginLeft: 8
+    },
     loadingText: { marginTop:10, fontSize:16, color:'#555', textAlign:'center' },
     errorText: { textAlign:'center', fontSize:16, color:'red' },
-    headerContainer: { flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:15 },
+    headerContainer: { flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:15, marginTop: 10 },
     questionCounter: { fontSize:16, color:'#555' },
     difficultyText: { fontSize:16, color:'#007bff', fontWeight:'bold' },
     questionText: { fontSize:20, fontWeight:'bold', marginBottom:25, textAlign:'center', color:'#333', lineHeight:28 },
     optionsContainer: { marginBottom:20 },
-    optionButton: { backgroundColor:'#fff', paddingVertical:15, paddingHorizontal:12, marginVertical:8, borderRadius:10, borderWidth:1.5, borderColor:'#b0bec5', elevation:2, shadowColor:"#000", shadowOffset:{width:0,height:1}, shadowOpacity:0.18, shadowRadius:1 },
+    optionButton: { backgroundColor:'#fff', paddingVertical:15, paddingHorizontal:12, marginVertical:8, borderRadius:10, borderWidth:1.5, borderColor:'#b0bec5', elevation:2 },
     selectedOption: { borderColor:'#00BCD4', borderWidth:2.5, backgroundColor:'#e0f7fa' },
     correctOption: { backgroundColor:'#c8e6c9', borderColor:'#4caf50', borderWidth:2.5 },
     incorrectOption: { backgroundColor:'#ffcdd2', borderColor:'#f44336', borderWidth:2.5 },
     disabledOption: { backgroundColor: '#BDBDBD', borderColor: '#9E9E9E', opacity: 0.7 },
     optionText: { fontSize:17, color:'#455a64', textAlign:'center' },
-    correctOptionText: { fontWeight:'bold', color:'#2e7d32' },
     submitButton: { backgroundColor:'#00BCD4', paddingVertical:15, paddingHorizontal:20, borderRadius:25, alignItems:'center', marginTop:10, elevation:3 },
     nextButton: { backgroundColor:'#FF9800', paddingVertical:15, paddingHorizontal:20, borderRadius:25, alignItems:'center', marginTop:20, elevation:3 },
     submitButtonText: { color:'#fff', fontSize:18, fontWeight:'bold' },
@@ -466,33 +453,10 @@ const styles = StyleSheet.create({
     feedbackText: { fontSize:16, color:'#555', marginBottom:8, lineHeight:22 },
     feedbackTextBold: { fontSize:16, color:'#555', marginBottom:8, fontWeight:'bold' },
     feedbackTextNormal: { fontWeight:'normal' },
-    timerText: { fontSize:18, fontWeight:'bold', color:'#d32f2f', textAlign:'center', marginBottom:15 },
-    powerUpContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        marginTop: 5,
-        marginBottom: 10,
-    },
-    powerUpButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#00796B',
-        backgroundColor: '#FFFFFF',
-    },
-    powerUpText: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginLeft: 8,
-        color: '#00796B'
-    },
-    powerUpDisabled: {
-        backgroundColor: '#E0E0E0',
-        opacity: 0.6,
-    },
+    powerUpContainer: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 5, marginBottom: 10 },
+    powerUpButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 20, borderWidth: 1, borderColor: '#00796B', backgroundColor: '#FFFFFF' },
+    powerUpText: { fontSize: 16, fontWeight: 'bold', marginLeft: 8, color: '#00796B' },
+    powerUpDisabled: { backgroundColor: '#E0E0E0', opacity: 0.6 },
 });
 
 export default TestScreen;
