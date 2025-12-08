@@ -21,7 +21,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import { awardXpAndCoins } from '../services/xpService';
+import { awardXpAndCoins } from '../../../services/xpService';
 
 const EXERCISE_ID = "howManyTimesTrainer";
 const TASKS_LIMIT = 100;
@@ -188,12 +188,12 @@ const HowManyTimesTrainerScreen4 = () => {
     return (
         <View style={{ flex: 1 }}>
             <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-            <ImageBackground source={require('../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+            <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
 
             <KeyboardAwareScrollView contentContainerStyle={styles.container} enableOnAndroid extraScrollHeight={100} keyboardShouldPersistTaps="handled">
                 <View style={{ position: 'absolute', top: 5, right: 5, alignItems: 'center', zIndex: 10 }}>
                     <TouchableOpacity onPress={() => setShowHint(!showHint)}>
-                        <Image source={require('../assets/question.png')} style={{ width: 90, height: 90 }} />
+                        <Image source={require('../../../assets/question.png')} style={{ width: 90, height: 90 }} />
                     </TouchableOpacity>
                     <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#007AFF', textAlign: 'center' }}>Pomoc</Text>
                     {showHint && (
@@ -232,9 +232,9 @@ const HowManyTimesTrainerScreen4 = () => {
                 </Animated.View>
 
                 <View style={styles.iconsBottom}>
-                    <Image source={require('../assets/happy.png')} style={styles.iconSame} />
+                    <Image source={require('../../../assets/happy.png')} style={styles.iconSame} />
                     <Text style={styles.counterTextIcons}>{correctCount}</Text>
-                    <Image source={require('../assets/sad.png')} style={styles.iconSame} />
+                    <Image source={require('../../../assets/sad.png')} style={styles.iconSame} />
                     <Text style={styles.counterTextIcons}>{wrongCount}</Text>
                 </View>
             </KeyboardAwareScrollView>

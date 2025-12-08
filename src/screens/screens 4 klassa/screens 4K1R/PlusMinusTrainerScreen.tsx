@@ -8,7 +8,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 // ✅ 1. Імпортуємо сервіс XP
-import { awardXpAndCoins } from '../services/xpService';
+import { awardXpAndCoins } from '../../../services/xpService';
 
 const EXERCISE_ID = "addSubtractTrainer";
 const TASKS_LIMIT = 100;
@@ -127,7 +127,7 @@ const AdditionSubtractionTrainerScreen = () => {
     return (
         <View style={{ flex: 1 }}>
             {/* ... (StatusBar видалено) ... */}
-            <ImageBackground source={require('../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+            <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
             <KeyboardAwareScrollView
                 contentContainerStyle={styles.container}
                 enableOnAndroid

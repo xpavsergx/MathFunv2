@@ -27,21 +27,21 @@ import GradeSelectionScreen from './src/screens/GradeSelectionScreen';
 import TopicListScreen from './src/screens/TopicListScreen';
 import SubTopicListScreen from './src/screens/SubTopicListScreen';
 import TestScreen from './src/screens/TestScreen';
-import MultiplicationTrainerScreen from './src/screens/MultiplicationTrainerScreen';
-import PlusMinusTrainerScreen from './src/screens/PlusMinusTrainerScreen';
-import DivisionTrainerScreen from './src/screens/DivisionTrainerScreen';
-import MoreLessTrainerScreen4 from './src/screens/MoreLessTrainerScreen4';
-import HowManyTimesTrainerScreen4 from './src/screens/HowManyTimesTrainerScreen4';
-import DivisionWithRemainderScreen4 from './src/screens/DivisionWithRemainderScreen4';
-import SquaresCubesTrainerScreen4 from './src/screens/SquaresCubesTrainerScreen4';
-import OrderOperationsTrainerScreen4 from './src/screens/OrderOperationsTrainerScreen4';
+import MultiplicationTrainerScreen from './src/screens/screens 4 klassa/screens 4K1R/MultiplicationTrainerScreen';
+import PlusMinusTrainerScreen from './src/screens/screens 4 klassa/screens 4K1R/PlusMinusTrainerScreen';
+import DivisionTrainerScreen from './src/screens/screens 4 klassa/screens 4K1R/DivisionTrainerScreen';
+import MoreLessTrainerScreen4 from './src/screens/screens 4 klassa/screens 4K1R/MoreLessTrainerScreen4';
+import HowManyTimesTrainerScreen4 from './src/screens/screens 4 klassa/screens 4K1R/HowManyTimesTrainerScreen4';
+import DivisionWithRemainderScreen4 from './src/screens/screens 4 klassa/screens 4K1R/DivisionWithRemainderScreen4';
+import SquaresCubesTrainerScreen4 from './src/screens/screens 4 klassa/screens 4K1R/SquaresCubesTrainerScreen4';
+import OrderOperationsTrainerScreen4 from './src/screens/screens 4 klassa/screens 4K1R/OrderOperationsTrainerScreen4';
 
 // 🔥 ЗАДАЧИ ТЕКСТОВЫЕ
-import WordProblemsLevel1Screen4 from './src/screens/WordProblemsLevel1Screen4';
-import WordProblemsLevel2Screen4 from './src/screens/WordProblemsLevel2Screen4';
+import WordProblemsLevel1Screen4 from './src/screens/screens 4 klassa/screens 4K1R/WordProblemsLevel1Screen4';
+import WordProblemsLevel2Screen4 from './src/screens/screens 4 klassa/screens 4K1R/WordProblemsLevel2Screen4';
 
 // 🔥 НОВЫЙ ТРЕНАЖЕР ОСИ ЛИЧБОВОЙ
-import NumberLineTrainerScreen4 from './src/screens/NumberLineTrainerScreen4'; // ✅ DODANO
+import NumberLineTrainerScreen4 from './src/screens/screens 4 klassa/screens 4K1R/NumberLineTrainerScreen4'; // ✅ DODANO
 
 import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';

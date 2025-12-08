@@ -17,17 +17,18 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import { awardXpAndCoins } from '../services/xpService';
+import { awardXpAndCoins } from '../../../services/xpService';
 
-const EXERCISE_ID = "squaresCubesTrainer";
+const EXERCISE_ID = "divisionWithRemainder";
 const TASKS_LIMIT = 100;
 const screenWidth = Dimensions.get('window').width;
 const iconSize = screenWidth * 0.28;
 
-const SquaresCubesTrainerScreen4 = () => {
-    const [baseNumber, setBaseNumber] = useState<number>(0);
-    const [power, setPower] = useState<2 | 3>(2);
-    const [answer, setAnswer] = useState<string>('');
+const DivisionWithRemainderScreen4 = () => {
+    const [dividend, setDividend] = useState<number>(0);
+    const [divisor, setDivisor] = useState<number>(0);
+    const [quotient, setQuotient] = useState<string>('');
+    const [remainder, setRemainder] = useState<string>('');
     const [resultMessage, setResultMessage] = useState<string>('');
     const [finalCorrect, setFinalCorrect] = useState<boolean>(false);
     const [readyForNext, setReadyForNext] = useState<boolean>(false);
@@ -39,8 +40,9 @@ const SquaresCubesTrainerScreen4 = () => {
     const [isGameFinished, setIsGameFinished] = useState<boolean>(false);
     const [showHint, setShowHint] = useState<boolean>(false);
     const [firstAttempt, setFirstAttempt] = useState<boolean>(true);
-    const [correctInput, setCorrectInput] = useState<boolean | null>(null);
-    const [lastWrongAnswer, setLastWrongAnswer] = useState<string>(''); // сохраняем последний неправильный
+
+    const [correctQuotientInput, setCorrectQuotientInput] = useState<boolean | null>(null);
+    const [correctRemainderInput, setCorrectRemainderInput] = useState<boolean | null>(null);
 
     const backgroundColor = useRef(new Animated.Value(0)).current;
 
@@ -52,45 +54,47 @@ const SquaresCubesTrainerScreen4 = () => {
             return;
         }
 
-        const newPower: 2 | 3 = Math.random() > 0.5 ? 2 : 3;
-        const newBase = newPower === 2
-            ? Math.floor(Math.random() * 20) + 1
-            : Math.floor(Math.random() * 5) + 1;
+        const newDivisor = Math.floor(Math.random() * 9) + 2; // 2..10
+        const newDividend = Math.floor(Math.random() * 91) + 10; // 10..100
 
-        setBaseNumber(newBase);
-        setPower(newPower);
-        setAnswer('');
+        setDividend(newDividend);
+        setDivisor(newDivisor);
+        setQuotient('');
+        setRemainder('');
         setResultMessage('');
         setFinalCorrect(false);
         setReadyForNext(false);
         setSeconds(0);
         setStartTime(Date.now());
-        setFirstAttempt(true);
-        setCorrectInput(null);
-        setShowHint(false);
-        setLastWrongAnswer('');
-
         setTaskCount(prev => prev + 1);
+        setFirstAttempt(true);
+        setCorrectQuotientInput(null);
+        setCorrectRemainderInput(null);
         backgroundColor.setValue(0);
     };
 
     useEffect(() => { nextTask(); }, []);
 
-    const toggleHint = () => setShowHint(prev => !prev);
-
     const getHintText = () => {
-        if (power === 2) return `${baseNumber} × ${baseNumber}`;
-        if (power === 3) return `${baseNumber} × ${baseNumber} × ${baseNumber}`;
-        return '';
+        return `${dividend} = ${divisor} × ? + reszta`;
     };
 
     const handleCheck = () => {
         Keyboard.dismiss();
-        if (!answer) { setResultMessage('Wpisz odpowiedź!'); return; }
+        if (!quotient || !remainder) {
+            setResultMessage('Wpisz odpowiedź i resztę!');
+            return;
+        }
 
-        const numAnswer = Number(answer);
-        const correctResult = Math.pow(baseNumber, power);
-        const isCorrect = numAnswer === correctResult;
+        const numQuotient = Number(quotient);
+        const numRemainder = Number(remainder);
+
+        const correctQuotient = Math.floor(dividend / divisor);
+        const correctRemainder = dividend % divisor;
+
+        const isQuotientCorrect = numQuotient === correctQuotient;
+        const isRemainderCorrect = numRemainder === correctRemainder;
+        const isCorrect = isQuotientCorrect && isRemainderCorrect;
 
         setFinalCorrect(isCorrect);
         setSeconds(Math.floor((Date.now() - startTime) / 1000));
@@ -101,28 +105,36 @@ const SquaresCubesTrainerScreen4 = () => {
             : null;
 
         if (isCorrect) {
-            setCorrectInput(true);
+            setCorrectQuotientInput(true);
+            setCorrectRemainderInput(true);
             setCorrectCount(prev => prev + 1);
             statsDocRef?.set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setResultMessage('Świetnie! ✅');
             setReadyForNext(true);
             awardXpAndCoins(5, 1);
+            setFirstAttempt(true);
         } else {
-            setCorrectInput(false);
-            setWrongCount(prev => prev + 1);
-            statsDocRef?.set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-
             if (firstAttempt) {
+                // Первая ошибка: очищаем поля и подсвечиваем
+                setCorrectQuotientInput(isQuotientCorrect ? true : false);
+                setCorrectRemainderInput(isRemainderCorrect ? true : false);
                 setResultMessage('Błąd! Spróbuj ponownie!');
-                setAnswer('');
+                setQuotient('');
+                setRemainder('');
                 setFirstAttempt(false);
             } else {
-                setResultMessage(`Błąd! Poprawne: ${correctResult}`);
-                setLastWrongAnswer(answer); // сохраняем введённое
+                // Вторая ошибка: поля красные, показываем правильный ответ
+                setCorrectQuotientInput(false);
+                setCorrectRemainderInput(false);
+                setResultMessage(`Błąd! Poprawne: ${correctQuotient} reszta ${correctRemainder}`);
                 setReadyForNext(true);
                 setFirstAttempt(true);
             }
+
+            setWrongCount(prev => prev + 1);
+            statsDocRef?.set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
 
             Animated.sequence([
                 Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
@@ -131,19 +143,21 @@ const SquaresCubesTrainerScreen4 = () => {
         }
     };
 
-    const getValidationStyle = () => correctInput === null
-        ? styles.input
-        : correctInput ? styles.correctFinal : styles.errorFinal;
+    const getValidationStyle = (field: 'quotient' | 'remainder') => {
+        const value = field === 'quotient' ? correctQuotientInput : correctRemainderInput;
+        if (value === null) return styles.input;
+        return value ? styles.correctFinal : styles.errorFinal;
+    };
 
     return (
         <View style={{ flex: 1 }}>
             <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-            <ImageBackground source={require('../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+            <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
 
             <KeyboardAwareScrollView contentContainerStyle={styles.container} enableOnAndroid extraScrollHeight={100} keyboardShouldPersistTaps="handled">
                 <View style={{ position: 'absolute', top: 5, right: 5, alignItems: 'center', zIndex: 10 }}>
-                    <TouchableOpacity onPress={toggleHint}>
-                        <Image source={require('../assets/question.png')} style={{ width: 90, height: 90 }} />
+                    <TouchableOpacity onPress={() => setShowHint(!showHint)}>
+                        <Image source={require('../../../assets/question.png')} style={{ width: 90, height: 90 }} />
                     </TouchableOpacity>
                     <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#007AFF', textAlign: 'center' }}>Pomoc</Text>
                     {showHint && (
@@ -156,42 +170,46 @@ const SquaresCubesTrainerScreen4 = () => {
                 <Animated.View style={[styles.card, { backgroundColor: 'transparent' }]}>
                     <View style={styles.overlayBackground} />
                     <Text style={styles.title}>Trener</Text>
-                    <Text style={styles.title}>Kwadraty i sześciany liczb</Text>
+                    <Text style={styles.title}>Dzielenia z resztą</Text>
 
                     {!isGameFinished && (
                         <>
-                            <Text style={styles.task}>Oblicz:</Text>
-                            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-start', marginBottom: 15 }}>
-                                <Text style={styles.baseNumber}>{baseNumber}</Text>
-                                <Text style={styles.power}>{power}</Text>
+                            <Text style={styles.task}>Wykonaj działanie z resztą:</Text>
+                            <Text style={styles.task}>{dividend} : {divisor} = ?</Text>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '60%', marginTop: 10 }}>
+                                <TextInput
+                                    style={[getValidationStyle('quotient'), { flex: 1, marginRight: 5 }]}
+                                    keyboardType="numeric"
+                                    value={quotient}
+                                    onChangeText={setQuotient}
+                                    placeholder="Iloraz"
+                                    placeholderTextColor="#aaa"
+                                />
+                                <TextInput
+                                    style={[getValidationStyle('remainder'), { flex: 1, marginLeft: 5 }]}
+                                    keyboardType="numeric"
+                                    value={remainder}
+                                    onChangeText={setRemainder}
+                                    placeholder="Reszta"
+                                    placeholderTextColor="#aaa"
+                                />
                             </View>
-
-                            <TextInput
-                                style={[getValidationStyle(), styles.finalInput]}
-                                keyboardType="numeric"
-                                value={answer || lastWrongAnswer}
-                                onChangeText={setAnswer}
-                                placeholder="Odpowiedź"
-                                placeholderTextColor="#aaa"
-                            />
-
                             <View style={styles.buttonContainer}>
                                 <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
                             </View>
-
                             <Text style={styles.counterTextSmall}>Zadanie: {taskCount > TASKS_LIMIT ? TASKS_LIMIT : taskCount} / {TASKS_LIMIT} ⏱ {seconds}s</Text>
-
-                            {resultMessage && (
-                                <Text style={[styles.result, finalCorrect ? styles.correctText : styles.errorText]}>{resultMessage}</Text>
-                            )}
                         </>
+                    )}
+
+                    {resultMessage && (
+                        <Text style={[styles.result, finalCorrect ? styles.correctText : styles.errorText]}>{resultMessage}</Text>
                     )}
                 </Animated.View>
 
                 <View style={styles.iconsBottom}>
-                    <Image source={require('../assets/happy.png')} style={styles.iconSame} />
+                    <Image source={require('../../../assets/happy.png')} style={styles.iconSame} />
                     <Text style={styles.counterTextIcons}>{correctCount}</Text>
-                    <Image source={require('../assets/sad.png')} style={styles.iconSame} />
+                    <Image source={require('../../../assets/sad.png')} style={styles.iconSame} />
                     <Text style={styles.counterTextIcons}>{wrongCount}</Text>
                 </View>
             </KeyboardAwareScrollView>
@@ -205,20 +223,17 @@ const styles = StyleSheet.create({
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
     title: { fontSize: 24, fontWeight: '700', marginBottom: 20, color: '#333', textAlign: 'center' },
     task: { fontSize: 22, fontWeight: '700', marginBottom: 10, color: '#007AFF', textAlign: 'center' },
-    baseNumber: { fontSize: 36, fontWeight: '700', color: '#007AFF', marginRight: 2 },
-    power: { fontSize: 20, fontWeight: '700', color: '#007AFF', marginTop: 6 },
     counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
-    input: { width: 220, height: 56, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#fafafa', marginBottom: 15 },
-    finalInput: { width: 220 },
+    input: { width: 100, height: 56, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#fafafa', marginBottom: 15 },
     buttonContainer: { marginTop: 20, width: '80%', borderRadius: 10, overflow: 'hidden' },
     result: { fontSize: 18, fontWeight: '700', marginTop: 20, textAlign: 'center' },
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: iconSize, height: iconSize, resizeMode: 'contain', marginHorizontal: 10 },
     counterTextIcons: { fontSize: Math.max(14, iconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
-    correctFinal: { width: 220, height: 56, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#d4edda', borderColor: '#28a745', color: '#155724', marginBottom: 15 },
-    errorFinal: { width: 220, height: 56, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#f8d7da', borderColor: '#dc3545', color: '#721c24', marginBottom: 15 },
+    correctFinal: { width: 100, height: 56, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#d4edda', borderColor: '#28a745', color: '#155724', marginBottom: 15 },
+    errorFinal: { width: 100, height: 56, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#f8d7da', borderColor: '#dc3545', color: '#721c24', marginBottom: 15 },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
 });
 
-export default SquaresCubesTrainerScreen4;
+export default DivisionWithRemainderScreen4;

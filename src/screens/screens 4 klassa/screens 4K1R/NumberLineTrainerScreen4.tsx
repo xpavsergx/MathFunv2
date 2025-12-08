@@ -21,7 +21,7 @@ import Svg, { Path, Line, Text as SvgText, G } from 'react-native-svg';
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import { awardXpAndCoins } from '../services/xpService';
+import { awardXpAndCoins } from '../../../services/xpService';
 
 const EXERCISE_ID = "numberLineTrainer";
 const TASKS_LIMIT = 50;
@@ -231,19 +231,19 @@ const NumberLineTrainerScreen4 = () => {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={{ flex: 1 }}>
                 <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-                <ImageBackground source={require('../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
                 <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: bgInterpolation }]} pointerEvents="none" />
 
                 <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardContainer}>
                     {!isKeyboardVisible && (
                         <View style={styles.topButtons}>
                             <TouchableOpacity onPress={toggleScratchpad} style={{ marginRight: 20, alignItems: 'center' }}>
-                                <Image source={require('../assets/pencil.png')} style={styles.iconTop} />
+                                <Image source={require('../../../assets/pencil.png')} style={styles.iconTop} />
                                 <Text style={styles.buttonLabel}>Brudnopis</Text>
                             </TouchableOpacity>
                             <View style={{ alignItems: 'center' }}>
                                 <TouchableOpacity onPress={toggleHint}>
-                                    <Image source={require('../assets/question.png')} style={styles.iconTop} />
+                                    <Image source={require('../../../assets/question.png')} style={styles.iconTop} />
                                 </TouchableOpacity>
                                 <Text style={styles.buttonLabel}>Pomoc</Text>
                             </View>
@@ -282,9 +282,9 @@ const NumberLineTrainerScreen4 = () => {
 
                     {!isKeyboardVisible && (
                         <View style={styles.iconsBottom}>
-                            <Image source={require('../assets/happy.png')} style={styles.iconSame} />
+                            <Image source={require('../../../assets/happy.png')} style={styles.iconSame} />
                             <Text style={styles.counterTextIcons}>{correctCount}</Text>
-                            <Image source={require('../assets/sad.png')} style={styles.iconSame} />
+                            <Image source={require('../../../assets/sad.png')} style={styles.iconSame} />
                             <Text style={styles.counterTextIcons}>{wrongCount}</Text>
                         </View>
                     )}
