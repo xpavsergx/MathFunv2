@@ -9,6 +9,9 @@ import OileExplanationBlock from '../Components/OileExplanationBlock';
 import TimesMoreLessBlock from '../Components/TimesMoreLessBlock';
 import DivisionRemainderBlock from '../Components/DivisionRemainderBlock';
 import SquaresCubesBlock from '../Components/SquaresCubesBlock';
+import OrderOfOperationsBlock from '../Components/OrderOfOperationsBlock';
+import TextProblems1Block from '../Components/TextProblems1Block';
+import NumberLineBlock from "../Components/NumberLineBlock";
 
 type TheoryContentItem = {
     type: "paragraph" | "subHeader" | "listItem" | "example";
@@ -46,12 +49,15 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
             subTopic === "O ile więcej, o ile mniej" ||
             subTopic === "Ile razy więcej, ile razy mniej" ||
             subTopic === "Dzielenie z resztą" ||
-            subTopic === "Kwadraty i sześciany liczb"
+            subTopic === "Kwadraty i sześciany liczb" ||
+            subTopic === "Kolejność wykonywania działań" ||
+            subTopic === "Zadania tekstowe, cz. 1" ||
+            subTopic === "Oś liczbowa"
         );
 
     if (isSpecialMemoryTopic) {
         return (
-            <ScrollView style={styles.scrollContainer}>
+            <View style={{flex: 1}}>
                 {subTopic === "Rachunki pamięciowe - dodawanie i odejmowanie" && (
                     <RachunkiMemoryBlock />
                 )}
@@ -71,7 +77,16 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
                 {subTopic === "Kwadraty i sześciany liczb" && (
                     <SquaresCubesBlock />
                 )}
-            </ScrollView>
+                {subTopic === "Kolejność wykonywania działań" && (
+                    <OrderOfOperationsBlock />
+                )}
+                {subTopic === "Zadania tekstowe, cz. 1" && (
+                    <TextProblems1Block />
+                )}
+                {subTopic === "Oś liczbowa" && (
+                    <NumberLineBlock />
+                )}
+            </View>
         );
     }
 

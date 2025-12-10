@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
     },
     topicButtonText: {
         color: '#FFFFFF',
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: '700',
         textAlign: 'center',
     },

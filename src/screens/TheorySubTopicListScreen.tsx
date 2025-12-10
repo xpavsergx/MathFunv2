@@ -43,7 +43,25 @@ function TheorySubTopicListScreen({ route, navigation }: TheorySubTopicListScree
         if (!gradeData) return [];
         const topicData = gradeData[topic];
         if (!topicData) return [];
-        return Object.keys(topicData);
+        return Object.keys(topicData).filter(subTopicKey => {
+            const subTopicData = topicData[subTopicKey];
+
+            // 1. Definiujemy, które tematy mają być ukryte w teorii.
+            // Używamy nazwy podtematu, ponieważ JSON jest statyczny.
+            const hiddenTopics = [
+                "Zadania tekstowe, cz. 2",
+                "Sprawdzian końcowy",
+                // Tutaj dodaj inne tematy, które mają być tylko w praktyce
+            ];
+
+            // 2. Jeśli nazwa podtematu znajduje się na liście ukrytych, zwróć false.
+            if (hiddenTopics.includes(subTopicKey)) {
+                return false;
+            }
+
+            // 3. W przeciwnym razie, zwróć true (temat jest widoczny w teorii).
+            return true;
+        });
     }, [db, grade, topic]);
 
     const handleSubTopicPress = (subTopic: string) => {

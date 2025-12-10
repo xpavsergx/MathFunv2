@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     ScrollView,
     ActivityIndicator,
+    ImageBackground, // 🔥 DODANO IMPORT ImageBackground
 } from 'react-native';
 
 import firestore from '@react-native-firebase/firestore';
@@ -34,7 +35,15 @@ export default function TimesMoreLessBlock() {
                     .doc(LESSON_ID)
                     .get();
                 if (doc.exists) {
-                    setLessonData(doc.data() || {});
+                    const data = doc.data();
+                    if (data) {
+                        // Zapewnienie, że steps to tablice (nawet jeśli są mapami w bazie)
+                        // UWAGA: Pole intro jest usunięte z bazy, więc w lessonData będzie null/undefined.
+                        setLessonData({
+                            ...data,
+                            steps: Object.values(data.steps || {}),
+                        });
+                    }
                 } else {
                     console.warn(`Nie znaleziono dokumentu dla ${LESSON_ID}.`);
                     setLessonData(null);
@@ -82,8 +91,8 @@ export default function TimesMoreLessBlock() {
     const getSteps = () => {
         if (!lessonData) return [];
 
-        // Pole intro jest usunięte z bazy, więc nie jest używane.
-        const stepLines = Array.isArray(lessonData.steps) ? lessonData.steps : [];
+        // Pole intro jest usunięte z bazy, więc jest ignorowane.
+        const stepLines = lessonData.steps;
 
         // --- 1. Kroki Właściwe (Kroki 0, 1, 2...) ---
         const calculationSteps = stepLines.map((stepText: string, index: number) => (
@@ -130,31 +139,52 @@ export default function TimesMoreLessBlock() {
     }
 
     return (
-        <View style={styles.wrapper}>
-            <View style={styles.container}>
-                <Text style={styles.title}>
-                    {lessonData?.title || 'Ile razy więcej, ile razy mniej'}
-                </Text>
+        // 🔥 Zastąpienie głównego View przez ImageBackground
+        <ImageBackground
+            source={require('../assets/tloTeorii.png')} // Zmień na właściwą ścieżkę do Twojego pliku graficznego
+            style={styles.backgroundImage}
+            resizeMode="cover"
+        >
+            <View style={styles.overlay}>
+                <View style={styles.container}>
+                    <Text style={styles.title}>
+                        {lessonData?.title || 'Ile razy więcej, ile razy mniej'}
+                    </Text>
 
-                <ScrollView
-                    style={styles.scrollArea}
-                    contentContainerStyle={styles.scrollContent}
-                >
-                    {getSteps()}
-                </ScrollView>
+                    <ScrollView
+                        style={styles.scrollArea}
+                        contentContainerStyle={styles.scrollContent}
+                    >
+                        {getSteps()}
+                    </ScrollView>
 
-                {/* Zabezpieczenie przed przejściem poza maksymalny krok */}
-                {step < MAX_STEPS && (
-                    <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-                        <Text style={styles.buttonText}>Dalej ➜</Text>
-                    </TouchableOpacity>
-                )}
+                    {/* Zabezpieczenie przed przejściem poza maksymalny krok */}
+                    {step < MAX_STEPS && (
+                        <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+                            <Text style={styles.buttonText}>Dalej ➜</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
-        </View>
+        </ImageBackground>
     );
 }
 
 const styles = StyleSheet.create({
+    // 🔥 NOWE STYLE DLA TŁA I WARSTWY
+    backgroundImage: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+    },
+    overlay: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        paddingTop: 20,
+    },
+
+    // Używamy wrapper dla stanu ładowania/błędu
     wrapper: {
         flex: 1,
         alignItems: 'center',
@@ -166,14 +196,16 @@ const styles = StyleSheet.create({
         height: 300,
         padding: 20,
     },
+    // 🔥 ZMIENIONO TŁO NA PÓŁPRZEZROCZYSTE DLA WIDOCZNOŚCI GRAFIKI
     container: {
-        backgroundColor: '#FFF8E1',
+        backgroundColor: 'rgba(255, 255, 255, 0.85)',
         borderRadius: 12,
         padding: 20,
         alignItems: 'center',
         width: '90%',
         elevation: 3,
         maxWidth: 600,
+        marginBottom: 20, // Dodano dla spójności
     },
     title: {
         fontSize: 22,
@@ -183,7 +215,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     scrollArea: {
-        maxHeight: 450,
+        // Usunięto maxHeight: 450, aby działało elastyczne rozciąganie
         width: '100%',
     },
     scrollContent: {

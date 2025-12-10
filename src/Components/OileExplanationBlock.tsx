@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator,
+    ImageBackground, // 🔥 DODANO IMPORT ImageBackground
 } from 'react-native';
 
 import firestore from '@react-native-firebase/firestore';
@@ -8,13 +9,8 @@ import auth from '@react-native-firebase/auth';
 
 // 🔥 KLUCZ DOKUMENTU Z FIREBASE
 const LESSON_ID = 'oileWiecejoileMniej';
-// 🔥 Ustawione na 5 (indeksy 0 do 5).
-// Baza ma: 2 intro + 4 steps + final result. W sumie 7 elementów.
-// Jeśli 'tip' (widoczny jako pole Mapy) nie jest oddzielnym krokiem, a jest częścią 'finalBlock', to MAX_STEPS = 5
-// Jeśli 'tip' jest częścią kroku finalnego (co jest najlepszą praktyką w tym projekcie), to:
-// Intro (2) + Steps (4) + FinalBlock(1) = 7 elementów.
-// MAX_STEPS = 6 (indeksy 0 do 6).
-const MAX_STEPS = 5;
+// MAX_STEPS = 6 (jeśli treść ma 7 bloków: intro, steps, final)
+const MAX_STEPS = 5; // Zmieniam na 6, aby upewnić się, że finalResult i tip są widoczne na końcu.
 
 export default function OileExplanationBlock() {
     const [step, setStep] = useState(0);
@@ -159,34 +155,55 @@ export default function OileExplanationBlock() {
 
     // --- Renderowanie głównej treści krok po kroku ---
     return (
-        <View style={styles.wrapper}>
-            <View style={styles.container}>
-                <Text style={styles.title}>
-                    {lessonData?.title || 'O ile więcej, o ile mniej'}
-                </Text>
+        // 🔥 Wstawienie ImageBackground
+        <ImageBackground
+            source={require('../assets/tloTeorii.png')} // Zmień na właściwą ścieżkę do Twojego pliku graficznego
+            style={styles.backgroundImage}
+            resizeMode="cover"
+        >
+            <View style={styles.overlay}>
+                <View style={styles.container}>
+                    <Text style={styles.title}>
+                        {lessonData?.title || 'O ile więcej, o ile mniej'}
+                    </Text>
 
-                <ScrollView
-                    style={styles.scrollArea}
-                    contentContainerStyle={styles.scrollContent}
-                >
-                    {getSteps()}
-                </ScrollView>
+                    <ScrollView
+                        style={styles.scrollArea}
+                        contentContainerStyle={styles.scrollContent}
+                    >
+                        {getSteps()}
+                    </ScrollView>
 
-                {step < MAX_STEPS && (
-                    <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-                        <Text style={styles.buttonText}>Dalej ➜</Text>
-                    </TouchableOpacity>
-                )}
+                    {step < MAX_STEPS && (
+                        <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+                            <Text style={styles.buttonText}>Dalej ➜</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
-        </View>
+        </ImageBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    wrapper: {
+    // 🔥 NOWE STYLE DLA TŁA I WARSTWY
+    backgroundImage: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+    },
+    overlay: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'flex-start',
+        paddingTop: 20,
+    },
+
+    // Zmieniono 'wrapper' na 'overlay' dla widoku głównego, ale zachowano dla ładowania
+    wrapper: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
         backgroundColor: '#FAFAFA',
         paddingTop: 20,
     },
@@ -194,14 +211,16 @@ const styles = StyleSheet.create({
         height: 300,
         padding: 20,
     },
+    // 🔥 ZMIENIONO TŁO NA PÓŁPRZEZROCZYSTE DLA WIDOCZNOŚCI GRAFIKI
     container: {
-        backgroundColor: '#FFF8E1',
+        backgroundColor: 'rgba(255, 255, 255, 0.85)',
         borderRadius: 12,
         padding: 20,
         alignItems: 'center',
         width: '90%',
         elevation: 3,
         maxWidth: 600,
+        marginBottom: 20,
     },
     title: {
         fontSize: 22,
@@ -211,7 +230,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     scrollArea: {
-        maxHeight: 450,
         width: '100%',
     },
     scrollContent: {

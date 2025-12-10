@@ -5,6 +5,8 @@ import {
     StyleSheet,
     TouchableOpacity,
     ScrollView,
+    ImageBackground, // 🔥 Dodano import ImageBackground
+    ActivityIndicator, // Dodano import ActivityIndicator dla stanu ładowania
 } from 'react-native';
 
 import firestore from '@react-native-firebase/firestore';
@@ -16,6 +18,7 @@ export default function MultiplyDivideBlock() {
     const [lessonData, setLessonData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
+    // MAX_STEPS = 7 oznacza 8 bloków (0 do 7)
     const handleNextStep = () => {
         setStep((prev) => (prev < 7 ? prev + 1 : prev));
     };
@@ -26,28 +29,35 @@ export default function MultiplyDivideBlock() {
     };
 
     useEffect(() => {
-        // Функция для загрузки данных из Firestore
         const fetchData = async () => {
             try {
                 setLoading(true);
                 const doc = await firestore()
                     .collection('lessons')
-                    .doc(mode)
+                    .doc(mode) // W Firestore powinny być dokumenty 'division' i 'multiplication'
                     .get();
                 if (doc.exists) {
-                    setLessonData(doc.data());
+                    const data = doc.data();
+                    if (data) {
+                        // Zapewnienie, że intro i steps to tablice (nawet jeśli są mapami w bazie)
+                        setLessonData({
+                            ...data,
+                            intro: Object.values(data.intro || {}),
+                            steps: Object.values(data.steps || {}),
+                        });
+                    }
                 } else {
                     console.warn('Nie znaleziono dokumentu.');
                     setLessonData(null);
                 }
             } catch (error) {
                 console.error('Błąd ładowania danych:', error);
+                setLessonData(null);
             } finally {
                 setLoading(false);
             }
         };
 
-        // Проверяем авторизацию, если нет - выполняем анонимный вход, потом загружаем данные
         const prepareAndFetch = async () => {
             if (!auth().currentUser) {
                 try {
@@ -79,26 +89,29 @@ export default function MultiplyDivideBlock() {
     };
 
     const getSteps = () => {
-        if (!lessonData) return [];
+        if (!lessonData || !lessonData.intro || !lessonData.steps) return [];
+
+        const introLines = lessonData.intro;
+        const stepLines = lessonData.steps;
 
         const steps = [
             <View key="intro" style={styles.introBlock}>
-                {lessonData.intro.map((line: string, index: number) => (
+                {introLines.map((line: string, index: number) => (
                     <Text key={`intro-${index}`} style={styles.intro}>
                         {highlightNumbers(line)}
                     </Text>
                 ))}
             </View>,
-            ...lessonData.steps.map((stepText: string, index: number) => (
+            ...stepLines.map((stepText: string, index: number) => (
                 <Text key={`step-${index}`} style={styles.stepText}>
                     {highlightNumbers(stepText)}
                 </Text>
             )),
             <View key="final" style={styles.finalBlock}>
                 <Text style={styles.finalResult}>
-                    {highlightNumbers(lessonData.finalResult)}
+                    {highlightNumbers(lessonData.finalResult || '')}
                 </Text>
-                <Text style={styles.tip}>{lessonData.tip}</Text>
+                <Text style={styles.tip}>{lessonData.tip || ''}</Text>
             </View>,
         ];
 
@@ -107,72 +120,108 @@ export default function MultiplyDivideBlock() {
 
     if (loading) {
         return (
-            <View style={styles.wrapper}>
+            // Używamy wrapper dla stanu ładowania/błędu
+            <View style={[styles.wrapper, styles.loadingWrapper]}>
+                <ActivityIndicator size="large" color="#FF8F00" />
                 <Text style={styles.intro}>Ładowanie danych...</Text>
+            </View>
+        );
+    }
+    if (!lessonData) {
+        return (
+            <View style={[styles.wrapper, styles.loadingWrapper]}>
+                <Text style={[styles.intro, {color: '#D84315'}]}>Błąd: Nie znaleziono danych lekcji w Firestore dla trybu: {mode}.</Text>
             </View>
         );
     }
 
     return (
-        <View style={styles.wrapper}>
-            <View style={styles.container}>
-                <Text style={styles.title}>
-                    {lessonData?.title || 'Mnożenie i dzielenie'}
-                </Text>
+        // 🔥 Krok 1: Wstawienie ImageBackground
+        <ImageBackground
+            source={require('../assets/tloTeorii.png')} // Zmień na właściwą ścieżkę do Twojego pliku graficznego
+            style={styles.backgroundImage}
+            resizeMode="cover"
+        >
+            <View style={styles.overlay}>
+                <View style={styles.container}>
+                    <Text style={styles.title}>
+                        {lessonData?.title || 'Mnożenie i dzielenie'}
+                    </Text>
 
-                <View style={styles.switcher}>
-                    <TouchableOpacity
-                        style={[
-                            styles.switchButton,
-                            mode === 'division' && styles.activeSwitch,
-                        ]}
-                        onPress={() => handleModeChange('division')}
+                    <View style={styles.switcher}>
+                        <TouchableOpacity
+                            style={[
+                                styles.switchButton,
+                                mode === 'division' && styles.activeSwitch,
+                            ]}
+                            onPress={() => handleModeChange('division')}
+                        >
+                            <Text style={styles.switchText}>÷ Dzielenie</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[
+                                styles.switchButton,
+                                mode === 'multiplication' && styles.activeSwitch,
+                            ]}
+                            onPress={() => handleModeChange('multiplication')}
+                        >
+                            <Text style={styles.switchText}>× Mnożenie</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <ScrollView
+                        style={styles.scrollArea}
+                        contentContainerStyle={styles.scrollContent}
                     >
-                        <Text style={styles.switchText}>÷ Dzielenie</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[
-                            styles.switchButton,
-                            mode === 'multiplication' && styles.activeSwitch,
-                        ]}
-                        onPress={() => handleModeChange('multiplication')}
-                    >
-                        <Text style={styles.switchText}>× Mnożenie</Text>
-                    </TouchableOpacity>
+                        {getSteps()}
+                    </ScrollView>
+
+                    {step < 7 && (
+                        <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+                            <Text style={styles.buttonText}>Dalej ➜</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
-
-                <ScrollView
-                    style={styles.scrollArea}
-                    contentContainerStyle={styles.scrollContent}
-                >
-                    {getSteps()}
-                </ScrollView>
-
-                {step < 7 && (
-                    <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-                        <Text style={styles.buttonText}>Dalej ➜</Text>
-                    </TouchableOpacity>
-                )}
             </View>
-        </View>
+        </ImageBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    wrapper: {
+    // 🔥 NOWE STYLE DLA TŁA I WARSTWY
+    backgroundImage: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+    },
+    overlay: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        paddingTop: 20,
+    },
+
+    wrapper: { // Zachowane dla stanu ładowania/błędu
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#FAFAFA',
         paddingTop: 20,
     },
+    loadingWrapper: {
+        height: 300,
+        padding: 20,
+    },
+    // 🔥 ZMIENIONO TŁO NA PÓŁPRZEZROCZYSTE DLA WIDOCZNOŚCI GRAFIKI
     container: {
-        backgroundColor: '#FFF8E1',
+        backgroundColor: 'rgba(255, 255, 255, 0.85)',
         borderRadius: 12,
         padding: 20,
         alignItems: 'center',
         width: '90%',
         elevation: 3,
+        maxWidth: 600,
+        marginBottom: 20, // Dodano margines dolny dla spójności
     },
     title: {
         fontSize: 22,

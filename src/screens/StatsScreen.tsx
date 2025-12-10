@@ -43,6 +43,14 @@ const getTrainerName = (id: string) => {
             return 'Dzielenie z resztą';
         case 'squaresCubesTrainer':
             return 'Kwadraty i sześciany liczb';
+        case 'orderOperationsTrainer':
+            return 'Kolejność wykonywania działań';
+        case 'wordProblemsLevel1':
+            return 'Zadania tekstowe, cz. 1';
+        case 'wordProblemsLevel2':
+            return 'Zadania tekstowe, cz. 2';
+        case 'numberLineTrainer':
+            return 'Oś liczbowa';
         default:
             return id;
     }

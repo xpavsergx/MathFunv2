@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator,
+    ImageBackground, // 💡 Dodano import ImageBackground
 } from 'react-native';
 
 // 🔥 Importy Firebase pozostają bez zmian
@@ -9,9 +10,7 @@ import auth from '@react-native-firebase/auth';
 
 // ZMIANA: Nowe ID dokumentu, które wczytamy z Firebase
 const LESSON_ID = 'squaresCubes';
-// 🔥 Dostosuj do liczby linii w Firestore: (introLines + stepLines + 1)
-// Jeśli masz 2 linie intro, 4 kroki obliczeniowe, i 1 final block => 2+4+1 = 7.
-// Na potrzeby przykładu: MAX_STEPS = 6 (0 do 6 = 7 kroków)
+// 🔥 Ustawienie MAX_STEPS na 5 (indeksy 0-5), co daje 6 elementów (np. 2 intro + 3 steps + final)
 const MAX_STEPS = 5;
 
 export default function SquaresCubesBlock() {
@@ -33,7 +32,15 @@ export default function SquaresCubesBlock() {
                     .doc(LESSON_ID)
                     .get();
                 if (doc.exists) {
-                    setLessonData(doc.data() || {});
+                    const data = doc.data();
+                    if (data) {
+                        // Parsowanie obiektów Firestore do tablicy dla łatwiejszego mapowania
+                        setLessonData({
+                            ...data,
+                            intro: Object.values(data.intro || {}),
+                            steps: Object.values(data.steps || {}),
+                        });
+                    }
                 } else {
                     console.warn(`Nie znaleziono dokumentu dla ${LESSON_ID}.`);
                     setLessonData(null);
@@ -65,12 +72,12 @@ export default function SquaresCubesBlock() {
     // ------------------------------------
 
 
-    // 🔥 FUNKCJA WIZUALNIE PODKREŚLAJĄCA LICZBY
-    const highlightNumbers = (text: string) => {
-        // Dodajemy obsługę potęg (małe cyfry)
+    // 🔥 FUNKCJA WIZUALNIE PODKREŚLAJĄCA LICZBY I POTĘGI
+    const highlightElements = (text: string) => {
+        // Dodano obsługę potęg (^2, ^3)
         const parts = text.split(/(\d+|\^2|\^3)/g);
         return parts.map((part, index) =>
-            // Podświetlaj cyfry, oraz symbole potęg (^2, ^3)
+            // Podświetlaj cyfry oraz symbole potęg
             /(\d+|\^2|\^3)/.test(part) ? (
                 <Text key={index} style={styles.numberHighlight}>
                     {part}
@@ -86,9 +93,8 @@ export default function SquaresCubesBlock() {
     const getSteps = () => {
         if (!lessonData) return [];
 
-        // Dane z Firebase są obiektami Map, przekształcamy na tablice, by zachować kolejność
-        const introLines = Object.values(lessonData.intro || {});
-        const stepLines = Object.values(lessonData.steps || {});
+        const introLines = lessonData.intro;
+        const stepLines = lessonData.steps;
 
         // --- 1. KROK 0 (Blok Wprowadzający) ---
         const introBlock = (
@@ -100,7 +106,7 @@ export default function SquaresCubesBlock() {
                             key={`intro-${index}`}
                             style={[styles.intro, isFirstLine && styles.introBold]}
                         >
-                            {highlightNumbers(line)}
+                            {highlightElements(line)}
                         </Text>
                     );
                 })}
@@ -111,7 +117,7 @@ export default function SquaresCubesBlock() {
         // --- 2. Kroki Właściwe (Steps 1, 2, 3...) ---
         const calculationSteps = stepLines.map((stepText: string, index: number) => (
             <Text key={`step-${index}`} style={styles.stepText}>
-                {highlightNumbers(stepText)}
+                {highlightElements(stepText)}
             </Text>
         ));
 
@@ -120,9 +126,9 @@ export default function SquaresCubesBlock() {
         const finalBlock = (
             <View key="final" style={styles.finalBlock}>
                 <Text style={styles.finalResult}>
-                    {highlightNumbers(lessonData.finalResult || '')}
+                    {highlightElements(lessonData.finalResult || '')}
                 </Text>
-                <Text style={styles.tip}>{highlightNumbers(lessonData.tip || '')}</Text>
+                <Text style={styles.tip}>{highlightElements(lessonData.tip || '')}</Text>
             </View>
         );
 
@@ -133,10 +139,10 @@ export default function SquaresCubesBlock() {
         return allSteps.slice(0, step + 1);
     };
 
-    // --- Renderowanie ---
-
+    // --- Renderowanie stanu ładowania/błędu ---
     if (loading) {
         return (
+            // Używamy wrapper dla stanu ładowania/błędu
             <View style={[styles.wrapper, styles.loadingWrapper]}>
                 <ActivityIndicator size="large" color="#FF8F00" />
                 <Text style={[styles.intro, {marginTop: 10}]}>Ładowanie magicznych potęg...</Text>
@@ -153,35 +159,59 @@ export default function SquaresCubesBlock() {
     }
 
     return (
-        <View style={styles.wrapper}>
-            <View style={styles.container}>
-                <Text style={styles.title}>
-                    {lessonData?.title || 'Kwadraty i sześciany liczb'}
-                </Text>
+        // 🚀 Krok 1: Wstawienie tła ImageBackground
+        <ImageBackground
+            source={require('../assets/tloTeorii.png')} // Zmień na właściwą ścieżkę
+            style={styles.backgroundImage}
+            resizeMode="cover"
+        >
+            {/* 🚀 Krok 2: Użycie warstwy overlay do pozycjonowania i centrowania */}
+            <View style={styles.overlay}>
+                {/* 🚀 Krok 3: Kontener teorii (żółty/biały blok) */}
+                <View style={styles.container}>
+                    <Text style={styles.title}>
+                        {lessonData?.title || 'Kwadraty i sześciany liczb'}
+                    </Text>
 
-                <ScrollView
-                    style={styles.scrollArea}
-                    contentContainerStyle={styles.scrollContent}
-                >
-                    {getSteps()}
-                </ScrollView>
+                    <ScrollView
+                        style={styles.scrollArea}
+                        contentContainerStyle={styles.scrollContent}
+                    >
+                        {getSteps()}
+                    </ScrollView>
 
-                {step < MAX_STEPS && (
-                    <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-                        <Text style={styles.buttonText}>Dalej ➜</Text>
-                    </TouchableOpacity>
-                )}
+                    {step < MAX_STEPS && (
+                        <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+                            <Text style={styles.buttonText}>Dalej ➜</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
-        </View>
+        </ImageBackground>
     );
 }
 
-// ... (Styles pozostają niezmienione, aby pasowały do DivisionRemainderBlock)
+// --- STYLE ---
+
 const styles = StyleSheet.create({
+    // 💡 NOWE STYLE DLA TŁA
+    backgroundImage: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+    },
+    overlay: {
+        flex: 1, // Wypełnia całe tło
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        paddingTop: 20,
+    },
+
+    // Ustawienia dla stanu ładowania/błędu
     wrapper: {
         flex: 1,
         alignItems: 'center',
-        justifyContent: 'flex-start',
+        justifyContent: 'center',
         backgroundColor: '#FAFAFA',
         paddingTop: 20,
     },
@@ -189,28 +219,36 @@ const styles = StyleSheet.create({
         height: 300,
         padding: 20,
     },
+
+    // 🚀 STYL GŁÓWNEGO BLOKU TEORII
     container: {
-        backgroundColor: '#FFF8E1',
+        //flex: 1, // 🔥 Zapewnia rozciągnięcie bloku na całą dostępną wysokość
+        // Półprzezroczysty biały/żółty, aby tło graficzne było widoczne
+        backgroundColor: 'rgba(255, 255, 255, 0.85)',
         borderRadius: 12,
         padding: 20,
         alignItems: 'center',
         width: '90%',
         elevation: 3,
+        maxWidth: 600,
+        marginBottom: 20,
     },
+    scrollArea: {
+        //flex: 1, // 🔥 Zapewnia, że ScrollView wypełnia całą dostępną przestrzeń
+        width: '100%',
+    },
+    scrollContent: {
+        alignItems: 'center',
+        paddingBottom: 50,
+    },
+
+    // 🚀 Style dla tekstu i kroków
     title: {
         fontSize: 22,
         fontWeight: 'bold',
         color: '#FF8F00',
         marginBottom: 10,
         textAlign: 'center',
-    },
-    scrollArea: {
-        maxHeight: 450,
-        width: '100%',
-    },
-    scrollContent: {
-        alignItems: 'center',
-        paddingBottom: 50,
     },
     introBlock: {
         alignItems: 'center',
@@ -260,6 +298,8 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
         textAlign: 'center',
     },
+
+    // 🚀 Style dla przycisku
     button: {
         backgroundColor: '#FFD54F',
         paddingHorizontal: 24,

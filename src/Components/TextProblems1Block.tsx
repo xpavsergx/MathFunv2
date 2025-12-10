@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator,
-    ImageBackground, // Dodano import ImageBackground
+    ImageBackground, // 💡 Dodano import ImageBackground
 } from 'react-native';
 
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
-// Ustawienie klucza dokumentu
-const LESSON_ID = 'remainder';
-// Wartość MAX_STEPS zależy od zawartości Firebase (liczba linii intro + liczba linii steps + final block)
-const MAX_STEPS = 4;
+// 🚀 ZMIANA: Nowe ID dokumentu dla "Zadania tekstowe, cz. 1"
+const LESSON_ID = 'textProblems1';
+// 🚀 ZMIANA: Max kroki do wyświetlenia (2 intro + 4 steps + finalResult = 7 bloków)
+// Ustaliliśmy, że MAX_STEPS = 6 (indeksy 0-6).
+const MAX_STEPS = 5;
 
-export default function DivisionRemainderBlock() {
+export default function TextProblems1Block() {
     const [step, setStep] = useState(0);
     const [lessonData, setLessonData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -32,7 +33,6 @@ export default function DivisionRemainderBlock() {
                 if (doc.exists) {
                     const data = doc.data();
                     if (data) {
-                        // Spójne parsowanie danych: zakłada, że intro i steps to mapy w Firebase
                         setLessonData({
                             ...data,
                             intro: Object.values(data.intro || {}),
@@ -67,10 +67,11 @@ export default function DivisionRemainderBlock() {
         prepareAndFetch();
     }, []);
 
-    const highlightNumbers = (text: string) => {
-        const parts = text.split(/(\d+)/g);
+    // Funkcja do wyróżniania liczb i operatorów
+    const highlightElements = (text: string) => {
+        const parts = text.split(/(\d+|\(|\)|\+|\-|\*|\/|=|:)/g);
         return parts.map((part, index) =>
-            /\d+/.test(part) ? (
+            /(\d+|\(|\)|\+|\-|\*|\/|=|:)/.test(part) ? (
                 <Text key={index} style={styles.numberHighlight}>
                     {part}
                 </Text>
@@ -96,7 +97,7 @@ export default function DivisionRemainderBlock() {
                             key={`intro-${index}`}
                             style={[styles.intro, isFirstLine && styles.introBold]}
                         >
-                            {highlightNumbers(line)}
+                            {highlightElements(line)}
                         </Text>
                     );
                 })}
@@ -104,10 +105,10 @@ export default function DivisionRemainderBlock() {
         );
 
 
-        // --- 2. Kroki Właściwe (Steps 1, 2, 3...) ---
+        // --- 2. Kroki Właściwe (Steps 1, 2...) ---
         const calculationSteps = stepLines.map((stepText: string, index: number) => (
             <Text key={`step-${index}`} style={styles.stepText}>
-                {highlightNumbers(stepText)}
+                {highlightElements(stepText)}
             </Text>
         ));
 
@@ -116,9 +117,9 @@ export default function DivisionRemainderBlock() {
         const finalBlock = (
             <View key="final" style={styles.finalBlock}>
                 <Text style={styles.finalResult}>
-                    {highlightNumbers(lessonData.finalResult || '')}
+                    {highlightElements(lessonData.finalResult || '')}
                 </Text>
-                <Text style={styles.tip}>{highlightNumbers(lessonData.tip || '')}</Text>
+                <Text style={styles.tip}>{highlightElements(lessonData.tip || '')}</Text>
             </View>
         );
 
@@ -128,6 +129,7 @@ export default function DivisionRemainderBlock() {
     };
 
     if (loading) {
+        // Używamy standardowego View dla stanu ładowania/błędu
         return (
             <View style={[styles.wrapper, styles.loadingWrapper]}>
                 <ActivityIndicator size="large" color="#FF8F00" />
@@ -145,18 +147,18 @@ export default function DivisionRemainderBlock() {
     }
 
     return (
-        // 🚀 Krok 1: Wstawienie tła ImageBackground
+        // 🚀 Krok 1: ImageBackground do ustawienia tła graficznego
         <ImageBackground
-            source={require('../assets/tloTeorii.png')}
+            source={require('../assets/tloTeorii.png')} // Zmień na właściwą ścieżkę do Twojego pliku graficznego
             style={styles.backgroundImage}
             resizeMode="cover"
         >
-            {/* 🚀 Krok 2: Użycie warstwy overlay do pozycjonowania i centrowania */}
+            {/* 🚀 Krok 2: Warstwa overlay do centrowania i paddingu górnego */}
             <View style={styles.overlay}>
-                {/* 🚀 Krok 3: Kontener teorii (żółty/biały blok) */}
+                {/* 🚀 Krok 3: Kontener teorii (półprzezroczysty blok) */}
                 <View style={styles.container}>
                     <Text style={styles.title}>
-                        {lessonData?.title || 'Dzielenie z resztą'}
+                        {lessonData?.title || 'Zadania tekstowe, cz. 1'}
                     </Text>
 
                     <ScrollView
@@ -177,8 +179,10 @@ export default function DivisionRemainderBlock() {
     );
 }
 
+// --- STYLE ---
+
 const styles = StyleSheet.create({
-    // --- NOWE/ZModyfikowane Style ---
+    // 💡 NOWE STYLE DLA TŁA I ROZCIĄGANIA
     backgroundImage: {
         flex: 1,
         width: '100%',
@@ -187,50 +191,51 @@ const styles = StyleSheet.create({
     overlay: {
         flex: 1, // Wypełnia całe tło
         alignItems: 'center',
-        // Zmieniono na 'flex-start', aby zawartość zaczynała się od góry
-        justifyContent: 'flex-start',
+        justifyContent: 'flex-start', // Zawartość zaczyna się od góry
         paddingTop: 20,
     },
-    wrapper: { // Zostawiono dla stanu ładowania, ale bez tła
+
+    // Ustawienia dla stanu ładowania/błędu
+    wrapper: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#FAFAFA',
+        backgroundColor: '#FAFAFA', // Tło ładowania
         paddingTop: 20,
     },
+    loadingWrapper: {
+        height: 300,
+        padding: 20,
+    },
+
+    // 🚀 STYL GŁÓWNEGO BLOKU TEORII
     container: {
-        // 🔥 Dodano flex: 1, aby żółty/biały blok rozciągał się na całą wysokość pod nagłówkiem
-        // flex: 1,
-        // Zmieniono kolor na półprzezroczysty, aby tło graficzne przebijało
-        backgroundColor: 'rgba(255, 255, 255, 0.85)',
+        // 🔥 Usunięto flex: 1, aby blok rósł wraz z treścią
+        backgroundColor: 'rgba(255, 255, 255, 0.85)', // Półprzezroczysty, aby tło było widoczne
         borderRadius: 12,
         padding: 20,
         alignItems: 'center',
         width: '90%',
         elevation: 3,
         maxWidth: 600,
-        marginBottom: 20, // Mały margines od dolnego paska nawigacji
+        marginBottom: 20,
+    },
+    scrollArea: {
+        // 🔥 Usunięto flex: 1 (jeśli nie ma go w container)
+        width: '100%',
+    },
+    scrollContent: {
+        alignItems: 'center',
+        paddingBottom: 50,
     },
 
-    // --- ISTNIEJĄCE STYLE ---
-    loadingWrapper: {
-        height: 300,
-        padding: 20,
-    },
+    // 🚀 Style dla tekstu i kroków
     title: {
         fontSize: 22,
         fontWeight: 'bold',
         color: '#FF8F00',
         marginBottom: 10,
         textAlign: 'center',
-    },
-    scrollArea: {
-        // Usunięto maxHeight: 450, bo container ma flex: 1, scrollArea musi rosnąć elastycznie
-        width: '100%',
-    },
-    scrollContent: {
-        alignItems: 'center',
-        paddingBottom: 50,
     },
     introBlock: {
         alignItems: 'center',
@@ -280,6 +285,8 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
         textAlign: 'center',
     },
+
+    // 🚀 Style dla przycisku
     button: {
         backgroundColor: '#FFD54F',
         paddingHorizontal: 24,

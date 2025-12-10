@@ -1,23 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator,
-    ImageBackground, // Dodano import ImageBackground
+    ImageBackground,
 } from 'react-native';
 
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
-// Ustawienie klucza dokumentu
-const LESSON_ID = 'remainder';
-// Wartość MAX_STEPS zależy od zawartości Firebase (liczba linii intro + liczba linii steps + final block)
-const MAX_STEPS = 4;
+// 🚀 ZMIANA: Nowe ID dokumentu dla "Kolejność wykonywania działań"
+const LESSON_ID = 'orderOfOperations';
+// 🚀 ZMIANA: Max kroki do wyświetlenia (intro + 2 kroki + finalResult = 4 bloki)
+const MAX_STEPS = 3;
 
-export default function DivisionRemainderBlock() {
+export default function OrderOfOperationsBlock() {
     const [step, setStep] = useState(0);
     const [lessonData, setLessonData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     const handleNextStep = () => {
+        // Kontroluje przejście do następnego kroku, aż do MAX_STEPS
         setStep((prev) => (prev < MAX_STEPS ? prev + 1 : prev));
     };
 
@@ -32,7 +33,7 @@ export default function DivisionRemainderBlock() {
                 if (doc.exists) {
                     const data = doc.data();
                     if (data) {
-                        // Spójne parsowanie danych: zakłada, że intro i steps to mapy w Firebase
+                        // Parsowanie obiektów Firestore do tablicy dla łatwiejszego mapowania
                         setLessonData({
                             ...data,
                             intro: Object.values(data.intro || {}),
@@ -67,10 +68,13 @@ export default function DivisionRemainderBlock() {
         prepareAndFetch();
     }, []);
 
-    const highlightNumbers = (text: string) => {
-        const parts = text.split(/(\d+)/g);
+    // Funkcja do wyróżniania liczb i operatorów
+    const highlightElements = (text: string) => {
+        // Wyróżnia liczby oraz nawiasy i operatory (+, -, *, /)
+        const parts = text.split(/(\d+|\(|\)|\+|\-|\*|\/|=)/g);
         return parts.map((part, index) =>
-            /\d+/.test(part) ? (
+            // Sprawdzamy czy to liczba lub operator
+            /(\d+|\(|\)|\+|\-|\*|\/|=)/.test(part) ? (
                 <Text key={index} style={styles.numberHighlight}>
                     {part}
                 </Text>
@@ -96,7 +100,7 @@ export default function DivisionRemainderBlock() {
                             key={`intro-${index}`}
                             style={[styles.intro, isFirstLine && styles.introBold]}
                         >
-                            {highlightNumbers(line)}
+                            {highlightElements(line)}
                         </Text>
                     );
                 })}
@@ -104,10 +108,10 @@ export default function DivisionRemainderBlock() {
         );
 
 
-        // --- 2. Kroki Właściwe (Steps 1, 2, 3...) ---
+        // --- 2. Kroki Właściwe (Steps 1, 2...) ---
         const calculationSteps = stepLines.map((stepText: string, index: number) => (
             <Text key={`step-${index}`} style={styles.stepText}>
-                {highlightNumbers(stepText)}
+                {highlightElements(stepText)}
             </Text>
         ));
 
@@ -116,9 +120,9 @@ export default function DivisionRemainderBlock() {
         const finalBlock = (
             <View key="final" style={styles.finalBlock}>
                 <Text style={styles.finalResult}>
-                    {highlightNumbers(lessonData.finalResult || '')}
+                    {highlightElements(lessonData.finalResult || '')}
                 </Text>
-                <Text style={styles.tip}>{highlightNumbers(lessonData.tip || '')}</Text>
+                <Text style={styles.tip}>{highlightElements(lessonData.tip || '')}</Text>
             </View>
         );
 
@@ -145,18 +149,16 @@ export default function DivisionRemainderBlock() {
     }
 
     return (
-        // 🚀 Krok 1: Wstawienie tła ImageBackground
         <ImageBackground
+            // 💡 Użycie tła z symbolami matematycznymi (jak w Dodawaniu)
             source={require('../assets/tloTeorii.png')}
             style={styles.backgroundImage}
             resizeMode="cover"
         >
-            {/* 🚀 Krok 2: Użycie warstwy overlay do pozycjonowania i centrowania */}
             <View style={styles.overlay}>
-                {/* 🚀 Krok 3: Kontener teorii (żółty/biały blok) */}
                 <View style={styles.container}>
                     <Text style={styles.title}>
-                        {lessonData?.title || 'Dzielenie z resztą'}
+                        {lessonData?.title || 'Kolejność wykonywania działań'}
                     </Text>
 
                     <ScrollView
@@ -166,6 +168,7 @@ export default function DivisionRemainderBlock() {
                         {getSteps()}
                     </ScrollView>
 
+                    {/* Przycisk "Dalej" znika po osiągnięciu maksymalnego kroku */}
                     {step < MAX_STEPS && (
                         <TouchableOpacity style={styles.button} onPress={handleNextStep}>
                             <Text style={styles.buttonText}>Dalej ➜</Text>
@@ -177,31 +180,38 @@ export default function DivisionRemainderBlock() {
     );
 }
 
+
+// --- STYLE ---
+
 const styles = StyleSheet.create({
-    // --- NOWE/ZModyfikowane Style ---
-    backgroundImage: {
-        flex: 1,
-        width: '100%',
-        height: '100%',
-    },
-    overlay: {
-        flex: 1, // Wypełnia całe tło
-        alignItems: 'center',
-        // Zmieniono na 'flex-start', aby zawartość zaczynała się od góry
-        justifyContent: 'flex-start',
-        paddingTop: 20,
-    },
-    wrapper: { // Zostawiono dla stanu ładowania, ale bez tła
+    // Ustawienia dla stanu ładowania/błędu
+    wrapper: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#FAFAFA',
         paddingTop: 20,
     },
+    loadingWrapper: {
+        height: 300,
+        padding: 20,
+    },
+
+    // 🚀 Style dla tła i kontenera teorii
+    backgroundImage: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+    },
+    overlay: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'flex-start', // Zapewnia, że zawartość zaczyna się od góry
+        paddingTop: 20,
+    },
     container: {
-        // 🔥 Dodano flex: 1, aby żółty/biały blok rozciągał się na całą wysokość pod nagłówkiem
-        // flex: 1,
-        // Zmieniono kolor na półprzezroczysty, aby tło graficzne przebijało
+        //flex: 1, // 🔥 Zapewnia rozciągnięcie bloku na całą dostępną wysokość
+        // Półprzezroczysty biały, by tło graficzne było widoczne
         backgroundColor: 'rgba(255, 255, 255, 0.85)',
         borderRadius: 12,
         padding: 20,
@@ -209,28 +219,24 @@ const styles = StyleSheet.create({
         width: '90%',
         elevation: 3,
         maxWidth: 600,
-        marginBottom: 20, // Mały margines od dolnego paska nawigacji
+        marginBottom: 20,
+    },
+    scrollArea: {
+        // flex: 1, // 🔥 Zapewnia, że ScrollView wypełnia całą dostępną przestrzeń wewnątrz container
+        width: '100%',
+    },
+    scrollContent: {
+        alignItems: 'center',
+        paddingBottom: 50,
     },
 
-    // --- ISTNIEJĄCE STYLE ---
-    loadingWrapper: {
-        height: 300,
-        padding: 20,
-    },
+    // 🚀 Style dla tekstu i kroków
     title: {
         fontSize: 22,
         fontWeight: 'bold',
         color: '#FF8F00',
         marginBottom: 10,
         textAlign: 'center',
-    },
-    scrollArea: {
-        // Usunięto maxHeight: 450, bo container ma flex: 1, scrollArea musi rosnąć elastycznie
-        width: '100%',
-    },
-    scrollContent: {
-        alignItems: 'center',
-        paddingBottom: 50,
     },
     introBlock: {
         alignItems: 'center',
@@ -280,6 +286,8 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
         textAlign: 'center',
     },
+
+    // 🚀 Style dla przycisku
     button: {
         backgroundColor: '#FFD54F',
         paddingHorizontal: 24,

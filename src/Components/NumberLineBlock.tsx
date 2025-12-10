@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator,
-    ImageBackground, // Dodano import ImageBackground
+    ImageBackground,
 } from 'react-native';
 
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
-// Ustawienie klucza dokumentu
-const LESSON_ID = 'remainder';
-// Wartość MAX_STEPS zależy od zawartości Firebase (liczba linii intro + liczba linii steps + final block)
+// 🚀 ID dokumentu dla "Oś Liczbowa"
+const LESSON_ID = 'numberLine';
+// 🚀 Max kroki do wyświetlenia (7 bloków treści: 0 do 6)
 const MAX_STEPS = 4;
 
-export default function DivisionRemainderBlock() {
+export default function NumberLineBlock() {
     const [step, setStep] = useState(0);
     const [lessonData, setLessonData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -32,9 +32,9 @@ export default function DivisionRemainderBlock() {
                 if (doc.exists) {
                     const data = doc.data();
                     if (data) {
-                        // Spójne parsowanie danych: zakłada, że intro i steps to mapy w Firebase
                         setLessonData({
                             ...data,
+                            // Parsowanie danych z mapy na tablicę
                             intro: Object.values(data.intro || {}),
                             steps: Object.values(data.steps || {}),
                         });
@@ -67,10 +67,12 @@ export default function DivisionRemainderBlock() {
         prepareAndFetch();
     }, []);
 
-    const highlightNumbers = (text: string) => {
-        const parts = text.split(/(\d+)/g);
+    // Funkcja do wyróżniania liczb i operatorów
+    const highlightElements = (text: string) => {
+        // Wyróżnia liczby oraz operatory
+        const parts = text.split(/(\d+|\+|\-|\*|\/|=|:)/g);
         return parts.map((part, index) =>
-            /\d+/.test(part) ? (
+            /(\d+|\+|\-|\*|\/|=|:)/.test(part) ? (
                 <Text key={index} style={styles.numberHighlight}>
                     {part}
                 </Text>
@@ -96,7 +98,7 @@ export default function DivisionRemainderBlock() {
                             key={`intro-${index}`}
                             style={[styles.intro, isFirstLine && styles.introBold]}
                         >
-                            {highlightNumbers(line)}
+                            {highlightElements(line)}
                         </Text>
                     );
                 })}
@@ -104,10 +106,10 @@ export default function DivisionRemainderBlock() {
         );
 
 
-        // --- 2. Kroki Właściwe (Steps 1, 2, 3...) ---
+        // --- 2. Kroki Właściwe (Steps 1, 2...) ---
         const calculationSteps = stepLines.map((stepText: string, index: number) => (
             <Text key={`step-${index}`} style={styles.stepText}>
-                {highlightNumbers(stepText)}
+                {highlightElements(stepText)}
             </Text>
         ));
 
@@ -116,9 +118,9 @@ export default function DivisionRemainderBlock() {
         const finalBlock = (
             <View key="final" style={styles.finalBlock}>
                 <Text style={styles.finalResult}>
-                    {highlightNumbers(lessonData.finalResult || '')}
+                    {highlightElements(lessonData.finalResult || '')}
                 </Text>
-                <Text style={styles.tip}>{highlightNumbers(lessonData.tip || '')}</Text>
+                <Text style={styles.tip}>{highlightElements(lessonData.tip || '')}</Text>
             </View>
         );
 
@@ -145,18 +147,15 @@ export default function DivisionRemainderBlock() {
     }
 
     return (
-        // 🚀 Krok 1: Wstawienie tła ImageBackground
         <ImageBackground
-            source={require('../assets/tloTeorii.png')}
+            source={require('../assets/tloTeorii.png')} // Zmień na właściwą ścieżkę do Twojego pliku graficznego
             style={styles.backgroundImage}
             resizeMode="cover"
         >
-            {/* 🚀 Krok 2: Użycie warstwy overlay do pozycjonowania i centrowania */}
             <View style={styles.overlay}>
-                {/* 🚀 Krok 3: Kontener teorii (żółty/biały blok) */}
                 <View style={styles.container}>
                     <Text style={styles.title}>
-                        {lessonData?.title || 'Dzielenie z resztą'}
+                        {lessonData?.title || 'Oś Liczbowa'}
                     </Text>
 
                     <ScrollView
@@ -177,31 +176,35 @@ export default function DivisionRemainderBlock() {
     );
 }
 
+// --- STYLE ---
+
 const styles = StyleSheet.create({
-    // --- NOWE/ZModyfikowane Style ---
+    // 💡 NOWE STYLE DLA TŁA
     backgroundImage: {
         flex: 1,
         width: '100%',
         height: '100%',
     },
     overlay: {
-        flex: 1, // Wypełnia całe tło
+        flex: 1,
         alignItems: 'center',
-        // Zmieniono na 'flex-start', aby zawartość zaczynała się od góry
         justifyContent: 'flex-start',
         paddingTop: 20,
     },
-    wrapper: { // Zostawiono dla stanu ładowania, ale bez tła
+    wrapper: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#FAFAFA',
         paddingTop: 20,
     },
+    loadingWrapper: {
+        height: 300,
+        padding: 20,
+    },
+    // 🚀 STYL GŁÓWNEGO BLOKU TEORII
     container: {
-        // 🔥 Dodano flex: 1, aby żółty/biały blok rozciągał się na całą wysokość pod nagłówkiem
-        // flex: 1,
-        // Zmieniono kolor na półprzezroczysty, aby tło graficzne przebijało
+        // Usunięto flex: 1, aby blok rósł wraz z treścią
         backgroundColor: 'rgba(255, 255, 255, 0.85)',
         borderRadius: 12,
         padding: 20,
@@ -209,13 +212,7 @@ const styles = StyleSheet.create({
         width: '90%',
         elevation: 3,
         maxWidth: 600,
-        marginBottom: 20, // Mały margines od dolnego paska nawigacji
-    },
-
-    // --- ISTNIEJĄCE STYLE ---
-    loadingWrapper: {
-        height: 300,
-        padding: 20,
+        marginBottom: 20,
     },
     title: {
         fontSize: 22,
@@ -225,7 +222,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     scrollArea: {
-        // Usunięto maxHeight: 450, bo container ma flex: 1, scrollArea musi rosnąć elastycznie
         width: '100%',
     },
     scrollContent: {
