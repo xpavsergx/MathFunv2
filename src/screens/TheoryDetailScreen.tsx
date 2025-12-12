@@ -12,6 +12,10 @@ import SquaresCubesBlock from '../Components/SquaresCubesBlock';
 import OrderOfOperationsBlock from '../Components/OrderOfOperationsBlock';
 import TextProblems1Block from '../Components/TextProblems1Block';
 import NumberLineBlock from "../Components/NumberLineBlock";
+import DecimalSystemBlock from '../Components/Grade4_2/DecimalSystemBlock';
+import ComparingNumbersBlock from "../Components/Grade4_2/ComparingNumbersBlock";
+import LargeCalculationsBlock from "../Components/Grade4_2/LargeCalculationsBlock";
+import MoneyUnitsBlock from "../Components/Grade4_2/MoneyUnitsBlock";
 
 type TheoryContentItem = {
     type: "paragraph" | "subHeader" | "listItem" | "example";
@@ -53,6 +57,16 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
             subTopic === "Kolejność wykonywania działań" ||
             subTopic === "Zadania tekstowe, cz. 1" ||
             subTopic === "Oś liczbowa"
+        ) ||
+        (
+            grade === "4" &&
+            topic === "SYSTEM ZAPISYWANIA LICZB" &&
+            (
+                subTopic === "System dziesiątkowy" ||
+                subTopic === "Porównywanie liczb naturalnych" ||
+                subTopic === "Rachunki pamięciowe na dużych liczbach" ||
+                subTopic === "Jednostki monetarne - złote i grosze"
+            )
         );
 
     if (isSpecialMemoryTopic) {
@@ -85,6 +99,18 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
                 )}
                 {subTopic === "Oś liczbowa" && (
                     <NumberLineBlock />
+                )}
+                {subTopic === "System dziesiątkowy" && (
+                    <DecimalSystemBlock />
+                )}
+                {subTopic === "Porównywanie liczb naturalnych" && (
+                    <ComparingNumbersBlock />
+                )}
+                {subTopic === "Rachunki pamięciowe na dużych liczbach" && (
+                    <LargeCalculationsBlock />
+                )}
+                {subTopic === "Jednostki monetarne - złote i grosze" && (
+                    <MoneyUnitsBlock />
                 )}
             </View>
         );

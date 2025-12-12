@@ -528,14 +528,32 @@
     "SYSTEM ZAPISYWANIA LICZB": {
       "System dziesiątkowy": {
         "theoryTitle": "Nasz system liczbowy - dziesiątkowy",
-        "theoryContent": [],
-        "questions": [
-          { "id": "q1_sysdzies_4", "type": "theory", "difficulty": "łatwe", "questionText": "Jaką cyfrę oznacza pozycja setek w liczbie 1234?", "options": ["1", "2", "3", "4"], "correctAnswerIndex": 1, "correctAnswerExplanation": "W liczbie 1234 cyfra 1 jest na pozycji tysięcy, 2 na pozycji setek, 3 na pozycji dziesiątek, a 4 na pozycji jedności.", "theorySnippet": "System dziesiątkowy jest pozycyjny. Wartość cyfry zależy od jej miejsca (pozycji) w liczbie: jedności, dziesiątki, setki, tysiące itd."}
-        ]
+        "isTrainer": true, // <-- NOWOŚĆ: Oznacza, że to moduł treningowy
+        "practiceKeys": ["System dziesiątkowy"], // <-- Dodanie klucza treningu
+        "showInPractice": true, // <-- Dodanie dla widoczności w Trenerze
+        "questions": [] // <-- WAŻNE: Pusta lista pytań (bo treść jest w Firebase)
       },
-      "Porównywanie liczb naturalnych": { "theoryTitle": "Która liczba większa?", "theoryContent": [], "questions": [] },
-      "Rachunki pamięciowe na dużych liczbach": { "theoryTitle": "Liczymy duże liczby w głowie", "theoryContent": [], "questions": [] },
-      "Jednostki monetarne - złote i grosze": { "theoryTitle": "Pieniądze: złote i grosze", "theoryContent": [], "questions": [] },
+      "Porównywanie liczb naturalnych": {
+        "theoryTitle": "Która liczba większa?",
+        "isTrainer": true,
+        "practiceKeys": ["Porównywanie liczb naturalnych"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Rachunki pamięciowe na dużych liczbach": {
+        "theoryTitle": "Liczymy duże liczby w głowie",
+        "isTrainer": true,
+        "practiceKeys": ["Rachunki pamięciowe na dużych liczbach"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Jednostki monetarne - złote i grosze": {
+        "theoryTitle": "Pieniądze: złote i grosze",
+        "isTrainer": true,
+        "practiceKeys": ["Jednostki monetarne - złote i grosze"],
+        "showInPractice": true,
+        "questions": []
+      },
       "Jednostki długości": { "theoryTitle": "Mierzymy długość: metry, centymetry", "theoryContent": [], "questions": [] },
       "Jednostki masy": { "theoryTitle": "Ważymy: kilogramy i gramy", "theoryContent": [], "questions": [] },
       "System rzymski": { "theoryTitle": "Liczby rzymskie - jak je czytać?", "theoryContent": [], "questions": [] },

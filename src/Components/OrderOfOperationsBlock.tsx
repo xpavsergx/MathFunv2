@@ -7,9 +7,8 @@ import {
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
-// 🚀 ZMIANA: Nowe ID dokumentu dla "Kolejność wykonywania działań"
+// ID lekcji
 const LESSON_ID = 'orderOfOperations';
-// 🚀 ZMIANA: Max kroki do wyświetlenia (intro + 2 kroki + finalResult = 4 bloki)
 const MAX_STEPS = 3;
 
 export default function OrderOfOperationsBlock() {
@@ -18,7 +17,6 @@ export default function OrderOfOperationsBlock() {
     const [loading, setLoading] = useState(true);
 
     const handleNextStep = () => {
-        // Kontroluje przejście do następnego kroku, aż do MAX_STEPS
         setStep((prev) => (prev < MAX_STEPS ? prev + 1 : prev));
     };
 
@@ -30,10 +28,10 @@ export default function OrderOfOperationsBlock() {
                     .collection('lessons')
                     .doc(LESSON_ID)
                     .get();
+
                 if (doc.exists) {
                     const data = doc.data();
                     if (data) {
-                        // Parsowanie obiektów Firestore do tablicy dla łatwiejszego mapowania
                         setLessonData({
                             ...data,
                             intro: Object.values(data.intro || {}),
@@ -45,19 +43,19 @@ export default function OrderOfOperationsBlock() {
                     setLessonData(null);
                 }
             } catch (error) {
-                console.error('Błąd ładowania danych Firestore:', error);
+                console.error('Błąd ładowania Firestore:', error);
                 setLessonData(null);
             } finally {
                 setLoading(false);
             }
         };
 
-        const prepareAndFetch = async () => {
+        const prepare = async () => {
             if (!auth().currentUser) {
                 try {
                     await auth().signInAnonymously();
                 } catch (error) {
-                    console.error('Failed to sign in anonymously:', error);
+                    console.error('Anonimowe logowanie nieudane:', error);
                     setLoading(false);
                     return;
                 }
@@ -65,67 +63,83 @@ export default function OrderOfOperationsBlock() {
             fetchData();
         };
 
-        prepareAndFetch();
+        prepare();
     }, []);
 
-    // Funkcja do wyróżniania liczb i operatorów
-    const highlightElements = (text: string) => {
-        // Wyróżnia liczby oraz nawiasy i operatory (+, -, *, /)
-        const parts = text.split(/(\d+|\(|\)|\+|\-|\*|\/|=)/g);
-        return parts.map((part, index) =>
-            // Sprawdzamy czy to liczba lub operator
-            /(\d+|\(|\)|\+|\-|\*|\/|=)/.test(part) ? (
-                <Text key={index} style={styles.numberHighlight}>
-                    {part}
-                </Text>
-            ) : (
-                <Text key={index}>{part}</Text>
-            )
-        );
+    /**
+     * highlightNumbers:
+     * - liczby -> styles.numberHighlight (niebieskie, większe, pogrubione)
+     * - operatory () + - * / = -> styles.operatorNormal (czarne, normalne)
+     * - reszta tekstu -> zwykły Text
+     */
+    const highlightNumbers = (text?: string) => {
+        if (!text || typeof text !== 'string') return null;
+
+        // dzielimy na liczby | operatory | reszta
+        const parts = text.split(/(\d+|[\+\-\*\/\(\)=])/g);
+
+        return parts.map((part, index) => {
+            // LICZBY -> niebieskie + większe
+            if (/^\d+$/.test(part)) {
+                return (
+                    <Text key={index} style={styles.numberHighlight}>
+                        {part}
+                    </Text>
+                );
+            }
+
+            // OPERATORY -> zwykłe, czarne, normalny rozmiar
+            if (/^[\+\-\*\/\(\)=]$/.test(part)) {
+                return (
+                    <Text key={index} style={styles.operatorNormal}>
+                        {part}
+                    </Text>
+                );
+            }
+
+            // reszta (spacje, słowa) -> zwykły Text (dziedziczy styl rodzica)
+            return <Text key={index}>{part}</Text>;
+        });
     };
 
     const getSteps = () => {
         if (!lessonData) return [];
 
-        const introLines = lessonData.intro;
-        const stepLines = lessonData.steps;
+        const introLines = lessonData.intro || [];
+        const stepLines = lessonData.steps || [];
 
-        // --- 1. KROK 0 (Blok Wprowadzający) ---
         const introBlock = (
             <View key="intro" style={styles.introBlock}>
                 {introLines.map((line: string, index: number) => {
-                    const isFirstLine = index === 0;
+                    const isFirst = index === 0;
                     return (
                         <Text
                             key={`intro-${index}`}
-                            style={[styles.intro, isFirstLine && styles.introBold]}
+                            style={[styles.intro, isFirst && styles.introBold]}
                         >
-                            {highlightElements(line)}
+                            {highlightNumbers(line)}
                         </Text>
                     );
                 })}
             </View>
         );
 
-
-        // --- 2. Kroki Właściwe (Steps 1, 2...) ---
         const calculationSteps = stepLines.map((stepText: string, index: number) => (
             <Text key={`step-${index}`} style={styles.stepText}>
-                {highlightElements(stepText)}
+                {highlightNumbers(stepText)}
             </Text>
         ));
 
-
-        // --- 3. Krok Końcowy (Final Block) ---
         const finalBlock = (
             <View key="final" style={styles.finalBlock}>
                 <Text style={styles.finalResult}>
-                    {highlightElements(lessonData.finalResult || '')}
+                    {highlightNumbers(lessonData.finalResult || '')}
                 </Text>
-                <Text style={styles.tip}>{highlightElements(lessonData.tip || '')}</Text>
+                <Text style={styles.tip}>
+                    {highlightNumbers(lessonData.tip || '')}
+                </Text>
             </View>
         );
-
 
         const allSteps = [introBlock, ...calculationSteps, finalBlock];
         return allSteps.slice(0, step + 1);
@@ -135,7 +149,7 @@ export default function OrderOfOperationsBlock() {
         return (
             <View style={[styles.wrapper, styles.loadingWrapper]}>
                 <ActivityIndicator size="large" color="#FF8F00" />
-                <Text style={[styles.intro, {marginTop: 10}]}>Ładowanie danych...</Text>
+                <Text style={[styles.intro, { marginTop: 10 }]}>Ładowanie danych...</Text>
             </View>
         );
     }
@@ -143,14 +157,15 @@ export default function OrderOfOperationsBlock() {
     if (!lessonData) {
         return (
             <View style={[styles.wrapper, styles.loadingWrapper]}>
-                <Text style={[styles.intro, {color: '#D84315'}]}>Błąd: Nie znaleziono danych lekcji w Firestore dla ID: {LESSON_ID}.</Text>
+                <Text style={[styles.intro, { color: '#D84315' }]}>
+                    Nie znaleziono danych lekcji: {LESSON_ID}
+                </Text>
             </View>
         );
     }
 
     return (
         <ImageBackground
-            // 💡 Użycie tła z symbolami matematycznymi (jak w Dodawaniu)
             source={require('../assets/tloTeorii.png')}
             style={styles.backgroundImage}
             resizeMode="cover"
@@ -168,7 +183,6 @@ export default function OrderOfOperationsBlock() {
                         {getSteps()}
                     </ScrollView>
 
-                    {/* Przycisk "Dalej" znika po osiągnięciu maksymalnego kroku */}
                     {step < MAX_STEPS && (
                         <TouchableOpacity style={styles.button} onPress={handleNextStep}>
                             <Text style={styles.buttonText}>Dalej ➜</Text>
@@ -181,10 +195,20 @@ export default function OrderOfOperationsBlock() {
 }
 
 
-// --- STYLE ---
+// ⭐⭐⭐ STYLE — jak w pierwszym komponencie, z dodatkiem operatorNormal ⭐⭐⭐
 
 const styles = StyleSheet.create({
-    // Ustawienia dla stanu ładowania/błędu
+    backgroundImage: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+    },
+    overlay: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        paddingTop: 20,
+    },
     wrapper: {
         flex: 1,
         alignItems: 'center',
@@ -196,22 +220,7 @@ const styles = StyleSheet.create({
         height: 300,
         padding: 20,
     },
-
-    // 🚀 Style dla tła i kontenera teorii
-    backgroundImage: {
-        flex: 1,
-        width: '100%',
-        height: '100%',
-    },
-    overlay: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'flex-start', // Zapewnia, że zawartość zaczyna się od góry
-        paddingTop: 20,
-    },
     container: {
-        //flex: 1, // 🔥 Zapewnia rozciągnięcie bloku na całą dostępną wysokość
-        // Półprzezroczysty biały, by tło graficzne było widoczne
         backgroundColor: 'rgba(255, 255, 255, 0.85)',
         borderRadius: 12,
         padding: 20,
@@ -221,22 +230,19 @@ const styles = StyleSheet.create({
         maxWidth: 600,
         marginBottom: 20,
     },
-    scrollArea: {
-        // flex: 1, // 🔥 Zapewnia, że ScrollView wypełnia całą dostępną przestrzeń wewnątrz container
-        width: '100%',
-    },
-    scrollContent: {
-        alignItems: 'center',
-        paddingBottom: 50,
-    },
-
-    // 🚀 Style dla tekstu i kroków
     title: {
         fontSize: 22,
         fontWeight: 'bold',
         color: '#FF8F00',
         marginBottom: 10,
         textAlign: 'center',
+    },
+    scrollArea: {
+        width: '100%',
+    },
+    scrollContent: {
+        alignItems: 'center',
+        paddingBottom: 50,
     },
     introBlock: {
         alignItems: 'center',
@@ -265,6 +271,12 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 22,
     },
+    // operatorNormal: czarne, normalna wielkość — to co chciałeś
+    operatorNormal: {
+        color: '#000',
+        fontSize: 18,
+        fontWeight: 'normal',
+    },
     finalBlock: {
         alignItems: 'center',
         marginTop: 10,
@@ -286,8 +298,6 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
         textAlign: 'center',
     },
-
-    // 🚀 Style dla przycisku
     button: {
         backgroundColor: '#FFD54F',
         paddingHorizontal: 24,
