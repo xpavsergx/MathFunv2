@@ -7,12 +7,12 @@ import {
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
-// 🚀 ID dokumentu dla "Oś Liczbowa"
-const LESSON_ID = 'numberLine';
-// 🚀 Max kroki do wyświetlenia (7 bloków treści: 0 do 6)
-const MAX_STEPS = 4;
+// 🚀 ID dokumentu dla "Jednostki Masy"
+const LESSON_ID = 'massUnits'; // <--- NOWY ID DLA JEDNOSTEK MASY
+// 🚀 Ustal maksymalną liczbę kroków dla tego tematu (dostosuj do danych z Firestore)
+const MAX_STEPS = 6; // <--- Przykładowa wartość
 
-export default function NumberLineBlock() {
+export default function MassUnitsBlock() {
     const [step, setStep] = useState(0);
     const [lessonData, setLessonData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -34,7 +34,6 @@ export default function NumberLineBlock() {
                     if (data) {
                         setLessonData({
                             ...data,
-                            // Parsowanie danych z mapy na tablicę
                             intro: Object.values(data.intro || {}),
                             steps: Object.values(data.steps || {}),
                         });
@@ -67,12 +66,13 @@ export default function NumberLineBlock() {
         prepareAndFetch();
     }, []);
 
-    // Funkcja do wyróżniania liczb i operatorów
+    // 🔥 NOWA FUNKCJA HIGHLIGHT: Wyróżnia liczby ORAZ jednostki masy
     const highlightElements = (text: string) => {
-        // Wyróżnia TYLKO liczby
-        const parts = text.split(/(\d+)/g); // <--- Zmienione na matchowanie TYLKO liczb (\d+)
+        // \d+ (liczby) ORAZ to, co jest w nawiasach: \([^)]+\)
+        const parts = text.split(/(\d+|\([^)]+\))/g);
+
         return parts.map((part, index) =>
-            /(\d+)/.test(part) ? ( // <--- Zmienione na matchowanie TYLKO liczb (\d+)
+            /(\d+|\([^)]+\))/.test(part) ? (
                 <Text key={index} style={styles.numberHighlight}>
                     {part}
                 </Text>
@@ -88,7 +88,6 @@ export default function NumberLineBlock() {
         const introLines = lessonData.intro;
         const stepLines = lessonData.steps;
 
-        // --- 1. KROK 0 (Blok Wprowadzający) ---
         const introBlock = (
             <View key="intro" style={styles.introBlock}>
                 {introLines.map((line: string, index: number) => {
@@ -105,27 +104,22 @@ export default function NumberLineBlock() {
             </View>
         );
 
-
-        // --- 2. Kroki Właściwe (Steps 1, 2...) ---
         const calculationSteps = stepLines.map((stepText: string, index: number) => (
             <Text key={`step-${index}`} style={styles.stepText}>
                 {highlightElements(stepText)}
             </Text>
         ));
 
-
-        // --- 3. Krok Końcowy (Final Block) ---
-        const finalBlock = (
+        const finalBlock = lessonData.finalResult ? (
             <View key="final" style={styles.finalBlock}>
                 <Text style={styles.finalResult}>
                     {highlightElements(lessonData.finalResult || '')}
                 </Text>
                 <Text style={styles.tip}>{highlightElements(lessonData.tip || '')}</Text>
             </View>
-        );
+        ) : null;
 
-
-        const allSteps = [introBlock, ...calculationSteps, finalBlock];
+        const allSteps = [introBlock, ...calculationSteps, finalBlock].filter(Boolean);
         return allSteps.slice(0, step + 1);
     };
 
@@ -148,14 +142,14 @@ export default function NumberLineBlock() {
 
     return (
         <ImageBackground
-            source={require('../assets/tloTeorii.png')} // Zmień na właściwą ścieżkę do Twojego pliku graficznego
+            source={require('../../assets/tloTeorii.png')}
             style={styles.backgroundImage}
             resizeMode="cover"
         >
             <View style={styles.overlay}>
                 <View style={styles.container}>
                     <Text style={styles.title}>
-                        {lessonData?.title || 'Oś Liczbowa'}
+                        {lessonData?.title || 'Jednostki Masy'}
                     </Text>
 
                     <ScrollView
@@ -163,6 +157,29 @@ export default function NumberLineBlock() {
                         contentContainerStyle={styles.scrollContent}
                     >
                         {getSteps()}
+
+                        {/* Możesz dodać diagramy/tabelę jednostek masy tutaj */}
+                        {step >= 1 && (
+                            <View style={styles.diagramArea}>
+                                <Text style={styles.diagramTitle}>Tabela jednostek masy:</Text>
+                                {/*  */}
+                                {step >= 2 && (
+                                    <Text style={styles.diagramText}>
+                                        1 tona (t) = 1000 kilogramów (kg)
+                                    </Text>
+                                )}
+                                {step >= 3 && (
+                                    <Text style={styles.diagramText}>
+                                        1 kilogram (kg) = 100 dekagramów (dag) = 1000 gramów (g)
+                                    </Text>
+                                )}
+                                {step >= 4 && (
+                                    <Text style={styles.diagramText}>
+                                        1 dekagram (dag) = 10 gramów (g)
+                                    </Text>
+                                )}
+                            </View>
+                        )}
                     </ScrollView>
 
                     {step < MAX_STEPS && (
@@ -179,32 +196,11 @@ export default function NumberLineBlock() {
 // --- STYLE ---
 
 const styles = StyleSheet.create({
-    // 💡 NOWE STYLE DLA TŁA
-    backgroundImage: {
-        flex: 1,
-        width: '100%',
-        height: '100%',
-    },
-    overlay: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        paddingTop: 20,
-    },
-    wrapper: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#FAFAFA',
-        paddingTop: 20,
-    },
-    loadingWrapper: {
-        height: 300,
-        padding: 20,
-    },
-    // 🚀 STYL GŁÓWNEGO BLOKU TEORII
+    backgroundImage: { flex: 1, width: '100%', height: '100%', },
+    overlay: { flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 20, },
+    wrapper: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FAFAFA', paddingTop: 20, },
+    loadingWrapper: { height: 300, padding: 20, },
     container: {
-        // Usunięto flex: 1, aby blok rósł wraz z treścią
         backgroundColor: 'rgba(255, 255, 255, 0.85)',
         borderRadius: 12,
         padding: 20,
@@ -212,80 +208,55 @@ const styles = StyleSheet.create({
         width: '90%',
         elevation: 3,
         maxWidth: 600,
-        marginBottom: 20,
+        marginBottom: 100,
     },
     title: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#FF8F00',
+        color: '#1976D2',
         marginBottom: 10,
         textAlign: 'center',
     },
-    scrollArea: {
-        width: '100%',
-    },
+    scrollArea: { width: '100%', },
     scrollContent: {
         alignItems: 'center',
-        paddingBottom: 50,
+        paddingBottom: 50, // Wrócono do 50, ponieważ container ma duży marginBottom
     },
-    introBlock: {
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    intro: {
-        fontSize: 18,
-        color: '#424242',
-        textAlign: 'center',
-        marginBottom: 6,
-    },
-    introBold: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#D84315',
-        marginBottom: 10,
-    },
-    stepText: {
-        fontSize: 20,
-        textAlign: 'center',
-        marginVertical: 8,
-        color: '#5D4037',
-    },
+    introBlock: { alignItems: 'center', marginBottom: 10, },
+    intro: { fontSize: 18, color: '#424242', textAlign: 'center', marginBottom: 6, },
+    introBold: { fontSize: 20, fontWeight: 'bold', color: '#D84315', marginBottom: 10, },
+    stepText: { fontSize: 20, textAlign: 'center', marginVertical: 8, color: '#5D4037', },
     numberHighlight: {
         color: '#1976D2',
         fontWeight: 'bold',
         fontSize: 20,
     },
-    finalBlock: {
-        alignItems: 'center',
-        marginTop: 10,
-        paddingTop: 10,
-        borderTopWidth: 1,
-        borderTopColor: '#FFD54F',
-    },
-    finalResult: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#D84315',
-        textAlign: 'center',
-        marginTop: 10,
-    },
-    tip: {
-        fontSize: 16,
-        marginTop: 10,
-        color: '#00796B',
-        fontStyle: 'italic',
-        textAlign: 'center',
-    },
-    button: {
-        backgroundColor: '#FFD54F',
-        paddingHorizontal: 24,
-        paddingVertical: 10,
-        borderRadius: 25,
+    finalBlock: { alignItems: 'center', marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#FFD54F', },
+    finalResult: { fontSize: 24, fontWeight: 'bold', color: '#D84315', textAlign: 'center', marginTop: 10, },
+    tip: { fontSize: 16, marginTop: 10, color: '#00796B', fontStyle: 'italic', textAlign: 'center', },
+    button: { backgroundColor: '#FFD54F', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 25, marginTop: 20, },
+    buttonText: { fontSize: 18, color: '#5D4037', fontWeight: 'bold', },
+
+    diagramArea: {
+        width: '100%',
         marginTop: 20,
+        padding: 15,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: 8,
+        borderLeftWidth: 5,
+        borderLeftColor: '#00796B',
+        alignItems: 'center',
     },
-    buttonText: {
+    diagramTitle: {
         fontSize: 18,
-        color: '#5D4037',
         fontWeight: 'bold',
+        color: '#00796B',
+        marginBottom: 10,
     },
+    diagramText: {
+        fontSize: 16,
+        color: '#424242',
+        textAlign: 'center',
+        marginVertical: 4,
+    }
 });

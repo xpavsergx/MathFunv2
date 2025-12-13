@@ -68,10 +68,10 @@ export default function ComparingNumbersBlock() {
 
     // Funkcja do wyróżniania liczb i operatorów (teraz uwzględnia <, >, =)
     const highlightElements = (text: string) => {
-        const parts = text.split(/(\d+|>|<|=)/g);
+        const parts = text.split(/(\d+)/g); // <--- Zmienione: tylko liczby (\d+)
         return parts.map((part, index) =>
-            // Wyróżnia liczby oraz operatory porównania
-            /(\d+|>|<|=)/.test(part) ? (
+            // Wyróżnia TYLKO liczby
+            /(\d+)/.test(part) ? ( // <--- Zmienione: tylko liczby (\d+)
                 <Text key={index} style={styles.numberHighlight}>
                     {part}
                 </Text>

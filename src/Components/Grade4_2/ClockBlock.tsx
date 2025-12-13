@@ -7,12 +7,12 @@ import {
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
-// 🚀 ID dokumentu dla "Oś Liczbowa"
-const LESSON_ID = 'numberLine';
-// 🚀 Max kroki do wyświetlenia (7 bloków treści: 0 do 6)
-const MAX_STEPS = 4;
+// 🚀 ID dokumentu dla "Godziny na Zegarach"
+const LESSON_ID = 'clockReading';
+// 🚀 Ustal maksymalną liczbę kroków dla tego tematu (5 kroków + intro)
+const MAX_STEPS = 5;
 
-export default function NumberLineBlock() {
+export default function ClockBlock() {
     const [step, setStep] = useState(0);
     const [lessonData, setLessonData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -34,7 +34,6 @@ export default function NumberLineBlock() {
                     if (data) {
                         setLessonData({
                             ...data,
-                            // Parsowanie danych z mapy na tablicę
                             intro: Object.values(data.intro || {}),
                             steps: Object.values(data.steps || {}),
                         });
@@ -67,12 +66,12 @@ export default function NumberLineBlock() {
         prepareAndFetch();
     }, []);
 
-    // Funkcja do wyróżniania liczb i operatorów
+    // 🔥 FUNKCJA HIGHLIGHT: Wyróżnia TYLKO liczby ORAZ zawartość w nawiasach (najbezpieczniejsza wersja)
     const highlightElements = (text: string) => {
-        // Wyróżnia TYLKO liczby
-        const parts = text.split(/(\d+)/g); // <--- Zmienione na matchowanie TYLKO liczb (\d+)
+        const parts = text.split(/(\d+)/g); // <--- Zmienione: tylko liczby (\d+)
         return parts.map((part, index) =>
-            /(\d+)/.test(part) ? ( // <--- Zmienione na matchowanie TYLKO liczb (\d+)
+            // Wyróżnia TYLKO liczby
+            /(\d+)/.test(part) ? ( // <--- Zmienione: tylko liczby (\d+)
                 <Text key={index} style={styles.numberHighlight}>
                     {part}
                 </Text>
@@ -88,7 +87,6 @@ export default function NumberLineBlock() {
         const introLines = lessonData.intro;
         const stepLines = lessonData.steps;
 
-        // --- 1. KROK 0 (Blok Wprowadzający) ---
         const introBlock = (
             <View key="intro" style={styles.introBlock}>
                 {introLines.map((line: string, index: number) => {
@@ -105,27 +103,22 @@ export default function NumberLineBlock() {
             </View>
         );
 
-
-        // --- 2. Kroki Właściwe (Steps 1, 2...) ---
         const calculationSteps = stepLines.map((stepText: string, index: number) => (
             <Text key={`step-${index}`} style={styles.stepText}>
                 {highlightElements(stepText)}
             </Text>
         ));
 
-
-        // --- 3. Krok Końcowy (Final Block) ---
-        const finalBlock = (
+        const finalBlock = lessonData.finalResult ? (
             <View key="final" style={styles.finalBlock}>
                 <Text style={styles.finalResult}>
                     {highlightElements(lessonData.finalResult || '')}
                 </Text>
                 <Text style={styles.tip}>{highlightElements(lessonData.tip || '')}</Text>
             </View>
-        );
+        ) : null;
 
-
-        const allSteps = [introBlock, ...calculationSteps, finalBlock];
+        const allSteps = [introBlock, ...calculationSteps, finalBlock].filter(Boolean);
         return allSteps.slice(0, step + 1);
     };
 
@@ -148,14 +141,14 @@ export default function NumberLineBlock() {
 
     return (
         <ImageBackground
-            source={require('../assets/tloTeorii.png')} // Zmień na właściwą ścieżkę do Twojego pliku graficznego
+            source={require('../../assets/tloTeorii.png')}
             style={styles.backgroundImage}
             resizeMode="cover"
         >
             <View style={styles.overlay}>
                 <View style={styles.container}>
                     <Text style={styles.title}>
-                        {lessonData?.title || 'Oś Liczbowa'}
+                        {lessonData?.title || 'Godziny na Zegarach'}
                     </Text>
 
                     <ScrollView
@@ -163,6 +156,46 @@ export default function NumberLineBlock() {
                         contentContainerStyle={styles.scrollContent}
                     >
                         {getSteps()}
+
+                        {/* Wizualizacje zegara sterowane krokiem (step) */}
+                        {step >= 1 && (
+                            <View style={styles.diagramArea}>
+                                <Text style={styles.diagramTitle}>Jak działa zegar:</Text>
+
+                                {/* Wskazówka Godziny - pojawia się po intro/kroku 1 */}
+                                {step >= 1 && (
+                                    <View style={styles.clockVisual}>
+                                        <Text style={styles.clockHandSmall}>⏰ Mała wskazówka (Godzina)</Text>
+                                        <Text style={styles.diagramText}>
+                                            Wskazuje godzinę.
+                                        </Text>
+                                    </View>
+                                )}
+
+                                {/* Wskazówka Minuty - pojawia się po kroku 2 */}
+                                {step >= 2 && (
+                                    <View style={styles.clockVisual}>
+                                        <Text style={styles.clockHandLarge}>🕰️ Duża wskazówka (Minuta)</Text>
+                                        <Text style={styles.diagramText}>
+                                            Wskazuje minuty. Pamiętaj: każda duża kreska to (5) minut.
+                                        </Text>
+                                    </View>
+                                )}
+
+                                {/* Zegar Cyfrowy - pojawia się po kroku 4 (wprowadzenie 24h) */}
+                                {step >= 4 && (
+                                    <View style={styles.clockDigitalContainer}>
+                                        <Text style={styles.diagramTitle}>Zegar Cyfrowy:</Text>
+                                        <View style={styles.clockDigital}>
+                                            <Text style={styles.clockDigitalText}>14:30</Text>
+                                        </View>
+                                        <Text style={styles.diagramText}>
+                                            Format (24) godzinny jest najdokładniejszy.
+                                        </Text>
+                                    </View>
+                                )}
+                            </View>
+                        )}
                     </ScrollView>
 
                     {step < MAX_STEPS && (
@@ -179,32 +212,11 @@ export default function NumberLineBlock() {
 // --- STYLE ---
 
 const styles = StyleSheet.create({
-    // 💡 NOWE STYLE DLA TŁA
-    backgroundImage: {
-        flex: 1,
-        width: '100%',
-        height: '100%',
-    },
-    overlay: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        paddingTop: 20,
-    },
-    wrapper: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#FAFAFA',
-        paddingTop: 20,
-    },
-    loadingWrapper: {
-        height: 300,
-        padding: 20,
-    },
-    // 🚀 STYL GŁÓWNEGO BLOKU TEORII
+    backgroundImage: { flex: 1, width: '100%', height: '100%', },
+    overlay: { flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 20, },
+    wrapper: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FAFAFA', paddingTop: 20, },
+    loadingWrapper: { height: 300, padding: 20, },
     container: {
-        // Usunięto flex: 1, aby blok rósł wraz z treścią
         backgroundColor: 'rgba(255, 255, 255, 0.85)',
         borderRadius: 12,
         padding: 20,
@@ -212,80 +224,95 @@ const styles = StyleSheet.create({
         width: '90%',
         elevation: 3,
         maxWidth: 600,
-        marginBottom: 20,
+        marginBottom: 100, // Utrzymujemy zwiększony margines
     },
     title: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#FF8F00',
+        color: '#1976D2', // Utrzymujemy niebieski kolor
         marginBottom: 10,
         textAlign: 'center',
     },
-    scrollArea: {
-        width: '100%',
-    },
+    scrollArea: { width: '100%', },
     scrollContent: {
         alignItems: 'center',
         paddingBottom: 50,
     },
-    introBlock: {
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    intro: {
-        fontSize: 18,
-        color: '#424242',
-        textAlign: 'center',
-        marginBottom: 6,
-    },
-    introBold: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#D84315',
-        marginBottom: 10,
-    },
-    stepText: {
-        fontSize: 20,
-        textAlign: 'center',
-        marginVertical: 8,
-        color: '#5D4037',
-    },
+    introBlock: { alignItems: 'center', marginBottom: 10, },
+    intro: { fontSize: 18, color: '#424242', textAlign: 'center', marginBottom: 6, },
+    introBold: { fontSize: 20, fontWeight: 'bold', color: '#D84315', marginBottom: 10, },
+    stepText: { fontSize: 20, textAlign: 'center', marginVertical: 8, color: '#5D4037', },
     numberHighlight: {
         color: '#1976D2',
         fontWeight: 'bold',
         fontSize: 20,
     },
-    finalBlock: {
+    finalBlock: { alignItems: 'center', marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#FFD54F', },
+    finalResult: { fontSize: 24, fontWeight: 'bold', color: '#D84315', textAlign: 'center', marginTop: 10, },
+    tip: { fontSize: 16, marginTop: 10, color: '#00796B', fontStyle: 'italic', textAlign: 'center', },
+    button: { backgroundColor: '#FFD54F', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 25, marginTop: 20, },
+    buttonText: { fontSize: 18, color: '#5D4037', fontWeight: 'bold', },
+
+    // --- STYLE DLA WIZUALIZACJI ZEGARA ---
+    diagramArea: {
+        width: '100%',
+        marginTop: 20,
+        padding: 15,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: 8,
+        borderLeftWidth: 5,
+        borderLeftColor: '#00796B',
         alignItems: 'center',
-        marginTop: 10,
-        paddingTop: 10,
-        borderTopWidth: 1,
-        borderTopColor: '#FFD54F',
     },
-    finalResult: {
-        fontSize: 24,
+    diagramTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#00796B',
+        marginBottom: 10,
+    },
+    diagramText: {
+        fontSize: 16,
+        color: '#424242',
+        textAlign: 'center',
+        marginVertical: 4,
+    },
+    clockVisual: {
+        width: '100%',
+        marginVertical: 8,
+        paddingHorizontal: 10,
+        borderLeftWidth: 3,
+        borderLeftColor: '#D84315',
+    },
+    clockHandSmall: {
+        fontSize: 18,
         fontWeight: 'bold',
         color: '#D84315',
-        textAlign: 'center',
-        marginTop: 10,
+        marginBottom: 4,
     },
-    tip: {
-        fontSize: 16,
-        marginTop: 10,
-        color: '#00796B',
-        fontStyle: 'italic',
-        textAlign: 'center',
-    },
-    button: {
-        backgroundColor: '#FFD54F',
-        paddingHorizontal: 24,
-        paddingVertical: 10,
-        borderRadius: 25,
-        marginTop: 20,
-    },
-    buttonText: {
+    clockHandLarge: {
         fontSize: 18,
-        color: '#5D4037',
         fontWeight: 'bold',
+        color: '#1976D2',
+        marginBottom: 4,
+    },
+    clockDigitalContainer: {
+        marginTop: 15,
+        padding: 10,
+        width: '100%',
+        alignItems: 'center'
+    },
+    clockDigital: {
+        marginTop: 10,
+        padding: 10,
+        backgroundColor: '#424242',
+        borderRadius: 5,
+        minWidth: 100,
+        alignItems: 'center'
+    },
+    clockDigitalText: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#FF8F00',
+        textAlign: 'center',
     },
 });

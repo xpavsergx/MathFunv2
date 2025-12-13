@@ -16,6 +16,13 @@ import DecimalSystemBlock from '../Components/Grade4_2/DecimalSystemBlock';
 import ComparingNumbersBlock from "../Components/Grade4_2/ComparingNumbersBlock";
 import LargeCalculationsBlock from "../Components/Grade4_2/LargeCalculationsBlock";
 import MoneyUnitsBlock from "../Components/Grade4_2/MoneyUnitsBlock";
+import LengthUnitsBlock from "../Components/Grade4_2/LengthUnitsBlock";
+import MassUnitsBlock from "../Components/Grade4_2/MassUnitsBlock";
+import RomanSystemBlock from "../Components/Grade4_2/RomanSystemBlock";
+import CalendarBlock from "../Components/Grade4_2/CalendarBlock";
+import ClockBlock from "../Components/Grade4_2/ClockBlock";
+import DynamicAdditionBlock from "../Components/Grade4_3/DynamicAdditionBloc";
+import DynamicSubtractionBlock from "../Components/Grade4_3/DynamicSubtractionBlock";
 
 type TheoryContentItem = {
     type: "paragraph" | "subHeader" | "listItem" | "example";
@@ -65,9 +72,23 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
                 subTopic === "System dziesiątkowy" ||
                 subTopic === "Porównywanie liczb naturalnych" ||
                 subTopic === "Rachunki pamięciowe na dużych liczbach" ||
-                subTopic === "Jednostki monetarne - złote i grosze"
+                subTopic === "Jednostki monetarne - złote i grosze" ||
+                subTopic === "Jednostki długości" ||
+                subTopic === "Jednostki masy" ||
+                subTopic === "System rzymski" ||
+                subTopic === "Z kalendarzem za pan brat" ||
+                subTopic === "Godziny na zegarach"
+            )
+        ) ||
+        (
+            grade === "4" &&
+            topic === "DZIAŁANIA PISEMNE" &&
+            (
+                subTopic === "Dodawanie pisemne" ||
+                subTopic === "Odejmowanie pisemne"
             )
         );
+
 
     if (isSpecialMemoryTopic) {
         return (
@@ -111,6 +132,27 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
                 )}
                 {subTopic === "Jednostki monetarne - złote i grosze" && (
                     <MoneyUnitsBlock />
+                )}
+                {subTopic === "Jednostki długości" && (
+                    <LengthUnitsBlock />
+                )}
+                {subTopic === "Jednostki masy" && (
+                    <MassUnitsBlock />
+                )}
+                {subTopic === "System rzymski" && (
+                    <RomanSystemBlock />
+                )}
+                {subTopic === "Z kalendarzem za pan brat" && (
+                    <CalendarBlock />
+                )}
+                {subTopic === "Godziny na zegarach" && (
+                    <ClockBlock />
+                )}
+                {subTopic === "Dodawanie pisemne" && (
+                    <DynamicAdditionBlock />
+                )}
+                {subTopic === "Odejmowanie pisemne" && (
+                    <DynamicSubtractionBlock />
                 )}
             </View>
         );

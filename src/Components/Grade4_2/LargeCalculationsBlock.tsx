@@ -79,9 +79,10 @@ export default function largeCalculationsBlock() {
 
     // 🔥 ZMIANA: Modyfikacja regex, aby uwzględniał operatory (+,-) jeśli są częścią wyróżnienia
     const highlightElements = (text: string) => {
-        const parts = text.split(/(\d+|\+|\-)/g);
+        const parts = text.split(/(\d+)/g); // <--- Zmienione: tylko liczby (\d+)
         return parts.map((part, index) =>
-            /(\d+|\+|\-)/.test(part) ? (
+            // Wyróżnia TYLKO liczby
+            /(\d+)/.test(part) ? ( // <--- Zmienione: tylko liczby (\d+)
                 <Text key={index} style={styles.numberHighlight}>
                     {part}
                 </Text>

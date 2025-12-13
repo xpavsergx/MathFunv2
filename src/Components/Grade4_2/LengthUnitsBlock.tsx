@@ -7,12 +7,12 @@ import {
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
-// 🚀 ID dokumentu dla "Oś Liczbowa"
-const LESSON_ID = 'numberLine';
-// 🚀 Max kroki do wyświetlenia (7 bloków treści: 0 do 6)
-const MAX_STEPS = 4;
+// 🚀 ID dokumentu dla "Jednostki Długości"
+const LESSON_ID = 'lengthUnits';
+// 🚀 Ustal maksymalną liczbę kroków dla tego tematu (dostosuj do danych z Firestore)
+const MAX_STEPS = 5;
 
-export default function NumberLineBlock() {
+export default function LengthUnitsBlock() {
     const [step, setStep] = useState(0);
     const [lessonData, setLessonData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -67,12 +67,13 @@ export default function NumberLineBlock() {
         prepareAndFetch();
     }, []);
 
-    // Funkcja do wyróżniania liczb i operatorów
+    // 🔥 POPRAWIONA FUNKCJA: Wyróżnia liczby ORAZ jednostki (km, m, cm, mm, dm)
     const highlightElements = (text: string) => {
-        // Wyróżnia TYLKO liczby
-        const parts = text.split(/(\d+)/g); // <--- Zmienione na matchowanie TYLKO liczb (\d+)
+        // \d+ (liczby) ORAZ \([^)]+\) (dowolna zawartość w nawiasach, np. (km))
+        const parts = text.split(/(\d+|\([^)]+\))/g);
+
         return parts.map((part, index) =>
-            /(\d+)/.test(part) ? ( // <--- Zmienione na matchowanie TYLKO liczb (\d+)
+            /(\d+|\([^)]+\))/.test(part) ? (
                 <Text key={index} style={styles.numberHighlight}>
                     {part}
                 </Text>
@@ -80,7 +81,7 @@ export default function NumberLineBlock() {
                 <Text key={index}>{part}</Text>
             )
         );
-    };
+    };;
 
     const getSteps = () => {
         if (!lessonData) return [];
@@ -106,7 +107,7 @@ export default function NumberLineBlock() {
         );
 
 
-        // --- 2. Kroki Właściwe (Steps 1, 2...) ---
+        // --- 2. Kroki Właściwe ---
         const calculationSteps = stepLines.map((stepText: string, index: number) => (
             <Text key={`step-${index}`} style={styles.stepText}>
                 {highlightElements(stepText)}
@@ -115,17 +116,17 @@ export default function NumberLineBlock() {
 
 
         // --- 3. Krok Końcowy (Final Block) ---
-        const finalBlock = (
+        const finalBlock = lessonData.finalResult ? (
             <View key="final" style={styles.finalBlock}>
                 <Text style={styles.finalResult}>
                     {highlightElements(lessonData.finalResult || '')}
                 </Text>
                 <Text style={styles.tip}>{highlightElements(lessonData.tip || '')}</Text>
             </View>
-        );
+        ) : null;
 
 
-        const allSteps = [introBlock, ...calculationSteps, finalBlock];
+        const allSteps = [introBlock, ...calculationSteps, finalBlock].filter(Boolean);
         return allSteps.slice(0, step + 1);
     };
 
@@ -148,21 +149,45 @@ export default function NumberLineBlock() {
 
     return (
         <ImageBackground
-            source={require('../assets/tloTeorii.png')} // Zmień na właściwą ścieżkę do Twojego pliku graficznego
+            source={require('../../assets/tloTeorii.png')}
             style={styles.backgroundImage}
             resizeMode="cover"
         >
             <View style={styles.overlay}>
                 <View style={styles.container}>
                     <Text style={styles.title}>
-                        {lessonData?.title || 'Oś Liczbowa'}
+                        {lessonData?.title || 'Jednostki Długości'}
                     </Text>
 
                     <ScrollView
                         style={styles.scrollArea}
+                        // Zapewnienie, że scrollContent jest wystarczająco duży, by przycisk "Dalej" był widoczny
                         contentContainerStyle={styles.scrollContent}
                     >
                         {getSteps()}
+
+                        {/* Możesz dodać diagramy/tabelę jednostek długości tutaj lub w Firestore */}
+                        {step >= 1 && (
+                            <View style={styles.diagramArea}>
+                                <Text style={styles.diagramTitle}>Tabela jednostek długości:</Text>
+                                {/*  */}
+                                {step >= 2 && (
+                                    <Text style={styles.diagramText}>
+                                        1 kilometr (km) = 1000 metrów (m)
+                                    </Text>
+                                )}
+                                {step >= 3 && (
+                                    <Text style={styles.diagramText}>
+                                        1 metr (m) = 10 decymetrów (dm) = 100 centymetrów (cm)
+                                    </Text>
+                                )}
+                                {step >= 4 && (
+                                    <Text style={styles.diagramText}>
+                                        1 centymetr (cm) = 10 milimetrów (mm)
+                                    </Text>
+                                )}
+                            </View>
+                        )}
                     </ScrollView>
 
                     {step < MAX_STEPS && (
@@ -179,32 +204,11 @@ export default function NumberLineBlock() {
 // --- STYLE ---
 
 const styles = StyleSheet.create({
-    // 💡 NOWE STYLE DLA TŁA
-    backgroundImage: {
-        flex: 1,
-        width: '100%',
-        height: '100%',
-    },
-    overlay: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        paddingTop: 20,
-    },
-    wrapper: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#FAFAFA',
-        paddingTop: 20,
-    },
-    loadingWrapper: {
-        height: 300,
-        padding: 20,
-    },
-    // 🚀 STYL GŁÓWNEGO BLOKU TEORII
+    backgroundImage: { flex: 1, width: '100%', height: '100%', },
+    overlay: { flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 20, },
+    wrapper: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FAFAFA', paddingTop: 20, },
+    loadingWrapper: { height: 300, padding: 20, },
     container: {
-        // Usunięto flex: 1, aby blok rósł wraz z treścią
         backgroundColor: 'rgba(255, 255, 255, 0.85)',
         borderRadius: 12,
         padding: 20,
@@ -212,80 +216,55 @@ const styles = StyleSheet.create({
         width: '90%',
         elevation: 3,
         maxWidth: 600,
-        marginBottom: 20,
+        marginBottom: 100, // 🔥 NAPRAWA: Zwiększony margines, aby podnieść przycisk nad dolny pasek
     },
     title: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#FF8F00',
+        color: '#1976D2',
         marginBottom: 10,
         textAlign: 'center',
     },
-    scrollArea: {
-        width: '100%',
-    },
+    scrollArea: { width: '100%', },
     scrollContent: {
         alignItems: 'center',
-        paddingBottom: 50,
+        paddingBottom: 50, // Zredukowane, aby uniknąć nadmiernej pustej przestrzeni w ScrollView, bo container ma już duży margines.
     },
-    introBlock: {
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    intro: {
-        fontSize: 18,
-        color: '#424242',
-        textAlign: 'center',
-        marginBottom: 6,
-    },
-    introBold: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#D84315',
-        marginBottom: 10,
-    },
-    stepText: {
-        fontSize: 20,
-        textAlign: 'center',
-        marginVertical: 8,
-        color: '#5D4037',
-    },
+    introBlock: { alignItems: 'center', marginBottom: 10, },
+    intro: { fontSize: 18, color: '#424242', textAlign: 'center', marginBottom: 6, },
+    introBold: { fontSize: 20, fontWeight: 'bold', color: '#D84315', marginBottom: 10, },
+    stepText: { fontSize: 20, textAlign: 'center', marginVertical: 8, color: '#5D4037', },
     numberHighlight: {
         color: '#1976D2',
         fontWeight: 'bold',
         fontSize: 20,
     },
-    finalBlock: {
-        alignItems: 'center',
-        marginTop: 10,
-        paddingTop: 10,
-        borderTopWidth: 1,
-        borderTopColor: '#FFD54F',
-    },
-    finalResult: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#D84315',
-        textAlign: 'center',
-        marginTop: 10,
-    },
-    tip: {
-        fontSize: 16,
-        marginTop: 10,
-        color: '#00796B',
-        fontStyle: 'italic',
-        textAlign: 'center',
-    },
-    button: {
-        backgroundColor: '#FFD54F',
-        paddingHorizontal: 24,
-        paddingVertical: 10,
-        borderRadius: 25,
+    finalBlock: { alignItems: 'center', marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#FFD54F', },
+    finalResult: { fontSize: 24, fontWeight: 'bold', color: '#D84315', textAlign: 'center', marginTop: 10, },
+    tip: { fontSize: 16, marginTop: 10, color: '#00796B', fontStyle: 'italic', textAlign: 'center', },
+    button: { backgroundColor: '#FFD54F', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 25, marginTop: 20, },
+    buttonText: { fontSize: 18, color: '#5D4037', fontWeight: 'bold', },
+
+    diagramArea: {
+        width: '100%',
         marginTop: 20,
+        padding: 15,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: 8,
+        borderLeftWidth: 5,
+        borderLeftColor: '#00796B',
+        alignItems: 'center',
     },
-    buttonText: {
+    diagramTitle: {
         fontSize: 18,
-        color: '#5D4037',
         fontWeight: 'bold',
+        color: '#00796B',
+        marginBottom: 10,
     },
+    diagramText: {
+        fontSize: 16,
+        color: '#424242',
+        textAlign: 'center',
+        marginVertical: 4,
+    }
 });

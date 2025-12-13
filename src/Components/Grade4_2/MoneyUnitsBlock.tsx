@@ -69,13 +69,10 @@ export default function MoneyUnitsBlock() {
 
     // 🔥 POPRAWIONA FUNKCJA HIGHLIGHTELEMENTS: Podświetla tylko liczby i operator równości
     const highlightElements = (text: string) => {
-        // Regex: Wyróżnia: całe liczby (w tym dziesiętne z przecinkami/kropkami) oraz operator "="
-        // Symbole 'zł' i 'gr' są ignorowane (nie są podświetlane)
-        const parts = text.split(/(\d[\d\s,.]*\d|\d+|=)/g);
-
+        const parts = text.split(/(\d+)/g); // <--- Zmienione: tylko liczby (\d+)
         return parts.map((part, index) =>
-            // Sprawdzamy, czy przechwycona część zawiera cyfrę lub operator =
-            /(\d|=)/g.test(part) ? (
+            // Wyróżnia TYLKO liczby
+            /(\d+)/.test(part) ? ( // <--- Zmienione: tylko liczby (\d+)
                 <Text key={index} style={styles.numberHighlight}>
                     {part}
                 </Text>
