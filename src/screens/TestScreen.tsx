@@ -1,7 +1,16 @@
 // src/screens/TestScreen.tsx
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    Alert,
+    ScrollView,
+    ActivityIndicator,
+    ImageBackground // <--- 1. Добавлено сюда
+} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainAppStackParamList } from '../../App';
 import questionsDatabase from '../data/questionsDb.json';
@@ -234,12 +243,11 @@ function TestScreen({ route, navigation }: TestScreenProps) {
             setShowFeedback(true);
         } else {
             // 🔥 В РЕЖИМЕ ЭКЗАМЕНА (SPRAWDZIAN) — МГНОВЕННЫЙ ПЕРЕХОД
-            // Убрали setTimeout, теперь "зависания" не будет
             const nextIndex = currentQuestionIndex + 1;
             if (nextIndex >= questions.length) {
                 finishTest(isCorrect ? score + 1 : score);
             } else {
-                handleNextQuestion(); // <-- Сразу следующий вопрос!
+                handleNextQuestion();
             }
         }
     };
@@ -279,6 +287,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
     };
 
     if (loading) {
+        // Здесь тоже можно добавить фон, если хотите, но пока оставим как было
         return (
             <View style={[styles.container, { justifyContent: 'center' }]}>
                 <ActivityIndicator size="large" color="#00BCD4" />
@@ -303,7 +312,12 @@ function TestScreen({ route, navigation }: TestScreenProps) {
 
     // --- UI ---
     return (
-        <View style={{ flex: 1, backgroundColor: '#f0f8ff' }}>
+        // <--- 2. ЗАМЕНА View НА ImageBackground
+        <ImageBackground
+            source={require('../assets/images/tlo.png')}
+            style={{ flex: 1, backgroundColor: '#f0f8ff' }}
+            resizeMode="cover"
+        >
 
             {mode === 'assess' && (
                 <View style={styles.timerHeader}>
@@ -401,7 +415,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                     </View>
                 )}
             </ScrollView>
-        </View>
+        </ImageBackground> // <--- 2. Конец ImageBackground
     );
 }
 
