@@ -51,6 +51,7 @@ function TheorySubTopicListScreen({ route, navigation }: TheorySubTopicListScree
             const hiddenTopics = [
                 "Zadania tekstowe, cz. 2",
                 "Sprawdzian końcowy",
+                "Działania pisemne. Zadania tekstowe",
                 // Tutaj dodaj inne tematy, które mają być tylko w praktyce
             ];
 

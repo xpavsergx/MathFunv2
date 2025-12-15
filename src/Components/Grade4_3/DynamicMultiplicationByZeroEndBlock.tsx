@@ -7,22 +7,22 @@ import {
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
-// 🚀 ID dokumentu dla "Dynamiczne Dodawanie Pisemne"
-const LESSON_ID = 'dynamicAddition';
-// 🚀 Ustal maksymalną liczbę kroków (0 do 6 = 7 kroków)
-const MAX_STEPS = 6; // Ustawione na 7, aby mieć 6 pełnych akcji po starcie
+// 🚀 ID dokumentu dla "Mnożenie przez Liczby z Zerami na Końcu"
+const LESSON_ID = 'multiplicationByZeroEnd';
+// 🚀 Ustal maksymalną liczbę kroków (0 do 5 = 6 kroków)
+const MAX_STEPS = 5;
 
 // --- STAŁE DANE DLA TEORII (zaszyte w kodzie - używamy tylko tytułu) ---
 const STATIC_LESSON_DATA = {
-    title: "Dodawanie Pisemne",
+    title: "Mnożenie Pisemne przez Liczby z Zerami na Końcu",
 };
 
 // --- KOMPONENT ---
 
-export default function DynamicAdditionBlock() {
+export default function DynamicMultiplicationByZeroEndBlock() {
     const [step, setStep] = useState(0);
-    const [num1, setNum1] = useState('');
-    const [num2, setNum2] = useState('');
+    const [factor1, setFactor1] = useState(''); // Górna liczba (np. 45)
+    const [factor2, setFactor2] = useState(''); // Mnożnik z zerami (np. 20)
     const [loading, setLoading] = useState(true);
 
     const handleNextStep = () => {
@@ -39,8 +39,8 @@ export default function DynamicAdditionBlock() {
                     .get();
                 if (doc.exists) {
                     const data = doc.data();
-                    setNum1(data?.number1 || '27');
-                    setNum2(data?.number2 || '45');
+                    setFactor1(data?.factor1 || '45');
+                    setFactor2(data?.factor2 || '20');
                 }
             } catch (error) {
                 console.error('Błąd ładowania danych Firestore:', error);
@@ -70,7 +70,7 @@ export default function DynamicAdditionBlock() {
         });
     };
 
-    if (loading || !num1 || !num2) {
+    if (loading || !factor1 || !factor2) {
         return (
             <View style={[styles.wrapper, styles.loadingWrapper]}>
                 <ActivityIndicator size="large" color="#FF8F00" />
@@ -80,65 +80,75 @@ export default function DynamicAdditionBlock() {
     }
 
     // --- LOGIKA WIZUALIZACJI "PISANIA" ---
-    const getExplanationText = (visStep: number, num1: string, num2: string) => {
+    const getExplanationText = (visStep: number, factor1: string, factor2: string) => {
         const isHighlight = (current: number) => visStep === current;
 
-        // Zaktualizowano objaśnienia, aby pasowały do nowej sekwencji (4, 5, 6)
+        // Obliczenia dla objaśnień (45 x 20)
+        const nonZeroFactor2 = parseInt(factor2.slice(0, -1)); // 2
+        const partialResult = parseInt(factor1) * nonZeroFactor2; // 45 * 2 = 90
+
         if (isHighlight(1)) {
-            return `Zapisujemy pierwszą i drugą liczbę, wyrównując kolumny.`;
+            return `Zapisujemy zadanie. Kluczem jest pominięcie zera na końcu, aby uprościć mnożenie.`;
         } else if (isHighlight(2)) {
-            return `Rysujemy linię. Zadanie gotowe!`;
+            return `Rysujemy linię. Zadanie gotowe! Mnożymy tylko przez ${nonZeroFactor2}.`;
         } else if (isHighlight(3)) {
-            return `Krok 1: Podświetlamy JEDNOŚCI. Dodajemy: ${num1[1]} + ${num2[1]}.`;
+            return `Krok 1: Mnożenie. Mnożymy ${factor1} przez ${nonZeroFactor2} w kolumnach.`;
         } else if (isHighlight(4)) {
-            return `Wynik (12): Zapisz 2 pod Jednościami. Teraz przygotuj przeniesienie.`;
+            return `Wynik częściowy to ${partialResult}. Zapisujemy go pod linią.`;
         } else if (isHighlight(5)) {
-            return `PRZENOSIMY (1) na górę kolumny Dziesiątek. Krok 2: Podświetlamy DZIESIĄTKI i dodajemy.`;
-        } else if (isHighlight(6)) {
-            return `Wynik: 1 (przeniesienie) + ${num1[0]} + ${num2[0]} = 7. Zapisujemy 7. Zadanie wykonane!`;
+            return `Krok 2: Dopisujemy ZERA. Wracamy do pominiętego zera z ${factor2} i dopisujemy je na końcu wyniku. Wynik: ${partialResult}0.`;
         } else {
             return `Kliknij "Dalej", aby rozpocząć pisanie zadania.`;
         }
     };
 
-    const renderWrittenAdditionDiagram = () => {
-        const number1 = ' ' + num1;
-        const number2 = '+' + num2;
-        const rawResult = (parseInt(num1) + parseInt(num2)).toString();
-        const result = ' ' + rawResult;
+    const renderWrittenMultiplicationDiagram = () => {
+        // Górna liczba (45)
+        const number1 = ' ' + factor1;
+        // Dolna liczba (*20). Dodajemy spację, aby wyrównać "2" pod "5"
+        const number2 = 'x' + factor2;
+        // Wynik (900)
+        const rawResult = (parseInt(factor1) * parseInt(factor2)).toString();
+        const finalResult = rawResult; // 900
+        const zeroIndex = number2.length - 1; // Index zera w "x20" (ostatni)
+        const nonZeroIndex = zeroIndex - 1; // Index cyfry '2' w "x20"
 
         const VIS_STEP = step;
 
         const isVisible = (start: number) => VIS_STEP >= start;
         const isHighlight = (current: number) => VIS_STEP === current;
 
-        // Przeniesienie (Mała jedynka na górze)
-        const carryElement = (
-            <Text
-                style={styles.additionCarry}
-            >
-                1
-            </Text>
-        );
-
-        // Funkcja renderująca wiersz liczb
+        // Renderowanie wiersza liczb
         const renderRow = (text: string, isResult: boolean = false, visibleStartStep: number) => (
-            <View style={styles.additionRow}>
+            <View style={styles.multiplicationRow}>
                 {text.split('').map((char, index) => {
                     let opacity = 0;
 
                     if (isResult) {
-                        // Wynik Jedności (index 2)
-                        if (index === 2) opacity = isVisible(4) ? 1 : 0;
-                        // Wynik Dziesiątek (index 1)
-                        else if (index === 1) opacity = isVisible(6) ? 1 : 0;
+                        // Wynik częściowy (90) - pojawia się w VIS_STEP 4
+                        if (index < text.length - 1) opacity = isVisible(4) ? 1 : 0;
+                        // Zero końcowe (0) - pojawia się w VIS_STEP 5
+                        else opacity = isVisible(5) ? 1 : 0;
                     } else {
-                        // LICZBY WEJŚCIOWE: Całe zadanie widoczne od ustalonego kroku.
+                        // LICZBY WEJŚCIOWE
                         opacity = isVisible(visibleStartStep) ? 1 : 0;
                     }
 
-                    // Podświetlenie: Jedności (index 2) w VIS_STEP 3, Dziesiątki (index 1) w VIS_STEP 5
-                    const isColHighlight = (isHighlight(3) && index === 2) || (isHighlight(5) && index === 1);
+                    // --- LOGIKA PODŚWIETLENIA MNOŻENIA (VIS_STEP 3) ---
+                    let highlightStyle = styles.normalCyfra;
+                    if (isHighlight(3)) {
+                        // Cyfry biorące udział w mnożeniu: 4, 5, i 2
+                        const isFactor1Digit = text === number1 && (index === text.length - 1 || index === text.length - 2);
+                        const isFactor2NonZero = text === number2 && index === nonZeroIndex;
+
+                        if (isFactor1Digit || isFactor2NonZero) {
+                            highlightStyle = styles.highlightJednosci; // Używamy stylu aktywnego podświetlenia
+                        }
+                    }
+
+                    // Zero w mnożniku: Zmniejsza przezroczystość od VIS_STEP 2, bo je pomijamy
+                    const isZeroToIgnore = (index === zeroIndex) && !isResult;
+                    const dimStyle = isZeroToIgnore && isVisible(2) ? styles.cyfraDim : {};
 
                     return (
                         <Text
@@ -147,7 +157,8 @@ export default function DynamicAdditionBlock() {
                                 styles.cyfra,
                                 isResult && styles.resultCyfra,
                                 {opacity: opacity},
-                                isColHighlight ? styles.highlightJednosci : styles.normalCyfra,
+                                highlightStyle, // Stosujemy precyzyjne podświetlenie
+                                dimStyle,
                             ]}
                         >
                             {char}
@@ -159,26 +170,19 @@ export default function DynamicAdditionBlock() {
 
         return (
             <View style={styles.additionCoreContainer}>
-                <Text style={styles.additionTitle}>Zadanie: {num1} + {num2}</Text>
+                <Text style={styles.additionTitle}>Zadanie: {factor1} x {factor2}</Text>
 
-                {/* Wiersz Przeniesienia - WARUNKOWE RENDEROWANIE ELEMENTU */}
-                <View style={[styles.additionRow, styles.carryRow]}>
-                    <Text style={styles.cyfra}></Text>
-                    {isVisible(5) ? carryElement : <Text style={styles.cyfra}></Text>}
-                    <Text style={styles.cyfra}></Text>
-                </View>
-
-                {/* Wiersz 1: 27. Widoczny od VIS_STEP 1 */}
+                {/* Wiersz 1: 45. Widoczny od VIS_STEP 1 */}
                 {renderRow(number1, false, 1)}
 
-                {/* Wiersz 2: +45. Widoczny od VIS_STEP 1 */}
+                {/* Wiersz 2: x20. Widoczny od VIS_STEP 1 */}
                 {renderRow(number2, false, 1)}
 
                 {/* Kreska. Widoczna od VIS_STEP 2 */}
                 <View style={[styles.additionLine, { opacity: isVisible(2) ? 1 : 0 }]} />
 
-                {/* Wynik: 72 */}
-                {renderRow(result, true, 4)}
+                {/* Wynik: 900 */}
+                {renderRow(finalResult, true, 4)}
             </View>
         );
     };
@@ -200,17 +204,17 @@ export default function DynamicAdditionBlock() {
                         style={styles.scrollArea}
                         contentContainerStyle={styles.scrollContent}
                     >
-                        {/* 1. KONTENER GŁÓWNEJ WIZUALIZACJI (Zielony pasek z boku) */}
+                        {/* WIZUALIZACJA jest teraz główną treścią */}
                         {step >= 1 && (
                             <View style={styles.diagramArea}>
-                                {renderWrittenAdditionDiagram()}
+                                {renderWrittenMultiplicationDiagram()}
                             </View>
                         )}
 
-                        {/* 2. TEKST WYJAŚNIAJĄCY (Pod kwadratem, na pełną szerokość) */}
+                        {/* TEKST WYJAŚNIAJĄCY (Pod kwadratem, na pełną szerokość) */}
                         <View style={styles.additionInfoWrapper}>
                             <Text style={styles.additionInfo}>
-                                {getExplanationText(step, num1, num2)}
+                                {getExplanationText(step, factor1, factor2)}
                             </Text>
                         </View>
 
@@ -284,21 +288,10 @@ const styles = StyleSheet.create({
         color: '#5D4037',
         marginBottom: 8,
     },
-    additionRow: {
+    multiplicationRow: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
         width: '100%',
-    },
-    carryRow: {
-        height: 20,
-    },
-    additionCarry: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#D84315',
-        position: 'absolute',
-        top: 0,
-        right: 42,
     },
     cyfra: {
         fontSize: 28,
@@ -319,13 +312,29 @@ const styles = StyleSheet.create({
         marginBottom: 5,
         marginTop: 2,
     },
-    highlightJednosci: {
+    highlightJednosci: { // Używamy tego jako aktywne podświetlenie cyfry
         backgroundColor: '#FFD54F',
         borderRadius: 4,
     },
     normalCyfra: {
         backgroundColor: 'transparent',
     },
+    cyfraDim: { // Styl dla zaciemnionego zera
+        opacity: 0.3,
+    },
+    // Przeniesienie (nieużywane w tym bloku, ale style są zdefiniowane)
+    carryRow: {
+        height: 20,
+    },
+    carry: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#D84315',
+        position: 'absolute',
+        top: 0,
+        right: 42,
+    },
+    // Wyjaśnienia
     additionInfoWrapper: {
         width: '100%',
         marginTop: 15,

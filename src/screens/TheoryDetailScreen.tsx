@@ -23,6 +23,10 @@ import CalendarBlock from "../Components/Grade4_2/CalendarBlock";
 import ClockBlock from "../Components/Grade4_2/ClockBlock";
 import DynamicAdditionBlock from "../Components/Grade4_3/DynamicAdditionBloc";
 import DynamicSubtractionBlock from "../Components/Grade4_3/DynamicSubtractionBlock";
+import DynamicMultiplicationBlock from "../Components/Grade4_3/DynamicMultiplicationBlock";
+import DynamicMultiplicationByZeroEndBlock from "../Components/Grade4_3/DynamicMultiplicationByZeroEndBlock";
+import DynamicDivisionBlock from "../Components/Grade4_3/DynamicDivisionBlock";
+import DynamicMultiplicationTwoDigitsBlock from "../Components/Grade4_3/DynamicMultiplicationTwoDigitsBlock";
 
 type TheoryContentItem = {
     type: "paragraph" | "subHeader" | "listItem" | "example";
@@ -85,7 +89,11 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
             topic === "DZIAŁANIA PISEMNE" &&
             (
                 subTopic === "Dodawanie pisemne" ||
-                subTopic === "Odejmowanie pisemne"
+                subTopic === "Odejmowanie pisemne" ||
+                subTopic === "Mnożenie pisemne przez liczby jednocyfrowe" ||
+                subTopic === "Mnożenie przez liczby z zerami na końcu" ||
+                subTopic === "Dzielenie pisemne przez liczby jednocyfrowe" ||
+                subTopic === "Mnożenie pisemne przez liczby wielocyfrowe"
             )
         );
 
@@ -153,6 +161,18 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
                 )}
                 {subTopic === "Odejmowanie pisemne" && (
                     <DynamicSubtractionBlock />
+                )}
+                {subTopic === "Mnożenie pisemne przez liczby jednocyfrowe" && (
+                    <DynamicMultiplicationBlock />
+                )}
+                {subTopic === "Mnożenie przez liczby z zerami na końcu" && (
+                    <DynamicMultiplicationByZeroEndBlock />
+                )}
+                {subTopic === "Dzielenie pisemne przez liczby jednocyfrowe" && (
+                    <DynamicDivisionBlock />
+                )}
+                {subTopic === "Mnożenie pisemne przez liczby wielocyfrowe" && (
+                    <DynamicMultiplicationTwoDigitsBlock />
                 )}
             </View>
         );

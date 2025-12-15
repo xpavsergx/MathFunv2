@@ -91,6 +91,7 @@ export default function DynamicSubtractionBlock() {
         } else if (isHighlight(3)) {
             return `Krok 1: Podświetlamy JEDNOŚCI. Odejmujemy: ${num1[1]} - ${num2[1]}? Nie da się (2 < 5).`;
         } else if (isHighlight(4)) {
+            // W tym kroku: Zmienia się 7 na 6, a wynik jedności pojawia się
             return `POŻYCZAMY 10 z kolumny dziesiątek: 7 staje się 6, a 2 staje się 12. Odejmij: 12 - 5 = 7.`;
         } else if (isHighlight(5)) {
             return `Krok 2: Podświetlamy DZIESIĄTKI. Odejmujemy: 6 (po pożyczce) - ${num2[0]}.`;
@@ -107,20 +108,15 @@ export default function DynamicSubtractionBlock() {
         const rawResult = (parseInt(num1) - parseInt(num2)).toString(); // np. '27'
         const result = ' ' + rawResult;
 
-        // KROK WIZUALIZACJI (VIS_STEP):
-        // 1=Zapis, 2=Linia, 3=Jedności + Podświetlenie, 4=Pożyczenie + Wynik Jedności, 5=Dziesiątki + Podświetlenie, 6=Wynik Dziesiątek
         const VIS_STEP = step;
 
         const isVisible = (start: number) => VIS_STEP >= start;
         const isHighlight = (current: number) => VIS_STEP === current;
 
         // Liczba po pożyczce (7 -> 6)
-        const borrowed = (
+        const borrowedElement = (
             <Text
-                style={[
-                    styles.subtractionBorrowed,
-                    {opacity: isVisible(4) ? 1 : 0}, // Zmiana cyfry pojawia się w VIS_STEP 4
-                ]}
+                style={styles.subtractionBorrowed}
             >
                 6
             </Text>
@@ -138,12 +134,16 @@ export default function DynamicSubtractionBlock() {
                         // Wynik Dziesiątek (index 1)
                         else if (index === 1) opacity = isVisible(6) ? 1 : 0; // Pojawia się po obliczeniu dziesiątek (VIS_STEP 6)
                     } else {
-                        // LICZBY WEJŚCIOWE: Całe zadanie widoczne od ustalonego kroku.
+                        // LICZBY WEJŚCIOWE
                         opacity = isVisible(visibleStartStep) ? 1 : 0;
                     }
 
                     // Podświetlenie: Jedności (index 2) w VIS_STEP 3, Dziesiątki (index 1) w VIS_STEP 5
                     const isColHighlight = (isHighlight(3) && index === 2) || (isHighlight(5) && index === 1);
+
+                    // ZACERNIENIE STAREJ CYFRY (7) w kolumnie DZIESIĄTEK (index 1)
+                    const isOriginalDigit = !isResult && index === 1; // Sprawdza, czy to jest '7' w 72
+                    const shouldDim = isOriginalDigit && isVisible(4); // Zaciemnia się od Kroku 4
 
                     return (
                         <Text
@@ -154,8 +154,8 @@ export default function DynamicSubtractionBlock() {
                                 {opacity: opacity},
                                 isColHighlight ? styles.highlightJednosci : styles.normalCyfra,
 
-                                // Wizualizacja pożyczki: W kolumnie dziesiątek (index 1)
-                                index === 1 && isHighlight(4) && styles.cyfraOpacity, // Zmniejsza widoczność starej cyfry (7)
+                                // APLIKACJA ZACERNIENIA
+                                shouldDim && styles.cyfraOpacity,
                             ]}
                         >
                             {char}
@@ -169,10 +169,10 @@ export default function DynamicSubtractionBlock() {
             <View style={styles.additionCoreContainer}>
                 <Text style={styles.additionTitle}>Zadanie: {num1} - {num2}</Text>
 
-                {/* Wiersz Pożyczki (nad 7) */}
+                {/* Wiersz Pożyczki (6) - RENDEROWANY WARUNKOWO */}
                 <View style={[styles.subtractionRow, styles.borrowRow]}>
                     <Text style={styles.cyfra}></Text>
-                    <Text style={styles.cyfra}>{borrowed}</Text>
+                    {isVisible(4) ? borrowedElement : <Text style={styles.cyfra}></Text>}
                     <Text style={styles.cyfra}></Text>
                 </View>
 
@@ -190,7 +190,6 @@ export default function DynamicSubtractionBlock() {
             </View>
         );
     };
-    // --- KONIEC LOGIKI WIZUALIZACJI ---
 
     return (
         <ImageBackground
@@ -208,12 +207,12 @@ export default function DynamicSubtractionBlock() {
                         style={styles.scrollArea}
                         contentContainerStyle={styles.scrollContent}
                     >
-                        {/* WIZUALIZACJA jest teraz główną treścią */}
+                        {/* 1. KONTENER GŁÓWNEJ WIZUALIZACJI */}
                         <View style={styles.diagramArea}>
                             {renderWrittenSubtractionDiagram()}
                         </View>
 
-                        {/* TEKST WYJAŚNIAJĄCY (Pod kwadratem, na pełną szerokość) */}
+                        {/* 2. TEKST WYJAŚNIAJĄCY */}
                         <View style={styles.additionInfoWrapper}>
                             <Text style={styles.additionInfo}>
                                 {getExplanationText(step, num1, num2)}
@@ -290,12 +289,12 @@ const styles = StyleSheet.create({
         color: '#5D4037',
         marginBottom: 8,
     },
-    subtractionRow: { // Zmieniono nazwę na subtractionRow
+    subtractionRow: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
         width: '100%',
     },
-    borrowRow: { // Nowy styl dla pożyczki
+    borrowRow: {
         height: 20,
     },
     subtractionBorrowed: { // Styl dla pożyczonej/zmienionej cyfry
@@ -304,7 +303,7 @@ const styles = StyleSheet.create({
         color: '#D84315',
         position: 'absolute',
         top: 0,
-        right: 82, // Pozycja nad 7 (kolumna dziesiątek)
+        right: 82,
     },
     cyfra: {
         fontSize: 28,
@@ -321,7 +320,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#1976D2',
     },
-    additionLine: { // Używamy tego samego stylu linii
+    additionLine: {
         width: 120,
         height: 3,
         backgroundColor: '#D84315',
@@ -349,5 +348,10 @@ const styles = StyleSheet.create({
         padding: 8,
         borderRadius: 4,
         width: '90%',
+    },
+    numberHighlight: {
+        color: '#1976D2',
+        fontWeight: 'bold',
+        fontSize: 20,
     },
 });
