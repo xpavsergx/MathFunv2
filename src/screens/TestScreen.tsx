@@ -36,7 +36,7 @@ type QuestionsDatabase = {
 };
 type TestScreenProps = NativeStackScreenProps<MainAppStackParamList, 'Test'>;
 
-const ASSESSMENT_TIME_SECONDS = 15 * 60; // 15 хвилин
+const ASSESSMENT_TIME_SECONDS = 15 * 60; // Стандартний час (15 хвилин)
 
 function TestScreen({ route, navigation }: TestScreenProps) {
     const { grade, topic, subTopic, mode: initialMode, testType = 'subTopic', duelId } = route.params;
@@ -126,14 +126,27 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                 }
             }
             else if (testType === 'subTopic' && grade && topic && subTopic) {
+                // Отримуємо питання КОНКРЕТНО для цієї підтеми
                 const rawQuestions = db[String(grade)]?.[topic]?.[subTopic]?.questions || [];
 
-                // 🔥 ЛОГИКА ДЛЯ КОНТРОЛЬНОЙ
+                // 🔥 ЛОГИКА ДЛЯ КОНТРОЛЬНОЙ (Sprawdzian końcowy)
                 if (subTopic === 'Sprawdzian końcowy') {
+                    // 1. Беремо питання ТІЛЬКИ з цієї підтеми (rawQuestions)
+                    // 2. Перемішуємо
                     const shuffled = [...rawQuestions].sort(() => Math.random() - 0.5);
-                    loadedQuestions = shuffled.slice(0, 20);
+
+                    // 3. Беремо 30 штук (або менше, якщо в базі їх менше 30)
+                    loadedQuestions = shuffled.slice(0, 30);
+
+                    // 4. Встановлюємо довгий таймер (45 хвилин)
+                    setTimeLeft(45 * 60);
+
                 } else {
+                    // Звичайний тест по підтемі (все як було раніше)
                     loadedQuestions = rawQuestions;
+
+                    // Стандартний час (15 хв)
+                    setTimeLeft(ASSESSMENT_TIME_SECONDS);
                 }
             }
 
@@ -143,7 +156,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
             setSelectedAnswerIndex(null);
             setIsAnswerSubmitted(false);
             setShowFeedback(false);
-            setTimeLeft(ASSESSMENT_TIME_SECONDS);
+
             if (timerRef.current) clearInterval(timerRef.current);
             setLoading(false);
         };
@@ -177,7 +190,9 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         if (mode === 'duel' && duelId && currentUser) {
             try {
                 const duelRef = firestore().collection('duels').doc(duelId);
-                const finalTime = ASSESSMENT_TIME_SECONDS - timeLeft;
+                const maxTime = subTopic === 'Sprawdzian końcowy' ? 45 * 60 : ASSESSMENT_TIME_SECONDS;
+                const finalTime = maxTime - timeLeft;
+
                 await duelRef.update({
                     [`results.${currentUser.uid}.score`]: finalScore,
                     [`results.${currentUser.uid}.time`]: finalTime,
@@ -230,16 +245,14 @@ function TestScreen({ route, navigation }: TestScreenProps) {
 
         // --- ЛОГИКА ПЕРЕХОДА ---
         if (mode === 'learn' || currentQ.type === 'theory') {
-            // В режиме обучения показываем объяснение
             setShowFeedback(true);
         } else {
-            // 🔥 В РЕЖИМЕ ЭКЗАМЕНА (SPRAWDZIAN) — МГНОВЕННЫЙ ПЕРЕХОД
-            // Убрали setTimeout, теперь "зависания" не будет
+            // МИТТЄВИЙ ПЕРЕХІД ДЛЯ КОНТРОЛЬНОЇ
             const nextIndex = currentQuestionIndex + 1;
             if (nextIndex >= questions.length) {
                 finishTest(isCorrect ? score + 1 : score);
             } else {
-                handleNextQuestion(); // <-- Сразу следующий вопрос!
+                handleNextQuestion();
             }
         }
     };

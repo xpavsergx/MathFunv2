@@ -45,7 +45,8 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         Object.keys(subTopicsMap).forEach(subKey => {
             const subTopic = subTopicsMap[subKey];
             if (!subTopic) return;
-            // Ховаємо з практики, якщо заборонено
+
+            // Ховаємо з практики, якщо заборонено (але 'Sprawdzian końcowy' має showInPractice: true)
             if (subTopic.showInPractice === false && mode === 'training') return;
 
             if (subTopic.isTrainer && subTopic.practiceKeys?.length) {
@@ -60,11 +61,24 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     }, [db, grade, topic, mode]);
 
     const handleSubTopicPress = (item: SubTopicButton) => {
+        // 🔥 СПЕЦІАЛЬНА УМОВА: Якщо це "Sprawdzian końcowy", ЗАВЖДИ відкриваємо як ТЕСТ
+        // Це дасть нам таймер і вигляд тесту навіть у розділі "Ćwiczenia"
+        if (item.subTopicKey === 'Sprawdzian końcowy') {
+            navigation.navigate('Test', {
+                grade,
+                topic,
+                subTopic: item.subTopicKey,
+                testType: 'subTopic' // Вказуємо, що це тест по підтемі
+            });
+            return;
+        }
+
         // --- 🔴 РЕЖИМ: TESTY ---
         if (mode === 'test') {
             navigation.navigate('Test', {
-                grade, topic,
-                subTopic: item.subTopicKey, // 🔥 ВИПРАВЛЕНО: передаємо ключ бази, а не назву кнопки
+                grade,
+                topic,
+                subTopic: item.subTopicKey,
                 testType: 'subTopic'
             });
             return;
@@ -73,34 +87,47 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         // --- 🟢 РЕЖИМ: ĆWICZENIA (Training) ---
         if (mode === 'training') {
             const specificTrainer = getTrainerScreen(item.key);
+
             if (specificTrainer) {
                 // Відкриваємо спец. тренажер
                 // @ts-ignore
-                navigation.navigate(specificTrainer, { grade, topic, subTopic: item.subTopicKey });
+                navigation.navigate(specificTrainer, {
+                    grade,
+                    topic,
+                    subTopic: item.subTopicKey
+                });
             } else {
-                // Відкриваємо новий екран PracticeScreen
+                // Відкриваємо звичайну практику (без таймера)
                 navigation.navigate('Practice', {
                     grade,
                     topic,
-                    subTopic: item.subTopicKey // 🔥 ВИПРАВЛЕНО: передаємо ключ бази
+                    subTopic: item.subTopicKey
                 });
             }
         }
     };
 
-    const renderCircleButton = (item: SubTopicButton, index: number) => (
-        <TouchableOpacity
-            key={`circle-${item.key}-${index}`}
-            style={[
-                styles.topicButton,
-                mode === 'test' ? { backgroundColor: '#2196F3' } : { backgroundColor: '#4CAF50' }
-            ]}
-            onPress={() => handleSubTopicPress(item)}
-            activeOpacity={0.85}
-        >
-            <Text style={styles.topicButtonText}>{item.displayName || item.key}</Text>
-        </TouchableOpacity>
-    );
+    const renderCircleButton = (item: SubTopicButton, index: number) => {
+        // Якщо це контрольна, можемо виділити її червоним кольором або іншим стилем
+        const isFinalTest = item.subTopicKey === 'Sprawdzian końcowy';
+
+        return (
+            <TouchableOpacity
+                key={`circle-${item.key}-${index}`}
+                style={[
+                    styles.topicButton,
+                    // Колір кнопки: синій для тестів, зелений для практики, червоний для контрольної
+                    isFinalTest
+                        ? { backgroundColor: '#FF5722' }
+                        : (mode === 'test' ? { backgroundColor: '#2196F3' } : { backgroundColor: '#4CAF50' })
+                ]}
+                onPress={() => handleSubTopicPress(item)}
+                activeOpacity={0.85}
+            >
+                <Text style={styles.topicButtonText}>{item.displayName || item.key}</Text>
+            </TouchableOpacity>
+        );
+    };
 
     const renderContent = () => {
         const layoutGroups = [];
