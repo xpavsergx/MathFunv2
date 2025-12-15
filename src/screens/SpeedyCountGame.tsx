@@ -1,7 +1,10 @@
 // src/screens/SpeedyCountGame.tsx
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, useColorScheme, ActivityIndicator, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import {
+    View, Text, StyleSheet, SafeAreaView, TouchableOpacity,
+    useColorScheme, Animated, Alert, Dimensions
+} from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS, FONT_SIZES, PADDING, MARGIN } from '../styles/theme';
@@ -9,35 +12,54 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { xpService } from '../services/xpService';
 
-type Equation = {
-    text: string;
-    isCorrect: boolean;
-};
+type Equation = { text: string; isCorrect: boolean; };
 
-const GAME_DURATION = 60; // 60 секунд
+const GAME_DURATION = 60;
+const { width } = Dimensions.get('window');
 
-// (generateEquation - без змін)
-const generateEquation = (): Equation => {
-    const a = Math.floor(Math.random() * 10) + 1;
-    const b = Math.floor(Math.random() * 10) + 1;
+// Генерація рівняння
+const generateEquation = (currentScore: number): Equation => {
+    let maxNum = 10;
+    if (currentScore > 5) maxNum = 20;
+    if (currentScore > 15) maxNum = 50;
+    if (currentScore > 30) maxNum = 100;
+
+    const a = Math.floor(Math.random() * maxNum) + 1;
+    const b = Math.floor(Math.random() * maxNum) + 1;
+
     const opVal = Math.random();
     let operation: string;
     let correctAnswer: number;
-    if (opVal < 0.5) { operation = '+'; correctAnswer = a + b; }
-    else { operation = '-'; correctAnswer = a - b; }
-    const isCorrect = Math.random() < 0.5;
-    let displayedAnswer: number;
-    if (isCorrect) {
-        displayedAnswer = correctAnswer;
+
+    if (opVal < 0.5) {
+        operation = '+';
+        correctAnswer = a + b;
     } else {
-        let offset = Math.floor(Math.random() * 3) + 1;
-        if (Math.random() < 0.5) offset = -offset;
-        displayedAnswer = correctAnswer + offset;
-        if (displayedAnswer === correctAnswer) displayedAnswer += 1;
+        const max = Math.max(a, b);
+        const min = Math.min(a, b);
+        operation = '-';
+        correctAnswer = max - min;
+        return generateFormattedEquation(max, min, '-', correctAnswer);
     }
+
+    return generateFormattedEquation(a, b, '+', correctAnswer);
+};
+
+const generateFormattedEquation = (a: number, b: number, op: string, correct: number): Equation => {
+    const isCorrect = Math.random() < 0.5;
+    let displayedAnswer = correct;
+
+    if (!isCorrect) {
+        let offset = Math.floor(Math.random() * 5) + 1;
+        if (Math.random() < 0.5) offset = -offset;
+        displayedAnswer = correct + offset;
+        if (displayedAnswer === correct) displayedAnswer += 1;
+        if (displayedAnswer < 0) displayedAnswer = 0;
+    }
+
     return {
-        text: `${a} ${operation} ${b} = ${displayedAnswer}`,
-        isCorrect: displayedAnswer === correctAnswer,
+        text: `${a} ${op} ${b} = ${displayedAnswer}`,
+        isCorrect: displayedAnswer === correct,
     };
 };
 
@@ -50,116 +72,103 @@ function SpeedyCountGame() {
     const [xpEarned, setXpEarned] = useState(0);
     const [coinsEarned, setCoinsEarned] = useState(0);
 
+    const bgAnim = useRef(new Animated.Value(0)).current;
+
     const currentUser = auth().currentUser;
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
 
-    // (Стилі теми - без змін)
+    const resetGame = useCallback(() => {
+        setScore(0);
+        setXpEarned(0);
+        setCoinsEarned(0);
+        setTimeLeft(GAME_DURATION);
+        setCurrentEquation(generateEquation(0));
+        setGameState('idle');
+        bgAnim.setValue(0);
+    }, []);
+
+    useFocusEffect(useCallback(() => { resetGame(); }, [resetGame]));
+
+    useEffect(() => {
+        if (gameState !== 'running' || timeLeft === 0) {
+            if (timeLeft === 0 && gameState === 'running') setGameState('over');
+            return;
+        }
+        const timerId = setInterval(() => setTimeLeft(p => p - 1), 1000);
+        return () => clearInterval(timerId);
+    }, [gameState, timeLeft]);
+
+    useEffect(() => {
+        if (gameState === 'over' && currentUser && score > 0) {
+            const xp = score * 5;
+            const coins = score * 2;
+            setXpEarned(xp);
+            setCoinsEarned(coins);
+            xpService.addXP(currentUser.uid, xp, xp, 0);
+            firestore().collection('users').doc(currentUser.uid).update({ coins: firestore.FieldValue.increment(coins) });
+        }
+    }, [gameState, currentUser]);
+
+    const startGame = useCallback(() => {
+        setScore(0);
+        setCurrentEquation(generateEquation(0));
+        setGameState('running');
+    }, []);
+
+    const flashBackground = (correct: boolean) => {
+        bgAnim.setValue(correct ? 1 : -1);
+        Animated.timing(bgAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: false
+        }).start();
+    };
+
+    const handleAnswer = useCallback((userAnswer: boolean) => {
+        if (gameState !== 'running' || !currentEquation) return;
+
+        const isCorrect = userAnswer === currentEquation.isCorrect;
+        flashBackground(isCorrect);
+
+        if (isCorrect) {
+            setScore(prev => {
+                const newScore = prev + 1;
+                setCurrentEquation(generateEquation(newScore));
+                return newScore;
+            });
+        } else {
+            setTimeLeft(prev => Math.max(0, prev - 3));
+            setCurrentEquation(generateEquation(score));
+        }
+    }, [gameState, currentEquation, score]);
+
+    const bgColorInterpolation = bgAnim.interpolate({
+        inputRange: [-1, 0, 1],
+        outputRange: ['rgba(255, 0, 0, 0.2)', isDarkMode ? COLORS.backgroundDark : COLORS.backgroundLight, 'rgba(0, 255, 0, 0.2)']
+    });
+
     const themeStyles = {
-        container: { backgroundColor: isDarkMode ? COLORS.backgroundDark : COLORS.backgroundLight },
         text: { color: isDarkMode ? COLORS.textDark : COLORS.textLight },
         card: { backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.white },
         correctButton: { backgroundColor: COLORS.correct },
         incorrectButton: { backgroundColor: COLORS.incorrect },
     };
 
-    // --- ✅ 1. 'resetGame' тепер обгорнута в useCallback ---
-    const resetGame = useCallback(() => {
-        setScore(0);
-        setXpEarned(0);
-        setCoinsEarned(0);
-        setTimeLeft(GAME_DURATION);
-        setCurrentEquation(generateEquation());
-        setGameState('idle');
-    }, []); // Порожній масив залежностей, оскільки вона не залежить від пропсів
-
-    // --- ✅ 2. 'useFocusEffect' тепер безпечно залежить від 'resetGame' ---
-    useFocusEffect(
-        useCallback(() => {
-            resetGame();
-        }, [resetGame]) // Додано resetGame як залежність
-    );
-
-    // (Таймер гри - без змін)
-    useEffect(() => {
-        if (gameState !== 'running' || timeLeft === 0) {
-            if (timeLeft === 0) {
-                setGameState('over');
-            }
-            return;
-        }
-        const timerId = setInterval(() => {
-            setTimeLeft(prev => prev - 1);
-        }, 1000);
-        return () => clearInterval(timerId);
-    }, [gameState, timeLeft]);
-
-
-    // (Логіка нагороди - без змін)
-    useEffect(() => {
-        if (gameState === 'over' && currentUser && score > 0) {
-
-            const handleGameEnd = async () => {
-                const calculatedXp = score * 5;
-                const calculatedCoins = score * 2;
-
-                setXpEarned(calculatedXp);
-                setCoinsEarned(calculatedCoins);
-
-                xpService.addXP(currentUser.uid, calculatedXp, calculatedXp, 0);
-
-                const userDocRef = firestore().collection('users').doc(currentUser.uid);
-                await userDocRef.update({
-                    coins: firestore.FieldValue.increment(calculatedCoins),
-                });
-            };
-
-            handleGameEnd();
-        }
-    }, [gameState, currentUser, score]);
-
-    // --- ✅ 3. 'startGame' тепер теж обгорнута в useCallback ---
-    const startGame = useCallback(() => {
-        setScore(0);
-        setCurrentEquation(generateEquation());
-        setGameState('running');
-    }, []); // Порожній масив
-
-    // --- ✅ 4. 'handleAnswer' теж обгорнута в useCallback ---
-    const handleAnswer = useCallback((userAnswer: boolean) => {
-        if (gameState !== 'running' || !currentEquation) return;
-
-        if (userAnswer === currentEquation.isCorrect) {
-            setScore(prev => prev + 1);
-        } else {
-            setTimeLeft(prev => Math.max(0, prev - 2));
-        }
-
-        if (timeLeft > 0) {
-            setCurrentEquation(generateEquation());
-        }
-    }, [gameState, currentEquation, timeLeft]); // Залежить від цих станів
-
-
-    // --- Рендеринг станів гри ---
-
     if (gameState === 'over') {
         return (
-            <SafeAreaView style={[styles.container, themeStyles.container]}>
+            <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.card.backgroundColor }]}>
                 <View style={[styles.card, themeStyles.card]}>
                     <Text style={[styles.title, themeStyles.text]}>Czas minął!</Text>
                     <Ionicons name="stopwatch-outline" size={80} color={COLORS.primary} />
-                    <Text style={[styles.equationText, themeStyles.text]}>Twój wynik:</Text>
-                    <Text style={[styles.finalScore, themeStyles.text]}>{score}</Text>
-
+                    <Text style={[styles.equationText, themeStyles.text]}>Wynik: {score}</Text>
                     <Text style={[styles.rewardText, { color: COLORS.accent }]}>+ {xpEarned} XP</Text>
-                    <Text style={[styles.rewardText, { color: COLORS.primaryDarkTheme }]}>+ {coinsEarned} 🪙</Text>
-
-                    <TouchableOpacity style={[styles.button, themeStyles.button]} onPress={resetGame}>
+                    <Text style={[styles.rewardText, { color: '#FFD700' }]}>+ {coinsEarned} Monet</Text>
+                    <TouchableOpacity style={[styles.button, {marginTop: 30}]} onPress={resetGame}>
                         <Text style={styles.buttonText}>Zagraj ponownie</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.menuButton} onPress={() => navigation.goBack()}>
-                        <Text style={styles.menuButtonText}>Menu Gier</Text>
+                        <Text style={styles.menuButtonText}>Menu</Text>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
@@ -168,145 +177,83 @@ function SpeedyCountGame() {
 
     if (gameState === 'idle') {
         return (
-            <SafeAreaView style={[styles.container, themeStyles.container]}>
+            <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.card.backgroundColor }]}>
                 <View style={[styles.card, themeStyles.card]}>
                     <Text style={[styles.title, themeStyles.text]}>Szybkie Liczenie</Text>
                     <Ionicons name="speedometer-outline" size={80} color={COLORS.accent} />
                     <Text style={[styles.rulesText, themeStyles.text]}>
-                        Masz 60 sekund. Odpowiedz "Tak" lub "Nie" na jak najwięcej równań.
+                        60 sekund. Tak czy Nie?{"\n"}Im dalej, tym trudniej!
                     </Text>
-                    <Text style={[styles.rulesText, themeStyles.text, { color: COLORS.incorrect }]}>
-                        Błędna odpowiedź kosztuje 2 sekundy!
-                    </Text>
-
-                    <TouchableOpacity
-                        style={[styles.button, themeStyles.button]}
-                        onPress={startGame}
-                    >
-                        <Text style={styles.buttonText}>Start!</Text>
+                    <TouchableOpacity style={styles.button} onPress={startGame}>
+                        <Text style={styles.buttonText}>START</Text>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
         );
     }
 
-    // (gameState === 'running')
     return (
-        <SafeAreaView style={[styles.container, themeStyles.container]}>
-            <View style={styles.header}>
-                <Text style={[styles.headerText, themeStyles.text]}>Czas: {timeLeft}</Text>
-                <Text style={[styles.headerText, themeStyles.text]}>Wynik: {score}</Text>
-            </View>
-            <View style={styles.gameArea}>
-                <Text style={[styles.equationText, themeStyles.text]}>{currentEquation?.text}</Text>
-            </View>
-            <View style={styles.controls}>
-                <TouchableOpacity style={[styles.controlButton, themeStyles.correctButton]} onPress={() => handleAnswer(true)}>
-                    <Ionicons name="checkmark-outline" size={50} color={COLORS.white} />
-                    <Text style={styles.buttonText}>Tak</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.controlButton, themeStyles.incorrectButton]} onPress={() => handleAnswer(false)}>
-                    <Ionicons name="close-outline" size={50} color={COLORS.white} />
-                    <Text style={styles.buttonText}>Nie</Text>
-                </TouchableOpacity>
-            </View>
-        </SafeAreaView>
+        <Animated.View style={[styles.container, { backgroundColor: bgColorInterpolation }]}>
+            <SafeAreaView style={{flex: 1, width: '100%', alignItems: 'center'}}>
+                <View style={styles.header}>
+                    <View style={styles.pill}><Text style={styles.pillText}>⏳ {timeLeft}s</Text></View>
+                    <View style={styles.pill}><Text style={styles.pillText}>🏆 {score}</Text></View>
+                </View>
+
+                <View style={styles.gameArea}>
+                    {/* ✅ ВИПРАВЛЕНО: Додано adjustsFontSizeToFit та numberOfLines */}
+                    <Text
+                        style={[styles.equationText, themeStyles.text]}
+                        adjustsFontSizeToFit
+                        numberOfLines={1}
+                        minimumFontScale={0.5}
+                    >
+                        {currentEquation?.text}
+                    </Text>
+                </View>
+
+                <View style={styles.controls}>
+                    <TouchableOpacity style={[styles.controlButton, themeStyles.correctButton]} onPress={() => handleAnswer(true)}>
+                        <Ionicons name="checkmark" size={60} color="white" />
+                        <Text style={styles.controlText}>TAK</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.controlButton, themeStyles.incorrectButton]} onPress={() => handleAnswer(false)}>
+                        <Ionicons name="close" size={60} color="white" />
+                        <Text style={styles.controlText}>NIE</Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+        </Animated.View>
     );
 }
 
-// (Стилі - без змін)
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: PADDING.medium,
-    },
-    card: {
-        width: '100%',
-        borderRadius: 20,
-        padding: PADDING.large,
-        alignItems: 'center',
-        elevation: 5,
-        gap: MARGIN.medium,
-    },
-    title: {
-        fontSize: FONT_SIZES.title,
-        fontWeight: 'bold',
-        textAlign: 'center',
-    },
-    rulesText: {
-        fontSize: FONT_SIZES.medium,
-        textAlign: 'center',
-        lineHeight: 24,
-    },
-    button: {
-        backgroundColor: COLORS.primary,
-        paddingVertical: PADDING.medium,
-        paddingHorizontal: PADDING.large,
-        borderRadius: 25,
-        marginTop: MARGIN.medium,
-    },
-    buttonText: {
-        color: COLORS.white,
-        fontSize: FONT_SIZES.large,
-        fontWeight: 'bold',
-    },
-    menuButton: {
-        marginTop: MARGIN.small,
-    },
-    menuButtonText: {
-        color: COLORS.grey,
-        fontSize: FONT_SIZES.medium,
-    },
-    finalScore: {
-        fontSize: 64,
-        fontWeight: 'bold',
-        color: COLORS.primary,
-        marginVertical: MARGIN.small,
-    },
-    rewardText: {
-        fontSize: FONT_SIZES.large,
-        fontWeight: 'bold',
-    },
-    header: {
-        position: 'absolute',
-        top: 60,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-        paddingHorizontal: PADDING.large,
-    },
-    headerText: {
-        fontSize: FONT_SIZES.large,
-        fontWeight: 'bold',
-    },
-    gameArea: {
-        flex: 2,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
+    container: { flex: 1, justifyContent: 'center', padding: PADDING.medium },
+    card: { width: '100%', borderRadius: 20, padding: PADDING.large, alignItems: 'center', elevation: 5, gap: MARGIN.medium },
+    title: { fontSize: FONT_SIZES.title, fontWeight: 'bold' },
+    rulesText: { fontSize: FONT_SIZES.medium, textAlign: 'center', marginTop: 20, lineHeight: 24 },
+    button: { backgroundColor: COLORS.primary, paddingVertical: 15, paddingHorizontal: 40, borderRadius: 30, elevation: 3 },
+    buttonText: { color: 'white', fontSize: 20, fontWeight: 'bold' },
+    menuButton: { marginTop: 20 },
+    menuButtonText: { color: COLORS.grey, fontSize: 16 },
+    rewardText: { fontSize: 24, fontWeight: 'bold', marginTop: 5 },
+
+    // ✅ ОНОВЛЕНО: Зменшено базовий шрифт і додано паддінг
     equationText: {
-        fontSize: 48,
+        fontSize: 52, // Було 56 (або більше)
         fontWeight: 'bold',
         textAlign: 'center',
+        paddingHorizontal: 10,
+        width: '100%' // Щоб займати всю ширину для масштабування
     },
-    controls: {
-        flex: 1,
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        width: '100%',
-    },
-    controlButton: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        justifyContent: 'center',
-        alignItems: 'center',
-        elevation: 8,
-        gap: 5,
-    },
+
+    header: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 20, paddingHorizontal: 20 },
+    pill: { backgroundColor: 'rgba(0,0,0,0.1)', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20 },
+    pillText: { fontSize: 18, fontWeight: 'bold' },
+    gameArea: { flex: 1, justifyContent: 'center', alignItems: 'center', width: '100%' },
+    controls: { flexDirection: 'row', justifyContent: 'space-around', width: '100%', marginBottom: 40 },
+    controlButton: { width: 140, height: 140, borderRadius: 70, justifyContent: 'center', alignItems: 'center', elevation: 5 },
+    controlText: { color: 'white', fontSize: 24, fontWeight: 'bold', marginTop: 5 }
 });
 
 export default SpeedyCountGame;

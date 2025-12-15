@@ -3,213 +3,139 @@
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { Alert } from 'react-native';
-import { createNotification } from './notificationService';
-import questionsDatabase from '../data/questionsDb.json';
 
-// (sendFriendRequest - без змін, вже обробляє дублікати)
-export const sendFriendRequest = async (friendName: string) => {
+// --- Типи ---
+export interface Friend {
+    id: string;
+    email: string;
+    avatar?: string;
+    displayName?: string;
+}
+
+/**
+ * Відправляє запит на дружбу за Email
+ */
+export const sendFriendRequest = async (targetEmail: string) => {
     const currentUser = auth().currentUser;
-    if (!currentUser) {
-        Alert.alert("Błąd", "Nie jesteś zalogowany.");
+    if (!currentUser || !currentUser.email) return;
+
+    if (currentUser.email.toLowerCase() === targetEmail.toLowerCase()) {
+        Alert.alert("Błąd", "Nie możesz dodać samego siebie.");
         return;
     }
-    const usersRef = firestore().collection('users');
+
     try {
-        const currentUserDoc = await usersRef.doc(currentUser.uid).get();
-        if (!currentUserDoc.exists) {
-            Alert.alert("Błąd", "Wystąpił błąd z Twoim kontem.");
+        // 1. Знаходимо користувача за Email
+        const usersSnapshot = await firestore()
+            .collection('users')
+            .where('email', '==', targetEmail.toLowerCase())
+            .limit(1)
+            .get();
+
+        if (usersSnapshot.empty) {
+            Alert.alert("Błąd", "Nie znaleziono użytkownika z takim e-mailem.");
             return;
         }
-        const currentUserData = currentUserDoc.data();
-        const currentUserFirstName = currentUserData?.firstName;
-        if (!currentUserFirstName) {
-            Alert.alert("Błąd", "Twoje konto nie ma ustawionego imienia.");
-            return;
-        }
-        if (currentUserFirstName.toLowerCase() === friendName.toLowerCase()) {
-            Alert.alert("Błąd", "Nie możesz dodać samego siebie do znajomych.");
-            return;
-        }
-        const querySnapshot = await usersRef.where('firstName', '==', friendName).get();
-        if (querySnapshot.empty) {
-            Alert.alert("Nie znaleziono", `Użytkownik o imieniu ${friendName} nie został znaleziony.`);
-            return;
-        }
-        if (querySnapshot.size > 1) {
-            Alert.alert(
-                "Znaleziono wielu graczy",
-                `Znaleziono ${querySnapshot.size} użytkowników o imieniu ${friendName}.\n\nSpróbuj poprosić znajomego o jego unikalny nick lub e-mail.`
-            );
-            return;
-        }
-        const friendDoc = querySnapshot.docs[0];
-        const friendId = friendDoc.id;
-        if (currentUserData?.friends?.includes(friendId)) {
-            Alert.alert("Informacja", "Ten użytkownik jest już na Twojej liście znajomych.");
-            return;
-        }
-        await createNotification(friendId, {
-            type: 'friend_request',
-            title: 'Nowe zaproszenie do znajomych!',
-            body: `Użytkownik ${currentUserFirstName} chce Cię dodać do znajomych.`,
-            icon: 'person-add-outline',
-            fromUserId: currentUser.uid,
-            fromUserNickname: currentUserFirstName,
-        });
-        Alert.alert("Wysłano!", `Wysłano zaproszenie do znajomych do ${friendName}.`);
+
+        const targetUserDoc = usersSnapshot.docs[0];
+        const targetUserId = targetUserDoc.id;
+
+        // 2. Створюємо сповіщення для цього користувача
+        await firestore()
+            .collection('users')
+            .doc(targetUserId)
+            .collection('notifications')
+            .add({
+                type: 'friend_request',
+                title: 'Zaproszenie do znajomych',
+                body: `Użytkownik ${currentUser.email} chce dodać Cię do znajomych.`,
+                data: {
+                    fromUserId: currentUser.uid,
+                    fromUserEmail: currentUser.email
+                },
+                createdAt: firestore.FieldValue.serverTimestamp(),
+                read: false,
+            });
+
+        Alert.alert("Sukces", "Wysłano zaproszenie!");
+
     } catch (error) {
-        console.error("Error sending friend request:", error);
-        Alert.alert("Błąd", "Wystąpił problem podczas wysyłania zaproszenia.");
+        console.error("Błąd wysyłania zaproszenia:", error);
+        Alert.alert("Błąd", "Wystąpił problem przy wysyłaniu.");
     }
 };
 
-// (acceptFriendRequest - без змін)
-export const acceptFriendRequest = async (friendId: string, fromUserNickname: string, notificationId: string) => {
+/**
+ * Приймає запит на дружбу
+ * Оновлює списки друзів у обох користувачів (current + friend)
+ */
+export const acceptFriendRequest = async (currentUserId: string, friendId: string, friendEmail: string) => {
+    if (!currentUserId || !friendId) return;
+
+    const db = firestore();
+    const batch = db.batch();
+
+    // 1. Додаємо друга до списку поточного користувача
+    const currentUserFriendRef = db.collection('users').doc(currentUserId).collection('friends').doc(friendId);
+    batch.set(currentUserFriendRef, {
+        id: friendId,
+        email: friendEmail, // Зберігаємо email для зручності
+        addedAt: firestore.FieldValue.serverTimestamp(),
+    });
+
+    // 2. Додаємо поточного користувача до списку друга
+    // Спочатку треба отримати email поточного юзера
     const currentUser = auth().currentUser;
-    if (!currentUser) return;
-    const currentUserRef = firestore().collection('users').doc(currentUser.uid);
-    const friendRef = firestore().collection('users').doc(friendId);
-    try {
-        const currentUserDoc = await currentUserRef.get();
-        if (!currentUserDoc.exists) {
-            Alert.alert("Błąd", "Nie można znaleźć Twoich danych.");
-            return;
-        }
-        const currentUserFirstName = currentUserDoc.data()?.firstName;
-        if (!currentUserFirstName) {
-            Alert.alert("Błąd", "Twoje konto nie ma ustawionego imienia.");
-            return;
-        }
-        const batch = firestore().batch();
-        batch.update(currentUserRef, { friends: firestore.FieldValue.arrayUnion(friendId) });
-        batch.update(friendRef, { friends: firestore.FieldValue.arrayUnion(currentUser.uid) });
-        batch.delete(currentUserRef.collection('notifications').doc(notificationId));
-        await batch.commit();
-        await createNotification(friendId, {
-            type: 'friend_accepted',
-            title: 'Zaproszenie przyjęte',
-            body: `${currentUserFirstName} przyjął/przyjęła Twoje zaproszenie.`,
-            icon: 'checkmark-done-outline'
-        });
-        Alert.alert("Sukces", `Dodałeś ${fromUserNickname} do znajomych!`);
-    } catch (error) {
-        console.error("Error accepting friend request:", error);
-        Alert.alert("Błąd", "Nie udało się zaakceptować zaproszenia.");
-    }
+    const currentUserEmail = currentUser?.email || "unknown@email.com";
+
+    const friendUserRef = db.collection('users').doc(friendId).collection('friends').doc(currentUserId);
+    batch.set(friendUserRef, {
+        id: currentUserId,
+        email: currentUserEmail,
+        addedAt: firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Виконуємо запис
+    await batch.commit();
+    console.log(`Znajomość nawiązana: ${currentUserId} <-> ${friendId}`);
 };
 
-// (rejectFriendRequest - без змін)
-export const rejectFriendRequest = async (notificationId: string) => {
-    const currentUser = auth().currentUser;
-    if (!currentUser) return;
-    try {
-        await firestore().collection('users').doc(currentUser.uid).collection('notifications').doc(notificationId).delete();
-    } catch (error) {
-        console.error("Error rejecting friend request:", error);
-    }
+/**
+ * Отримує список друзів (real-time)
+ */
+export const subscribeToFriends = (userId: string, onUpdate: (friends: Friend[]) => void) => {
+    return firestore()
+        .collection('users')
+        .doc(userId)
+        .collection('friends')
+        .onSnapshot(snapshot => {
+            const friendsList = snapshot.docs.map(doc => ({
+                id: doc.id,
+                email: doc.data().email || 'Brak emaila',
+                ...doc.data()
+            })) as Friend[];
+            onUpdate(friendsList);
+        });
 };
 
-// --- ✅ ОНОВЛЕНО: sendDuelRequest (повертає ID дуелі) ---
-export const sendDuelRequest = async (friendId: string, grade: number, topic: string): Promise<string | null> => {
-    const currentUser = auth().currentUser;
-    if (!currentUser) {
-        Alert.alert("Błąd", "Nie jesteś zalogowany.");
-        return null; // Повертаємо null
-    }
-    try {
-        const usersRef = firestore().collection('users');
-        const currentUserDoc = await usersRef.doc(currentUser.uid).get();
-        const friendDoc = await usersRef.doc(friendId).get();
-        if (!currentUserDoc.exists || !friendDoc.exists) {
-            Alert.alert("Błąd", "Nie można znaleźć danych użytkownika lub znajomego.");
-            return null;
-        }
-        const currentUserData = currentUserDoc.data();
-        const friendData = friendDoc.data();
-        const currentUserFirstName = currentUserData?.firstName;
-        const friendFirstName = friendData?.firstName;
-        if (!currentUserFirstName || !friendFirstName) {
-            Alert.alert("Błąd", "Brak imion użytkowników, nie można rozpocząć pojedynku.");
-            return null;
-        }
-        const gradeData = (questionsDatabase as any)[String(grade)];
-        if (!gradeData || !gradeData[topic]) {
-            throw new Error("Invalid grade or topic provided for duel.");
-        }
-        const allQuestions = Object.values(gradeData[topic])
-            .flatMap((subTopic: any) => subTopic.questions || []);
-        if (allQuestions.length < 5) {
-            Alert.alert("Błąd", "W tym temacie jest za mało pytań, aby stworzyć pojedynek (wymagane 5).");
-            return null;
-        }
-        const duelQuestions = allQuestions.sort(() => 0.5 - Math.random()).slice(0, 5);
-        const questionIds = duelQuestions.map(q => q.id);
-        const duelRef = await firestore().collection('duels').add({
-            status: 'pending',
-            players: [currentUser.uid, friendId],
-            challengerId: currentUser.uid,
-            challengerNickname: currentUserFirstName,
-            topic: topic,
-            grade: grade,
-            questionIds: questionIds,
-            results: {
-                [currentUser.uid]: { score: null, time: null, nickname: currentUserFirstName },
-                [friendId]: { score: null, time: null, nickname: friendFirstName },
-            },
-            createdAt: firestore.FieldValue.serverTimestamp(),
-        });
-        await createNotification(friendId, {
-            type: 'duel_request',
-            title: 'Wyzwanie na pojedynek!',
-            body: `${currentUserFirstName} rzuca Ci wyzwanie z tematu: ${topic}.`,
-            icon: 'flame-outline',
-            duelId: duelRef.id,
-            grade: grade,
-            topic: topic,
-        });
-
-        // Повертаємо ID дуелі
-        return duelRef.id;
-
-    } catch (error) {
-        console.error("Error sending duel request:", error);
-        Alert.alert("Błąd", "Nie udało się wysłać wyzwania.");
-        return null;
-    }
-};
-
-// --- ✅ НОВА ФУНКЦІЯ: rejectDuelRequest ---
-export const rejectDuelRequest = async (notificationId: string, duelId: string, challengerId: string) => {
+/**
+ * Видаляє друга
+ */
+export const removeFriend = async (friendId: string) => {
     const currentUser = auth().currentUser;
     if (!currentUser) return;
 
-    const currentUserRef = firestore().collection('users').doc(currentUser.uid);
-    const duelRef = firestore().collection('duels').doc(duelId);
-
     try {
-        // Отримуємо ім'я поточного користувача для сповіщення про відхилення
-        const currentUserDoc = await currentUserRef.get();
-        const currentUserFirstName = currentUserDoc.data()?.firstName || 'Gracz';
+        await firestore()
+            .collection('users')
+            .doc(currentUser.uid)
+            .collection('friends')
+            .doc(friendId)
+            .delete();
 
-        const batch = firestore().batch();
-
-        // 1. Видаляємо дуель
-        batch.delete(duelRef);
-        // 2. Видаляємо сповіщення
-        batch.delete(currentUserRef.collection('notifications').doc(notificationId));
-
-        await batch.commit();
-
-        // 3. (Опціонально) Надсилаємо сповіщення відправнику, що його виклик відхилено
-        await createNotification(challengerId, {
-            type: 'friend_accepted', // (Використовуємо загальний тип)
-            title: 'Wyzwanie odrzucone',
-            body: `${currentUserFirstName} odrzucił/a Twoje wyzwanie na pojedynek.`,
-            icon: 'close-circle-outline'
-        });
-
+        // Опціонально: видалити і у друга (щоб дружба була двостороння)
+        // Але зазвичай достатньо видалити у себе
     } catch (error) {
-        console.error("Error rejecting duel request:", error);
-        Alert.alert("Błąd", "Nie udało się odrzucić wyzwania.");
+        console.error("Error removing friend:", error);
     }
 };

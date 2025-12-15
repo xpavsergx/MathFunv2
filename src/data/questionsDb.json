@@ -5,589 +5,410 @@
         "theoryTitle": "Sprytne dodawanie i odejmowanie w pamięci",
         "isTrainer": true,
         "practiceKeys": ["Dodawanie i odejmowanie"],
-        "questions": []
+        "showInPractice": true,
+        "questions": [
+          {
+            "id": "q1_add_sub",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 45 + 55?",
+            "options": ["90", "100", "110", "95"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "40 + 50 = 90, 5 + 5 = 10. Razem 100."
+          },
+          {
+            "id": "q2_add_sub",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz różnicę: 120 - 35",
+            "options": ["85", "95", "75", "80"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "120 - 20 = 100, 100 - 15 = 85."
+          },
+          {
+            "id": "q3_add_sub",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka liczba jest o 12 większa od 48?",
+            "options": ["50", "60", "58", "62"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "48 + 12 = 60."
+          }
+        ]
       },
       "Mnożenie i dzielenie (cd.)": {
         "theoryTitle": "Sprytne mnożenie i dzielenie",
         "isTrainer": true,
-        "practiceKeys": ["Mnożenie i dzielenie"],
-        "questions": []
+        "practiceKeys": ["Mnożenie", "Dzielenie"],
+        "showInPractice": true,
+        "questions": [
+          {
+            "id": "q1_mult",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Wynik mnożenia 6 · 7 to:",
+            "options": ["42", "36", "48", "49"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Z tabliczki mnożenia: 6 razy 7 to 42."
+          },
+          {
+            "id": "q2_div",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 56 : 8?",
+            "options": ["6", "7", "8", "9"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Ponieważ 7 · 8 = 56."
+          },
+          {
+            "id": "q3_mult",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Iloczyn liczb 9 i 9 wynosi:",
+            "options": ["18", "81", "99", "72"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "9 · 9 = 81."
+          }
+        ]
       },
       "O ile więcej, o ile mniej": {
         "theoryTitle": "Jak policzyć o ile więcej i o ile mniej",
         "isTrainer": true,
         "practiceKeys": ["O ile więcej, o ile mniej"],
-        "questions": []
+        "showInPractice": true,
+        "questions": [
+          {
+            "id": "q1_more",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "O ile liczba 15 jest większa od 9?",
+            "options": ["o 5", "o 6", "o 7", "o 4"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "15 - 9 = 6."
+          },
+          {
+            "id": "q2_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 50 jest mniejsza od 120?",
+            "options": ["o 70", "o 60", "o 80", "o 50"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "120 - 50 = 70."
+          }
+        ]
       },
       "Ile razy więcej, ile razy mniej": {
         "theoryTitle": "Jak policzyć ile razy więcej i ile razy mniej",
         "isTrainer": true,
         "practiceKeys": ["Ile razy więcej, ile razy mniej"],
         "showInPractice": true,
-        "questions": []
+        "questions": [
+          {
+            "id": "q1_times",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile razy liczba 20 jest większa od 5?",
+            "options": ["2 razy", "4 razy", "5 razy", "10 razy"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "20 : 5 = 4."
+          },
+          {
+            "id": "q2_times",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Liczba 3 razy mniejsza od 27 to:",
+            "options": ["9", "8", "7", "6"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "27 : 3 = 9."
+          }
+        ]
       },
       "Dzielenie z resztą": {
         "theoryTitle": "Co to jest reszta z dzielenia?",
         "isTrainer": true,
         "practiceKeys": ["Dzielenie z resztą"],
         "showInPractice": true,
-        "questions": []
+        "questions": [
+          {
+            "id": "q1_rem",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Jaka jest reszta z dzielenia 11 przez 3?",
+            "options": ["1", "2", "3", "0"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "3 · 3 = 9, 11 - 9 = 2. Reszta to 2."
+          },
+          {
+            "id": "q2_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Wynik dzielenia 25 : 4 to:",
+            "options": ["6 r 1", "5 r 5", "6 r 2", "7 r 0"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "6 · 4 = 24, brakuje 1 do 25."
+          }
+        ]
       },
       "Kwadraty i sześciany liczb": {
         "theoryTitle": "Magiczne potęgi: kwadraty i sześciany",
         "isTrainer": true,
         "practiceKeys": ["Kwadraty i sześciany liczb"],
         "showInPractice": true,
-        "questions": []
+        "questions": [
+          {
+            "id": "q1_pow",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 5²?",
+            "options": ["10", "25", "15", "20"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "5² = 5 · 5 = 25."
+          },
+          {
+            "id": "q2_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 2³?",
+            "options": ["6", "8", "9", "4"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "2³ = 2 · 2 · 2 = 8."
+          }
+        ]
       },
       "Kolejność wykonywania działań": {
         "theoryTitle": "Kolejność działań - kto tu rządzi?",
         "isTrainer": true,
         "practiceKeys": ["Kolejność wykonywania działań"],
         "showInPractice": true,
-        "questions": []
+        "questions": [
+          {
+            "id": "q1_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 2 + 2 · 2",
+            "options": ["8", "6", "4", "10"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Najpierw mnożenie: 2 · 2 = 4. Potem dodawanie: 2 + 4 = 6."
+          },
+          {
+            "id": "q2_order",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Wynik działania (10 - 2) : 4 to:",
+            "options": ["2", "3", "8", "4"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Najpierw nawias: 10 - 2 = 8. Potem dzielenie: 8 : 4 = 2."
+          }
+        ]
       },
       "Zadania tekstowe, cz. 1": {
         "theoryTitle": "Rozwiązujemy zadania tekstowe - pierwsze kroki!",
         "isTrainer": true,
-        "practiceKeys": [" Zadania tekstowe. POZIOM 1 "],
+        "practiceKeys": ["Zadania tekstowe. POZIOM 1"],
         "showInPractice": true,
-        "questions": []
+        "questions": [
+          {
+            "id": "q1_word",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ala ma 5 jabłek, a Ola 3. Ile mają razem?",
+            "options": ["7", "8", "9", "10"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "5 + 3 = 8."
+          }
+        ]
       },
       "Zadania tekstowe, cz. 2": {
         "theoryTitle": "Zadania tekstowe dla bystrzaków - część 2!",
         "isTrainer": true,
         "practiceKeys": ["Zadania tekstowe. POZIOM 2"],
         "showInPractice": true,
-        "showInTheoryList": false,
-        "questions": []
+        "questions": [
+          {
+            "id": "q2_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "W pudełku było 20 kredek. Jaś wyjął 6. Ile zostało?",
+            "options": ["12", "13", "14", "15"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "20 - 6 = 14."
+          }
+        ]
       },
       "Oś liczbowa": {
         "theoryTitle": "Podróże po osi liczbowej!",
         "isTrainer": true,
         "practiceKeys": ["Oś liczbowa"],
         "showInPractice": true,
-        "questions": []
+        "questions": [
+          {
+            "id": "q1_axis",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Jaka liczba leży w połowie między 10 a 20?",
+            "options": ["12", "14", "15", "16"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "(10 + 20) : 2 = 15."
+          }
+        ]
       },
       "Sprawdzian końcowy": {
         "isTrainer": false,
         "showInPractice": true,
         "showInTheoryList": false,
         "questions": [
-          {
-            "id": "final_q1",
-            "type": "practice",
-            "difficulty": "łatwe",
-            "questionText": "Oblicz w pamięci: 64 + 28",
-            "options": [
-              "82",
-              "92",
-              "84",
-              "94"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "60 + 20 = 80, 4 + 8 = 12, razem 80 + 12 = 92."
-          },
-          {
-            "id": "final_q2",
-            "type": "practice",
-            "difficulty": "łatwe",
-            "questionText": "Znajdź liczbę o 15 mniejszą od 62.",
-            "options": [
-              "47",
-              "57",
-              "45",
-              "53"
-            ],
-            "correctAnswerIndex": 0,
-            "correctAnswerExplanation": "Należy wykonać odejmowanie: 62 - 15 = 47."
-          },
-          {
-            "id": "final_q3",
-            "type": "practice",
-            "difficulty": "średnie",
-            "questionText": "Oblicz iloczyn: 9 · 7",
-            "options": [
-              "56",
-              "63",
-              "54",
-              "72"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "Z tabliczki mnożenia: 9 · 7 = 63."
-          },
-          {
-            "id": "final_q4",
-            "type": "practice",
-            "difficulty": "średnie",
-            "questionText": "Znajdź liczbę 6 razy większą od 8.",
-            "options": [
-              "14",
-              "42",
-              "48",
-              "56"
-            ],
-            "correctAnswerIndex": 2,
-            "correctAnswerExplanation": "„6 razy większa” oznacza mnożenie: 6 · 8 = 48."
-          },
-          {
-            "id": "final_q5",
-            "type": "practice",
-            "difficulty": "średnie",
-            "questionText": "Wykonaj dzielenie: 72 : 8",
-            "options": [
-              "8",
-              "7",
-              "9",
-              "6"
-            ],
-            "correctAnswerIndex": 2,
-            "correctAnswerExplanation": "Z tabliczki mnożenia: 9 · 8 = 72, więc 72 : 8 = 9."
-          },
-          {
-            "id": "final_q6",
-            "type": "practice",
-            "difficulty": "trudne",
-            "questionText": "Która z liczb po podzieleniu przez 5 daje resztę 3?",
-            "options": [
-              "10",
-              "13",
-              "14",
-              "25"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "13 : 5 = 2 i reszta 3."
-          },
-          {
-            "id": "final_q7",
-            "type": "practice",
-            "difficulty": "średnie",
-            "questionText": "Jak zapisać działanie 4 · 4 · 4 za pomocą potęgowania?",
-            "options": [
-              "3⁴",
-              "4³",
-              "4 · 3",
-              "4 + 4 + 4"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "Mnożymy czwórkę przez siebie 3 razy, więc jest to 4 do potęgi 3 (4³)."
-          },
-          {
-            "id": "final_q8",
-            "type": "practice",
-            "difficulty": "trudne",
-            "questionText": "Oblicz wartość wyrażenia: 6²",
-            "options": [
-              "12",
-              "36",
-              "8",
-              "3"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "6² to 6 · 6, czyli 36."
-          },
-          {
-            "id": "final_q9",
-            "type": "practice",
-            "difficulty": "trudne",
-            "questionText": "Pamiętając o kolejności działań, oblicz: 20 - 10 : 2",
-            "options": [
-              "5",
-              "15",
-              "10",
-              "25"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "Najpierw dzielenie: 10 : 2 = 5. Potem odejmowanie: 20 - 5 = 15."
-          },
-          {
-            "id": "final_q10",
-            "type": "practice",
-            "difficulty": "trudne",
-            "questionText": "Oblicz: 5 + 3 · 4",
-            "options": [
-              "32",
-              "17",
-              "23",
-              "12"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "Najpierw mnożenie: 3 · 4 = 12. Potem dodawanie: 5 + 12 = 17."
-          },
-          {
-            "id": "final_q11",
-            "type": "practice",
-            "difficulty": "trudne",
-            "questionText": "Adam ma 15 naklejek. Bartek ma o 5 naklejek więcej niż Adam. Czarek ma 2 razy mniej naklejek niż Bartek. Ile naklejek ma Czarek?",
-            "options": [
-              "10",
-              "20",
-              "30",
-              "15"
-            ],
-            "correctAnswerIndex": 0,
-            "correctAnswerExplanation": "Adam = 15. Bartek = 15 + 5 = 20. Czarek = 20 : 2 = 10."
-          },
-          {
-            "id": "final_q12",
-            "type": "practice",
-            "difficulty": "średnie",
-            "questionText": "Punkt A na osi liczbowej to 20. Punkt B leży o 8 jednostek w prawo od A. Jaką współrzędną ma punkt B?",
-            "options": [
-              "12",
-              "28",
-              "24",
-              "16"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "W prawo oznacza dodawanie: 20 + 8 = 28."
-          },
-          {
-            "id": "final_q13",
-            "type": "practice",
-            "difficulty": "łatwe",
-            "questionText": "Ile jest liczb dwucyfrowych mniejszych od 15?",
-            "options": [
-              "4",
-              "5",
-              "6",
-              "14"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "Liczby dwucyfrowe mniejsze od 15 to: 10, 11, 12, 13, 14. Jest ich 5."
-          },
-          {
-            "id": "final_q14",
-            "type": "practice",
-            "difficulty": "średnie",
-            "questionText": "Ewa czytała książkę od strony 20 do strony 35 (włącznie). Ile stron przeczytała?",
-            "options": [
-              "15",
-              "16",
-              "14",
-              "25"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "35 - 20 + 1 = 16 stron."
-          },
-          {
-            "id": "final_q15",
-            "type": "practice",
-            "difficulty": "średnie",
-            "questionText": "Ania, Basia i Kasia zbierały grzyby. Ania zebrała 12, Basia 15, a Kasia 8. Ile grzybów zebrały razem?",
-            "options": [
-              "25",
-              "30",
-              "35",
-              "40"
-            ],
-            "correctAnswerIndex": 2,
-            "correctAnswerExplanation": "12 + 15 + 8 = 35."
-          },
-          {
-            "id": "final_q16",
-            "type": "practice",
-            "difficulty": "średnie",
-            "questionText": "Rozwiąż równanie: 4 · ? = 36",
-            "options": [
-              "8",
-              "7",
-              "9",
-              "6"
-            ],
-            "correctAnswerIndex": 2,
-            "correctAnswerExplanation": "Szukamy liczby, która pomnożona przez 4 da 36. To 9."
-          },
-          {
-            "id": "final_q17",
-            "type": "practice",
-            "difficulty": "trudne",
-            "questionText": "Zosia kupiła 3 zeszyty po 5 zł każdy i długopis za 7 zł. Ile zapłaciła?",
-            "options": [
-              "15 zł",
-              "21 zł",
-              "22 zł",
-              "12 zł"
-            ],
-            "correctAnswerIndex": 2,
-            "correctAnswerExplanation": "Zeszyty: 3 · 5 = 15 zł. Razem: 15 + 7 = 22 zł."
-          },
-          {
-            "id": "final_q18",
-            "type": "practice",
-            "difficulty": "średnie",
-            "questionText": "Co jest prawdą?",
-            "options": [
-              "5² = 10",
-              "4³ = 12",
-              "3² = 9",
-              "2³ = 6"
-            ],
-            "correctAnswerIndex": 2,
-            "correctAnswerExplanation": "3² to 3 · 3, czyli 9. Pozostałe to błędy (mylenie potęgowania z mnożeniem)."
-          },
-          {
-            "id": "final_q19",
-            "type": "practice",
-            "difficulty": "łatwe",
-            "questionText": "Oblicz: 100 - 45",
-            "options": [
-              "55",
-              "65",
-              "45",
-              "50"
-            ],
-            "correctAnswerIndex": 0,
-            "correctAnswerExplanation": "100 - 40 = 60, 60 - 5 = 55."
-          },
-          {
-            "id": "final_q20",
-            "type": "practice",
-            "difficulty": "trudne",
-            "questionText": "Suma trzech liczb wynosi 50. Pierwsza to 15, druga to 10. Jaka jest trzecia liczba?",
-            "options": [
-              "35",
-              "25",
-              "15",
-              "20"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "15 + 10 = 25. Trzecia liczba to 50 - 25 = 25."
-          },
-          {
-            "id": "final_q21",
-            "type": "practice",
-            "difficulty": "średnie",
-            "questionText": "Ile to jest 3 + 4 · 5?",
-            "options": [
-              "35",
-              "23",
-              "20",
-              "12"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "Kolejność działań: najpierw mnożenie. 4 · 5 = 20. Potem dodawanie: 3 + 20 = 23."
-          },
-          {
-            "id": "final_q22",
-            "type": "practice",
-            "difficulty": "trudne",
-            "questionText": "Tata ma 36 lat, a syn 9. Ile razy tata jest starszy od syna?",
-            "options": [
-              "3 razy",
-              "4 razy",
-              "27 razy",
-              "5 razy"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "Pytanie 'ile razy' oznacza dzielenie. 36 : 9 = 4."
-          },
-          {
-            "id": "final_q23",
-            "type": "practice",
-            "difficulty": "średnie",
-            "questionText": "Suma dwóch liczb wynosi 100. Jeden ze składników to 35. Drugi składnik to:",
-            "options": [
-              "65",
-              "75",
-              "135",
-              "55"
-            ],
-            "correctAnswerIndex": 0,
-            "correctAnswerExplanation": "100 - 35 = 65."
-          },
-          {
-            "id": "final_q24",
-            "type": "practice",
-            "difficulty": "średnie",
-            "questionText": "Ile wynosi kwadrat liczby 10 (10²)?",
-            "options": [
-              "20",
-              "100",
-              "200",
-              "1010"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "10² to 10 · 10 = 100."
-          },
-          {
-            "id": "final_q25",
-            "type": "practice",
-            "difficulty": "trudne",
-            "questionText": "Jaki jest wynik dzielenia z resztą: 23 : 5?",
-            "options": [
-              "4 r 3",
-              "5 r 2",
-              "4 r 1",
-              "3 r 8"
-            ],
-            "correctAnswerIndex": 0,
-            "correctAnswerExplanation": "4 · 5 = 20. 23 - 20 = 3 reszty. Wynik to 4 reszta 3."
-          },
-          {
-            "id": "final_q26",
-            "type": "practice",
-            "difficulty": "łatwe",
-            "questionText": "Oblicz sumę: 120 + 180",
-            "options": [
-              "200",
-              "300",
-              "400",
-              "290"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "100 + 100 = 200, 20 + 80 = 100. Razem 300."
-          },
-          {
-            "id": "final_q27",
-            "type": "practice",
-            "difficulty": "średnie",
-            "questionText": "Jaka liczba ukrywa się pod znakiem zapytania? ? - 20 = 50",
-            "options": [
-              "30",
-              "70",
-              "100",
-              "25"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "Aby znaleźć odjemną, dodajemy różnicę do odjemnika: 50 + 20 = 70."
-          },
-          {
-            "id": "final_q28",
-            "type": "practice",
-            "difficulty": "średnie",
-            "questionText": "Masz 3 banknoty po 20 zł. Ile masz łącznie pieniędzy?",
-            "options": [
-              "50 zł",
-              "60 zł",
-              "100 zł",
-              "23 zł"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "3 · 20 zł = 60 zł."
-          },
-          {
-            "id": "final_q29",
-            "type": "practice",
-            "difficulty": "trudne",
-            "questionText": "Jesteś na osi liczbowej w punkcie 50. Przesuwasz się w lewo o 15 jednostek. Gdzie jesteś?",
-            "options": [
-              "35",
-              "65",
-              "45",
-              "40"
-            ],
-            "correctAnswerIndex": 0,
-            "correctAnswerExplanation": "Ruch w lewo oznacza odejmowanie. 50 - 15 = 35."
-          },
-          {
-            "id": "final_q30",
-            "type": "practice",
-            "difficulty": "średnie",
-            "questionText": "Oblicz iloczyn: 15 · 4",
-            "options": [
-              "45",
-              "50",
-              "60",
-              "55"
-            ],
-            "correctAnswerIndex": 2,
-            "correctAnswerExplanation": "10 · 4 = 40, 5 · 4 = 20. Razem 60."
-          },
-          {
-            "id": "final_q31",
-            "type": "practice",
-            "difficulty": "łatwe",
-            "questionText": "Która z tych liczb jest parzysta?",
-            "options": [
-              "21",
-              "33",
-              "48",
-              "15"
-            ],
-            "correctAnswerIndex": 2,
-            "correctAnswerExplanation": "Liczba parzysta dzieli się przez 2 bez reszty (kończy się na 0, 2, 4, 6 lub 8). Jest to 48."
-          },
-          {
-            "id": "final_q32",
-            "type": "practice",
-            "difficulty": "trudne",
-            "questionText": "Na jednej półce jest 20 książek, a na drugiej o 5 więcej. Ile książek jest na obu półkach razem?",
-            "options": [
-              "25",
-              "45",
-              "40",
-              "35"
-            ],
-            "correctAnswerIndex": 1,
-            "correctAnswerExplanation": "Półka pierwsza: 20. Półka druga: 20 + 5 = 25. Razem: 20 + 25 = 45."
-          }
+          { "id": "final_q1", "type": "practice", "difficulty": "łatwe", "questionText": "Oblicz w pamięci: 64 + 28", "options": ["82", "92", "84", "94"], "correctAnswerIndex": 1, "correctAnswerExplanation": "92" },
+          { "id": "final_q2", "type": "practice", "difficulty": "łatwe", "questionText": "Znajdź liczbę o 15 mniejszą od 62.", "options": ["47", "57", "45", "53"], "correctAnswerIndex": 0, "correctAnswerExplanation": "47" },
+          { "id": "final_q3", "type": "practice", "difficulty": "średnie", "questionText": "Oblicz iloczyn: 9 · 7", "options": ["56", "63", "54", "72"], "correctAnswerIndex": 1, "correctAnswerExplanation": "63" },
+          { "id": "final_q4", "type": "practice", "difficulty": "średnie", "questionText": "Znajdź liczbę 6 razy większą od 8.", "options": ["14", "42", "48", "56"], "correctAnswerIndex": 2, "correctAnswerExplanation": "48" },
+          { "id": "final_q5", "type": "practice", "difficulty": "średnie", "questionText": "Wykonaj dzielenie: 72 : 8", "options": ["8", "7", "9", "6"], "correctAnswerIndex": 2, "correctAnswerExplanation": "9" }
         ]
       }
     },
     "SYSTEM ZAPISYWANIA LICZB": {
       "System dziesiątkowy": {
         "theoryTitle": "Nasz system liczbowy - dziesiątkowy",
-        "isTrainer": true, // <-- NOWOŚĆ: Oznacza, że to moduł treningowy
-        "practiceKeys": ["System dziesiątkowy"], // <-- Dodanie klucza treningu
-        "showInPractice": true, // <-- Dodanie dla widoczności w Trenerze
-        "questions": [] // <-- WAŻNE: Pusta lista pytań (bo treść jest w Firebase)
+        "isTrainer": false,
+        "showInPractice": true,
+        "questions": [
+          {
+            "id": "q1_dec",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile cyfr ma liczba tysiąc?",
+            "options": ["3", "4", "5", "2"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "1000 ma 4 cyfry."
+          }
+        ]
       },
       "Porównywanie liczb naturalnych": {
         "theoryTitle": "Która liczba większa?",
-        "isTrainer": true,
-        "practiceKeys": ["Porównywanie liczb naturalnych"],
+        "isTrainer": false,
         "showInPractice": true,
-        "questions": []
+        "questions": [
+          {
+            "id": "q1_comp",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Która liczba jest większa: 205 czy 250?",
+            "options": ["205", "250", "są równe", "nie da się określić"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "250 ma więcej dziesiątek."
+          }
+        ]
       },
       "Rachunki pamięciowe na dużych liczbach": {
         "theoryTitle": "Liczymy duże liczby w głowie",
-        "isTrainer": true,
-        "practiceKeys": ["Rachunki pamięciowe na dużych liczbach"],
+        "isTrainer": false,
         "showInPractice": true,
-        "questions": []
+        "questions": [
+          {
+            "id": "q1_big",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 2000 + 3500",
+            "options": ["5000", "5500", "6500", "4500"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "2+3=5 tysięcy, plus 500."
+          }
+        ]
       },
       "Jednostki monetarne - złote i grosze": {
         "theoryTitle": "Pieniądze: złote i grosze",
-        "isTrainer": true,
-        "practiceKeys": ["Jednostki monetarne - złote i grosze"],
+        "isTrainer": false,
         "showInPractice": true,
-        "questions": []
+        "questions": [
+          {
+            "id": "q1_money",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile groszy ma 1 złoty?",
+            "options": ["10", "100", "1000", "50"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "1 zł = 100 gr."
+          }
+        ]
       },
       "Jednostki długości": {
         "theoryTitle": "Mierzymy długość: metry, centymetry",
-        "isTrainer": true,
-        "practiceKeys": ["Jednostki długości"],
+        "isTrainer": false,
         "showInPractice": true,
-        "questions": []
+        "questions": [
+          {
+            "id": "q1_len",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile centymetrów ma 1 metr?",
+            "options": ["10", "100", "1000", "50"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "1 m = 100 cm."
+          }
+        ]
       },
       "Jednostki masy": {
         "theoryTitle": "Ważymy: kilogramy i gramy",
-        "isTrainer": true,
-        "practiceKeys": ["Jednostki masy"],
+        "isTrainer": false,
         "showInPractice": true,
-        "questions": []
+        "questions": [
+          {
+            "id": "q1_mass",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile gramów ma kilogram?",
+            "options": ["100", "1000", "10", "500"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Kilo znaczy tysiąc."
+          }
+        ]
       },
       "System rzymski": {
         "theoryTitle": "Liczby rzymskie - jak je czytać?",
-        "isTrainer": true,
-        "practiceKeys": ["System rzymski"],
+        "isTrainer": false,
         "showInPractice": true,
-        "questions": []
+        "questions": [
+          {
+            "id": "q1_rom",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jak zapisać liczbę 10 rzymskimi cyframi?",
+            "options": ["V", "X", "L", "I"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "X to 10."
+          }
+        ]
       },
       "Z kalendarzem za pan brat": {
         "theoryTitle": "Kalendarz: dni, miesiące, lata",
-        "isTrainer": true,
-        "practiceKeys": ["Z kalendarzem za pan brat"],
+        "isTrainer": false,
         "showInPractice": true,
-        "questions": []
+        "questions": [
+          {
+            "id": "q1_cal",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile miesięcy ma rok?",
+            "options": ["10", "11", "12", "13"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Rok ma 12 miesięcy."
+          }
+        ]
       },
       "Godziny na zegarach": {
         "theoryTitle": "Która godzina? Zegary",
-        "isTrainer": true,
-        "practiceKeys": ["Godziny na zegarach"],
+        "isTrainer": false,
         "showInPractice": true,
-        "questions": []
+        "questions": [
+          {
+            "id": "q1_clock",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Kwadrans to ile minut?",
+            "options": ["10", "15", "20", "30"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Kwadrans to 15 minut."
+          }
+        ]
       }
     },
     "DZIAŁANIA PISEMNE": {
@@ -597,7 +418,15 @@
         "practiceKeys": ["Dodawanie pisemne"],
         "showInPractice": true,
         "questions": [
-          { "id": "q1_dodpis_4", "type": "practice", "difficulty": "łatwe", "questionText": "Oblicz pisemnie: 123 + 45", "options": ["168", "178", "573", "158"], "correctAnswerIndex": 0, "correctAnswerExplanation": "Dodajemy jedności do jedności (3+5=8), dziesiątki do dziesiątek (2+4=6), setki zostają (1). Wynik: 168.", "theorySnippet": "Przy dodawaniu pisemnym podpisujemy liczby jedna pod drugą, wyrównując do prawej strony (jedności pod jednościami itd.) i dodajemy cyfry w kolejnych rzędach od prawej do lewej."}
+          {
+            "id": "q1_pis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Wynik dodawania 123 + 456 to:",
+            "options": ["579", "589", "569", "578"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "100+400=500, 20+50=70, 3+6=9."
+          }
         ]
       },
       "Odejmowanie pisemne": {
@@ -605,77 +434,99 @@
         "isTrainer": true,
         "practiceKeys": ["Odejmowanie pisemne"],
         "showInPractice": true,
-        "questions": []
+        "questions": [
+          {
+            "id": "q1_odejm",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Wynik odejmowania 150 - 25 to:",
+            "options": ["135", "125", "115", "130"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "150 - 20 = 130, 130 - 5 = 125."
+          }
+        ]
       },
-      "Mnożenie pisemne przez liczby jednocyfrowe": { "theoryTitle": "Mnożenie w słupku (przez jedną cyfrę)", "theoryContent": [], "questions": [] },
-      "Mnożenie przez liczby z zerami na końcu": { "theoryTitle": "Mnożenie z zerami na końcu", "theoryContent": [], "questions": [] },
-      "Dzielenie pisemne przez liczby jednocyfrowe": { "theoryTitle": "Dzielenie w słupku (przez jedną cyfrę)", "theoryContent": [], "questions": [] },
-      "Mnożenie pisemne przez liczby wielocyfrowe": { "theoryTitle": "Mnożenie w słupku (przez wiele cyfr)", "theoryContent": [], "questions": [] },
-      "Działania pisemne. Zadania tekstowe": { "theoryTitle": "Zadania tekstowe z działaniami pisemnymi", "theoryContent": [], "questions": [] }
+      "Mnożenie pisemne przez liczby jednocyfrowe": {
+        "theoryTitle": "Mnożenie w słupku (przez jedną cyfrę)",
+        "isTrainer": false,
+        "showInPractice": true,
+        "questions": [
+          {
+            "id": "q1_mno_pis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz pisemnie: 23 · 3",
+            "options": ["66", "69", "59", "79"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "20·3=60, 3·3=9."
+          }
+        ]
+      },
+      "Mnożenie przez liczby z zerami na końcu": { "theoryTitle": "Mnożenie z zerami na końcu", "showInPractice": true, "questions": [ { "id": "q1_zero", "questionText": "20 · 30 = ?", "options": ["60", "600", "500", "6000"], "correctAnswerIndex": 1, "correctAnswerExplanation": "2·3=6 i dwa zera -> 600." } ] },
+      "Dzielenie pisemne przez liczby jednocyfrowe": { "theoryTitle": "Dzielenie w słupku", "showInPractice": true, "questions": [ { "id": "q1_dziel_pis", "questionText": "48 : 2", "options": ["22", "24", "26", "20"], "correctAnswerIndex": 1, "correctAnswerExplanation": "24" } ] },
+      "Mnożenie pisemne przez liczby wielocyfrowe": { "theoryTitle": "Mnożenie przez wiele cyfr", "showInPractice": true, "questions": [ { "id": "q1_wielo", "questionText": "11 · 11", "options": ["121", "111", "101", "131"], "correctAnswerIndex": 0, "correctAnswerExplanation": "121" } ] },
+      "Działania pisemne. Zadania tekstowe": { "theoryTitle": "Zadania tekstowe", "showInPractice": true, "questions": [ { "id": "q1_tekst_pis", "questionText": "Kupiono 2 książki po 25 zł. Ile zapłacono?", "options": ["40 zł", "50 zł", "60 zł", "45 zł"], "correctAnswerIndex": 1, "correctAnswerExplanation": "25 + 25 = 50." } ] }
     },
     "FIGURY GEOMETRYCZNE": {
-      "Proste, półproste, odcinki": { "theoryTitle": "Linie wokół nas: proste i odcinki", "theoryContent": [], "questions": [] },
-      "Wzajemne położenie prostych": { "theoryTitle": "Jak proste mogą się spotykać?", "theoryContent": [], "questions": [] },
-      "Odcinki prostopadłe i odcinki równoległe": { "theoryTitle": "Prostopadłe i równoległe - co to znaczy?", "theoryContent": [], "questions": [] },
-      "Mierzenie długości": { "theoryTitle": "Mierzymy linijką", "theoryContent": [], "questions": [] },
-      "Kąty": { "theoryTitle": "Co to jest kąt?", "theoryContent": [], "questions": [] },
-      "Mierzenie kątów": { "theoryTitle": "Mierzymy kąty kątomierzem", "theoryContent": [], "questions": [] },
-      "Wielokąty": { "theoryTitle": "Figury z wieloma kątami", "theoryContent": [], "questions": [] },
-      "Prostokąty i kwadraty": { "theoryTitle": "Poznajemy prostokąty i kwadraty", "theoryContent": [], "questions": [] },
-      "Obwody prostokątów i kwadratów": { "theoryTitle": "Liczymy obwody figur", "theoryContent": [], "questions": [] },
-      "Koła i okręgi": { "theoryTitle": "Okrągłe kształty: koła i okręgi", "theoryContent": [], "questions": [] },
-      "Co to jest skala?": { "theoryTitle": "Powiększamy i zmniejszamy: skala", "theoryContent": [], "questions": [] },
-      "Skala na planach": { "theoryTitle": "Czytamy mapy i plany", "theoryContent": [], "questions": [] }
+      "Proste, półproste, odcinki": { "theoryTitle": "Linie", "showInPractice": true, "questions": [ { "id": "geo1", "questionText": "Co ma początek i koniec?", "options": ["Prosta", "Odcinek", "Półprosta", "Punkt"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Odcinek jest ograniczony z obu stron." } ] },
+      "Wzajemne położenie prostych": { "theoryTitle": "Proste", "showInPractice": true, "questions": [ { "id": "geo2", "questionText": "Proste, które się nie przecinają to:", "options": ["Prostopadłe", "Równoległe", "Przecinające", "Styczne"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Równoległe nigdy się nie spotykają." } ] },
+      "Odcinki prostopadłe i odcinki równoległe": { "theoryTitle": "Relacje odcinków", "showInPractice": true, "questions": [] },
+      "Mierzenie długości": { "theoryTitle": "Mierzenie", "showInPractice": true, "questions": [] },
+      "Kąty": { "theoryTitle": "Kąty", "showInPractice": true, "questions": [ { "id": "kat1", "questionText": "Kąt prosty ma:", "options": ["60 stopni", "90 stopni", "100 stopni", "180 stopni"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Kąt prosty to 90 stopni." } ] },
+      "Mierzenie kątów": { "theoryTitle": "Kątomierz", "showInPractice": true, "questions": [] },
+      "Wielokąty": { "theoryTitle": "Wielokąty", "showInPractice": true, "questions": [] },
+      "Prostokąty i kwadraty": { "theoryTitle": "Czworokąty", "showInPractice": true, "questions": [ { "id": "fig1", "questionText": "Kwadrat ma:", "options": ["Różne boki", "Wszystkie boki równe", "Tylko dwa boki równe", "Brak boków"], "correctAnswerIndex": 1, "correctAnswerExplanation": "Kwadrat ma 4 równe boki." } ] },
+      "Obwody prostokątów i kwadratów": { "theoryTitle": "Obwody", "showInPractice": true, "questions": [ { "id": "obw1", "questionText": "Bok kwadratu ma 5 cm. Obwód to:", "options": ["10 cm", "15 cm", "20 cm", "25 cm"], "correctAnswerIndex": 2, "correctAnswerExplanation": "4 · 5 = 20." } ] },
+      "Koła i okręgi": { "theoryTitle": "Koła", "showInPractice": true, "questions": [] },
+      "Co to jest skala?": { "theoryTitle": "Skala", "showInPractice": true, "questions": [] },
+      "Skala na planach": { "theoryTitle": "Plany", "showInPractice": true, "questions": [] }
     },
     "UŁAMKI ZWYKŁE": {
-      "Ułamek jako część całości": { "theoryTitle": "Co to jest ułamek?", "theoryContent": [], "questions": [] },
-      "Liczby mieszane": { "theoryTitle": "Całości i ułamki razem", "theoryContent": [], "questions": [] },
-      "Ułamki i liczby mieszane na osi liczbowej": { "theoryTitle": "Ułamki na osi liczbowej", "theoryContent": [], "questions": [] },
-      "Porównywanie ułamków": { "theoryTitle": "Który ułamek większy?", "theoryContent": [], "questions": [] },
-      "Rozszerzanie i skracanie ułamków": { "theoryTitle": "Zmieniamy ułamki, nie zmieniając wartości", "theoryContent": [], "questions": [] },
-      "Ułamki niewłaściwe": { "theoryTitle": "Gdy licznik jest większy od mianownika", "theoryContent": [], "questions": [] },
-      "Ułamek jako wynik dzielenia": { "theoryTitle": "Dzielenie a ułamki", "theoryContent": [], "questions": [] },
-      "Dodawanie ułamków zwykłych": { "theoryTitle": "Dodajemy ułamki", "theoryContent": [], "questions": [] },
-      "Odejmowanie ułamków zwykłych": { "theoryTitle": "Odejmujemy ułamki", "theoryContent": [], "questions": [] }
+      "Ułamek jako część całości": { "theoryTitle": "Ułamki", "showInPractice": true, "questions": [ { "id": "ul1", "questionText": "Pół to:", "options": ["1/3", "1/2", "1/4", "1/5"], "correctAnswerIndex": 1, "correctAnswerExplanation": "1/2" } ] },
+      "Liczby mieszane": { "theoryTitle": "Liczby mieszane", "showInPractice": true, "questions": [] },
+      "Ułamki i liczby mieszane na osi liczbowej": { "theoryTitle": "Oś liczbowa", "showInPractice": true, "questions": [] },
+      "Porównywanie ułamków": { "theoryTitle": "Porównywanie", "showInPractice": true, "questions": [ { "id": "ul2", "questionText": "Co jest większe?", "options": ["1/2", "1/4", "1/8", "1/10"], "correctAnswerIndex": 0, "correctAnswerExplanation": "Pół pizzy to więcej niż ćwierć." } ] },
+      "Rozszerzanie i skracanie ułamków": { "theoryTitle": "Skracanie", "showInPractice": true, "questions": [] },
+      "Ułamki niewłaściwe": { "theoryTitle": "Niewłaściwe", "showInPractice": true, "questions": [] },
+      "Ułamek jako wynik dzielenia": { "theoryTitle": "Dzielenie", "showInPractice": true, "questions": [] },
+      "Dodawanie ułamków zwykłych": { "theoryTitle": "Dodawanie", "showInPractice": true, "questions": [ { "id": "ul3", "questionText": "1/5 + 2/5 = ?", "options": ["3/5", "3/10", "2/5", "1/5"], "correctAnswerIndex": 0, "correctAnswerExplanation": "Liczniki dodajemy, mianownik bez zmian." } ] },
+      "Odejmowanie ułamków zwykłych": { "theoryTitle": "Odejmowanie", "showInPractice": true, "questions": [] }
     },
     "UŁAMKI DZIESIĘTNE": {
-      "Ułamki o mianownikach 10, 100, 1000, ...": { "theoryTitle": "Ułamki z przecinkiem", "theoryContent": [], "questions": [] },
-      "Zapisywanie wyrażeń dwumianowanych, cz. 1": { "theoryTitle": "Zapisujemy miary z przecinkiem (metry, złote)", "theoryContent": [], "questions": [] },
-      "Zapisywanie wyrażeń dwumianowanych, cz. 2": { "theoryTitle": "Zapisujemy miary z przecinkiem (kilogramy, litry)", "theoryContent": [], "questions": [] },
-      "Różne zapisy tego samego ułamka dziesiętnego": { "theoryTitle": "Te same ułamki, różne zapisy", "theoryContent": [], "questions": [] },
-      "Porównywanie ułamków dziesiętnych": { "theoryTitle": "Który ułamek dziesiętний większy?", "theoryContent": [], "questions": [] },
-      "Dodawanie ułamków dziesiętnych": { "theoryTitle": "Dodajemy ułamki dziesiętne", "theoryContent": [], "questions": [] },
-      "Odejmowanie ułamków dziesiętnych": { "theoryTitle": "Odejmujemy ułamki dziesiętne", "theoryContent": [], "questions": [] }
+      "Ułamki o mianownikach 10, 100, 1000, ...": { "theoryTitle": "Dziesiętne", "showInPractice": true, "questions": [ { "id": "dz1", "questionText": "0,5 to:", "options": ["1/2", "1/5", "1/10", "1/100"], "correctAnswerIndex": 0, "correctAnswerExplanation": "5/10 = 1/2" } ] },
+      "Zapisywanie wyrażeń dwumianowanych, cz. 1": { "theoryTitle": "Miary", "showInPractice": true, "questions": [] },
+      "Zapisywanie wyrażeń dwumianowanych, cz. 2": { "theoryTitle": "Wagi", "showInPractice": true, "questions": [] },
+      "Różne zapisy tego samego ułamka dziesiętnego": { "theoryTitle": "Zapisy", "showInPractice": true, "questions": [] },
+      "Porównywanie ułamków dziesiętnych": { "theoryTitle": "Porównywanie", "showInPractice": true, "questions": [ { "id": "dz2", "questionText": "Co większe: 0,2 czy 0,15?", "options": ["0,2", "0,15", "równe", "nie wiem"], "correctAnswerIndex": 0, "correctAnswerExplanation": "0,20 > 0,15" } ] },
+      "Dodawanie ułamków dziesiętnych": { "theoryTitle": "Dodawanie", "showInPractice": true, "questions": [] },
+      "Odejmowanie ułamków dziesiętnych": { "theoryTitle": "Odejmowanie", "showInPractice": true, "questions": [] }
     },
     "POLA FIGUR": {
-      "Co to jest pole figury?": { "theoryTitle": "Ile miejsca zajmuje figura?", "theoryContent": [], "questions": [] },
-      "Jednostki pola": { "theoryTitle": "W czym mierzymy pole?", "theoryContent": [], "questions": [] },
-      "Pole prostokąta": { "theoryTitle": "Liczymy pole prostokąta", "theoryContent": [], "questions": [] },
-      "Zależności między jednostkami pola": { "theoryTitle": "Przeliczamy jednostki pola", "theoryContent": [], "questions": [] },
-      "Wycinanki i układanki": { "theoryTitle": "Zabawy z polami figur", "theoryContent": [], "questions": [] }
+      "Co to jest pole figury?": { "theoryTitle": "Pole", "showInPractice": true, "questions": [] },
+      "Jednostki pola": { "theoryTitle": "Jednostki", "showInPractice": true, "questions": [] },
+      "Pole prostokąta": { "theoryTitle": "Pole prostokąta", "showInPractice": true, "questions": [ { "id": "pole1", "questionText": "Boki 2 cm i 3 cm. Pole?", "options": ["6 cm²", "5 cm²", "10 cm²", "6 cm"], "correctAnswerIndex": 0, "correctAnswerExplanation": "2 · 3 = 6." } ] },
+      "Zależności między jednostkami pola": { "theoryTitle": "Przeliczanie", "showInPractice": true, "questions": [] },
+      "Wycinanki i układanki": { "theoryTitle": "Zabawy", "showInPractice": true, "questions": [] }
     },
     "PROSTOPADŁOŚCIANY I SZEŚCIANY": {
-      "Opis prostopadłościanu": { "theoryTitle": "Poznajemy prostopadłościany", "theoryContent": [], "questions": [] },
-      "Siatki prostopadłościanów": { "theoryTitle": "Rozkładamy pudełka - siatki", "theoryContent": [], "questions": [] },
-      "Pole powierzchni prostopadłościanu": { "theoryTitle": "Liczymy pole powierzchni pudełek", "theoryContent": [], "questions": [] }
+      "Opis prostopadłościanu": { "theoryTitle": "Bryły", "showInPractice": true, "questions": [ { "id": "bryla1", "questionText": "Sześcian ma ścian:", "options": ["4", "5", "6", "8"], "correctAnswerIndex": 2, "correctAnswerExplanation": "Jak kostka do gry." } ] },
+      "Siatki prostopadłościanów": { "theoryTitle": "Siatki", "showInPractice": true, "questions": [] },
+      "Pole powierzchni prostopadłościanu": { "theoryTitle": "Pole powierzchni", "showInPractice": true, "questions": [] }
     }
   },
   "5": {
-    "LICZBY_NATURALNE_W_DZIESIATKOWYM_SYSTEMIE_ZAPISU": {
-      "Odczytywanie_i_zapisywanie_liczb_wielocyfrowych": { "theoryTitle": "Wielkie liczby", "theoryContent": [], "questions": [] }
+    "LICZBY_NATURALNE": {
+      "Wielkie liczby": { "theoryTitle": "Miliony i miliardy", "showInPractice": true, "questions": [] }
     }
-    // !!! ДОДАЙТЕ СТРУКТУРУ ТА ПИТАННЯ ДЛЯ 5 КЛАСУ, ВИКОРИСТОВУЮЧИ ОБ'ЄКТИ ДЛЯ ПІДТЕМ !!!
   },
   "6": {
-    "ULAMKI_ZWYKLE_I_DZIESIETNE": {
-      "Dodawanie_i_odejmowanie_ulamkow": { "theoryTitle": "Działania na ułamkach", "theoryContent": [], "questions": [] }
+    "ULAMKI": {
+      "Działania": { "theoryTitle": "Mnożenie ułamków", "showInPractice": true, "questions": [] }
     }
-    // !!! ДОДАЙТЕ СТРУКТУРУ ТА ПИТАННЯ ДЛЯ 6 КЛАСУ, ВИКОРИСТОВУЮЧИ ОБ'ЄКТИ ДЛЯ ПІДТЕМ !!!
   },
   "7": {
-    "POTĘGI_I_PIERWIASTKI": {
-      "Potęga_o_wykładniku_naturalnym": { "theoryTitle": "Co to są potęgi?", "theoryContent": [], "questions": [] }
+    "POTEGI": {
+      "Wprowadzenie": { "theoryTitle": "Potęgi", "showInPractice": true, "questions": [] }
     }
-    // !!! ДОДАЙТЕ СТРУКТУРУ ТА ПИТАННЯ ДЛЯ 7 КЛАСУ, ВИКОРИСТОВУЮЧИ ОБ'ЄКТИ ДЛЯ ПІДТЕМ !!!
   }
 }
