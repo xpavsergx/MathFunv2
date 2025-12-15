@@ -7,22 +7,22 @@ import {
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
-// 🚀 ID dokumentu dla "Dynamiczne Dodawanie Pisemne"
-const LESSON_ID = 'dynamicAddition';
-// 🚀 Ustal maksymalną liczbę kroków (0 do 6 = 7 kroków)
-const MAX_STEPS = 6; // Ustawione na 7, aby mieć 6 pełnych akcji po starcie
+// 🚀 ID dokumentu dla "Dynamiczne Mnożenie Pisemne"
+const LESSON_ID = 'dynamicMultiplication';
+// 🚀 Ustal maksymalną liczbę kroków (0 do 7 = 8 kroków)
+const MAX_STEPS = 7;
 
 // --- STAŁE DANE DLA TEORII (zaszyte w kodzie - używamy tylko tytułu) ---
 const STATIC_LESSON_DATA = {
-    title: "Dodawanie Pisemne",
+    title: "Mnożenie Pisemne przez Liczbę Jednocyfrową",
 };
 
 // --- KOMPONENT ---
 
-export default function DynamicAdditionBlock() {
+export default function DynamicMultiplicationBlock() {
     const [step, setStep] = useState(0);
-    const [num1, setNum1] = useState('');
-    const [num2, setNum2] = useState('');
+    const [factor1, setFactor1] = useState(''); // Górna liczba (np. 45)
+    const [factor2, setFactor2] = useState(''); // Jednocyfrowy mnożnik (np. 3)
     const [loading, setLoading] = useState(true);
 
     const handleNextStep = () => {
@@ -39,8 +39,8 @@ export default function DynamicAdditionBlock() {
                     .get();
                 if (doc.exists) {
                     const data = doc.data();
-                    setNum1(data?.number1 || '27');
-                    setNum2(data?.number2 || '45');
+                    setFactor1(data?.factor1 || '45');
+                    setFactor2(data?.factor2 || '3');
                 }
             } catch (error) {
                 console.error('Błąd ładowania danych Firestore:', error);
@@ -70,7 +70,7 @@ export default function DynamicAdditionBlock() {
         });
     };
 
-    if (loading || !num1 || !num2) {
+    if (loading || !factor1 || !factor2) {
         return (
             <View style={[styles.wrapper, styles.loadingWrapper]}>
                 <ActivityIndicator size="large" color="#FF8F00" />
@@ -80,32 +80,40 @@ export default function DynamicAdditionBlock() {
     }
 
     // --- LOGIKA WIZUALIZACJI "PISANIA" ---
-    const getExplanationText = (visStep: number, num1: string, num2: string) => {
+    const getExplanationText = (visStep: number, factor1: string, factor2: string) => {
         const isHighlight = (current: number) => visStep === current;
 
-        // Zaktualizowano objaśnienia, aby pasowały do nowej sekwencji (4, 5, 6)
+        // Obliczenia dla objaśnień (45 * 3 = 135)
+        const unitMult = parseInt(factor1[1]) * parseInt(factor2); // 5 * 3 = 15
+        const tenMult = parseInt(factor1[0]) * parseInt(factor2); // 4 * 3 = 12
+
         if (isHighlight(1)) {
-            return `Zapisujemy pierwszą i drugą liczbę, wyrównując kolumny.`;
+            return `Zapisujemy liczby, wyrównując je do prawej. Zaczynamy mnożyć od (jedności).`;
         } else if (isHighlight(2)) {
             return `Rysujemy linię. Zadanie gotowe!`;
         } else if (isHighlight(3)) {
-            return `Krok 1: Podświetlamy JEDNOŚCI. Dodajemy: ${num1[1]} + ${num2[1]}.`;
+            return `Krok 1: Podświetlamy JEDNOŚCI. Mnożymy: ${factor1[1]} x ${factor2} = ${unitMult}.`;
         } else if (isHighlight(4)) {
-            return `Wynik (12): Zapisz 2 pod Jednościami. Teraz przygotuj przeniesienie.`;
+            return `Wynik (${unitMult}): Zapisz 5 pod Jednościami, a (1) przenieś na górę kolumny Dziesiątek.`;
         } else if (isHighlight(5)) {
-            return `PRZENOSIMY (1) na górę kolumny Dziesiątek. Krok 2: Podświetlamy DZIESIĄTKI i dodajemy.`;
+            return `Krok 2: Podświetlamy DZIESIĄTKI. Mnożymy: ${factor1[0]} x ${factor2}.`;
         } else if (isHighlight(6)) {
-            return `Wynik: 1 (przeniesienie) + ${num1[0]} + ${num2[0]} = 7. Zapisujemy 7. Zadanie wykonane!`;
+            return `Dodaj przeniesienie: ${tenMult} + 1 = ${tenMult + 1}. Zapisujemy 13.`;
+        } else if (isHighlight(7)) {
+            return `Zapisujemy 13 pod Dziesiątkami. Wynik to 135. Zadanie wykonane!`;
         } else {
             return `Kliknij "Dalej", aby rozpocząć pisanie zadania.`;
         }
     };
 
-    const renderWrittenAdditionDiagram = () => {
-        const number1 = ' ' + num1;
-        const number2 = '+' + num2;
-        const rawResult = (parseInt(num1) + parseInt(num2)).toString();
-        const result = ' ' + rawResult;
+    const renderWrittenMultiplicationDiagram = () => {
+        // Górna liczba (45)
+        const number1 = ' ' + factor1;
+        // Dolna liczba (*3)
+        const number2 = 'x ' + factor2;
+        // Wynik (135)
+        const rawResult = (parseInt(factor1) * parseInt(factor2)).toString();
+        const result = rawResult;
 
         const VIS_STEP = step;
 
@@ -115,30 +123,31 @@ export default function DynamicAdditionBlock() {
         // Przeniesienie (Mała jedynka na górze)
         const carryElement = (
             <Text
-                style={styles.additionCarry}
+                style={styles.carry}
             >
                 1
             </Text>
         );
 
-        // Funkcja renderująca wiersz liczb
+        // Renderowanie wiersza liczb
         const renderRow = (text: string, isResult: boolean = false, visibleStartStep: number) => (
-            <View style={styles.additionRow}>
+            <View style={styles.multiplicationRow}>
                 {text.split('').map((char, index) => {
                     let opacity = 0;
 
                     if (isResult) {
-                        // Wynik Jedności (index 2)
-                        if (index === 2) opacity = isVisible(4) ? 1 : 0;
-                        // Wynik Dziesiątek (index 1)
-                        else if (index === 1) opacity = isVisible(6) ? 1 : 0;
+                        // Cyfry wyniku (135)
+                        // Jedności (index 2) - Pojawia się VIS_STEP 4
+                        if (index === text.length - 1) opacity = isVisible(4) ? 1 : 0;
+                        // Dziesiątki (index 1) i Setki (index 0) - Pojawiają się VIS_STEP 6
+                        else if (index === text.length - 2 || index === text.length - 3) opacity = isVisible(6) ? 1 : 0;
                     } else {
-                        // LICZBY WEJŚCIOWE: Całe zadanie widoczne od ustalonego kroku.
+                        // LICZBY WEJŚCIOWE
                         opacity = isVisible(visibleStartStep) ? 1 : 0;
                     }
 
                     // Podświetlenie: Jedności (index 2) w VIS_STEP 3, Dziesiątki (index 1) w VIS_STEP 5
-                    const isColHighlight = (isHighlight(3) && index === 2) || (isHighlight(5) && index === 1);
+                    const isColHighlight = (isHighlight(3) && index === text.length - 1) || (isHighlight(5) && index === text.length - 2);
 
                     return (
                         <Text
@@ -159,25 +168,26 @@ export default function DynamicAdditionBlock() {
 
         return (
             <View style={styles.additionCoreContainer}>
-                <Text style={styles.additionTitle}>Zadanie: {num1} + {num2}</Text>
+                <Text style={styles.additionTitle}>Zadanie: {factor1} x {factor2}</Text>
 
-                {/* Wiersz Przeniesienia - WARUNKOWE RENDEROWANIE ELEMENTU */}
-                <View style={[styles.additionRow, styles.carryRow]}>
+                {/* Wiersz Przeniesienia (Carry) */}
+                <View style={[styles.multiplicationRow, styles.carryRow]}>
                     <Text style={styles.cyfra}></Text>
-                    {isVisible(5) ? carryElement : <Text style={styles.cyfra}></Text>}
+                    {isVisible(4) ? carryElement : <Text style={styles.cyfra}></Text>}
+                    <Text style={styles.cyfra}></Text>
                     <Text style={styles.cyfra}></Text>
                 </View>
 
-                {/* Wiersz 1: 27. Widoczny od VIS_STEP 1 */}
+                {/* Wiersz 1: 45. Widoczny od VIS_STEP 1 */}
                 {renderRow(number1, false, 1)}
 
-                {/* Wiersz 2: +45. Widoczny od VIS_STEP 1 */}
+                {/* Wiersz 2: x3. Widoczny od VIS_STEP 1 */}
                 {renderRow(number2, false, 1)}
 
                 {/* Kreska. Widoczna od VIS_STEP 2 */}
                 <View style={[styles.additionLine, { opacity: isVisible(2) ? 1 : 0 }]} />
 
-                {/* Wynik: 72 */}
+                {/* Wynik: 135 */}
                 {renderRow(result, true, 4)}
             </View>
         );
@@ -200,17 +210,17 @@ export default function DynamicAdditionBlock() {
                         style={styles.scrollArea}
                         contentContainerStyle={styles.scrollContent}
                     >
-                        {/* 1. KONTENER GŁÓWNEJ WIZUALIZACJI (Zielony pasek z boku) */}
+                        {/* WIZUALIZACJA jest teraz główną treścią */}
                         {step >= 1 && (
                             <View style={styles.diagramArea}>
-                                {renderWrittenAdditionDiagram()}
+                                {renderWrittenMultiplicationDiagram()}
                             </View>
                         )}
 
-                        {/* 2. TEKST WYJAŚNIAJĄCY (Pod kwadratem, na pełną szerokość) */}
+                        {/* TEKST WYJAŚNIAJĄCY (Pod kwadratem, na pełną szerokość) */}
                         <View style={styles.additionInfoWrapper}>
                             <Text style={styles.additionInfo}>
-                                {getExplanationText(step, num1, num2)}
+                                {getExplanationText(step, factor1, factor2)}
                             </Text>
                         </View>
 
@@ -276,7 +286,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
         marginBottom: 10,
         alignItems: 'flex-end',
-        width: 150,
+        width: 150, // Szerokość operacji
     },
     additionTitle: {
         fontSize: 16,
@@ -284,7 +294,8 @@ const styles = StyleSheet.create({
         color: '#5D4037',
         marginBottom: 8,
     },
-    additionRow: {
+    // ZMIANA: Styl dla wiersza mnożenia
+    multiplicationRow: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
         width: '100%',
@@ -292,7 +303,8 @@ const styles = StyleSheet.create({
     carryRow: {
         height: 20,
     },
-    additionCarry: {
+    // ZMIANA: Styl dla przeniesienia w mnożeniu
+    carry: {
         fontSize: 16,
         fontWeight: 'bold',
         color: '#D84315',

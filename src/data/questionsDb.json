@@ -607,11 +607,41 @@
         "showInPractice": true,
         "questions": []
       },
-      "Mnożenie pisemne przez liczby jednocyfrowe": { "theoryTitle": "Mnożenie w słupku (przez jedną cyfrę)", "theoryContent": [], "questions": [] },
-      "Mnożenie przez liczby z zerami na końcu": { "theoryTitle": "Mnożenie z zerami na końcu", "theoryContent": [], "questions": [] },
-      "Dzielenie pisemne przez liczby jednocyfrowe": { "theoryTitle": "Dzielenie w słupku (przez jedną cyfrę)", "theoryContent": [], "questions": [] },
-      "Mnożenie pisemne przez liczby wielocyfrowe": { "theoryTitle": "Mnożenie w słupku (przez wiele cyfr)", "theoryContent": [], "questions": [] },
-      "Działania pisemne. Zadania tekstowe": { "theoryTitle": "Zadania tekstowe z działaniami pisemnymi", "theoryContent": [], "questions": [] }
+      "Mnożenie pisemne przez liczby jednocyfrowe": {
+        "theoryTitle": "Mnożenie w słupku (przez jedną cyfrę)",
+        "isTrainer": true,
+        "practiceKeys": ["Mnożenie pisemne przez liczby jednocyfrowe"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Mnożenie przez liczby z zerami na końcu": {
+        "theoryTitle": "Mnożenie z zerami na końcu",
+        "isTrainer": true,
+        "practiceKeys": ["Mnożenie przez liczby z zerami na końcu"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Dzielenie pisemne przez liczby jednocyfrowe": {
+        "theoryTitle": "Dzielenie w słupku (przez jedną cyfrę)",
+        "isTrainer": true,
+        "practiceKeys": ["Dzielenie pisemne przez liczby jednocyfrowe"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Mnożenie pisemne przez liczby wielocyfrowe": {
+        "theoryTitle": "Mnożenie w słupku (przez wiele cyfr)",
+        "isTrainer": true,
+        "practiceKeys": ["Mnożenie pisemne przez liczby wielocyfrowe"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Działania pisemne. Zadania tekstowe": {
+        "theoryTitle": "Zadania tekstowe z działaniami pisemnymi",
+        "isTrainer": true,
+        "practiceKeys": ["Działania pisemne. Zadania tekstowe"],
+        "showInPractice": true,
+        "showInTheoryList": false,
+        "questions": [] }
     },
     "FIGURY GEOMETRYCZNE": {
       "Proste, półproste, odcinki": { "theoryTitle": "Linie wokół nas: proste i odcinki", "theoryContent": [], "questions": [] },
