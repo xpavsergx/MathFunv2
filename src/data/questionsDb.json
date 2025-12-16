@@ -258,6 +258,9 @@
     "SYSTEM ZAPISYWANIA LICZB": {
       "System dziesiątkowy": {
         "theoryTitle": "Nasz system liczbowy - dziesiątkowy",
+        "isTrainer": true,
+        "practiceKeys": ["System dziesiątkowy"],
+        "showInPractice": true,
         "questions": [
           { "id": "q1_sysdzies_4", "type": "theory", "difficulty": "łatwe", "questionText": "Jaką cyfrę oznacza pozycja setek w liczbie 1234?", "options": ["1", "2", "3", "4"], "correctAnswerIndex": 1, "correctAnswerExplanation": "W liczbie 1234 cyfra 1 jest na pozycji tysięcy, 2 na pozycji setek, 3 na pozycji dziesiątek, a 4 na pozycji jedności.", "theorySnippet": "System dziesiątkowy jest pozycyjny. Wartość cyfry zależy od jej miejsca (pozycji) w liczbie: jedności, dziesiątki, setki, tysiące itd."}
         ]

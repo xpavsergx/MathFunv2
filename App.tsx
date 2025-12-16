@@ -21,28 +21,41 @@ import {
     AppTabParamList,
 } from './src/navigation/types';
 
-// --- Экраны ---
+// --- Экраны: Основные ---
 import MainScreen from './src/screens/MainScreen';
 import GradeSelectionScreen from './src/screens/GradeSelectionScreen';
 import TopicListScreen from './src/screens/TopicListScreen';
 import SubTopicListScreen from './src/screens/SubTopicListScreen';
 import TestScreen from './src/screens/TestScreen';
-import MultiplicationTrainerScreen from './src/screens/screens 4 klassa/screens 4K1R/MultiplicationDivisionTrainerScreen';
-import PlusMinusTrainerScreen from './src/screens/screens 4 klassa/screens 4K1R/PlusMinusTrainerScreen';
+import PracticeScreen from './src/screens/PracticeScreen';
 
-import MoreLessTrainerScreen4 from './src/screens/screens 4 klassa/screens 4K1R/MoreLessTrainerScreen4';
-import HowManyTimesTrainerScreen4 from './src/screens/screens 4 klassa/screens 4K1R/HowManyTimesTrainerScreen4';
-import DivisionWithRemainderScreen4 from './src/screens/screens 4 klassa/screens 4K1R/DivisionWithRemainderScreen4';
-import SquaresCubesTrainerScreen4 from './src/screens/screens 4 klassa/screens 4K1R/SquaresCubesTrainerScreen4';
-import OrderOperationsTrainerScreen4 from './src/screens/screens 4 klassa/screens 4K1R/OrderOperationsTrainerScreen4';
+// --- Экраны: Тренажеры ---
+
+// ❗ Убедитесь, что этот файл существует в src/screens/ или закомментируйте его
+import CombinedDecompositionTrainer from './src/screens/screens_4_klassa/screens_4K1R/MultiplicationDivisionTrainerScreen';
+
+
+// ✅ Исправленный путь для умножения и деления (4 класс)
+import MultiplicationTrainerScreen from './src/screens/screens_4_klassa/screens_4K1R/MultiplicationDivisionTrainerScreen';
+import PlusMinusTrainerScreen from './src/screens/screens_4_klassa/screens_4K1R/PlusMinusTrainerScreen';
+
+import MoreLessTrainerScreen4 from './src/screens/screens_4_klassa/screens_4K1R/MoreLessTrainerScreen4';
+import HowManyTimesTrainerScreen4 from './src/screens/screens_4_klassa/screens_4K1R/HowManyTimesTrainerScreen4';
+import DivisionWithRemainderScreen4 from './src/screens/screens_4_klassa/screens_4K1R/DivisionWithRemainderScreen4';
+import SquaresCubesTrainerScreen4 from './src/screens/screens_4_klassa/screens_4K1R/SquaresCubesTrainerScreen4';
+import OrderOperationsTrainerScreen4 from './src/screens/screens_4_klassa/screens_4K1R/OrderOperationsTrainerScreen4';
+
+// 🔥 SYSTEM DZIESIĄTKOWY (ИЗМЕНЕН ПУТЬ НА screens_4K2R)
+import DecimalSystemTrainer from './src/screens/screens_4_klassa/screens_4K2R/DecimalSystemTrainer';
 
 // 🔥 ЗАДАЧИ ТЕКСТОВЫЕ
-import WordProblemsLevel1Screen4 from './src/screens/screens 4 klassa/screens 4K1R/WordProblemsLevel1Screen4';
-import WordProblemsLevel2Screen4 from './src/screens/screens 4 klassa/screens 4K1R/WordProblemsLevel2Screen4';
+import WordProblemsLevel1Screen4 from './src/screens/screens_4_klassa/screens_4K1R/WordProblemsLevel1Screen4';
+import WordProblemsLevel2Screen4 from './src/screens/screens_4_klassa/screens_4K1R/WordProblemsLevel2Screen4';
 
-// 🔥 НОВЫЙ ТРЕНАЖЕР ОСИ ЛИЧБОВОЙ
-import NumberLineTrainerScreen4 from './src/screens/screens 4 klassa/screens 4K1R/NumberLineTrainerScreen4';
+// 🔥 ОСЬ ЛИЧБОВА
+import NumberLineTrainerScreen4 from './src/screens/screens_4_klassa/screens_4K1R/NumberLineTrainerScreen4';
 
+// --- Экраны: Остальное ---
 import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
@@ -53,22 +66,23 @@ import TheoryScreen from './src/screens/TheoryScreen';
 import TheorySubTopicListScreen from './src/screens/TheorySubTopicListScreen';
 import TheoryDetailScreen from './src/screens/TheoryDetailScreen';
 
+// --- Экраны: Игры ---
 import GamesScreen from './src/screens/GamesScreen';
-import FriendsScreen from './src/screens/FriendsScreen';
-import DuelSetupScreen from './src/screens/DuelSetupScreen';
-import StatsScreen from './src/screens/StatsScreen';
-import ActivityScreen from './src/screens/ActivityScreen';
 import MatchstickEquationGame from './src/screens/MatchstickEquationGame';
 import SpeedyCountGame from './src/screens/SpeedyCountGame';
 import MathSprintScreen from './src/screens/MathSprintScreen';
-import StoreScreen from './src/screens/StoreScreen';
-import DuelResultScreen from './src/screens/DuelResultScreen';
-
-// ✅ ДОДАНО НОВІ ІГРИ (Імпорти)
 import SequenceGame from './src/screens/SequenceGame';
 import NumberMemoryGame from './src/screens/NumberMemoryGame';
 import GreaterLesserGame from './src/screens/GreaterLesserGame';
-import PracticeScreen from './src/screens/PracticeScreen'; // ✅ Також додав PracticeScreen
+
+// --- Экраны: Друзья и Активность ---
+import FriendsScreen from './src/screens/FriendsScreen';
+import DuelSetupScreen from './src/screens/DuelSetupScreen';
+import DuelResultScreen from './src/screens/DuelResultScreen';
+import StatsScreen from './src/screens/StatsScreen';
+import ActivityScreen from './src/screens/ActivityScreen';
+import StoreScreen from './src/screens/StoreScreen';
+
 
 // --- Навигация ---
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -93,18 +107,39 @@ function HomeStackNavigator() {
             <MainStack.Screen name="SubTopicList" component={SubTopicListScreen} options={({ route }) => ({ title: route.params.topic })} />
             <MainStack.Screen name="Test" component={TestScreen} options={({ route }) => ({ title: route.params.subTopic })} />
 
-            {/* ✅ НОВИЙ ЕКРАН ПРАКТИКИ */}
-            <MainStack.Screen name="Practice" component={PracticeScreen} options={({ route }) => ({ title: 'Trening' })} />
+            {/* Новый экран практики */}
+            <MainStack.Screen name="Practice" component={PracticeScreen} options={{ title: 'Trening' }} />
 
-            {/* Тренажеры */}
-            <MainStack.Screen name="MultiplicationTrainer" component={MultiplicationTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
-            <MainStack.Screen name="PlusMinusTrainer" component={PlusMinusTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
+            {/* --- ТРЕНАЖЕРЫ --- */}
 
-            <MainStack.Screen name="MoreLessTrainer4" component={MoreLessTrainerScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
-            <MainStack.Screen name="HowManyTimesTrainerScreen4" component={HowManyTimesTrainerScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
-            <MainStack.Screen name="DivisionWithRemainderScreen4" component={DivisionWithRemainderScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
-            <MainStack.Screen name="SquaresCubesTrainerScreen4" component={SquaresCubesTrainerScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
-            <MainStack.Screen name="OrderOperationsTrainerScreen4" component={OrderOperationsTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic || 'Trener' })} />
+            {/* 1. CombinedDecompositionTrainer (если файла нет - закомментируйте эту секцию) */}
+            <MainStack.Screen
+                name="CombinedDecompositionTrainer"
+                component={CombinedDecompositionTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Trener' })}
+            />
+
+            {/* 2. Multiplication & Division (Ваш исправленный файл) */}
+            <MainStack.Screen
+                name="MultiplicationTrainer"
+                component={MultiplicationTrainerScreen}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie i Dzielenie' })}
+            />
+
+            {/* 3. Остальные тренажеры */}
+            <MainStack.Screen name="PlusMinusTrainer" component={PlusMinusTrainerScreen} options={({ route }) => ({ title: route.params?.subTopic })} />
+            <MainStack.Screen name="MoreLessTrainer4" component={MoreLessTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic })} />
+            <MainStack.Screen name="HowManyTimesTrainerScreen4" component={HowManyTimesTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic })} />
+            <MainStack.Screen name="DivisionWithRemainderScreen4" component={DivisionWithRemainderScreen4} options={({ route }) => ({ title: route.params?.subTopic })} />
+            <MainStack.Screen name="SquaresCubesTrainerScreen4" component={SquaresCubesTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic })} />
+            <MainStack.Screen name="OrderOperationsTrainerScreen4" component={OrderOperationsTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic || 'Kolejność działań' })} />
+
+            {/* 🔥 SYSTEM DZIESIĄTKOWY (DODANY TUTAJ) */}
+            <MainStack.Screen
+                name="DecimalSystemTrainer"
+                component={DecimalSystemTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'System dziesiątkowy' })}
+            />
 
             {/* EKRANY ZADAŃ TEKSTOWYCH */}
             <MainStack.Screen name="WordProblemsLevel1Screen4" component={WordProblemsLevel1Screen4} options={({ route }) => ({ title: route.params?.subTopic || 'Zadania tekstowe' })} />
@@ -113,7 +148,7 @@ function HomeStackNavigator() {
             {/* EKRAN OSI LICZBOWEJ */}
             <MainStack.Screen name="NumberLineTrainerScreen4" component={NumberLineTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic || 'Oś liczbowa' })} />
 
-            {/* Остальное */}
+            {/* Результаты */}
             <MainStack.Screen name="Results" component={ResultsScreen} options={{ title: 'Wyniki Testu' }} />
             <MainStack.Screen name="DuelResult" component={DuelResultScreen} options={{ title: 'Wynik Pojedynku', headerShown: false }} />
 
@@ -137,7 +172,6 @@ function GamesStackNavigator() {
             <GamesStackNav.Screen name="SpeedyCountGame" component={SpeedyCountGame} options={{ title: 'Szybkie Liczenie', headerShown: false }} />
             <GamesStackNav.Screen name="MathSprintGame" component={MathSprintScreen} options={{ title: 'Math Sprint', headerShown: false }} />
 
-            {/* ✅ ТУТ БУЛА ПРОБЛЕМА: Додаємо нові ігри в навігатор */}
             <GamesStackNav.Screen name="SequenceGame" component={SequenceGame} options={{ title: 'Sekwencje', headerShown: false }} />
             <GamesStackNav.Screen name="NumberMemoryGame" component={NumberMemoryGame} options={{ title: 'Pamięć Liczbowa', headerShown: false }} />
             <GamesStackNav.Screen name="GreaterLesserGame" component={GreaterLesserGame} options={{ title: 'Większe czy Mniejsze', headerShown: false }} />

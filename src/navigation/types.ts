@@ -46,6 +46,10 @@ export type MainAppStackParamList = {
     };
 
     // --- Тренажери (ĆWICZENIA - Інтерактивні екрани) ---
+
+    // 🔥 ДОБАВЛЕНО СЮДА:
+    CombinedDecompositionTrainer: { grade: number; topic: string; subTopic: string };
+
     MultiplicationTrainer: { grade: number; topic: string; subTopic: string };
     PlusMinusTrainer: { grade: number; topic: string; subTopic: string };
     DivisionTrainer: { grade: number; topic: string; subTopic: string };

@@ -23,6 +23,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+// Make sure this path is correct for your project structure
 import { awardXpAndCoins } from '../../../services/xpService';
 
 const EXERCISE_ID = "combinedDecompositionTrainer";
@@ -31,11 +32,11 @@ const TASKS_LIMIT = 100;
 const { width: screenWidth } = Dimensions.get('window');
 const isSmallDevice = screenWidth < 380;
 
-// Размеры элементов
+// Element sizes
 const combinedIconSize = screenWidth * 0.25;
 const combinedInputSize = isSmallDevice ? 70 : 90;
 
-// --- КОМПОНЕНТ РИСОВАЛКИ (BRUDNOPIS) ---
+// --- DRAWING COMPONENT (BRUDNOPIS) ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
@@ -69,7 +70,17 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
                         <Text style={styles.problemPreviewLabel}>Zadanie:</Text>
                         <Text style={styles.problemPreviewTextSmall}>{problemText}</Text>
                     </View>
-                    <View style={styles.canvas} onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderGrant={(evt) => { const { locationX, locationY } = evt.nativeEvent; setCurrentPath(`M${locationX},${locationY}`); }} onResponderMove={onTouchMove} onResponderRelease={onTouchEnd}>
+                    <View
+                        style={styles.canvas}
+                        onStartShouldSetResponder={() => true}
+                        onMoveShouldSetResponder={() => true}
+                        onResponderGrant={(evt) => {
+                            const { locationX, locationY } = evt.nativeEvent;
+                            setCurrentPath(`M${locationX},${locationY}`);
+                        }}
+                        onResponderMove={onTouchMove}
+                        onResponderRelease={onTouchEnd}
+                    >
                         <Svg height="100%" width="100%">
                             {paths.map((d, index) => (<Path key={index} d={d} stroke="#000" strokeWidth={3} fill="none" />))}
                             <Path d={currentPath} stroke="#000" strokeWidth={3} fill="none" />
@@ -82,22 +93,22 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const CombinedDecompositionTrainer = () => {
-    // --- STATE: Режим игры ---
+    // --- STATE: Game Mode ---
     const [mode, setMode] = useState<'multiplication' | 'division'>('multiplication');
 
-    // --- STATE: Числа ---
+    // --- STATE: Numbers ---
     const [mainNumber, setMainNumber] = useState<number>(0);
     const [operand, setOperand] = useState<number>(0);
 
-    // --- STATE: Ввод ---
+    // --- STATE: Inputs ---
     const [decomp1, setDecomp1] = useState<string>('');
     const [decomp2, setDecomp2] = useState<string>('');
     const [partial1, setPartial1] = useState<string>('');
     const [partial2, setPartial2] = useState<string>('');
     const [final, setFinal] = useState<string>('');
 
-    // --- STATE: Валидация ---
-    // null = не заполнено (нейтрально), true = верно, false = ошибка
+    // --- STATE: Validation ---
+    // null = empty (neutral), true = correct, false = error
     const [validation, setValidation] = useState({
         decomp1: null as boolean | null,
         decomp2: null as boolean | null,
@@ -173,7 +184,7 @@ const CombinedDecompositionTrainer = () => {
     const toggleScratchpad = () => setShowScratchpad(prev => !prev);
     const toggleHint = () => setShowHint(prev => !prev);
 
-    // --- ГЛАВНАЯ ФУНКЦИЯ ПРОВЕРКИ ---
+    // --- MAIN CHECK FUNCTION ---
     const handleCheck = () => {
         Keyboard.dismiss();
 
@@ -189,7 +200,7 @@ const CombinedDecompositionTrainer = () => {
             const p2 = Number(partial2);
             const fin = Number(final);
 
-            // Инициализируем статус валидации как null (нейтральный)
+            // Initialize validation state
             let valState = {
                 decomp1: null as boolean | null,
                 decomp2: null as boolean | null,
@@ -201,47 +212,43 @@ const CombinedDecompositionTrainer = () => {
             let isFinalCorrect = false;
 
             if (mode === 'multiplication') {
-                // --- УМНОЖЕНИЕ ---
+                // --- MULTIPLICATION ---
                 const correctTens = Math.floor(mainNumber / 10) * 10;
                 const correctOnes = mainNumber % 10;
                 const correctFinal = mainNumber * operand;
 
-                // Проверяем финал (обязательно)
+                // Check final
                 valState.final = (fin === correctFinal);
                 isFinalCorrect = valState.final;
 
-                // Проверяем промежуточные ТОЛЬКО если они заполнены
+                // Check partials ONLY if filled
                 if (decomp1.trim() !== '') valState.decomp1 = (d1 === correctTens);
                 if (decomp2.trim() !== '') valState.decomp2 = (d2 === correctOnes);
                 if (partial1.trim() !== '') valState.partial1 = (p1 === correctTens * operand);
                 if (partial2.trim() !== '') valState.partial2 = (p2 === correctOnes * operand);
 
             } else {
-                // --- ДЕЛЕНИЕ ---
+                // --- DIVISION ---
                 const correctFinal = mainNumber / operand;
 
-                // Проверяем финал (обязательно)
+                // Check final
                 valState.final = (fin === correctFinal);
                 isFinalCorrect = valState.final;
 
-                // Разложение в делении гибкое (сумма должна быть равна числу, и делиться на операнд)
-                // Проверяем разложение, только если ОБА поля заполнены
+                // Decomposition for division
                 if (decomp1.trim() !== '' && decomp2.trim() !== '') {
                     const isValidDecomp = (d1 + d2 === mainNumber) && (d1 % operand === 0) && (d2 % operand === 0) && d1 > 0 && d2 > 0;
                     valState.decomp1 = isValidDecomp;
                     valState.decomp2 = isValidDecomp;
 
-                    // Проверяем частичные результаты, опираясь на введенное разложение
                     if (isValidDecomp) {
                         if (partial1.trim() !== '') valState.partial1 = (p1 === d1 / operand);
                         if (partial2.trim() !== '') valState.partial2 = (p2 === d2 / operand);
                     } else {
-                        // Если разложение неверное, то и частичные скорее всего неверные относительно задачи
                         if (partial1.trim() !== '') valState.partial1 = false;
                         if (partial2.trim() !== '') valState.partial2 = false;
                     }
                 }
-                // Если заполнено только одно поле разложения - это ошибка (или недописано)
                 else if (decomp1.trim() !== '' || decomp2.trim() !== '') {
                     if (decomp1.trim() !== '') valState.decomp1 = false;
                     if (decomp2.trim() !== '') valState.decomp2 = false;
@@ -250,12 +257,11 @@ const CombinedDecompositionTrainer = () => {
 
             setValidation(valState);
 
-            // Условие успеха: Финал верный И (нет явно ошибочных промежуточных полей)
             const hasErrors = Object.values(valState).includes(false);
             const isSuccess = isFinalCorrect && !hasErrors;
 
             if (isSuccess) {
-                // УСПЕХ
+                // SUCCESS
                 Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
                 setCorrectCount(prev => prev + 1);
                 setMessage('Świetnie! ✅');
@@ -271,7 +277,7 @@ const CombinedDecompositionTrainer = () => {
                     }
                 });
             } else {
-                // ОШИБКА
+                // ERROR
                 Animated.sequence([
                     Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
                     Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
@@ -303,9 +309,7 @@ const CombinedDecompositionTrainer = () => {
     };
 
     const getFieldStyle = (field: keyof typeof validation) => {
-        // Если null (не заполнено), возвращаем обычный стиль
         if (validation[field] === null) return styles.input;
-        // Иначе зеленый или красный
         return validation[field] ? styles.correctInput : styles.errorInput;
     };
 
@@ -368,7 +372,7 @@ const CombinedDecompositionTrainer = () => {
                                 {mode === 'multiplication' ? 'Rozłóż liczbę i pomnóż (opcjonalnie)' : 'Rozłóż liczbę i podziel (opcjonalnie)'}
                             </Text>
 
-                            {/* --- ШАГ 1: РАЗЛОЖЕНИЕ --- */}
+                            {/* --- STEP 1: DECOMPOSITION --- */}
                             <View style={styles.row}>
                                 <View style={styles.col}>
                                     <Text style={styles.stepLabel}>Rozkład</Text>
@@ -397,13 +401,13 @@ const CombinedDecompositionTrainer = () => {
                                 </View>
                             </View>
 
-                            {/* --- СТРЕЛКИ --- */}
+                            {/* --- ARROWS --- */}
                             <View style={styles.arrowRow}>
                                 <Text style={styles.arrowText}>↓ {step2Op} {operand}</Text>
                                 <Text style={styles.arrowText}>↓ {step2Op} {operand}</Text>
                             </View>
 
-                            {/* --- ШАГ 2: ПРОМЕЖУТОЧНЫЕ --- */}
+                            {/* --- STEP 2: PARTIAL RESULTS --- */}
                             <View style={styles.row}>
                                 <TextInput
                                     style={getFieldStyle('partial1')}
@@ -426,7 +430,7 @@ const CombinedDecompositionTrainer = () => {
                                 />
                             </View>
 
-                            {/* --- ФИНАЛ --- */}
+                            {/* --- FINAL ARROWS --- */}
                             <View style={styles.arrowRow}>
                                 <Text style={styles.arrowText}>↘</Text>
                                 <Text style={styles.arrowText}>↙</Text>
