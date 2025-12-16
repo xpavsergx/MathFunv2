@@ -2,18 +2,16 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    StatusBar,
-    useColorScheme,
+    View, Text, StyleSheet, TouchableOpacity, StatusBar, useColorScheme, ScrollView
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { xpService } from '../services/xpService';
 import { useNavigation } from '@react-navigation/native';
+import { COLORS, FONT_SIZES } from '../styles/theme';
+
+type GameMode = 'multiply' | 'add' | 'mix';
 
 const MathSprintScreen: React.FC = () => {
     const navigation = useNavigation();
@@ -24,10 +22,12 @@ const MathSprintScreen: React.FC = () => {
     const [timeLeft, setTimeLeft] = useState<number>(30);
     const [selectedOption, setSelectedOption] = useState<number | null>(null);
     const [correctCount, setCorrectCount] = useState<number>(0);
-    const [sprintDuration, setSprintDuration] = useState<number>(30);
-    const [lastAnswerResult, setLastAnswerResult] = useState<string>('');
-    const [showMainMenu, setShowMainMenu] = useState<boolean>(true);
 
+    // Налаштування
+    const [sprintDuration, setSprintDuration] = useState<number>(30);
+    const [gameMode, setGameMode] = useState<GameMode>('multiply');
+
+    const [showMainMenu, setShowMainMenu] = useState<boolean>(true);
     const [xpEarned, setXpEarned] = useState<number>(0);
     const [coinsEarned, setCoinsEarned] = useState<number>(0);
 
@@ -35,61 +35,56 @@ const MathSprintScreen: React.FC = () => {
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
 
-    // Все кнопки нежно-голубые
-    const buttonColor = '#7EC8E3';
-
     const rand = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-    // Таймер
     useEffect(() => {
         if (!isRunning) return;
         if (timeLeft <= 0) {
             setIsRunning(false);
-            setProblemText('');
-            setOptions([]);
             return;
         }
-
         timerRef.current = setInterval(() => setTimeLeft(t => t - 1), 1000);
-
-        return () => {
-            if (timerRef.current) clearInterval(timerRef.current);
-            timerRef.current = null;
-        };
+        return () => { if (timerRef.current) clearInterval(timerRef.current); };
     }, [isRunning, timeLeft]);
 
     const generateProblem = () => {
-        const a = rand(1, 10);
-        const b = rand(1, 10);
-        const correct = a * b;
+        let a, b, correct, sign;
+        let mode = gameMode;
+
+        if (mode === 'mix') {
+            mode = Math.random() < 0.5 ? 'multiply' : 'add';
+        }
+
+        if (mode === 'multiply') {
+            a = rand(2, 9);
+            b = rand(2, 9);
+            correct = a * b;
+            sign = '×';
+        } else {
+            a = rand(5, 50);
+            b = rand(5, 50);
+            correct = a + b;
+            sign = '+';
+        }
+
         setCorrectAnswer(correct);
-        setProblemText(`${a} × ${b}`);
+        setProblemText(`${a} ${sign} ${b}`);
 
         const opts = new Set<number>();
         opts.add(correct);
         while (opts.size < 4) {
-            let candidate = correct + (Math.random() > 0.5 ? rand(1, 5) : -rand(1, 5));
-            if (candidate <= 0) candidate = Math.abs(candidate) + 1;
-            opts.add(candidate);
+            let offset = rand(1, 10);
+            let candidate = correct + (Math.random() > 0.5 ? offset : -offset);
+            if (candidate > 0) opts.add(candidate);
         }
 
-        const optsArr = Array.from(opts);
-        for (let i = optsArr.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [optsArr[i], optsArr[j]] = [optsArr[j], optsArr[i]];
-        }
-        setOptions(optsArr);
+        setOptions(Array.from(opts).sort(() => Math.random() - 0.5));
         setSelectedOption(null);
-        setLastAnswerResult('');
     };
 
-    const startGame = (duration?: number) => {
-        const time = duration || sprintDuration;
-        setSprintDuration(time);
-        setTimeLeft(time);
+    const startGame = () => {
+        setTimeLeft(sprintDuration);
         setCorrectCount(0);
-        setXpEarned(0);
-        setCoinsEarned(0);
         setIsRunning(true);
         setShowMainMenu(false);
         generateProblem();
@@ -97,162 +92,109 @@ const MathSprintScreen: React.FC = () => {
 
     const handleOptionPress = (value: number) => {
         if (!isRunning || selectedOption !== null) return;
-
         setSelectedOption(value);
 
         if (value === correctAnswer) {
             setCorrectCount(c => c + 1);
-            setLastAnswerResult('Poprawnie!');
-        } else {
-            setLastAnswerResult('Błąd!');
         }
 
         setTimeout(() => {
             if (isRunning) generateProblem();
-        }, 300);
+        }, 200);
     };
 
-    const getButtonColor = (value: number) => {
-        if (selectedOption === null) return buttonColor;
-        if (value === correctAnswer) return '#2ecc71';
-        if (value === selectedOption && value !== correctAnswer) return '#e74c3c';
-        return buttonColor;
-    };
-
-    // Начисление наград
+    // Нагороди
     useEffect(() => {
         if (!isRunning && timeLeft === 0 && correctCount > 0) {
             const currentUser = auth().currentUser;
             if (!currentUser) return;
-
-            const handleRewards = async () => {
-                const XP_PER_CORRECT = 5;
-                const COINS_PER_CORRECT = 2;
-
-                const calculatedXp = correctCount * XP_PER_CORRECT;
-                const calculatedCoins = correctCount * COINS_PER_CORRECT;
-
-                setXpEarned(calculatedXp);
-                setCoinsEarned(calculatedCoins);
-
-                xpService.addXP(currentUser.uid, calculatedXp, calculatedXp, 0);
-                const userDocRef = firestore().collection('users').doc(currentUser.uid);
-                await userDocRef.update({
-                    coins: firestore.FieldValue.increment(calculatedCoins),
-                });
-            };
-
-            handleRewards();
+            const xp = correctCount * 5;
+            const coins = correctCount * 2;
+            setXpEarned(xp);
+            setCoinsEarned(coins);
+            xpService.addXP(currentUser.uid, xp, xp, 0);
+            firestore().collection('users').doc(currentUser.uid).update({ coins: firestore.FieldValue.increment(coins) });
         }
-    }, [isRunning, timeLeft, correctCount]);
+    }, [isRunning, timeLeft]);
 
-    // Главное меню
+    const getBtnColor = (val: number) => {
+        if (selectedOption === null) return isDarkMode ? '#333' : '#FFF';
+        if (val === correctAnswer) return COLORS.correct;
+        if (val === selectedOption) return COLORS.incorrect;
+        return isDarkMode ? '#333' : '#FFF';
+    };
+
+    // --- ГОЛОВНЕ МЕНЮ ---
     if (showMainMenu) {
         return (
-            <View style={[styles.container, { backgroundColor: isDarkMode ? '#000' : '#fff' }]}>
-                <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-                <Text style={[styles.title, { color: '#FFD700' }]}>Math Sprint</Text>
-                <Text style={[styles.subtitle, { color: isDarkMode ? '#fff' : '#000', textAlign: 'center', marginBottom: 20 }]}>
-                    To jest sprint tabliczki mnożenia. Odpowiadaj jak najszybciej na podawane działania.
-                </Text>
+            <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F5F5F5' }]}>
+                <Text style={styles.menuTitle}>Math Sprint</Text>
 
-                <Text style={[styles.subtitle, { color: isDarkMode ? '#fff' : '#000', marginBottom: 10 }]}>
-                    Wybierz czas sprintu:
-                </Text>
-
-                <View style={styles.durationButtons}>
-                    {[30, 45, 60].map((sec) => (
-                        <TouchableOpacity
-                            key={sec}
-                            style={[styles.durationButton, { backgroundColor: sprintDuration === sec ? buttonColor : '#444' }]}
-                            onPress={() => setSprintDuration(sec)}
-                        >
-                            <Text style={styles.durationText}>{sec}s</Text>
+                <Text style={styles.label}>Tryb gry:</Text>
+                <View style={styles.row}>
+                    {(['multiply', 'add', 'mix'] as GameMode[]).map(m => (
+                        <TouchableOpacity key={m}
+                                          style={[styles.optionBtn, gameMode === m && styles.selectedOptionBtn]}
+                                          onPress={() => setGameMode(m)}>
+                            <Text style={[styles.optionText, gameMode === m && {color: 'white'}]}>
+                                {m === 'multiply' ? 'Mnożenie' : m === 'add' ? 'Dodawanie' : 'Mix'}
+                            </Text>
                         </TouchableOpacity>
                     ))}
                 </View>
 
-                <TouchableOpacity style={[styles.startButton, { backgroundColor: buttonColor }]} onPress={() => startGame()}>
-                    <Text style={styles.startButtonText}>Zagraj</Text>
+                <Text style={styles.label}>Czas:</Text>
+                <View style={styles.row}>
+                    {[30, 60].map(t => (
+                        <TouchableOpacity key={t}
+                                          style={[styles.optionBtn, sprintDuration === t && styles.selectedOptionBtn]}
+                                          onPress={() => setSprintDuration(t)}>
+                            <Text style={[styles.optionText, sprintDuration === t && {color: 'white'}]}>{t}s</Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
+                <TouchableOpacity style={styles.startBtn} onPress={startGame}>
+                    <Text style={styles.startBtnText}>START</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.startButton, { backgroundColor: '#444', marginTop: 12 }]} onPress={() => navigation.goBack()}>
-                    <Text style={styles.startButtonText}>Wróć do menu gier</Text>
+                <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+                    <Text style={{color: COLORS.grey}}>Wróć</Text>
                 </TouchableOpacity>
             </View>
         );
     }
 
-    // Игровой экран
+    // --- ГРА ---
     return (
-        <View style={[styles.container, { backgroundColor: isDarkMode ? '#000' : '#fff' }]}>
-            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-
-            {/* Верхний блок с текущим счётом */}
-            <View style={styles.header}>
-                <Text style={[styles.headerText, { color: isDarkMode ? '#fff' : '#000' }]}>Wynik: {correctCount}</Text>
+        <View style={[styles.container, { backgroundColor: isDarkMode ? '#000' : '#E0F7FA' }]}>
+            <View style={styles.gameHeader}>
+                <Text style={styles.timer}>{timeLeft}s</Text>
+                <Text style={styles.score}>Wynik: {correctCount}</Text>
             </View>
 
-            {isRunning && (
-                <View style={[styles.card, { backgroundColor: isDarkMode ? '#222' : '#eee' }]}>
-                    <Text style={[styles.problem, { color: '#FFD700' }]}>{problemText}</Text>
-
-                    <View style={styles.options}>
-                        {options.map((opt) => (
-                            <TouchableOpacity
-                                key={opt}
-                                style={[styles.optionButton, { backgroundColor: getButtonColor(opt) }]}
-                                onPress={() => handleOptionPress(opt)}
-                            >
-                                <Text style={styles.optionText}>{opt}</Text>
+            {timeLeft > 0 ? (
+                <View style={styles.gameContent}>
+                    <Text style={styles.problemText}>{problemText}</Text>
+                    <View style={styles.grid}>
+                        {options.map(opt => (
+                            <TouchableOpacity key={opt}
+                                              style={[styles.gridBtn, {backgroundColor: getBtnColor(opt)}]}
+                                              onPress={() => handleOptionPress(opt)}>
+                                <Text style={styles.gridBtnText}>{opt}</Text>
                             </TouchableOpacity>
                         ))}
                     </View>
-
-                    {selectedOption !== null && (
-                        <Text style={[
-                            styles.answerResult,
-                            { color: lastAnswerResult === 'Poprawnie!' ? '#2ecc71' : '#e74c3c' }
-                        ]}>
-                            {lastAnswerResult}
-                        </Text>
-                    )}
-
-                    {/* Время внизу */}
-                    <Text style={[
-                        styles.timerText,
-                        {
-                            color: timeLeft <= 10 ? 'red' : isDarkMode ? '#fff' : '#000',
-                            marginTop: 20,
-                            fontSize: 24,
-                            fontWeight: 'bold'
-                        }
-                    ]}>Czas: {timeLeft}s</Text>
                 </View>
-            )}
+            ) : (
+                <View style={styles.gameOver}>
+                    <Text style={styles.gameOverTitle}>Koniec!</Text>
+                    <Text style={styles.gameOverScore}>Wynik: {correctCount}</Text>
+                    <Text style={styles.rewards}>+{xpEarned} XP  |  +{coinsEarned} Monet</Text>
 
-            {/* Game Over */}
-            {!isRunning && timeLeft === 0 && (
-                <View style={styles.gameOverBox}>
-                    <Text style={[styles.gameOverText, { color: '#FFD700' }]}>Koniec sprintu!</Text>
-                    <Text style={[styles.gameOverText, { color: '#FFD700' }]}>Twój wynik: {correctCount}</Text>
-
-                    <View style={{ flexDirection: 'row', gap: 20, marginVertical: 10 }}>
-                        <Text style={[styles.rewardText, { color: '#FFD700', fontSize: 36 }]}>{xpEarned} XP</Text>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="cash-outline" size={36} color="#00FF00" />
-                            <Text style={[styles.rewardText, { color: '#00FF00', fontSize: 36, marginLeft: 6 }]}>{coinsEarned}</Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.endButtonsColumn}>
-                        <TouchableOpacity style={[styles.startButton, { backgroundColor: buttonColor }]} onPress={() => startGame()}>
-                            <Text style={styles.startButtonText}>Zagraj ponownie</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={[styles.startButton, { backgroundColor: '#444', marginTop: 12 }]} onPress={() => navigation.goBack()}>
-                            <Text style={styles.startButtonText}>Wróć do menu gier</Text>
-                        </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity style={styles.startBtn} onPress={() => setShowMainMenu(true)}>
+                        <Text style={styles.startBtnText}>Menu</Text>
+                    </TouchableOpacity>
                 </View>
             )}
         </View>
@@ -261,26 +203,30 @@ const MathSprintScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
-    title: { fontSize: 36, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-    subtitle: { fontSize: 18, marginBottom: 10, textAlign: 'center' },
-    durationButtons: { flexDirection: 'row', marginBottom: 20 },
-    durationButton: { marginHorizontal: 6, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
-    durationText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
-    startButton: { paddingVertical: 14, paddingHorizontal: 30, borderRadius: 8, alignItems: 'center', width: '70%' },
-    startButtonText: { color: '#fff', fontSize: 20, fontWeight: 'bold', textAlign: 'center' },
-    card: { width: '90%', alignItems: 'center', padding: 16, borderRadius: 12 },
-    problem: { fontSize: 36, fontWeight: 'bold', marginBottom: 20 },
-    options: { flexDirection: 'column', justifyContent: 'center', width: '100%', marginBottom: 10 },
-    optionButton: { width: '100%', marginVertical: 6, padding: 16, borderRadius: 8, alignItems: 'center' },
-    optionText: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
-    answerResult: { fontSize: 26, fontWeight: 'bold', marginTop: 10 },
-    header: { position: 'absolute', top: 60, flexDirection: 'row', justifyContent: 'center', width: '90%' },
-    headerText: { fontSize: 22, fontWeight: 'bold' },
-    timerText: { fontSize: 24, fontWeight: 'bold' },
-    gameOverBox: { alignItems: 'center', marginTop: 20 },
-    gameOverText: { fontSize: 28, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },
-    rewardText: { fontWeight: 'bold' },
-    endButtonsColumn: { marginTop: 20, width: '80%', justifyContent: 'center', alignItems: 'center' },
+    menuTitle: { fontSize: 40, fontWeight: 'bold', color: COLORS.primary, marginBottom: 40 },
+    label: { fontSize: 18, color: COLORS.grey, marginBottom: 10, marginTop: 20 },
+    row: { flexDirection: 'row', gap: 10 },
+    optionBtn: { padding: 10, borderWidth: 1, borderColor: COLORS.primary, borderRadius: 8, minWidth: 80, alignItems: 'center' },
+    selectedOptionBtn: { backgroundColor: COLORS.primary },
+    optionText: { color: COLORS.primary, fontWeight: 'bold' },
+    startBtn: { backgroundColor: COLORS.correct, paddingVertical: 15, paddingHorizontal: 50, borderRadius: 30, marginTop: 40, elevation: 5 },
+    startBtnText: { color: 'white', fontSize: 24, fontWeight: 'bold' },
+    backBtn: { marginTop: 20 },
+
+    gameHeader: { position: 'absolute', top: 50, flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingHorizontal: 20 },
+    timer: { fontSize: 24, fontWeight: 'bold', color: COLORS.error },
+    score: { fontSize: 24, fontWeight: 'bold', color: COLORS.primary },
+
+    gameContent: { alignItems: 'center', width: '100%' },
+    problemText: { fontSize: 60, fontWeight: 'bold', marginBottom: 40, color: '#333' },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 15, justifyContent: 'center' },
+    gridBtn: { width: '45%', height: 100, justifyContent: 'center', alignItems: 'center', borderRadius: 15, elevation: 3 },
+    gridBtnText: { fontSize: 32, fontWeight: 'bold', color: '#333' },
+
+    gameOver: { alignItems: 'center' },
+    gameOverTitle: { fontSize: 40, fontWeight: 'bold', color: '#333' },
+    gameOverScore: { fontSize: 24, marginVertical: 10 },
+    rewards: { fontSize: 20, color: COLORS.accent, fontWeight: 'bold', marginBottom: 30 }
 });
 
 export default MathSprintScreen;

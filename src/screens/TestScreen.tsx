@@ -9,7 +9,7 @@ import {
     Alert,
     ScrollView,
     ActivityIndicator,
-    ImageBackground // <--- 1. Добавлено сюда
+    ImageBackground
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainAppStackParamList } from '../../App';
@@ -45,12 +45,11 @@ type QuestionsDatabase = {
 };
 type TestScreenProps = NativeStackScreenProps<MainAppStackParamList, 'Test'>;
 
-const ASSESSMENT_TIME_SECONDS = 15 * 60; // 15 хвилин
+const ASSESSMENT_TIME_SECONDS = 15 * 60;
 
 function TestScreen({ route, navigation }: TestScreenProps) {
     const { grade, topic, subTopic, mode: initialMode, testType = 'subTopic', duelId } = route.params;
 
-    // 🔥 ПРИНУДИТЕЛЬНЫЙ РЕЖИМ ЭКЗАМЕНА ДЛЯ КОНТРОЛЬНОЙ
     const mode = subTopic === 'Sprawdzian końcowy' ? 'assess' : (initialMode || 'learn');
 
     const [questions, setQuestions] = useState<Question[]>([]);
@@ -75,7 +74,6 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         scoreRef.current = score;
     }, [score]);
 
-    // --- ЗАГРУЗКА ИНВЕНТАРЯ ---
     useEffect(() => {
         if (!currentUser) {
             setIsPowerupLoading(false);
@@ -95,7 +93,6 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         return () => unsubscribe();
     }, [currentUser]);
 
-    // --- ЗАГРУЗКА ВОПРОСОВ ---
     useEffect(() => {
         const loadQuestions = async () => {
             setLoading(true);
@@ -136,13 +133,13 @@ function TestScreen({ route, navigation }: TestScreenProps) {
             }
             else if (testType === 'subTopic' && grade && topic && subTopic) {
                 const rawQuestions = db[String(grade)]?.[topic]?.[subTopic]?.questions || [];
-
-                // 🔥 ЛОГИКА ДЛЯ КОНТРОЛЬНОЙ
                 if (subTopic === 'Sprawdzian końcowy') {
                     const shuffled = [...rawQuestions].sort(() => Math.random() - 0.5);
-                    loadedQuestions = shuffled.slice(0, 20);
+                    loadedQuestions = shuffled.slice(0, 30);
+                    setTimeLeft(45 * 60);
                 } else {
                     loadedQuestions = rawQuestions;
+                    setTimeLeft(ASSESSMENT_TIME_SECONDS);
                 }
             }
 
@@ -152,7 +149,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
             setSelectedAnswerIndex(null);
             setIsAnswerSubmitted(false);
             setShowFeedback(false);
-            setTimeLeft(ASSESSMENT_TIME_SECONDS);
+
             if (timerRef.current) clearInterval(timerRef.current);
             setLoading(false);
         };
@@ -160,7 +157,6 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         loadQuestions();
     }, [grade, topic, subTopic, mode, testType, duelId]);
 
-    // --- ТАЙМЕР ---
     useEffect(() => {
         if (mode === 'assess' && questions.length > 0 && !loading) {
             timerRef.current = setInterval(() => {
@@ -178,7 +174,6 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         }
     }, [mode, questions.length, loading]);
 
-    // --- ФИНИШ ---
     const finishTest = async (finalScore: number) => {
         if (timerRef.current) clearInterval(timerRef.current);
         const currentUser = auth().currentUser;
@@ -186,7 +181,9 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         if (mode === 'duel' && duelId && currentUser) {
             try {
                 const duelRef = firestore().collection('duels').doc(duelId);
-                const finalTime = ASSESSMENT_TIME_SECONDS - timeLeft;
+                const maxTime = subTopic === 'Sprawdzian końcowy' ? 45 * 60 : ASSESSMENT_TIME_SECONDS;
+                const finalTime = maxTime - timeLeft;
+
                 await duelRef.update({
                     [`results.${currentUser.uid}.score`]: finalScore,
                     [`results.${currentUser.uid}.time`]: finalTime,
@@ -237,9 +234,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
             if (isCorrect) setScore(prev => prev + 1);
         }
 
-        // --- ЛОГИКА ПЕРЕХОДА ---
         if (mode === 'learn' || currentQ.type === 'theory') {
-            // В режиме обучения показываем объяснение
             setShowFeedback(true);
         } else {
             // 🔥 В РЕЖИМЕ ЭКЗАМЕНА (SPRAWDZIAN) — МГНОВЕННЫЙ ПЕРЕХОД
@@ -252,7 +247,6 @@ function TestScreen({ route, navigation }: TestScreenProps) {
         }
     };
 
-    // --- POWER-UPS ---
     const handleUseHint5050 = async () => {
         if (!currentUser || hintUsedForThisQuestion || (inventory.hint5050 || 0) <= 0) {
             Alert.alert("Brak wskazówek", "Nie masz więcej wskazówek 50/50.");
@@ -287,7 +281,6 @@ function TestScreen({ route, navigation }: TestScreenProps) {
     };
 
     if (loading) {
-        // Здесь тоже можно добавить фон, если хотите, но пока оставим как было
         return (
             <View style={[styles.container, { justifyContent: 'center' }]}>
                 <ActivityIndicator size="large" color="#00BCD4" />
@@ -310,9 +303,7 @@ function TestScreen({ route, navigation }: TestScreenProps) {
     const capitalizeFirstLetter = (str?: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
     const formatTime = (seconds: number) => `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, '0')}`;
 
-    // --- UI ---
     return (
-        // <--- 2. ЗАМЕНА View НА ImageBackground
         <ImageBackground
             source={require('../assets/images/tlo.png')}
             style={{ flex: 1, backgroundColor: '#f0f8ff' }}
@@ -415,34 +406,15 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                     </View>
                 )}
             </ScrollView>
-        </ImageBackground> // <--- 2. Конец ImageBackground
+        </ImageBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    scrollView: {
-        flex: 1,
-    },
-    container: {
-        flexGrow: 1,
-        padding: 20,
-        paddingBottom: 40,
-    },
-    timerHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#ffebee',
-        paddingVertical: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ffcdd2',
-    },
-    timerText: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#d32f2f',
-        marginLeft: 8
-    },
+    scrollView: { flex: 1 },
+    container: { flexGrow: 1, padding: 20, paddingBottom: 40 },
+    timerHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffebee', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#ffcdd2' },
+    timerText: { fontSize: 20, fontWeight: 'bold', color: '#d32f2f', marginLeft: 8 },
     loadingText: { marginTop:10, fontSize:16, color:'#555', textAlign:'center' },
     errorText: { textAlign:'center', fontSize:16, color:'red' },
     headerContainer: { flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:15, marginTop: 10 },
@@ -467,7 +439,7 @@ const styles = StyleSheet.create({
     feedbackText: { fontSize:16, color:'#555', marginBottom:8, lineHeight:22 },
     feedbackTextBold: { fontSize:16, color:'#555', marginBottom:8, fontWeight:'bold' },
     feedbackTextNormal: { fontWeight:'normal' },
-    powerUpContainer: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 5, marginBottom: 10 },
+    powerUpContainer: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 5 },
     powerUpButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 20, borderWidth: 1, borderColor: '#00796B', backgroundColor: '#FFFFFF' },
     powerUpText: { fontSize: 16, fontWeight: 'bold', marginLeft: 8, color: '#00796B' },
     powerUpDisabled: { backgroundColor: '#E0E0E0', opacity: 0.6 },

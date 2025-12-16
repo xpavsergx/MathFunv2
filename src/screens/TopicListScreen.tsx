@@ -1,3 +1,5 @@
+// src/screens/TopicListScreen.tsx
+
 import React, { useMemo } from 'react';
 import {
     View,
@@ -13,6 +15,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainAppStackParamList } from '../../App';
 import questionsDatabase from '../data/questionsDb.json';
 import backgroundImage from '../assets/books1.png';
+import { COLORS } from '../styles/theme'; // Переконайтеся, що імпорт правильний
 
 type TopicListProps = NativeStackScreenProps<MainAppStackParamList, 'TopicList'>;
 
@@ -20,12 +23,13 @@ type QuestionsDatabase = {
     [grade: string]: { [topic: string]: { [subTopic: string]: any[] } };
 };
 
-// --- Stała bez zmian ---
 const { width } = Dimensions.get('window');
 const CIRCLE_DIAMETER = width / 2.5;
 
 function TopicListScreen({ route, navigation }: TopicListProps) {
-    const { grade } = route.params;
+    // 🔥 ВАЖЛИВО: Витягуємо також 'mode' з параметрів!
+    const { grade, mode } = route.params;
+
     const db: QuestionsDatabase = (questionsDatabase as any).default || questionsDatabase;
 
     const topics = useMemo(() => {
@@ -37,12 +41,15 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
         return Object.keys(topicsForGrade);
     }, [db, grade]);
 
-    // --- ✅ Logika nawigacji nietknięta (nawiguje do SubTopicList) ---
     const handleTopicPress = (topic: string) => {
-        navigation.navigate('SubTopicList', { grade: grade, topic: topic });
+        // 🔥 ВИПРАВЛЕННЯ: Тепер ми передаємо 'mode' далі до SubTopicList
+        navigation.navigate('SubTopicList', {
+            grade: grade,
+            topic: topic,
+            mode: mode // <--- Це те, чого не вистачало!
+        });
     };
 
-    // Ta funkcja zostaje bez zmian, renderuje jedno kółko
     const renderCircleButton = (item: string, index: number) => (
         <TouchableOpacity
             key={`circle-${item}-${index}`}
@@ -54,7 +61,6 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
         </TouchableOpacity>
     );
 
-    // --- Cały JSX zostaje bez zmian ---
     return (
         <ImageBackground
             source={backgroundImage}
@@ -62,7 +68,9 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
             resizeMode="cover"
         >
             <View style={styles.overlay}>
-                <Text style={styles.headerText}>Wybierz dział:</Text>
+                <Text style={styles.headerText}>
+                    {mode === 'test' ? 'Testy: Wybierz dział' : 'Ćwiczenia: Wybierz dział'}
+                </Text>
 
                 <ScrollView contentContainerStyle={styles.scrollContent}>
                     {topics.length === 0 ? (
@@ -92,7 +100,6 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
     );
 }
 
-// --- ✅ ZMIANY WPROWADZONE TYLKO TUTAJ (STYLE) ---
 const styles = StyleSheet.create({
     backgroundImage: {
         flex: 1,
@@ -123,24 +130,21 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         paddingBottom: 40,
     },
-    // Nowy kontener na całą ścieżkę
     pathContainer: {
         width: '100%',
-        paddingHorizontal: 60, // <-- ZMIANA: Z 20 na 60 (węższy "wąż")
+        paddingHorizontal: 60,
     },
-    // Kontener na pojedyncze kółko, aby umożliwić wyrównanie
     circleContainer: {
-        marginBottom: 20, // Odstęp między kółkami (bez nachodzenia)
+        marginBottom: 20,
     },
     circleContainerLeft: {
-        alignSelf: 'flex-start', // Wyrównaj do lewej
+        alignSelf: 'flex-start',
     },
     circleContainerRight: {
-        alignSelf: 'flex-end',   // Wyrównaj do prawej
+        alignSelf: 'flex-end',
     },
-    // Styl kółka
     topicButton: {
-        backgroundColor: '#00BCD4', // <-- ZMIANA: Z zielonego na niebieski
+        backgroundColor: '#00BCD4', // Використовуємо жорстко заданий колір або COLORS.primary
         width: CIRCLE_DIAMETER,
         height: CIRCLE_DIAMETER,
         borderRadius: CIRCLE_DIAMETER / 2,
@@ -153,7 +157,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
     },
-    // Styl tekstu
     topicButtonText: {
         color: '#FFFFFF',
         fontSize: 18,

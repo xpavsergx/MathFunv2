@@ -64,6 +64,12 @@ import MathSprintScreen from './src/screens/MathSprintScreen';
 import StoreScreen from './src/screens/StoreScreen';
 import DuelResultScreen from './src/screens/DuelResultScreen';
 
+// ✅ ДОДАНО НОВІ ІГРИ (Імпорти)
+import SequenceGame from './src/screens/SequenceGame';
+import NumberMemoryGame from './src/screens/NumberMemoryGame';
+import GreaterLesserGame from './src/screens/GreaterLesserGame';
+import PracticeScreen from './src/screens/PracticeScreen'; // ✅ Також додав PracticeScreen
+
 // --- Навигация ---
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainAppStackParamList>();
@@ -87,10 +93,12 @@ function HomeStackNavigator() {
             <MainStack.Screen name="SubTopicList" component={SubTopicListScreen} options={({ route }) => ({ title: route.params.topic })} />
             <MainStack.Screen name="Test" component={TestScreen} options={({ route }) => ({ title: route.params.subTopic })} />
 
+            {/* ✅ НОВИЙ ЕКРАН ПРАКТИКИ */}
+            <MainStack.Screen name="Practice" component={PracticeScreen} options={({ route }) => ({ title: 'Trening' })} />
+
             {/* Тренажеры */}
             <MainStack.Screen name="MultiplicationTrainer" component={MultiplicationTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
             <MainStack.Screen name="PlusMinusTrainer" component={PlusMinusTrainerScreen} options={({ route }) => ({ title: route.params.subTopic })} />
-            {/* ❌ DivisionTrainer USUNIĘTY STĄD */}
 
             <MainStack.Screen name="MoreLessTrainer4" component={MoreLessTrainerScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
             <MainStack.Screen name="HowManyTimesTrainerScreen4" component={HowManyTimesTrainerScreen4} options={({ route }) => ({ title: route.params.subTopic })} />
@@ -102,7 +110,7 @@ function HomeStackNavigator() {
             <MainStack.Screen name="WordProblemsLevel1Screen4" component={WordProblemsLevel1Screen4} options={({ route }) => ({ title: route.params?.subTopic || 'Zadania tekstowe' })} />
             <MainStack.Screen name="WordProblemsLevel2Screen4" component={WordProblemsLevel2Screen4} options={({ route }) => ({ title: route.params?.subTopic || 'Zadania tekstowe (Poz. 2)' })} />
 
-            {/* ✅ NOWY EKRAN OSI LICZBOWEJ */}
+            {/* EKRAN OSI LICZBOWEJ */}
             <MainStack.Screen name="NumberLineTrainerScreen4" component={NumberLineTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic || 'Oś liczbowa' })} />
 
             {/* Остальное */}
@@ -128,6 +136,11 @@ function GamesStackNavigator() {
             <GamesStackNav.Screen name="MatchstickGame" component={MatchstickEquationGame} options={{ title: 'Równania z Zapałkami' }} />
             <GamesStackNav.Screen name="SpeedyCountGame" component={SpeedyCountGame} options={{ title: 'Szybkie Liczenie', headerShown: false }} />
             <GamesStackNav.Screen name="MathSprintGame" component={MathSprintScreen} options={{ title: 'Math Sprint', headerShown: false }} />
+
+            {/* ✅ ТУТ БУЛА ПРОБЛЕМА: Додаємо нові ігри в навігатор */}
+            <GamesStackNav.Screen name="SequenceGame" component={SequenceGame} options={{ title: 'Sekwencje', headerShown: false }} />
+            <GamesStackNav.Screen name="NumberMemoryGame" component={NumberMemoryGame} options={{ title: 'Pamięć Liczbowa', headerShown: false }} />
+            <GamesStackNav.Screen name="GreaterLesserGame" component={GreaterLesserGame} options={{ title: 'Większe czy Mniejsze', headerShown: false }} />
         </GamesStackNav.Navigator>
     );
 }

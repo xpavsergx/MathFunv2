@@ -1,403 +1,198 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    ActivityIndicator,
-    TextInput,
-} from 'react-native';
+// src/screens/StatsScreen.tsx
+
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Dimensions, Image } from 'react-native';
+import { BarChart, PieChart } from 'react-native-gifted-charts';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-// --- ✅ POPRAWKA BŁĘDU: Usunięto '@expo/' ze ścieżki ---
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import { BarChart } from "react-native-gifted-charts";
+import { COLORS, PADDING, MARGIN } from '../styles/theme';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
-// (Typy bez zmian)
-type TestStatGroup = {
-    topic: string;
-    totalTests: number;
-    avgScore: number;
-    chartData: { value: number; label: string; frontColor: string }[];
-};
-type TrainerStat = {
-    id: string;
-    totalCorrect: number;
-    totalWrong: number;
-};
+const { width } = Dimensions.get('window');
 
-// (Funkcja pomocnicza bez zmian)
-const getTrainerName = (id: string) => {
-    switch (id) {
-        case 'multiplicationTrainer':
-            return 'Trener Mnożenia';
-        case 'divisionTrainer':
-            return 'Trener Dzielenia';
-        case 'addSubtractTrainer':
-            return 'Dodawanie i Odejmowanie';
-        case 'moreLessTrainer':
-            return 'O ile więcej, o ile mniej';
-        case 'howManyTimesTrainer':
-            return 'Ile razy więcej, ile razy mniej';
-        case 'divisionWithRemainder':
-            return 'Dzielenie z resztą';
-        case 'squaresCubesTrainer':
-            return 'Kwadraty i sześciany liczb';
-        case 'orderOperationsTrainer':
-            return 'Kolejność wykonywania działań';
-        case 'wordProblemsLevel1':
-            return 'Zadania tekstowe, cz. 1';
-        case 'wordProblemsLevel2':
-            return 'Zadania tekstowe, cz. 2';
-        case 'numberLineTrainer':
-            return 'Oś liczbowa';
-        default:
-            return id;
-    }
-};
-
-function StatsScreen() {
-    const [testStats, setTestStats] = useState<TestStatGroup[]>([]);
-    const [trainerStats, setTrainerStats] = useState<TrainerStat[]>([]);
+const StatsScreen = () => {
+    const user = auth().currentUser;
     const [loading, setLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState('');
-
-    const currentUser = auth().currentUser;
+    const [stats, setStats] = useState({
+        xp: 0,
+        coins: 0,
+        streak: 0,
+        totalQuestions: 0,
+        correctAnswers: 0,
+        testsCompleted: 0,
+        xpHistory: [0,0,0,0,0,0,0]
+    });
 
     useEffect(() => {
-        // (Logika pobierania danych 'useEffect' zostaje bez zmian)
-        if (!currentUser) {
-            setLoading(false);
-            return;
-        }
-
-        const fetchAllStats = async () => {
-            setLoading(true);
-            try {
-                // --- 1. Pobieranie statystyk TESTÓW (testResults) ---
-                const testResultsRef = firestore()
-                    .collection('users')
-                    .doc(currentUser.uid)
-                    .collection('testResults');
-
-                const testSnapshot = await testResultsRef.get();
-
-                const performanceByTopic: { [key: string]: { sum: number; count: number; results: any[] } } = {};
-                testSnapshot.forEach(doc => {
-                    const res = doc.data();
-                    if (!performanceByTopic[res.topic]) {
-                        performanceByTopic[res.topic] = { sum: 0, count: 0, results: [] };
-                    }
-                    performanceByTopic[res.topic].sum += res.percentage;
-                    performanceByTopic[res.topic].count += 1;
-                    performanceByTopic[res.topic].results.push(res);
-                });
-
-                const groupedTestStats: TestStatGroup[] = Object.keys(performanceByTopic).map(topic => {
-                    const data = performanceByTopic[topic];
-                    const chartData = [{
-                        value: Math.round(data.sum / data.count),
-                        label: 'Średnia',
-                        frontColor: '#00BCD4',
-                    }];
-                    return {
-                        topic: topic,
-                        totalTests: data.count,
-                        avgScore: Math.round(data.sum / data.count),
-                        chartData: chartData,
-                    };
-                });
-                setTestStats(groupedTestStats);
-
-                // --- 2. Pobieranie statystyk TRENINGÓW (exerciseStats) ---
-                const trainerStatsRef = firestore()
-                    .collection('users')
-                    .doc(currentUser.uid)
-                    .collection('exerciseStats');
-
-                const trainerSnapshot = await trainerStatsRef.get();
-
-                const fetchedTrainerStats: TrainerStat[] = [];
-                trainerSnapshot.forEach(doc => {
-                    fetchedTrainerStats.push({
-                        id: doc.id,
-                        ...doc.data(),
-                    } as TrainerStat);
-                });
-                setTrainerStats(fetchedTrainerStats);
-
-            } catch (error) {
-                console.error("Błąd pobierania statystyk:", error);
-            } finally {
+        if (!user) return;
+        const unsubscribe = firestore()
+            .collection('users')
+            .doc(user.uid)
+            .onSnapshot(doc => {
+                if (doc.exists) {
+                    const d = doc.data();
+                    setStats({
+                        xp: d?.xp || 0,
+                        coins: d?.coins || 0,
+                        streak: d?.streakDays || 0,
+                        totalQuestions: d?.stats?.totalQuestionsSolved || 0,
+                        correctAnswers: d?.stats?.correctAnswers || 0,
+                        testsCompleted: d?.stats?.testsCompleted || 0,
+                        // Заглушка для історії (можна реалізувати saving daily XP)
+                        xpHistory: [15, 30, 45, 20, 60, 80, d?.xpToday || 0]
+                    });
+                }
                 setLoading(false);
-            }
-        };
+            });
+        return () => unsubscribe();
+    }, [user]);
 
-        const unsubTest = firestore().collection('users').doc(currentUser.uid).collection('testResults').onSnapshot(fetchAllStats);
-        const unsubTrainer = firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').onSnapshot(fetchAllStats);
+    if (loading) return <View style={styles.center}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
 
-        return () => {
-            unsubTest();
-            unsubTrainer();
-        };
-    }, [currentUser]);
+    // 1. Дані для PIE CHART (Точність)
+    const accuracy = stats.totalQuestions > 0 ? Math.round((stats.correctAnswers / stats.totalQuestions) * 100) : 0;
+    const pieData = [
+        { value: accuracy, color: '#4CAF50', text: `${accuracy}%` },
+        { value: 100 - accuracy, color: '#E0E0E0' }
+    ];
 
-    // (Logika filtrowania bez zmian)
-    const filteredTrainerStats = useMemo(() => {
-        if (!searchQuery) {
-            return trainerStats;
-        }
-        return trainerStats.filter(stat =>
-            getTrainerName(stat.id)
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase())
-        );
-    }, [searchQuery, trainerStats]);
-
-
-    // (Renderowanie karty treningu z paskiem postępu)
-    const renderTrainerStatCard = (item: TrainerStat) => {
-        const total = item.totalCorrect + item.totalWrong;
-        const accuracy = total > 0 ? Math.floor((item.totalCorrect / total) * 100) : 0;
-
-        // Logika koloru tła (bez zmian)
-        let accuracyColor = '#28a745'; // Zielony
-        if (accuracy < 50) {
-            accuracyColor = '#dc3545'; // Czerwony
-        } else if (accuracy < 75) {
-            accuracyColor = '#ffc107'; // Żółty
-        }
-
-        // --- ✅ ZMIANA: Kolor tekstu jest teraz zawsze czarny ---
-        let progressBarTextColor = '#000000'; // Zawsze czarny
-        // --- Koniec zmiany ---
-
-        return (
-            <View key={item.id} style={styles.sectionContainer}>
-                <View style={styles.sectionHeader}>
-                    <Ionicons name="barbell-outline" size={26} color="#00796B" style={styles.sectionIcon} />
-                    <Text style={styles.sectionTitle}>{getTrainerName(item.id)}</Text>
-                </View>
-                <View style={styles.statsContainer}>
-                    <Text style={styles.statRow}>
-                        ✅ Poprawne:
-                        <Text style={styles.statValueGood}> {item.totalCorrect}</Text>
-                    </Text>
-                    <Text style={styles.statRow}>
-                        ❌ Błędne:
-                        <Text style={styles.statValueBad}> {item.totalWrong}</Text>
-                    </Text>
-                    <Text style={styles.statRow}>
-                        📊 Dokładność:
-                        <Text style={[styles.statValue, { color: accuracyColor }]}> {accuracy}%</Text>
-                    </Text>
-
-                    <View style={styles.progressBarBackground}>
-                        <View style={[styles.progressBarFill, { width: `${accuracy}%`, backgroundColor: accuracyColor }]} />
-                        <Text style={[styles.progressBarText, { color: progressBarTextColor }]}>
-                            {accuracy}%
-                        </Text>
-                    </View>
-                </View>
-            </View>
-        );
-    };
-
-    // (Renderowanie karty testu bez zmian)
-    const renderTestStatCard = (item: TestStatGroup) => {
-        return (
-            <View key={item.topic} style={styles.sectionContainer}>
-                <View style={styles.sectionHeader}>
-                    <Ionicons name="stats-chart-outline" size={26} color="#4CAF50" style={styles.sectionIcon} />
-                    <Text style={styles.sectionTitle}>{item.topic}</Text>
-                </View>
-                <View style={styles.statsSummary}>
-                    <Text style={styles.statsText}>Ukończone testy: {item.totalTests}</Text>
-                    <Text style={styles.statsText}>Średni wynik: {item.avgScore}%</Text>
-                </View>
-
-                <View style={{ paddingHorizontal: 10, paddingBottom: 10, alignItems: 'center' }}>
-                    <BarChart
-                        data={item.chartData}
-                        barWidth={50}
-                        initialSpacing={10}
-                        spacing={30}
-                        barBorderRadius={4}
-                        yAxisTextStyle={{ color: 'gray' }}
-                        xAxisLabelTextStyle={{ color: 'gray', fontSize: 10 }}
-                        noOfSections={5}
-                        maxValue={100}
-                        yAxisLabelSuffix="%"
-                        isAnimated
-                    />
-                </View>
-            </View>
-        );
-    };
-
-
-    if (loading) {
-        return <View style={styles.centered}><ActivityIndicator size="large" color="#007AFF" /></View>;
-    }
+    // 2. Дані для BAR CHART (Тижнева активність)
+    const barData = stats.xpHistory.map((val, i) => ({
+        value: val,
+        label: ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'][i],
+        frontColor: i === 6 ? COLORS.primary : '#90CAF9',
+    }));
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            {/* (Reszta JSX bez zmian) */}
-            <Text style={styles.bigSectionTitle}>Treningi (Ćwiczenia)</Text>
+        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
 
-            <TextInput
-                style={styles.searchInput}
-                placeholder="Szukaj treningu..."
-                placeholderTextColor="#666"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-            />
-
-            {filteredTrainerStats.length > 0 ? (
-                filteredTrainerStats.map(renderTrainerStatCard)
-            ) : (
-                <View style={styles.sectionContainer}>
-                    <Text style={styles.placeholderText}>
-                        {searchQuery ? 'Nie znaleziono treningu.' : 'Brak statystyk z treningów.'}
+            {/* --- МАСКОТ --- */}
+            <View style={styles.mascotSection}>
+                <Image source={require('../assets/fox_mascot.png')} style={styles.mascotImage} />
+                <View style={styles.bubble}>
+                    <Text style={styles.bubbleText}>
+                        {stats.streak > 2
+                            ? `Ogień! 🔥 ${stats.streak} dni z rzędu! Tak trzymaj!`
+                            : "Hej! Spójrz na statystyki. Możemy je poprawić!"}
                     </Text>
                 </View>
-            )}
+            </View>
 
-            <Text style={styles.bigSectionTitle}>Testy (Quizy)</Text>
-            {testStats.length > 0 ? (
-                testStats.map(renderTestStatCard)
-            ) : (
-                <View style={styles.sectionContainer}>
-                    <Text style={styles.placeholderText}>Brak statystyk z testów.</Text>
+            {/* --- ПЛИТКИ --- */}
+            <View style={styles.grid}>
+                <View style={[styles.card, {backgroundColor: '#E3F2FD'}]}>
+                    <Ionicons name="school" size={24} color="#2196F3" />
+                    <Text style={styles.val}>{stats.testsCompleted}</Text>
+                    <Text style={styles.label}>Testy</Text>
                 </View>
-            )}
+                <View style={[styles.card, {backgroundColor: '#E8F5E9'}]}>
+                    <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+                    <Text style={styles.val}>{stats.totalQuestions}</Text>
+                    <Text style={styles.label}>Zadania</Text>
+                </View>
+                <View style={[styles.card, {backgroundColor: '#FFF3E0'}]}>
+                    <Ionicons name="flame" size={24} color="#FF9800" />
+                    <Text style={styles.val}>{stats.streak}</Text>
+                    <Text style={styles.label}>Seria</Text>
+                </View>
+                <View style={[styles.card, {backgroundColor: '#F3E5F5'}]}>
+                    <Ionicons name="wallet" size={24} color="#9C27B0" />
+                    <Text style={styles.val}>{stats.coins}</Text>
+                    <Text style={styles.label}>Monety</Text>
+                </View>
+            </View>
+
+            {/* --- ГРАФІКИ --- */}
+            <View style={styles.chartsRow}>
+                {/* Кругова діаграма */}
+                <View style={[styles.chartBox, {flex: 1, marginRight: 5}]}>
+                    <Text style={styles.chartTitle}>Poprawność</Text>
+                    <View style={{alignItems: 'center', marginTop: 10}}>
+                        <PieChart
+                            data={pieData}
+                            donut
+                            radius={50}
+                            innerRadius={35}
+                            textColor="black"
+                            textSize={12}
+                            fontWeight="bold"
+                        />
+                    </View>
+                </View>
+
+                {/* Текст про XP */}
+                <View style={[styles.chartBox, {flex: 1, marginLeft: 5, justifyContent: 'center', alignItems: 'center'}]}>
+                    <Text style={styles.xpBig}>{stats.xp}</Text>
+                    <Text style={styles.xpLabel}>Całkowite XP</Text>
+                    <View style={{height: 10}}/>
+                    <Text style={{fontSize: 12, color: '#666', textAlign: 'center'}}>
+                        Jesteś w górnym 20% swojej klasy!
+                    </Text>
+                </View>
+            </View>
+
+            <View style={styles.chartBox}>
+                <Text style={styles.chartTitle}>Aktywność (Ostatnie 7 dni)</Text>
+                <BarChart
+                    data={barData}
+                    barWidth={20}
+                    noOfSections={3}
+                    barBorderRadius={4}
+                    yAxisThickness={0}
+                    xAxisThickness={0}
+                    height={150}
+                    width={width - 80}
+                />
+            </View>
+
+            {/* --- СПИСОК ТЕМ (Mockup) --- */}
+            <Text style={styles.sectionHeader}>Twoje postępy w działach</Text>
+            <View style={styles.topicsList}>
+                <View style={styles.topicRow}>
+                    <Text style={styles.topicName}>Dodawanie i Odejmowanie</Text>
+                    <Text style={[styles.topicScore, {color: COLORS.correct}]}>95%</Text>
+                </View>
+                <View style={styles.topicRow}>
+                    <Text style={styles.topicName}>Mnożenie</Text>
+                    <Text style={[styles.topicScore, {color: '#FFC107'}]}>70%</Text>
+                </View>
+                <View style={styles.topicRow}>
+                    <Text style={styles.topicName}>Geometria</Text>
+                    <Text style={[styles.topicScore, {color: COLORS.error}]}>45%</Text>
+                </View>
+            </View>
 
         </ScrollView>
     );
-}
+};
 
-// (Style bez zmian)
 const styles = StyleSheet.create({
-    centered: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#F0F4F8'
-    },
-    container: {
-        alignItems: 'center',
-        padding: 20,
-        backgroundColor: '#F0F4F8',
-    },
-    bigSectionTitle: {
-        fontSize: 22,
-        fontWeight: '600',
-        color: '#37474F',
-        alignSelf: 'flex-start',
-        marginBottom: 15,
-        marginTop: 10,
-    },
-    searchInput: {
-        width: '100%',
-        height: 50,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 10,
-        paddingHorizontal: 15,
-        fontSize: 16,
-        marginBottom: 20,
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
-        color: '#000',
-        elevation: 2,
-    },
-    sectionContainer: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        padding: 20,
-        width: '100%',
-        marginBottom: 25,
-        elevation: 3,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
-        paddingBottom: 10
-    },
-    sectionIcon: {
-        marginRight: 10
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#37474F'
-    },
-    placeholderText: {
-        fontSize: 15,
-        color: '#546E7A',
-        textAlign: 'center',
-        padding: 10,
-        lineHeight: 22
-    },
-    statsSummary: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        marginBottom: 15
-    },
-    statsText: {
-        fontSize: 16,
-        color: '#455A64'
-    },
-    statsContainer: {
-        width: '100%',
-        marginTop: 10,
-    },
-    statRow: {
-        fontSize: 16,
-        color: '#333',
-        marginBottom: 8,
-        paddingLeft: 5,
-    },
-    statValue: {
-        fontWeight: 'bold',
-        color: '#000',
-    },
-    statValueGood: {
-        fontWeight: 'bold',
-        color: '#28a745',
-    },
-    statValueBad: {
-        fontWeight: 'bold',
-        color: '#dc3545',
-    },
-    progressBarBackground: {
-        height: 18,
-        width: '100%',
-        backgroundColor: '#e9ecef',
-        borderRadius: 9,
-        marginTop: 10,
-        overflow: 'hidden',
-        justifyContent: 'center',
-    },
-    progressBarFill: {
-        height: '100%',
-        borderRadius: 9,
-        position: 'absolute',
-        top: 0,
-        left: 0,
-    },
-    progressBarText: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        backgroundColor: 'transparent',
-    },
+    container: { flex: 1, backgroundColor: '#F5F7FA' },
+    content: { padding: PADDING.medium, paddingBottom: 50 },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+
+    mascotSection: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+    mascotImage: { width: 80, height: 80, resizeMode: 'contain' },
+    bubble: { flex: 1, backgroundColor: '#FFF', padding: 15, borderRadius: 16, borderBottomLeftRadius: 0, marginLeft: 10, elevation: 2 },
+    bubbleText: { fontSize: 13, color: '#333' },
+
+    grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 20 },
+    card: { width: '48%', padding: 15, borderRadius: 12, alignItems: 'center', marginBottom: 10, elevation: 1 },
+    val: { fontSize: 20, fontWeight: 'bold', marginVertical: 5 },
+    label: { fontSize: 12, color: '#555' },
+
+    chartsRow: { flexDirection: 'row', marginBottom: 15 },
+    chartBox: { backgroundColor: '#FFF', padding: 15, borderRadius: 16, elevation: 2, marginBottom: 15 },
+    chartTitle: { fontSize: 14, fontWeight: 'bold', color: '#555', marginBottom: 5 },
+
+    xpBig: { fontSize: 32, fontWeight: 'bold', color: COLORS.primary },
+    xpLabel: { fontSize: 14, color: COLORS.grey },
+
+    sectionHeader: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, marginTop: 10 },
+    topicsList: { backgroundColor: '#FFF', borderRadius: 12, padding: 10, elevation: 1 },
+    topicRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+    topicName: { fontSize: 14, color: '#333' },
+    topicScore: { fontWeight: 'bold' }
 });
 
 export default StatsScreen;

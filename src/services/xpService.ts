@@ -1,112 +1,89 @@
 // src/services/xpService.ts
+
 import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth'; // Dodajemy import auth, który jest potrzebny
-import { checkAndGrantAchievements } from './achievementService';
+import auth from '@react-native-firebase/auth';
+import Toast from 'react-native-toast-message';
 
-// Розрахунок XP для наступного рівня (100, 200, 300...)
-const calculateXpToNextLevel = (level: number) => {
-    return level * 100;
-};
+// --- 1. Функція для нарахування XP та монет (використовується в тренажерах) ---
+export const awardXpAndCoins = async (xpAmount: number, coinsAmount: number) => {
+    const user = auth().currentUser;
+    if (!user) return;
 
-/**
- * Додає XP та МОНЕТИ користувачу та перевіряє підвищення рівня.
- * ЗМІНА: Додано coinsAmount
- * @param userId ID користувача
- * @param totalXp Загальна кількість XP для додавання
- * @param activeXp XP, зароблені за активні дії (відповіді)
- * @param passiveXp XP, зароблені пасивно (за завершення)
- * @param coinsAmount Кількість монет для додавання (NOWY ARGUMENT)
- */
-const addXP = async (userId: string, totalXp: number, activeXp: number, passiveXp: number, coinsAmount: number = 0) => {
-    // Zmieniono warunek, aby uwzględniał też monety
-    if (!userId || (totalXp === 0 && coinsAmount === 0)) return;
-
-    const userRef = firestore().collection('users').doc(userId);
-    let levelIncreased = false;
+    const userRef = firestore().collection('users').doc(user.uid);
 
     try {
-        await firestore().runTransaction(async (transaction) => {
-            const userDoc = await transaction.get(userRef);
-            if (!userDoc.exists) {
-                console.warn(`User document ${userId} not found. Cannot add XP/Coins.`);
-                return;
-            }
-
-            const userData = userDoc.data() || {};
-            const currentLevel = userData.level || 1;
-            const currentXp = userData.xp || 0;
-            let xpToNextLevel = userData.xpToNextLevel || calculateXpToNextLevel(currentLevel);
-
-            let newXp = currentXp + totalXp;
-            let newLevel = currentLevel;
-
-            // Перевірка підвищення рівня
-            while (newXp >= xpToNextLevel) {
-                newXp = newXp - xpToNextLevel;
-                newLevel += 1;
-                xpToNextLevel = calculateXpToNextLevel(newLevel);
-                levelIncreased = true;
-            }
-
-            // Оновлюємо документ користувача
-            transaction.update(userRef, {
-                xp: newXp,
-                level: newLevel,
-                xpToNextLevel: xpToNextLevel,
-                totalXpGained: firestore.FieldValue.increment(totalXp),
-                coins: firestore.FieldValue.increment(coinsAmount), // 👈 DODANO LOGIKĘ MONET
-            });
+        await userRef.update({
+            xp: firestore.FieldValue.increment(xpAmount),
+            coins: firestore.FieldValue.increment(coinsAmount),
+            // Опціонально: оновлюємо денний прогрес
+            xpToday: firestore.FieldValue.increment(xpAmount)
         });
 
-        if (levelIncreased) {
-            checkAndGrantAchievements(userId).catch(err => {
-                console.error("Фонова перевірка досягнень (Level Up) не вдалася:", err);
-            });
-        }
+        // Можна додати Toast, щоб користувач бачив нагороду (опціонально)
+        // Toast.show({
+        //     type: 'success',
+        //     text1: `+${xpAmount} XP  |  +${coinsAmount} Monet`,
+        //     position: 'bottom',
+        //     visibilityTime: 1500,
+        // });
 
     } catch (error) {
-        console.error("Błąd podczas dodawania XP:", error);
+        console.error("Błąd awardXpAndCoins:", error);
     }
 };
 
-// 🌟 DODANO TĘ FUNKCJĘ, ABY ROZWIĄZAĆ PROBLEM IMPORTU 🌟
-/**
- * Adapter dla ekranów zadaniowych.
- * Obsługuje stary format wywołania awardXpAndCoins(xp, coins).
- * Wskazówka: Całe XP jest traktowane jako 'activeXp'.
- */
-export const awardXpAndCoins = (xp: number, coins: number) => {
-    const currentUser = auth().currentUser;
-    if (currentUser) {
-        // Wywołuje pełną funkcję addXP z userId, XP, i monetami.
-        // Używamy XP jako aktywne i 0 jako pasywne.
-        addXP(currentUser.uid, xp, xp, 0, coins);
-    } else {
-        console.warn("Nie można przyznać nagród XP i monet: użytkownik niezalogowany.");
-    }
-};
-
-
-/**
- * Отримує поточний рівень та XP користувача.
- */
-const getUserXP = async (userId: string) => {
-    if (!userId) return null;
-    try {
-        const userDoc = await firestore().collection('users').doc(userId).get();
-        if (userDoc.exists) {
-            const { level, xp, xpToNextLevel } = userDoc.data() || {};
-            return { level, xp, xpToNextLevel };
-        }
-        return null;
-    } catch (error) {
-        console.error("Błąd pobierania XP użytkownika:", error);
-        return null;
-    }
-};
-
-// Експортуємо сервіс (bez zmian)
+// --- 2. Об'єкт сервісу (використовується в іграх та квестах) ---
 export const xpService = {
-    addXP,
-    getUserXP,
+    addXP: async (userId: string, xp: number, dailyXp: number, coins: number) => {
+        try {
+            await firestore().collection('users').doc(userId).update({
+                xp: firestore.FieldValue.increment(xp),
+                coins: firestore.FieldValue.increment(coins),
+                xpToday: firestore.FieldValue.increment(dailyXp)
+            });
+        } catch (error) {
+            console.error("Błąd xpService.addXP:", error);
+        }
+    }
+};
+
+// --- 3. Функція для збереження результатів тесту (вже була у вас) ---
+export const saveTestResults = async (
+    xpEarned: number,
+    coinsEarned: number,
+    totalQuestions: number,
+    correctAnswers: number,
+    topicName: string
+) => {
+    const user = auth().currentUser;
+    if (!user) return;
+
+    const userRef = firestore().collection('users').doc(user.uid);
+
+    try {
+        const accuracy = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+
+        const updateData: any = {
+            xp: firestore.FieldValue.increment(xpEarned),
+            coins: firestore.FieldValue.increment(coinsEarned),
+            'stats.testsCompleted': firestore.FieldValue.increment(1),
+            'stats.totalQuestionsSolved': firestore.FieldValue.increment(totalQuestions),
+            'stats.correctAnswers': firestore.FieldValue.increment(correctAnswers),
+            xpToday: firestore.FieldValue.increment(xpEarned),
+        };
+
+        // Логіка для "слабких тем"
+        if (accuracy < 50) {
+            updateData['stats.weakestTopic'] = topicName;
+        } else if (accuracy >= 80) {
+            // Видаляємо слабку тему, якщо результат хороший
+            updateData['stats.weakestTopic'] = firestore.FieldValue.delete();
+        }
+
+        await userRef.update(updateData);
+        console.log(`Statystyki zaktualizowane. Wynik: ${accuracy}%`);
+
+    } catch (error) {
+        console.error("Błąd zapisu statystyk:", error);
+    }
 };
