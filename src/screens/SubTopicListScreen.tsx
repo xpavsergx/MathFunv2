@@ -50,8 +50,11 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         'Oś liczbowa': 'NumberLineTrainerScreen4',
         'Sprint': 'MathSprintScreen',
 
-        // --- NOWY TRENER DODANY TUTAJ ---
+        // --- TRENERY: SYSTEM LICZBOWY ---
         'System dziesiątkowy': 'DecimalSystemTrainer',
+
+        // --- TRENERY: PORÓWNYWANIE (DODANE) ---
+        'Porównywanie liczb naturalnych': 'ComparingNumbersTrainer',
     } as const;
 
     type TrainerScreenKeys = typeof trainerScreenMap[keyof typeof trainerScreenMap];
@@ -86,7 +89,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     const handleSubTopicPress = (item: SubTopicButton) => {
         const isFinalTest = item.subTopicKey === 'Sprawdzian końcowy';
 
-        // 🔴 Контрольная или режим теста → Test
+        // 🔴 Kontrolna zawsze jako test
         if (isFinalTest || mode === 'test') {
             navigation.navigate('Test', {
                 grade,
@@ -98,17 +101,18 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
             return;
         }
 
-        // ✅ Исправлено: ищем тренажёр по subTopicKey, а не по item.key
-        const specificTrainer = getTrainerScreen(item.subTopicKey);
+        // Sprawdzamy czy mamy dedykowany ekran trenera dla tego tematu
+        const specificTrainer = getTrainerScreen(item.key) || getTrainerScreen(item.subTopicKey);
 
         if (specificTrainer) {
-            // @ts-ignore - игнорируем TS-ошибку для DecimalSystemTrainer
+            // @ts-ignore - ignorujemy błąd typowania nawigacji
             navigation.navigate(specificTrainer, {
                 grade,
                 topic,
                 subTopic: item.subTopicKey,
             });
         } else {
+            // Domyślny ekran ćwiczeń (test wyboru)
             navigation.navigate('Practice', {
                 grade,
                 topic,

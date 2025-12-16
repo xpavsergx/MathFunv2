@@ -10,7 +10,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { COLORS } from './src/styles/theme';
 
-// --- Типы ---
+// --- Typy ---
 import {
     AuthStackParamList,
     MainAppStackParamList,
@@ -21,7 +21,7 @@ import {
     AppTabParamList,
 } from './src/navigation/types';
 
-// --- Экраны: Основные ---
+// --- Ekrany: Główne ---
 import MainScreen from './src/screens/MainScreen';
 import GradeSelectionScreen from './src/screens/GradeSelectionScreen';
 import TopicListScreen from './src/screens/TopicListScreen';
@@ -29,13 +29,11 @@ import SubTopicListScreen from './src/screens/SubTopicListScreen';
 import TestScreen from './src/screens/TestScreen';
 import PracticeScreen from './src/screens/PracticeScreen';
 
-// --- Экраны: Тренажеры ---
+// --- Ekrany: Trenerzy ---
 
-// ❗ Убедитесь, что этот файл существует в src/screens/ или закомментируйте его
+// ❗ Upewnij się, że pliki istnieją w podanych ścieżkach
+
 import CombinedDecompositionTrainer from './src/screens/screens_4_klassa/screens_4K1R/MultiplicationDivisionTrainerScreen';
-
-
-// ✅ Исправленный путь для умножения и деления (4 класс)
 import MultiplicationTrainerScreen from './src/screens/screens_4_klassa/screens_4K1R/MultiplicationDivisionTrainerScreen';
 import PlusMinusTrainerScreen from './src/screens/screens_4_klassa/screens_4K1R/PlusMinusTrainerScreen';
 
@@ -45,17 +43,20 @@ import DivisionWithRemainderScreen4 from './src/screens/screens_4_klassa/screens
 import SquaresCubesTrainerScreen4 from './src/screens/screens_4_klassa/screens_4K1R/SquaresCubesTrainerScreen4';
 import OrderOperationsTrainerScreen4 from './src/screens/screens_4_klassa/screens_4K1R/OrderOperationsTrainerScreen4';
 
-// 🔥 SYSTEM DZIESIĄTKOWY (ИЗМЕНЕН ПУТЬ НА screens_4K2R)
+// 🔥 SYSTEM DZIESIĄTKOWY
 import DecimalSystemTrainer from './src/screens/screens_4_klassa/screens_4K2R/DecimalSystemTrainer';
 
-// 🔥 ЗАДАЧИ ТЕКСТОВЫЕ
+// 🔥 PORÓWNYWANIE LICZB (NOWY - ścieżka 4K2R zgodnie z twoim info)
+import ComparingNumbersTrainer from './src/screens/screens_4_klassa/screens_4K2R/ComparingNumbersTrainer';
+
+// 🔥 ZADANIA TEKSTOWE
 import WordProblemsLevel1Screen4 from './src/screens/screens_4_klassa/screens_4K1R/WordProblemsLevel1Screen4';
 import WordProblemsLevel2Screen4 from './src/screens/screens_4_klassa/screens_4K1R/WordProblemsLevel2Screen4';
 
-// 🔥 ОСЬ ЛИЧБОВА
+// 🔥 OŚ LICZBOWA
 import NumberLineTrainerScreen4 from './src/screens/screens_4_klassa/screens_4K1R/NumberLineTrainerScreen4';
 
-// --- Экраны: Остальное ---
+// --- Ekrany: Pozostałe ---
 import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
@@ -66,7 +67,7 @@ import TheoryScreen from './src/screens/TheoryScreen';
 import TheorySubTopicListScreen from './src/screens/TheorySubTopicListScreen';
 import TheoryDetailScreen from './src/screens/TheoryDetailScreen';
 
-// --- Экраны: Игры ---
+// --- Ekrany: Gry ---
 import GamesScreen from './src/screens/GamesScreen';
 import MatchstickEquationGame from './src/screens/MatchstickEquationGame';
 import SpeedyCountGame from './src/screens/SpeedyCountGame';
@@ -75,7 +76,7 @@ import SequenceGame from './src/screens/SequenceGame';
 import NumberMemoryGame from './src/screens/NumberMemoryGame';
 import GreaterLesserGame from './src/screens/GreaterLesserGame';
 
-// --- Экраны: Друзья и Активность ---
+// --- Ekrany: Znajomi i Aktywność ---
 import FriendsScreen from './src/screens/FriendsScreen';
 import DuelSetupScreen from './src/screens/DuelSetupScreen';
 import DuelResultScreen from './src/screens/DuelResultScreen';
@@ -84,7 +85,7 @@ import ActivityScreen from './src/screens/ActivityScreen';
 import StoreScreen from './src/screens/StoreScreen';
 
 
-// --- Навигация ---
+// --- Nawigacja ---
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainAppStackParamList>();
 const GamesStackNav = createNativeStackNavigator<GamesStackParamList>();
@@ -101,32 +102,29 @@ function HomeStackNavigator() {
         <MainStack.Navigator initialRouteName="Main">
             <MainStack.Screen name="Main" component={MainScreen} options={{ headerShown: false }} />
 
-            {/* Практика */}
+            {/* Praktyka */}
             <MainStack.Screen name="GradeSelection" component={GradeSelectionScreen} options={{ title: 'Praktyka - Wybierz klasę' }} />
             <MainStack.Screen name="TopicList" component={TopicListScreen} options={({ route }) => ({ title: `Klasa ${route.params.grade} - Działy` })} />
             <MainStack.Screen name="SubTopicList" component={SubTopicListScreen} options={({ route }) => ({ title: route.params.topic })} />
             <MainStack.Screen name="Test" component={TestScreen} options={({ route }) => ({ title: route.params.subTopic })} />
 
-            {/* Новый экран практики */}
+            {/* Nowy ekran praktyki */}
             <MainStack.Screen name="Practice" component={PracticeScreen} options={{ title: 'Trening' }} />
 
-            {/* --- ТРЕНАЖЕРЫ --- */}
+            {/* --- TRENERZY --- */}
 
-            {/* 1. CombinedDecompositionTrainer (если файла нет - закомментируйте эту секцию) */}
             <MainStack.Screen
                 name="CombinedDecompositionTrainer"
                 component={CombinedDecompositionTrainer}
                 options={({ route }) => ({ title: route.params?.subTopic || 'Trener' })}
             />
 
-            {/* 2. Multiplication & Division (Ваш исправленный файл) */}
             <MainStack.Screen
                 name="MultiplicationTrainer"
                 component={MultiplicationTrainerScreen}
                 options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie i Dzielenie' })}
             />
 
-            {/* 3. Остальные тренажеры */}
             <MainStack.Screen name="PlusMinusTrainer" component={PlusMinusTrainerScreen} options={({ route }) => ({ title: route.params?.subTopic })} />
             <MainStack.Screen name="MoreLessTrainer4" component={MoreLessTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic })} />
             <MainStack.Screen name="HowManyTimesTrainerScreen4" component={HowManyTimesTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic })} />
@@ -134,11 +132,18 @@ function HomeStackNavigator() {
             <MainStack.Screen name="SquaresCubesTrainerScreen4" component={SquaresCubesTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic })} />
             <MainStack.Screen name="OrderOperationsTrainerScreen4" component={OrderOperationsTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic || 'Kolejność działań' })} />
 
-            {/* 🔥 SYSTEM DZIESIĄTKOWY (DODANY TUTAJ) */}
+            {/* 🔥 SYSTEM DZIESIĄTKOWY */}
             <MainStack.Screen
                 name="DecimalSystemTrainer"
                 component={DecimalSystemTrainer}
                 options={({ route }) => ({ title: route.params?.subTopic || 'System dziesiątkowy' })}
+            />
+
+            {/* 🔥 PORÓWNYWANIE LICZB (DODANE TUTAJ) */}
+            <MainStack.Screen
+                name="ComparingNumbersTrainer"
+                component={ComparingNumbersTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Porównywanie liczb' })}
             />
 
             {/* EKRANY ZADAŃ TEKSTOWYCH */}
@@ -148,11 +153,11 @@ function HomeStackNavigator() {
             {/* EKRAN OSI LICZBOWEJ */}
             <MainStack.Screen name="NumberLineTrainerScreen4" component={NumberLineTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic || 'Oś liczbowa' })} />
 
-            {/* Результаты */}
+            {/* Wyniki */}
             <MainStack.Screen name="Results" component={ResultsScreen} options={{ title: 'Wyniki Testu' }} />
             <MainStack.Screen name="DuelResult" component={DuelResultScreen} options={{ title: 'Wynik Pojedynku', headerShown: false }} />
 
-            {/* Теория */}
+            {/* Teoria */}
             <MainStack.Screen name="TheoryGradeSelection" component={TheoryGradeSelectionScreen} options={{ title: 'Teoria - Wybierz Klasę' }} />
             <MainStack.Screen name="TheoryTopicList" component={TheoryScreen} options={({ route }) => ({ title: `Działy (Klasa ${route.params.grade})` })} />
             <MainStack.Screen name="TheorySubTopicList" component={TheorySubTopicListScreen} options={({ route }) => ({ title: route.params.topic })} />
