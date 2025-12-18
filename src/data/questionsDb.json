@@ -272,7 +272,12 @@
         "showInPractice": true,
         "questions": []
       },
-      "Rachunki pamięciowe na dużych liczbach": { "theoryTitle": "Liczymy duże liczby w głowie", "questions": [] },
+      "Rachunki pamięciowe na dużych liczbach": { "theoryTitle": "Liczymy duże liczby w głowie",
+        "isTrainer": true,
+        "practiceKeys": ["Rachunki pamięciowe na dużych liczbach"],
+        "showInPractice": true,
+        "questions": []
+      },
       "Jednostki monetarne - złote i grosze": { "theoryTitle": "Pieniądze: złote i grosze", "questions": [] },
       "Jednostki długości": { "theoryTitle": "Mierzymy długość: metry, centymetry", "questions": [] },
       "Jednostki masy": { "theoryTitle": "Ważymy: kilogramy i gramy", "questions": [] },

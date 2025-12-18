@@ -1,55 +1,63 @@
 // src/navigation/types.ts
 
+// ==============================
+//      АВТОРИЗАЦИЯ
+// ==============================
 export type AuthStackParamList = {
     Login: undefined;
     Register: undefined;
 };
 
+// ==============================
+//       ИГРЫ
+// ==============================
 export type GamesStackParamList = {
     GamesMain: undefined;
     MatchstickGame: undefined;
     SpeedyCountGame: undefined;
     MathSprintGame: undefined;
 
-    // ✅ Нові ігри
+    // Новые игры
     NumberMemoryGame: undefined;
     GreaterLesserGame: undefined;
     SequenceGame: undefined;
 };
 
-// ✅ Тип режиму: Тренування або Тест
+// ==============================
+//       РЕЖИМ ПРАКТИКИ
+// ==============================
 export type AppMode = 'training' | 'test';
 
+// ==============================
+//     ОСНОВНОЙ СТЭК ПРИЛОЖЕНИЯ
+// ==============================
 export type MainAppStackParamList = {
     Main: undefined;
 
-    // Екрани вибору з параметром mode
+    // Экраны выбора с параметром mode
     GradeSelection: { mode: AppMode };
     TopicList: { grade: number; mode: AppMode };
     SubTopicList: { grade: number; topic: string; mode: AppMode };
 
-    // 🔴 ЕКРАН ТЕСТУ (Тільки оцінювання, таймер)
+    // Тест
     Test: {
         grade: number;
         topic: string;
         subTopic?: string;
         testType?: 'subTopic' | 'mainTopic' | 'duel' | 'gradeRandom';
         duelId?: string;
-        mode: 'learn' | 'assess'; // 'learn' = з підказками, 'assess' = на час
+        mode: 'learn' | 'assess';
     };
 
-    // 🟢 НОВИЙ ЕКРАН ПРАКТИКИ (Інтерактивне навчання для JSON-питань)
+    // Практика
     Practice: {
         grade: number;
         topic: string;
         subTopic: string;
     };
 
-    // --- Тренажери (ĆWICZENIA - Інтерактивні екрани) ---
-
-    // 🔥 ДОБАВЛЕНО СЮДА:
+    // --- Тренажёры ---
     CombinedDecompositionTrainer: { grade: number; topic: string; subTopic: string };
-
     MultiplicationTrainer: { grade: number; topic: string; subTopic: string };
     PlusMinusTrainer: { grade: number; topic: string; subTopic: string };
     DivisionTrainer: { grade: number; topic: string; subTopic: string };
@@ -63,24 +71,31 @@ export type MainAppStackParamList = {
     NumberLineTrainerScreen4: { grade: number; topic: string; subTopic: string };
     MathSprintScreen: { grade: number; topic: string; subTopic: string };
 
-    // Результати
+    // Новые тренажёры
+    DecimalSystemTrainer: { grade: number; topic: string; subTopic?: string };
+    ComparingNumbersTrainer: { grade: number; topic: string; subTopic?: string };
+    MentalMathLargeNumbers: { grade: number; topic: string; subTopic?: string };
+    // Результаты
     Results: {
         score: number;
         total: number;
-        originalTestParams: any; // Параметри для кнопки "Повторити"
-        mode?: AppMode | 'assess' | 'learn'; // Щоб знати тип нагороди
+        originalTestParams: any;
+        mode?: AppMode | 'assess' | 'learn';
         isDoubleXp?: boolean;
     };
 
     DuelResult: { duelId: string };
 
-    // Теорія
+    // Теория
     TheoryGradeSelection: undefined;
     TheoryTopicList: { grade: string };
     TheorySubTopicList: { grade: string; topic: string };
     TheoryDetail: { grade: string; topic: string; subTopic: string };
 };
 
+// ==============================
+//       СТЭК ТЕОРИИ
+// ==============================
 export type TheoryStackParamList = {
     TheoryGradeSelection: undefined;
     TheoryTopicList: { grade: string };
@@ -88,11 +103,17 @@ export type TheoryStackParamList = {
     TheoryDetail: { grade: string; topic: string; subTopic: string };
 };
 
+// ==============================
+//       ЗНАКОМЫЕ / ДРУЗЬЯ
+// ==============================
 export type FriendsStackParamList = {
     Friends: undefined;
     DuelSetup: { friendId: string; friendEmail: string };
 };
 
+// ==============================
+//       ПРОФИЛЬ
+// ==============================
 export type ProfileStackParamList = {
     ProfileMain: undefined;
     UserDetails: undefined;
@@ -100,10 +121,16 @@ export type ProfileStackParamList = {
     Store: undefined;
 };
 
+// ==============================
+//       АКТИВНОСТЬ
+// ==============================
 export type ActivityStackParamList = {
     ActivityMain: undefined;
 };
 
+// ==============================
+//       TAB NAVIGATION
+// ==============================
 export type AppTabParamList = {
     HomeStack: undefined;
     GamesStack: undefined;

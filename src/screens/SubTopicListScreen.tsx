@@ -53,8 +53,11 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         // --- TRENERY: SYSTEM LICZBOWY ---
         'System dziesiątkowy': 'DecimalSystemTrainer',
 
-        // --- TRENERY: PORÓWNYWANIE (DODANE) ---
+        // --- TRENERY: PORÓWNYWANIE ---
         'Porównywanie liczb naturalnych': 'ComparingNumbersTrainer',
+
+        // 🔥 --- TRENERY: RACHUNKI PAMIĘCIOWE (DODANE) ---
+        'Rachunki pamięciowe na dużych liczbach': 'MentalMathLargeNumbers',
     } as const;
 
     type TrainerScreenKeys = typeof trainerScreenMap[keyof typeof trainerScreenMap];
@@ -72,7 +75,6 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
             const subTopic = subTopicsMap[subKey];
             if (!subTopic) return;
 
-            // Ховаємо з практики, якщо заборонено (але 'Sprawdzian końcowy' має showInPractice: true)
             if (subTopic.showInPractice === false && mode === 'training') return;
 
             if (subTopic.isTrainer && subTopic.practiceKeys?.length) {
@@ -89,7 +91,6 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     const handleSubTopicPress = (item: SubTopicButton) => {
         const isFinalTest = item.subTopicKey === 'Sprawdzian końcowy';
 
-        // 🔴 Kontrolna zawsze jako test
         if (isFinalTest || mode === 'test') {
             navigation.navigate('Test', {
                 grade,
@@ -101,18 +102,17 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
             return;
         }
 
-        // Sprawdzamy czy mamy dedykowany ekran trenera dla tego tematu
-        const specificTrainer = getTrainerScreen(item.key) || getTrainerScreen(item.subTopicKey);
+        const specificTrainer =
+            getTrainerScreen(item.key) || getTrainerScreen(item.subTopicKey);
 
         if (specificTrainer) {
-            // @ts-ignore - ignorujemy błąd typowania nawigacji
+            // @ts-ignore
             navigation.navigate(specificTrainer, {
                 grade,
                 topic,
                 subTopic: item.subTopicKey,
             });
         } else {
-            // Domyślny ekran ćwiczeń (test wyboru)
             navigation.navigate('Practice', {
                 grade,
                 topic,
@@ -138,7 +138,9 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
                 onPress={() => handleSubTopicPress(item)}
                 activeOpacity={0.85}
             >
-                <Text style={styles.topicButtonText}>{item.displayName || item.key}</Text>
+                <Text style={styles.topicButtonText}>
+                    {item.displayName || item.key}
+                </Text>
             </TouchableOpacity>
         );
     };
@@ -185,7 +187,9 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
                 </Text>
                 <ScrollView contentContainerStyle={styles.scrollContent}>
                     {subTopicsWithQuestions.length === 0 ? (
-                        <Text style={styles.emptyText}>Brak dostępnych materiałów.</Text>
+                        <Text style={styles.emptyText}>
+                            Brak dostępnych materiałów.
+                        </Text>
                     ) : (
                         renderContent()
                     )}
@@ -203,11 +207,31 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 20,
     },
-    headerText: { fontSize: 22, fontWeight: '700', color: '#111827', textAlign: 'center', marginBottom: 20 },
-    emptyText: { textAlign: 'center', marginTop: 50, fontSize: 16, color: '#6B7280' },
-    scrollContent: { paddingVertical: 10, alignItems: 'center', paddingBottom: 40 },
+    headerText: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: '#111827',
+        textAlign: 'center',
+        marginBottom: 20,
+    },
+    emptyText: {
+        textAlign: 'center',
+        marginTop: 50,
+        fontSize: 16,
+        color: '#6B7280',
+    },
+    scrollContent: {
+        paddingVertical: 10,
+        alignItems: 'center',
+        paddingBottom: 40,
+    },
     singleCircleRow: { marginBottom: 20 },
-    twoCircleRow: { flexDirection: 'row', justifyContent: 'space-between', width: width - 40, marginBottom: 20 },
+    twoCircleRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: width - 40,
+        marginBottom: 20,
+    },
     topicButton: {
         width: CIRCLE_DIAMETER,
         height: CIRCLE_DIAMETER,
@@ -217,7 +241,12 @@ const styles = StyleSheet.create({
         elevation: 5,
         padding: 8,
     },
-    topicButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700', textAlign: 'center' },
+    topicButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '700',
+        textAlign: 'center',
+    },
 });
 
 export default SubTopicListScreen;

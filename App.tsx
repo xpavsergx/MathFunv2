@@ -55,6 +55,7 @@ import WordProblemsLevel2Screen4 from './src/screens/screens_4_klassa/screens_4K
 
 // 🔥 OŚ LICZBOWA
 import NumberLineTrainerScreen4 from './src/screens/screens_4_klassa/screens_4K1R/NumberLineTrainerScreen4';
+import MentalMathLargeNumbers from './src/screens/screens_4_klassa/screens_4K2R/MentalMathLargeNumbers';
 
 // --- Ekrany: Pozostałe ---
 import ResultsScreen from './src/screens/ResultsScreen';
@@ -144,6 +145,11 @@ function HomeStackNavigator() {
                 name="ComparingNumbersTrainer"
                 component={ComparingNumbersTrainer}
                 options={({ route }) => ({ title: route.params?.subTopic || 'Porównywanie liczb' })}
+            />
+            <MainStack.Screen
+                name="MentalMathLargeNumbers"
+                component={MentalMathLargeNumbers}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Rachunki pamięciowe na dużych liczbach' })}
             />
 
             {/* EKRANY ZADAŃ TEKSTOWYCH */}
