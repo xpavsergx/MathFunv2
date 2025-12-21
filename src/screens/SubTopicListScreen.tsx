@@ -58,6 +58,8 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
 
         // 🔥 --- TRENERY: RACHUNKI PAMIĘCIOWE (DODANE) ---
         'Rachunki pamięciowe na dużych liczbach': 'MentalMathLargeNumbers',
+        'Jednostki monetarne - złote i grosze': 'MonetaryUnitsTrainer',
+        'Jednostki długości':'LengthUnitsTrainer',
     } as const;
 
     type TrainerScreenKeys = typeof trainerScreenMap[keyof typeof trainerScreenMap];

@@ -56,7 +56,8 @@ import WordProblemsLevel2Screen4 from './src/screens/screens_4_klassa/screens_4K
 // 🔥 OŚ LICZBOWA
 import NumberLineTrainerScreen4 from './src/screens/screens_4_klassa/screens_4K1R/NumberLineTrainerScreen4';
 import MentalMathLargeNumbers from './src/screens/screens_4_klassa/screens_4K2R/MentalMathLargeNumbers';
-
+import LengthUnitsTrainer from './src/screens/screens_4_klassa/screens_4K2R/LengthUnitsTrainer';
+import MonetaryUnitsTrainer from './src/screens/screens_4_klassa/screens_4K2R/MonetaryUnitsTrainer';
 // --- Ekrany: Pozostałe ---
 import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -125,6 +126,11 @@ function HomeStackNavigator() {
                 component={MultiplicationTrainerScreen}
                 options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie i Dzielenie' })}
             />
+            <MainStack.Screen
+                name="LengthUnitsTrainer"
+                component={LengthUnitsTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie i Dzielenie' })}
+            />
 
             <MainStack.Screen name="PlusMinusTrainer" component={PlusMinusTrainerScreen} options={({ route }) => ({ title: route.params?.subTopic })} />
             <MainStack.Screen name="MoreLessTrainer4" component={MoreLessTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic })} />
@@ -150,6 +156,11 @@ function HomeStackNavigator() {
                 name="MentalMathLargeNumbers"
                 component={MentalMathLargeNumbers}
                 options={({ route }) => ({ title: route.params?.subTopic || 'Rachunki pamięciowe na dużych liczbach' })}
+            />
+            <MainStack.Screen
+                name="MonetaryUnitsTrainer"
+                component={MonetaryUnitsTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Jednostki monetarne - złote i grosze' })}
             />
 
             {/* EKRANY ZADAŃ TEKSTOWYCH */}

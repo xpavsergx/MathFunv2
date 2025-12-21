@@ -75,6 +75,8 @@ export type MainAppStackParamList = {
     DecimalSystemTrainer: { grade: number; topic: string; subTopic?: string };
     ComparingNumbersTrainer: { grade: number; topic: string; subTopic?: string };
     MentalMathLargeNumbers: { grade: number; topic: string; subTopic?: string };
+    MonetaryUnitsTrainer: { grade: number; topic: string; subTopic?: string };
+    LengthUnitsTrainer: { grade: number; topic: string; subTopic?: string };
     // Результаты
     Results: {
         score: number;

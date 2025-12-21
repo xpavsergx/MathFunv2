@@ -278,8 +278,19 @@
         "showInPractice": true,
         "questions": []
       },
-      "Jednostki monetarne - złote i grosze": { "theoryTitle": "Pieniądze: złote i grosze", "questions": [] },
-      "Jednostki długości": { "theoryTitle": "Mierzymy długość: metry, centymetry", "questions": [] },
+      "Jednostki monetarne - złote i grosze": { "theoryTitle": "Pieniądze: złote i grosze",
+        "isTrainer": true,
+        "practiceKeys": ["Jednostki monetarne - złote i grosze"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Jednostki długości": { "theoryTitle": "Mierzymy długość: metry, centymetry",
+        "isTrainer": true,
+        "practiceKeys": ["Jednostki długości"],
+        "showInPractice": true,
+        "questions": []
+      },
+
       "Jednostki masy": { "theoryTitle": "Ważymy: kilogramy i gramy", "questions": [] },
       "System rzymski": { "theoryTitle": "Liczby rzymskie - jak je czytać?", "questions": [] },
       "Z kalendarzem za pan brat": { "theoryTitle": "Kalendarz: dni, miesiące, lata", "questions": [] },
