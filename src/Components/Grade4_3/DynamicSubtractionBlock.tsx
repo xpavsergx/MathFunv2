@@ -14,7 +14,7 @@ const MAX_STEPS = 6;
 
 // --- STAŁE DANE DLA TEORII (zaszyte w kodzie - używamy tylko tytułu) ---
 const STATIC_LESSON_DATA = {
-    title: "Odejmowanie Pisemne",
+    title: "Odejmowanie pisemne",
 };
 
 // --- KOMPONENT ---

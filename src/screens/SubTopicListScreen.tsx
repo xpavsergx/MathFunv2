@@ -1,5 +1,3 @@
-// src/screens/SubTopicListScreen.tsx
-
 import React, { useMemo } from 'react';
 import {
     View,
@@ -13,11 +11,10 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainAppStackParamList } from '../navigation/types';
 import questionsDatabase from '../data/questionsDb.json';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
-type SubTopicListProps = NativeStackScreenProps<
-    MainAppStackParamList,
-    'SubTopicList'
->;
+type SubTopicListProps = NativeStackScreenProps<MainAppStackParamList, 'SubTopicList'>;
 
 type QuestionsDatabaseType = {
     [grade: string]: { [topic: string]: { [subTopic: string]: any } };
@@ -30,13 +27,19 @@ type SubTopicButton = {
 };
 
 const { width } = Dimensions.get('window');
-const CIRCLE_DIAMETER = (width - 40 - 20) / 2;
+const PADDING_HORIZONTAL = 20;
+const GAP = 15;
+
+// Wymiary kafelków przeniesione z Teorii
+const UNIVERSAL_CARD_WIDTH = (width - (PADDING_HORIZONTAL * 2) - GAP) / 2;
+const CARD_HEIGHT = 150;
+
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     const { grade, topic, mode } = route.params;
     const db: QuestionsDatabaseType = questionsDatabase as QuestionsDatabaseType;
 
-    // Mapowanie nazw tematów (z pliku JSON) na nazwy ekranów w nawigacji
     const trainerScreenMap = {
         'Dodawanie i odejmowanie': 'PlusMinusTrainer',
         'Mnożenie i dzielenie': 'MultiplicationTrainer',
@@ -49,21 +52,12 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         'Zadania tekstowe. POZIOM 2': 'WordProblemsLevel2Screen4',
         'Oś liczbowa': 'NumberLineTrainerScreen4',
         'Sprint': 'MathSprintScreen',
-
-        // --- TRENERY: SYSTEM LICZBOWY ---
         'System dziesiątkowy': 'DecimalSystemTrainer',
-
-        // --- TRENERY: PORÓWNYWANIE ---
         'Porównywanie liczb naturalnych': 'ComparingNumbersTrainer',
-
-        // 🔥 --- TRENERY: RACHUNKI PAMIĘCIOWE (DODANE) ---
         'Rachunki pamięciowe na dużych liczbach': 'MentalMathLargeNumbers',
     } as const;
 
-    type TrainerScreenKeys = typeof trainerScreenMap[keyof typeof trainerScreenMap];
-
-    const getTrainerScreen = (key: string): TrainerScreenKeys | undefined =>
-        trainerScreenMap[key as keyof typeof trainerScreenMap];
+    const getTrainerScreen = (key: string) => trainerScreenMap[key as keyof typeof trainerScreenMap];
 
     const subTopicsWithQuestions = useMemo<SubTopicButton[]>(() => {
         const topicsForGrade = db[String(grade)];
@@ -74,7 +68,6 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         Object.keys(subTopicsMap).forEach(subKey => {
             const subTopic = subTopicsMap[subKey];
             if (!subTopic) return;
-
             if (subTopic.showInPractice === false && mode === 'training') return;
 
             if (subTopic.isTrainer && subTopic.practiceKeys?.length) {
@@ -90,88 +83,96 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
 
     const handleSubTopicPress = (item: SubTopicButton) => {
         const isFinalTest = item.subTopicKey === 'Sprawdzian końcowy';
-
         if (isFinalTest || mode === 'test') {
             navigation.navigate('Test', {
-                grade,
-                topic,
-                subTopic: item.subTopicKey,
+                grade, topic, subTopic: item.subTopicKey,
                 testType: 'subTopic',
                 mode: mode === 'training' ? 'learn' : 'assess',
             });
             return;
         }
 
-        const specificTrainer =
-            getTrainerScreen(item.key) || getTrainerScreen(item.subTopicKey);
-
+        const specificTrainer = getTrainerScreen(item.key) || getTrainerScreen(item.subTopicKey);
         if (specificTrainer) {
             // @ts-ignore
-            navigation.navigate(specificTrainer, {
-                grade,
-                topic,
-                subTopic: item.subTopicKey,
-            });
+            navigation.navigate(specificTrainer, { grade, topic, subTopic: item.subTopicKey });
         } else {
-            navigation.navigate('Practice', {
-                grade,
-                topic,
-                subTopic: item.subTopicKey,
-            });
+            navigation.navigate('Practice', { grade, topic, subTopic: item.subTopicKey });
         }
     };
 
-    const renderCircleButton = (item: SubTopicButton, index: number) => {
+    const renderTopicCard = (item: SubTopicButton, index: number) => {
         const isFinalTest = item.subTopicKey === 'Sprawdzian końcowy';
 
+        // Dynamiczny dobór koloru i ikony
+        let themeColor = mode === 'test' ? '#2196F3' : '#4CAF50';
+        let iconName = mode === 'test' ? "clipboard-outline" : "fitness-outline";
+
+        if (isFinalTest) {
+            themeColor = '#FF5722';
+            iconName = "trophy-outline";
+        }
+
         return (
-            <TouchableOpacity
-                key={`circle-${item.key}-${index}`}
+            <AnimatedTouchableOpacity
+                key={`card-${item.key}-${index}`}
+                entering={FadeInUp.delay(index * 50).duration(500)}
                 style={[
-                    styles.topicButton,
-                    isFinalTest
-                        ? { backgroundColor: '#FF5722' }
-                        : mode === 'test'
-                            ? { backgroundColor: '#2196F3' }
-                            : { backgroundColor: '#4CAF50' },
+                    styles.topicCard,
+                    { width: UNIVERSAL_CARD_WIDTH, borderColor: themeColor }
                 ]}
                 onPress={() => handleSubTopicPress(item)}
-                activeOpacity={0.85}
+                activeOpacity={0.8}
             >
-                <Text style={styles.topicButtonText}>
-                    {item.displayName || item.key}
-                </Text>
-            </TouchableOpacity>
+                <Ionicons name={iconName as any} size={22} color={themeColor} style={styles.cardIcon} />
+
+                <View style={styles.cardTextContainer}>
+                    <Text style={styles.topicTitle} numberOfLines={5}>
+                        {(item.displayName || item.key).toUpperCase()}
+                    </Text>
+                </View>
+
+                <Ionicons name="chevron-forward-outline" size={16} color={themeColor} style={styles.cardArrow} />
+            </AnimatedTouchableOpacity>
         );
     };
 
     const renderContent = () => {
         const layoutGroups = [];
-        let index = 0;
-        const n = subTopicsWithQuestions.length;
+        let currentIndex = 0;
+        const total = subTopicsWithQuestions.length;
 
-        while (index < n) {
-            const remaining = n - index;
-            const isSingle = layoutGroups.length % 2 === 0 || remaining === 1;
-
-            if (isSingle) {
+        while (currentIndex < total) {
+            // Rząd 1: Pojedynczy wyśrodkowany
+            if (currentIndex < total) {
                 layoutGroups.push(
-                    <View key={`group-${index}`} style={styles.singleCircleRow}>
-                        {renderCircleButton(subTopicsWithQuestions[index], index)}
+                    <View key={`row-s-${currentIndex}`} style={styles.singleRow}>
+                        {renderTopicCard(subTopicsWithQuestions[currentIndex], currentIndex)}
                     </View>
                 );
-                index += 1;
-            } else {
-                layoutGroups.push(
-                    <View key={`group-${index}`} style={styles.twoCircleRow}>
-                        {renderCircleButton(subTopicsWithQuestions[index], index)}
-                        {renderCircleButton(subTopicsWithQuestions[index + 1], index + 1)}
-                    </View>
-                );
-                index += 2;
+                currentIndex++;
+            }
+
+            // Rząd 2: Dwa kafelki obok siebie
+            if (currentIndex < total) {
+                if (currentIndex + 1 < total) {
+                    layoutGroups.push(
+                        <View key={`row-d-${currentIndex}`} style={styles.twoRow}>
+                            {renderTopicCard(subTopicsWithQuestions[currentIndex], currentIndex)}
+                            {renderTopicCard(subTopicsWithQuestions[currentIndex + 1], currentIndex + 1)}
+                        </View>
+                    );
+                    currentIndex += 2;
+                } else {
+                    layoutGroups.push(
+                        <View key={`row-s-end-${currentIndex}`} style={styles.singleRow}>
+                            {renderTopicCard(subTopicsWithQuestions[currentIndex], currentIndex)}
+                        </View>
+                    );
+                    currentIndex++;
+                }
             }
         }
-
         return layoutGroups;
     };
 
@@ -183,13 +184,11 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         >
             <View style={styles.overlay}>
                 <Text style={styles.headerText}>
-                    {mode === 'test' ? 'Wybierz test:' : 'Wybierz ćwiczenie:'}
+                    {mode === 'test' ? 'Wybierz test' : 'Wybierz ćwiczenie'}
                 </Text>
-                <ScrollView contentContainerStyle={styles.scrollContent}>
+                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     {subTopicsWithQuestions.length === 0 ? (
-                        <Text style={styles.emptyText}>
-                            Brak dostępnych materiałów.
-                        </Text>
+                        <Text style={styles.emptyText}>Brak dostępnych materiałów.</Text>
                     ) : (
                         renderContent()
                     )}
@@ -200,53 +199,59 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
 }
 
 const styles = StyleSheet.create({
-    backgroundImage: { flex: 1, width: '100%', height: '100%' },
+    backgroundImage: { flex: 1 },
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.85)',
-        paddingHorizontal: 20,
-        paddingTop: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.88)',
+        paddingTop: 30,
     },
     headerText: {
         fontSize: 22,
-        fontWeight: '700',
+        fontWeight: 'bold',
         color: '#111827',
         textAlign: 'center',
-        marginBottom: 20,
-    },
-    emptyText: {
-        textAlign: 'center',
-        marginTop: 50,
-        fontSize: 16,
-        color: '#6B7280',
+        marginBottom: 30,
+        textTransform: 'uppercase',
     },
     scrollContent: {
-        paddingVertical: 10,
-        alignItems: 'center',
-        paddingBottom: 40,
+        paddingBottom: 60,
+        paddingHorizontal: PADDING_HORIZONTAL,
     },
-    singleCircleRow: { marginBottom: 20 },
-    twoCircleRow: {
+    singleRow: {
+        width: '100%',
+        alignItems: 'center',
+        marginBottom: 30
+    },
+    twoRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        width: width - 40,
-        marginBottom: 20,
+        width: '100%',
+        marginBottom: 30,
     },
-    topicButton: {
-        width: CIRCLE_DIAMETER,
-        height: CIRCLE_DIAMETER,
-        borderRadius: CIRCLE_DIAMETER / 2,
-        justifyContent: 'center',
-        alignItems: 'center',
-        elevation: 5,
-        padding: 8,
+    topicCard: {
+        height: CARD_HEIGHT,
+        backgroundColor: 'white',
+        borderRadius: 18,
+        padding: 12,
+        elevation: 4,
+        borderWidth: 2.5,
+        justifyContent: 'space-between',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
-    topicButtonText: {
-        color: '#FFFFFF',
+    cardIcon: { alignSelf: 'flex-start' },
+    cardTextContainer: { flex: 1, justifyContent: 'center' },
+    topicTitle: {
         fontSize: 16,
-        fontWeight: '700',
+        fontWeight: '900',
+        color: '#1F2937',
         textAlign: 'center',
+        lineHeight: 20,
     },
+    cardArrow: { alignSelf: 'flex-end' },
+    emptyText: { textAlign: 'center', marginTop: 50, color: '#6B7280' },
 });
 
 export default SubTopicListScreen;

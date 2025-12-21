@@ -10,12 +10,13 @@ import {
 } from 'react-native';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { MainAppStackParamList } from '../../App'; // Importujemy główny typ
+import { MainAppStackParamList } from '../../App';
 import questionsDatabase from '../data/questionsDb.json';
 import backgroundImage from '../assets/books1.png';
 import { COLORS } from '../styles/theme';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
-// Używamy MainAppStackParamList, ponieważ ten ekran jest w głównym stosie
 type TopicListProps = NativeStackScreenProps<MainAppStackParamList, 'TopicList'>;
 
 type QuestionsDatabase = {
@@ -23,71 +24,71 @@ type QuestionsDatabase = {
 };
 
 const { width } = Dimensions.get('window');
-const CIRCLE_DIAMETER = width / 2.5;
+const CARD_WIDTH = width * 0.65;
+
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 function TopicListScreen({ route, navigation }: TopicListProps) {
-    const { grade } = route.params; // grade jest tutaj liczbą (number)
+    const { grade } = route.params;
     const db: QuestionsDatabase = (questionsDatabase as any).default || questionsDatabase;
 
     const topics = useMemo(() => {
         const topicsForGrade = db[String(grade)];
-        if (!topicsForGrade) {
-            console.error("TopicListScreen: Nie znaleziono danych dla klasy:", String(grade));
-            return [];
-        }
-        return Object.keys(topicsForGrade);
+        return topicsForGrade ? Object.keys(topicsForGrade) : [];
     }, [db, grade]);
 
-    // --- ✅ TUTAJ JEST POPRAWKA ---
     const handleTopicPress = (topic: string) => {
-        // Zmieniamy cel nawigacji z 'SubTopicList' na 'TheorySubTopicList'
         navigation.navigate('TheorySubTopicList', {
-            grade: String(grade), // Przekazujemy 'grade' jako string, bo TheorySubTopicList tego oczekuje
+            grade: String(grade),
             topic: topic
         });
     };
-    // --- KONIEC POPRAWKI ---
 
-    const renderCircleButton = (item: string, index: number) => (
-        <TouchableOpacity
-            key={`circle-${item}-${index}`}
-            style={styles.topicButton}
-            onPress={() => handleTopicPress(item)}
-            activeOpacity={0.85}
-        >
-            <Text style={styles.topicButtonText}>{item}</Text>
-        </TouchableOpacity>
-    );
+    // --- ZMIANA: Tutaj ustawiliśmy kolor pomarańczowy (COLORS.accent) ---
+    const renderTopicCard = (item: string, index: number) => {
+        const isRightAligned = index % 2 !== 0;
+        const themeColor = COLORS.accent; // To jest Twój pomarańczowy z MainScreen
+
+        return (
+            <AnimatedTouchableOpacity
+                key={`topic-${index}`}
+                entering={FadeInUp.delay(index * 100).duration(500)}
+                style={[
+                    styles.topicCard,
+                    {
+                        alignSelf: isRightAligned ? 'flex-end' : 'flex-start',
+                        borderColor: themeColor, // Ramka pomarańczowa
+                    }
+                ]}
+                onPress={() => handleTopicPress(item)}
+                activeOpacity={0.8}
+            >
+                {/* Ikona książki w kolorze pomarańczowym */}
+                <Ionicons name="book-outline" size={26} color={themeColor} style={styles.cardIcon} />
+
+                <View style={styles.cardTextContainer}>
+                    <Text style={styles.topicTitle} numberOfLines={3}>
+                        {item.toUpperCase()}
+                    </Text>
+                </View>
+
+                {/* Strzałka w kolorze pomarańczowym */}
+                <Ionicons name="chevron-forward-outline" size={20} color={themeColor} style={styles.cardArrow} />
+            </AnimatedTouchableOpacity>
+        );
+    };
 
     return (
-        <ImageBackground
-            source={backgroundImage}
-            style={styles.backgroundImage}
-            resizeMode="cover"
-        >
+        <ImageBackground source={backgroundImage} style={styles.backgroundImage} resizeMode="cover">
             <View style={styles.overlay}>
-                <Text style={styles.headerText}>Wybierz dział:</Text>
+                <Text style={styles.headerText}>TEORIA: WYBIERZ DZIAŁ</Text>
 
-                <ScrollView contentContainerStyle={styles.scrollContent}>
+                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     {topics.length === 0 ? (
-                        <Text style={styles.emptyText}>
-                            Brak działów dla tej klasy.
-                        </Text>
+                        <Text style={styles.emptyText}>Brak działów dla tej klasy.</Text>
                     ) : (
                         <View style={styles.pathContainer}>
-                            {topics.map((topic, index) => (
-                                <View
-                                    key={topic}
-                                    style={[
-                                        styles.circleContainer,
-                                        index % 2 === 0
-                                            ? styles.circleContainerLeft
-                                            : styles.circleContainerRight
-                                    ]}
-                                >
-                                    {renderCircleButton(topic, index)}
-                                </View>
-                            ))}
+                            {topics.map((topic, index) => renderTopicCard(topic, index))}
                         </View>
                     )}
                 </ScrollView>
@@ -96,72 +97,52 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
     );
 }
 
-// Style (bez zmian)
 const styles = StyleSheet.create({
-    backgroundImage: {
-        flex: 1,
-        width: '100%',
-        height: '100%',
-    },
+    backgroundImage: { flex: 1, width: '100%', height: '100%' },
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+        backgroundColor: 'rgba(255, 255, 255, 0.85)',
         paddingHorizontal: 20,
-        paddingTop: 20,
-        paddingBottom: 10,
+        paddingTop: 25,
     },
     headerText: {
-        fontSize: 20,
-        fontWeight: '700',
+        fontSize: 22,
+        fontWeight: 'bold',
         color: '#111827',
         textAlign: 'center',
-        marginBottom: 20,
-    },
-    emptyText: {
-        textAlign: 'center',
-        marginTop: 50,
-        fontSize: 16,
-        color: '#6B7280'
+        marginBottom: 30,
     },
     scrollContent: {
-        paddingVertical: 10,
-        paddingBottom: 40,
+        paddingBottom: 60,
+        paddingHorizontal: 10,
     },
-    pathContainer: {
-        width: '100%',
-    },
-    circleContainer: {
-        marginBottom: 20,
-    },
-    circleContainerLeft: {
-        alignSelf: 'flex-start',
-        marginLeft: '15%',
-    },
-    circleContainerRight: {
-        alignSelf: 'flex-end',
-        marginRight: '15%',
-    },
-    topicButton: {
-        backgroundColor: COLORS.primary,
-        width: CIRCLE_DIAMETER,
-        height: CIRCLE_DIAMETER,
-        borderRadius: CIRCLE_DIAMETER / 2,
-        justifyContent: 'center',
-        alignItems: 'center',
+    pathContainer: { width: '100%' },
+    // --- ZMIANA: Nowe style kafelka ---
+    topicCard: {
+        width: CARD_WIDTH,
+        height: 130,
+        backgroundColor: 'white',
+        borderRadius: 18,
+        padding: 15,
+        marginBottom: 25,
         elevation: 5,
-        padding: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
+        borderWidth: 3, // Grubsza linia, żeby kolor był widoczny
+        justifyContent: 'space-between',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.15,
+        shadowRadius: 5,
     },
-    topicButtonText: {
-        color: '#FFFFFF',
+    cardIcon: { alignSelf: 'flex-start' },
+    cardTextContainer: { flex: 1, justifyContent: 'center' },
+    topicTitle: {
         fontSize: 18,
-        fontWeight: '700',
-        textAlign: 'center',
+        fontWeight: '900',
+        color: '#1F2937',
+        textAlign: 'left',
     },
+    cardArrow: { alignSelf: 'flex-end' },
+    emptyText: { textAlign: 'center', marginTop: 50, fontSize: 16, color: '#6B7280' },
 });
 
 export default TopicListScreen;
-

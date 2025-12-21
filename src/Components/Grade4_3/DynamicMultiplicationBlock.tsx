@@ -14,7 +14,7 @@ const MAX_STEPS = 7;
 
 // --- STAŁE DANE DLA TEORII (zaszyte w kodzie - używamy tylko tytułu) ---
 const STATIC_LESSON_DATA = {
-    title: "Mnożenie Pisemne przez Liczbę Jednocyfrową",
+    title: "Mnożenie pisemne przez liczbę jednocyfrową",
 };
 
 // --- KOMPONENT ---
