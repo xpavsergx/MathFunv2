@@ -27,6 +27,8 @@ import DynamicMultiplicationBlock from "../Components/Grade4_3/DynamicMultiplica
 import DynamicMultiplicationByZeroEndBlock from "../Components/Grade4_3/DynamicMultiplicationByZeroEndBlock";
 import DynamicDivisionBlock from "../Components/Grade4_3/DynamicDivisionBlock";
 import DynamicMultiplicationTwoDigitsBlock from "../Components/Grade4_3/DynamicMultiplicationTwoDigitsBlock";
+import FractionTheoryBlock from "../Components/Drade4_4/FractionTheoryBlock";
+import MixedNumbersTheory from "../Components/Drade4_4/MixedNumbersTheory";
 
 type TheoryContentItem = {
     type: "paragraph" | "subHeader" | "listItem" | "example";
@@ -95,7 +97,16 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
                 subTopic === "Dzielenie pisemne przez liczby jednocyfrowe" ||
                 subTopic === "Mnożenie pisemne przez liczby wielocyfrowe"
             )
+        ) ||
+        (
+            grade === "4" &&
+            topic === "UŁAMKI ZWYKŁE" &&
+            (
+                subTopic === "Ułamek jako część całości" ||
+                subTopic === "Liczby mieszane"
+            )
         );
+
 
 
     if (isSpecialMemoryTopic) {
@@ -173,6 +184,12 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
                 )}
                 {subTopic === "Mnożenie pisemne przez liczby wielocyfrowe" && (
                     <DynamicMultiplicationTwoDigitsBlock />
+                )}
+                {subTopic === "Ułamek jako część całości" && (
+                    <FractionTheoryBlock />
+                )}
+                {subTopic === "Liczby mieszane" && (
+                    <MixedNumbersTheory />
                 )}
             </View>
         );

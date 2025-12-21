@@ -3,144 +3,139 @@ import {
     View,
     Text,
     StyleSheet,
-    FlatList,
     TouchableOpacity,
-    Dimensions, // Dodano Dimensions do obliczenia rozmiaru koła
-    ImageBackground, // Dodano ImageBackground, aby uzyskać tło
-    ScrollView, // Zmieniono z FlatList na ScrollView + renderContent
+    Dimensions,
+    ImageBackground,
+    ScrollView,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TheoryStackParamList } from '../../App';
 import questionsDatabase from '../data/questionsDb.json';
+import { COLORS } from '../styles/theme';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
-// --- Obliczenia rozmiaru koła ---
 const { width } = Dimensions.get('window');
-// Rozmiar koła dla 2 kolumn, z marginesami 20px po bokach i 20px pomiędzy.
 const PADDING_HORIZONTAL = 20;
-const GAP_BETWEEN_CIRCLES = 20;
-const CIRCLE_DIAMETER = (width - PADDING_HORIZONTAL * 2 - GAP_BETWEEN_CIRCLES) / 2;
-// ---------------------------------
+const GAP = 15; // Odstęp między kafelkami w rzędzie
 
-// Typy bez zmian...
-type TopicData = {
-    [subTopic: string]: any;
-};
+// Obliczamy JEDNĄ szerokość dla wszystkich kafelków na podstawie rzędu z dwoma elementami
+const UNIVERSAL_CARD_WIDTH = (width - (PADDING_HORIZONTAL * 2) - GAP) / 2;
+const CARD_HEIGHT = 150; // Stała wysokość dla wszystkich
 
-type QuestionsDatabaseType = {
-    [grade: string]: {
-        [topic: string]: TopicData;
-    };
-};
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 type TheorySubTopicListScreenProps = NativeStackScreenProps<TheoryStackParamList, 'TheorySubTopicList'>;
 
 function TheorySubTopicListScreen({ route, navigation }: TheorySubTopicListScreenProps) {
     const { grade, topic } = route.params;
-    const db: QuestionsDatabaseType = questionsDatabase as QuestionsDatabaseType;
+    const db: any = questionsDatabase;
 
     const subTopics = useMemo(() => {
         const gradeData = db[grade];
         if (!gradeData) return [];
         const topicData = gradeData[topic];
         if (!topicData) return [];
-        return Object.keys(topicData).filter(subTopicKey => {
-            const subTopicData = topicData[subTopicKey];
 
-            // 1. Definiujemy, które tematy mają być ukryte w teorii.
-            // Używamy nazwy podtematu, ponieważ JSON jest statyczny.
+        return Object.keys(topicData).filter(subTopicKey => {
             const hiddenTopics = [
                 "Zadania tekstowe, cz. 2",
                 "Sprawdzian końcowy",
                 "Działania pisemne. Zadania tekstowe",
-                // Tutaj dodaj inne tematy, które mają być tylko w praktyce
             ];
-
-            // 2. Jeśli nazwa podtematu znajduje się na liście ukrytych, zwróć false.
-            if (hiddenTopics.includes(subTopicKey)) {
-                return false;
-            }
-
-            // 3. W przeciwnym razie, zwróć true (temat jest widoczny w teorii).
-            return true;
+            return !hiddenTopics.includes(subTopicKey);
         });
     }, [db, grade, topic]);
 
     const handleSubTopicPress = (subTopic: string) => {
-        navigation.navigate('TheoryDetail', {
-            grade: grade,
-            topic: topic,
-            subTopic: subTopic,
-        });
+        navigation.navigate('TheoryDetail', { grade, topic, subTopic });
     };
 
-    // Zmieniona funkcja renderująca na styl kółek
-    const renderCircleButton = (item: string, index: number) => (
-        <TouchableOpacity
-            key={`circle-${item}-${index}`}
-            style={styles.topicButton}
-            onPress={() => handleSubTopicPress(item)}
-            activeOpacity={0.85}
-        >
-            <Text style={styles.topicButtonText}>{item}</Text>
-        </TouchableOpacity>
-    );
+    const renderTopicCard = (item: string, index: number) => {
+        const themeColor = COLORS.accent;
 
-    // Nowa funkcja renderująca treść w układzie 1-2-1-2 (z SubTopicListScreen.tsx)
+        return (
+            <AnimatedTouchableOpacity
+                key={`card-${item}-${index}`}
+                entering={FadeInUp.delay(index * 50).duration(500)}
+                style={[
+                    styles.topicCard,
+                    {
+                        width: UNIVERSAL_CARD_WIDTH, // Teraz każdy kafelek ma tę samą szerokość
+                        borderColor: themeColor,
+                    }
+                ]}
+                onPress={() => handleSubTopicPress(item)}
+                activeOpacity={0.8}
+            >
+                <Ionicons name="document-text-outline" size={22} color={themeColor} style={styles.cardIcon} />
+
+                <View style={styles.cardTextContainer}>
+                    <Text style={styles.topicTitle} numberOfLines={5}>
+                        {item.toUpperCase()}
+                    </Text>
+                </View>
+
+                <Ionicons name="chevron-forward-outline" size={16} color={themeColor} style={styles.cardArrow} />
+            </AnimatedTouchableOpacity>
+        );
+    };
+
     const renderContent = () => {
         const layoutGroups = [];
         let currentIndex = 0;
         const totalTopics = subTopics.length;
 
-        // Używamy oryginalnej logiki grupowania 1-2-1-2...
         while (currentIndex < totalTopics) {
+            // Rząd 1: Jeden kafelek (wyśrodkowany)
             if (currentIndex < totalTopics) {
-                // Rząd z jednym kołem
                 layoutGroups.push(
-                    <View key={`group-${currentIndex}`} style={styles.singleCircleRow}>
-                        {renderCircleButton(subTopics[currentIndex], currentIndex)}
+                    <View key={`row-single-${currentIndex}`} style={styles.singleRow}>
+                        {renderTopicCard(subTopics[currentIndex], currentIndex)}
                     </View>
                 );
                 currentIndex++;
             }
 
-            if (currentIndex < totalTopics && currentIndex + 1 < totalTopics) {
-                // Rząd z dwoma kołami
-                layoutGroups.push(
-                    <View key={`group-${currentIndex}-two`} style={styles.twoCircleRow}>
-                        {renderCircleButton(subTopics[currentIndex], currentIndex)}
-                        {renderCircleButton(subTopics[currentIndex + 1], currentIndex + 1)}
-                    </View>
-                );
-                currentIndex += 2;
-            } else if (currentIndex < totalTopics) {
-                // Rząd z jednym kołem (jeśli jest nieparzysta reszta)
-                layoutGroups.push(
-                    <View key={`group-${currentIndex}`} style={styles.singleCircleRow}>
-                        {renderCircleButton(subTopics[currentIndex], currentIndex)}
-                    </View>
-                );
-                currentIndex++;
+            // Rząd 2: Dwa kafelki obok siebie
+            if (currentIndex < totalTopics) {
+                if (currentIndex + 1 < totalTopics) {
+                    layoutGroups.push(
+                        <View key={`row-double-${currentIndex}`} style={styles.twoRow}>
+                            {renderTopicCard(subTopics[currentIndex], currentIndex)}
+                            {renderTopicCard(subTopics[currentIndex + 1], currentIndex + 1)}
+                        </View>
+                    );
+                    currentIndex += 2;
+                } else {
+                    // Jeśli został jeden na koniec
+                    layoutGroups.push(
+                        <View key={`row-single-end-${currentIndex}`} style={styles.singleRow}>
+                            {renderTopicCard(subTopics[currentIndex], currentIndex)}
+                        </View>
+                    );
+                    currentIndex++;
+                }
             }
         }
-
         return layoutGroups;
     };
 
-
     return (
         <ImageBackground
-            source={require('../assets/books1.png')} // Zmienić na ścieżkę do tła
+            source={require('../assets/books1.png')}
             style={styles.backgroundImage}
             resizeMode="cover"
         >
             <View style={styles.overlay}>
-                <Text style={styles.headerText}>Podtematy dla: {topic}</Text>
+                <Text style={styles.headerText}>{topic}</Text>
 
-                <ScrollView contentContainerStyle={styles.scrollContent}>
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
                     {subTopics.length === 0 ? (
-                        <Text style={styles.emptyText}>
-                            Brak dostępnych podtematów teorii dla tego działu.
-                        </Text>
+                        <Text style={styles.emptyText}>Brak dostępnych tematów.</Text>
                     ) : (
                         renderContent()
                     )}
@@ -151,71 +146,59 @@ function TheorySubTopicListScreen({ route, navigation }: TheorySubTopicListScree
 }
 
 const styles = StyleSheet.create({
-    // --- STYLES Z SUBTOPICLISTSCREEN.TSX ---
-    backgroundImage: {
-        flex: 1,
-        width: '100%',
-        height: '100%',
-    },
+    backgroundImage: { flex: 1 },
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.7)',
-        paddingHorizontal: PADDING_HORIZONTAL,
-        paddingTop: 20,
-        paddingBottom: 10,
+        backgroundColor: 'rgba(255, 255, 255, 0.88)',
+        paddingTop: 30,
     },
     headerText: {
-        fontSize: 20,
-        fontWeight: '700',
+        fontSize: 22,
+        fontWeight: 'bold',
         color: '#111827',
         textAlign: 'center',
-        marginBottom: 20,
-    },
-    emptyText: {
-        textAlign: 'center',
-        marginTop: 50,
-        fontSize: 16,
-        color: '#6B7280'
+        marginBottom: 30,
+        textTransform: 'uppercase',
     },
     scrollContent: {
-        paddingVertical: 10,
-        alignItems: 'center',
-        paddingBottom: 40,
+        paddingBottom: 60,
+        paddingHorizontal: PADDING_HORIZONTAL,
     },
-    singleCircleRow: {
-        marginBottom: 20,
-        // Centrowanie w rzędzie z jednym kołem
-        alignItems: 'center',
+    singleRow: {
+        width: '100%',
+        alignItems: 'center', // Centruje pojedynczy kafelek
+        marginBottom: 30
     },
-    twoCircleRow: {
+    twoRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        width: width - PADDING_HORIZONTAL * 2,
-        marginBottom: 20,
+        width: '100%',
+        marginBottom: 30,
     },
-    topicButton: {
-        backgroundColor: '#00BCD4', // Zmieniono na turkusowy/cyjan (bardziej "teoretyczny" kolor)
-        width: CIRCLE_DIAMETER,
-        height: CIRCLE_DIAMETER,
-        borderRadius: CIRCLE_DIAMETER / 2,
-        justifyContent: 'center',
-        alignItems: 'center',
-        elevation: 5,
-        padding: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
+    topicCard: {
+        height: CARD_HEIGHT,
+        backgroundColor: 'white',
+        borderRadius: 18,
+        padding: 12,
+        elevation: 4,
+        borderWidth: 2.5,
+        justifyContent: 'space-between',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
-    topicButtonText: {
-        color: '#FFFFFF',
-        fontSize: 18,
-        fontWeight: '700',
+    cardIcon: { alignSelf: 'flex-start' },
+    cardTextContainer: { flex: 1, justifyContent: 'center' },
+    topicTitle: {
+        fontSize: 16, // Nieco mniejszy font, aby zmieścić tekst w węższym kafelku
+        fontWeight: '900',
+        color: '#1F2937',
         textAlign: 'center',
-        // Używamy mniejszej czcionki, aby zmieściły się długie nazwy tematów
-        fontSize: 18,
+        lineHeight: 20,
     },
-    // --- USUNIĘTO NIEUŻYWANE STYLE Z POPRZEDNIEJ TEORII (itemContainer, itemText itp.) ---
+    cardArrow: { alignSelf: 'flex-end' },
+    emptyText: { textAlign: 'center', marginTop: 50, color: '#6B7280' },
 });
 
 export default TheorySubTopicListScreen;

@@ -14,7 +14,7 @@ const MAX_STEPS = 9;
 
 // --- STAŁE DANE DLA TEORII ---
 const STATIC_LESSON_DATA = {
-    title: "Mnożenie Pisemne przez Liczby Wielocyfrowe",
+    title: "Mnożenie pisemne przez liczby wielocyfrowe",
 };
 
 // --- KOMPONENT ---

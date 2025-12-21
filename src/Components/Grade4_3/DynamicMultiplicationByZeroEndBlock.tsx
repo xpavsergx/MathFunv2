@@ -14,7 +14,7 @@ const MAX_STEPS = 5;
 
 // --- STAŁE DANE DLA TEORII (zaszyte w kodzie - używamy tylko tytułu) ---
 const STATIC_LESSON_DATA = {
-    title: "Mnożenie Pisemne przez Liczby z Zerami na Końcu",
+    title: "Mnożenie pisemne przez liczby z zerami na końcu",
 };
 
 // --- KOMPONENT ---

@@ -14,7 +14,7 @@ const MAX_STEPS = 6; // Ustawione na 7, aby mieć 6 pełnych akcji po starcie
 
 // --- STAŁE DANE DLA TEORII (zaszyte w kodzie - używamy tylko tytułu) ---
 const STATIC_LESSON_DATA = {
-    title: "Dodawanie Pisemne",
+    title: "Dodawanie pisemne",
 };
 
 // --- KOMPONENT ---
