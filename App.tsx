@@ -58,6 +58,7 @@ import NumberLineTrainerScreen4 from './src/screens/screens_4_klassa/screens_4K1
 import MentalMathLargeNumbers from './src/screens/screens_4_klassa/screens_4K2R/MentalMathLargeNumbers';
 import LengthUnitsTrainer from './src/screens/screens_4_klassa/screens_4K2R/LengthUnitsTrainer';
 import MonetaryUnitsTrainer from './src/screens/screens_4_klassa/screens_4K2R/MonetaryUnitsTrainer';
+import MassUnitsTrainer from './src/screens/screens_4_klassa/screens_4K2R/MassUnitsTrainer';
 // --- Ekrany: Pozostałe ---
 import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -160,6 +161,11 @@ function HomeStackNavigator() {
             <MainStack.Screen
                 name="MonetaryUnitsTrainer"
                 component={MonetaryUnitsTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Jednostki monetarne - złote i grosze' })}
+            />
+            <MainStack.Screen
+                name="MassUnitsTrainer"
+                component={MassUnitsTrainer}
                 options={({ route }) => ({ title: route.params?.subTopic || 'Jednostki monetarne - złote i grosze' })}
             />
 

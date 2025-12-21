@@ -57,6 +57,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         'Rachunki pamięciowe na dużych liczbach': 'MentalMathLargeNumbers',
         'Jednostki monetarne - złote i grosze': 'MonetaryUnitsTrainer',
         'Jednostki długości':'LengthUnitsTrainer',
+        'Jednostki masy': 'MassUnitsTrainer',
     } as const;
 
     const getTrainerScreen = (key: string) => trainerScreenMap[key as keyof typeof trainerScreenMap];
