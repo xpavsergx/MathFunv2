@@ -71,6 +71,7 @@ export type MainAppStackParamList = {
     NumberLineTrainerScreen4: { grade: number; topic: string; subTopic: string };
     MathSprintScreen: { grade: number; topic: string; subTopic: string };
     MassUnitsTrainer: { grade: number; topic: string; subTopic: string };
+    RomanNumeralsTrainer: { grade: number; topic: string; subTopic: string };
     // Новые тренажёры
     DecimalSystemTrainer: { grade: number; topic: string; subTopic?: string };
     ComparingNumbersTrainer: { grade: number; topic: string; subTopic?: string };

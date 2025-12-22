@@ -293,11 +293,16 @@
 
       "Jednostki masy": { "theoryTitle": "Ważymy: kilogramy i gramy",
         "isTrainer": true,
-        "practiceKeys": ["JJednostki masy"],
+        "practiceKeys": ["Jednostki masy"],
         "showInPractice": true,
         "questions": []
       },
-      "System rzymski": { "theoryTitle": "Liczby rzymskie - jak je czytać?", "questions": [] },
+      "System rzymski": { "theoryTitle": "Liczby rzymskie - jak je czytać?",
+        "isTrainer": true,
+        "practiceKeys": ["System rzymski"],
+        "showInPractice": true,
+        "questions": []
+      },
       "Z kalendarzem za pan brat": { "theoryTitle": "Kalendarz: dni, miesiące, lata", "questions": [] },
       "Godziny na zegarach": { "theoryTitle": "Która godzina? Zegary", "questions": [] }
     },

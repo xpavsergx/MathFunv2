@@ -58,6 +58,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         'Jednostki monetarne - złote i grosze': 'MonetaryUnitsTrainer',
         'Jednostki długości':'LengthUnitsTrainer',
         'Jednostki masy': 'MassUnitsTrainer',
+        'System rzymski': 'RomanNumeralsTrainer',
     } as const;
 
     const getTrainerScreen = (key: string) => trainerScreenMap[key as keyof typeof trainerScreenMap];
