@@ -303,8 +303,18 @@
         "showInPractice": true,
         "questions": []
       },
-      "Z kalendarzem za pan brat": { "theoryTitle": "Kalendarz: dni, miesiące, lata", "questions": [] },
-      "Godziny na zegarach": { "theoryTitle": "Która godzina? Zegary", "questions": [] }
+      "Z kalendarzem za pan brat": { "theoryTitle": "Kalendarz: dni, miesiące, lata",
+        "isTrainer": true,
+        "practiceKeys": ["Z kalendarzem za pan brat"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Godziny na zegarach": { "theoryTitle": "Która godzina? Zegary",
+        "isTrainer": true,
+        "practiceKeys": ["Godziny na zegarach"],
+        "showInPractice": true,
+        "questions": []
+      }
     },
     "DZIAŁANIA PISEMNE": {
       "Dodawanie pisemne": {

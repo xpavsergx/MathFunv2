@@ -60,7 +60,8 @@ import LengthUnitsTrainer from './src/screens/screens_4_klassa/screens_4K2R/Leng
 import MonetaryUnitsTrainer from './src/screens/screens_4_klassa/screens_4K2R/MonetaryUnitsTrainer';
 import MassUnitsTrainer from './src/screens/screens_4_klassa/screens_4K2R/MassUnitsTrainer';
 import RomanNumeralsTrainer from './src/screens/screens_4_klassa/screens_4K2R/RomanNumeralsTrainer';
-
+import CalendarTrainer from './src/screens/screens_4_klassa/screens_4K2R/CalendarTrainer';
+import ClockTrainer from './src/screens/screens_4_klassa/screens_4K2R/ClockTrainer';
 // --- Ekrany: Pozostałe ---
 import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -88,6 +89,7 @@ import DuelResultScreen from './src/screens/DuelResultScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import ActivityScreen from './src/screens/ActivityScreen';
 import StoreScreen from './src/screens/StoreScreen';
+
 
 
 // --- Nawigacja ---
@@ -129,11 +131,7 @@ function HomeStackNavigator() {
                 component={MultiplicationTrainerScreen}
                 options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie i Dzielenie' })}
             />
-            <MainStack.Screen
-                name="LengthUnitsTrainer"
-                component={LengthUnitsTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie i Dzielenie' })}
-            />
+
 
             <MainStack.Screen name="PlusMinusTrainer" component={PlusMinusTrainerScreen} options={({ route }) => ({ title: route.params?.subTopic })} />
             <MainStack.Screen name="MoreLessTrainer4" component={MoreLessTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic })} />
@@ -166,14 +164,29 @@ function HomeStackNavigator() {
                 options={({ route }) => ({ title: route.params?.subTopic || 'Jednostki monetarne - złote i grosze' })}
             />
             <MainStack.Screen
+                name="LengthUnitsTrainer"
+                component={LengthUnitsTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Jednostki długości' })}
+            />
+            <MainStack.Screen
                 name="MassUnitsTrainer"
                 component={MassUnitsTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Jednostki monetarne - złote i grosze' })}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Jednostki masy' })}
             />
             <MainStack.Screen
                 name="RomanNumeralsTrainer"
                 component={RomanNumeralsTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Jednostki monetarne - złote i grosze' })}
+                options={({ route }) => ({ title: route.params?.subTopic || 'System rzymski' })}
+            />
+            <MainStack.Screen
+                name="CalendarTrainer"
+                component={CalendarTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Z kalendarzem za pan brat' })}
+            />
+            <MainStack.Screen
+                name="ClockTrainer"
+                component={ ClockTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Godziny na zegarach' })}
             />
 
             {/* EKRANY ZADAŃ TEKSTOWYCH */}

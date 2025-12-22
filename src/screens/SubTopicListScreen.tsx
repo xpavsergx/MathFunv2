@@ -13,6 +13,7 @@ import { MainAppStackParamList } from '../navigation/types';
 import questionsDatabase from '../data/questionsDb.json';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
+import CalendarTrainer from "./screens_4_klassa/screens_4K2R/CalendarTrainer";
 
 type SubTopicListProps = NativeStackScreenProps<MainAppStackParamList, 'SubTopicList'>;
 
@@ -59,6 +60,8 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         'Jednostki długości':'LengthUnitsTrainer',
         'Jednostki masy': 'MassUnitsTrainer',
         'System rzymski': 'RomanNumeralsTrainer',
+        'Z kalendarzem za pan brat': 'CalendarTrainer',
+        'Godziny na zegarach': 'ClockTrainer',
     } as const;
 
     const getTrainerScreen = (key: string) => trainerScreenMap[key as keyof typeof trainerScreenMap];
