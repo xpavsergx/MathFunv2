@@ -3,6 +3,13 @@
 // ==============================
 //      АВТОРИЗАЦИЯ
 // ==============================
+import WrittenSubtractionTrainer from "../screens/screens_4_klassa/screens_4K3R/WrittenSubtractionTrainer";
+import WrittenMultiplicationWithZerosTrainer
+    from "../screens/screens_4_klassa/screens_4K3R/WrittenMultiplicationWithZerosTrainer";
+import WrittenMultiDigitMultiplicationTrainer
+    from "../screens/screens_4_klassa/screens_4K3R/WrittenMultiDigitMultiplicationTrainer";
+import WrittenDivisionTrainer from "../screens/screens_4_klassa/screens_4K3R/WrittenDivisionTrainer";
+
 export type AuthStackParamList = {
     Login: undefined;
     Register: undefined;
@@ -74,7 +81,12 @@ export type MainAppStackParamList = {
     RomanNumeralsTrainer: { grade: number; topic: string; subTopic: string };
     CalendarTrainer: { grade: number; topic: string; subTopic: string };
     ClockTrainer:{ grade: number; topic: string; subTopic: string };
-
+    WrittenAdditionTrainer:{ grade: number; topic: string; subTopic: string };
+    WrittenSubtractionTrainer:{ grade: number; topic: string; subTopic: string };
+    WrittenMultiplicationTrainer:{ grade: number; topic: string; subTopic: string };
+    WrittenMultiplicationWithZerosTrainer:{ grade: number; topic: string; subTopic: string };
+    WrittenMultiDigitMultiplicationTrainer:{ grade: number; topic: string; subTopic: string };
+    WrittenDivisionTrainer:{ grade: number; topic: string; subTopic: string };
     // Новые тренажёры
     DecimalSystemTrainer: { grade: number; topic: string; subTopic?: string };
     ComparingNumbersTrainer: { grade: number; topic: string; subTopic?: string };

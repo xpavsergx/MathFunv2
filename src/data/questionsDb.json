@@ -317,17 +317,43 @@
       }
     },
     "DZIAŁANIA PISEMNE": {
-      "Dodawanie pisemne": {
-        "theoryTitle": "Dodawanie w słupku",
-        "questions": [
-          { "id": "q1_dodpis_4", "type": "practice", "difficulty": "łatwe", "questionText": "Oblicz pisemnie: 123 + 45", "options": ["168", "178", "573", "158"], "correctAnswerIndex": 0, "correctAnswerExplanation": "Dodajemy jedności do jedności (3+5=8), dziesiątki do dziesiątek (2+4=6), setki zostają (1). Wynik: 168.", "theorySnippet": "Przy dodawaniu pisemnym podpisujemy liczby jedna pod drugą, wyrównując do prawej strony (jedności pod jednościami itd.) i dodajemy cyfry w kolejnych rzędach od prawej do lewej."}
-        ]
+      "Dodawanie pisemne": { "theoryTitle": "Dodawanie w słupku",
+        "isTrainer": true,
+        "practiceKeys": ["Dodawanie pisemne"],
+        "showInPractice": true,
+        "questions": []
       },
-      "Odejmowanie pisemne": { "theoryTitle": "Odejmowanie w słupku", "questions": [] },
-      "Mnożenie pisemne przez liczby jednocyfrowe": { "theoryTitle": "Mnożenie w słupku (przez jedną cyfrę)", "questions": [] },
-      "Mnożenie przez liczby z zerami na końcu": { "theoryTitle": "Mnożenie z zerami na końcu", "questions": [] },
-      "Dzielenie pisemne przez liczby jednocyfrowe": { "theoryTitle": "Dzielenie w słupku (przez jedną cyfrę)", "questions": [] },
-      "Mnożenie pisemne przez liczby wielocyfrowe": { "theoryTitle": "Mnożenie w słupku (przez wiele cyfr)", "questions": [] },
+      "Odejmowanie pisemne": { "theoryTitle": "Odejmowanie w słupku",
+        "isTrainer": true,
+        "practiceKeys": ["Odejmowanie pisemne"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Mnożenie pisemne przez liczby jednocyfrowe": { "theoryTitle": "Mnożenie w słupku (przez jedną cyfrę)",
+        "isTrainer": true,
+        "practiceKeys": ["Mnożenie pisemne przez liczby jednocyfrowe"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Mnożenie przez liczby z zerami na końcu": { "theoryTitle": "Mnożenie z zerami na końcu",
+        "isTrainer": true,
+        "practiceKeys": ["Mnożenie przez liczby z zerami na końcu"],
+        "showInPractice": true,
+        "questions": []
+      },
+
+      "Mnożenie pisemne przez liczby wielocyfrowe": { "theoryTitle": "Mnożenie w słupku (przez wiele cyfr)",
+        "isTrainer": true,
+        "practiceKeys": ["Mnożenie pisemne przez liczby wielocyfrowe"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Dzielenie pisemne przez liczby jednocyfrowe": { "theoryTitle": "Dzielenie w słupku (przez jedną cyfrę)",
+        "isTrainer": true,
+        "practiceKeys": ["Dzielenie pisemne przez liczby jednocyfrowe"],
+        "showInPractice": true,
+        "questions": []
+      },
       "Działania pisemne. Zadania tekstowe": { "theoryTitle": "Zadania tekstowe z działaniami pisemnymi", "questions": [] }
     },
     "FIGURY GEOMETRYCZNE": {

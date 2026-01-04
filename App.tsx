@@ -62,6 +62,8 @@ import MassUnitsTrainer from './src/screens/screens_4_klassa/screens_4K2R/MassUn
 import RomanNumeralsTrainer from './src/screens/screens_4_klassa/screens_4K2R/RomanNumeralsTrainer';
 import CalendarTrainer from './src/screens/screens_4_klassa/screens_4K2R/CalendarTrainer';
 import ClockTrainer from './src/screens/screens_4_klassa/screens_4K2R/ClockTrainer';
+import WrittenAdditionTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WrittenAdditionTrainer";
+import WrittenSubtractionTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WrittenSubtractionTrainer";
 // --- Ekrany: Pozostałe ---
 import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -89,6 +91,13 @@ import DuelResultScreen from './src/screens/DuelResultScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import ActivityScreen from './src/screens/ActivityScreen';
 import StoreScreen from './src/screens/StoreScreen';
+import WrittenMultiplicationTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WrittenMultiplicationTrainer";
+import WrittenMultiplicationWithZerosTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WrittenMultiplicationWithZerosTrainer";
+import WrittenMultiDigitMultiplicationTrainer
+    from "./src/screens/screens_4_klassa/screens_4K3R/WrittenMultiDigitMultiplicationTrainer";
+import WrittenDivisionTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WrittenDivisionTrainer";
+
+
 
 
 
@@ -187,6 +196,36 @@ function HomeStackNavigator() {
                 name="ClockTrainer"
                 component={ ClockTrainer}
                 options={({ route }) => ({ title: route.params?.subTopic || 'Godziny na zegarach' })}
+            />
+            <MainStack.Screen
+                name="WrittenAdditionTrainer"
+                component={WrittenAdditionTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Dodawanie pisemne' })}
+            />
+            <MainStack.Screen
+                name="WrittenSubtractionTrainer"
+                component={ WrittenSubtractionTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Odejmowanie pisemne' })}
+            />
+            <MainStack.Screen
+                name="WrittenMultiplicationTrainer"
+                component={WrittenMultiplicationTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie pisemne przez liczby jednocyfrowe' })}
+            />
+            <MainStack.Screen
+                name="WrittenMultiplicationWithZerosTrainer"
+                component={WrittenMultiplicationWithZerosTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie pisemne przez liczby jednocyfrowe' })}
+            />
+            <MainStack.Screen
+                name="WrittenMultiDigitMultiplicationTrainer"
+                component={WrittenMultiDigitMultiplicationTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie pisemne przez liczby wielocyfrowe' })}
+            />
+            <MainStack.Screen
+                name="WrittenDivisionTrainer"
+                component={WrittenDivisionTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Dzielenie pisemne przez liczby jednocyfrowe' })}
             />
 
             {/* EKRANY ZADAŃ TEKSTOWYCH */}

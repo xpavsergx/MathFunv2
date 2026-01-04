@@ -14,6 +14,7 @@ import questionsDatabase from '../data/questionsDb.json';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import CalendarTrainer from "./screens_4_klassa/screens_4K2R/CalendarTrainer";
+import WrittenSubtractionTrainer from "./screens_4_klassa/screens_4K3R/WrittenSubtractionTrainer";
 
 type SubTopicListProps = NativeStackScreenProps<MainAppStackParamList, 'SubTopicList'>;
 
@@ -62,6 +63,13 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         'System rzymski': 'RomanNumeralsTrainer',
         'Z kalendarzem za pan brat': 'CalendarTrainer',
         'Godziny na zegarach': 'ClockTrainer',
+        'Dodawanie pisemne': 'WrittenAdditionTrainer',
+        'Odejmowanie pisemne': 'WrittenSubtractionTrainer',
+        'Mnożenie pisemne przez liczby jednocyfrowe' : 'WrittenMultiplicationTrainer',
+        'Mnożenie przez liczby z zerami na końcu' : 'WrittenMultiplicationWithZerosTrainer',
+        'Mnożenie pisemne przez liczby wielocyfrowe':'WrittenMultiDigitMultiplicationTrainer',
+        'Dzielenie pisemne przez liczby jednocyfrowe' : 'WrittenDivisionTrainer',
+
     } as const;
 
     const getTrainerScreen = (key: string) => trainerScreenMap[key as keyof typeof trainerScreenMap];
