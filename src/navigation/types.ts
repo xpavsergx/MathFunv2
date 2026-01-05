@@ -9,6 +9,7 @@ import WrittenMultiplicationWithZerosTrainer
 import WrittenMultiDigitMultiplicationTrainer
     from "../screens/screens_4_klassa/screens_4K3R/WrittenMultiDigitMultiplicationTrainer";
 import WrittenDivisionTrainer from "../screens/screens_4_klassa/screens_4K3R/WrittenDivisionTrainer";
+import WordProblemsTrainer from "../screens/screens_4_klassa/screens_4K3R/WordProblemsTrainer";
 
 export type AuthStackParamList = {
     Login: undefined;
@@ -87,6 +88,7 @@ export type MainAppStackParamList = {
     WrittenMultiplicationWithZerosTrainer:{ grade: number; topic: string; subTopic: string };
     WrittenMultiDigitMultiplicationTrainer:{ grade: number; topic: string; subTopic: string };
     WrittenDivisionTrainer:{ grade: number; topic: string; subTopic: string };
+    WordProblemsTrainer:{ grade: number; topic: string; subTopic: string };
     // Новые тренажёры
     DecimalSystemTrainer: { grade: number; topic: string; subTopic?: string };
     ComparingNumbersTrainer: { grade: number; topic: string; subTopic?: string };

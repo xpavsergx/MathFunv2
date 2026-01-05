@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     View, Text, StyleSheet, TextInput, Button, Keyboard, ImageBackground,
     Animated, StatusBar, Image, Dimensions, TouchableOpacity, Modal,
-    Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager, SafeAreaView
+    Platform, KeyboardAvoidingView, ScrollView, InteractionManager, SafeAreaView
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { awardXpAndCoins } from '../../../services/xpService';
@@ -18,7 +18,9 @@ const FONT_SIZE_DIGIT = CELL_WIDTH * 0.72;
 const FONT_SIZE_INPUT = CELL_WIDTH * 0.6;
 
 const TASKS_LIMIT = 50;
-const combinedIconSize = screenWidth * 0.20;
+
+// Размер иконок (как просили - увеличенный)
+const combinedIconSize = screenWidth * 0.28;
 
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
@@ -94,13 +96,10 @@ const WrittenDivisionTrainer = () => {
 
         const n2 = Math.floor(2 + Math.random() * 8);
 
-        // Logika generowania (80% szans na brak reszty)
         let n1;
         const wantNoRemainder = Math.random() < 0.8;
         const minVal = Math.pow(10, len - 1);
         const maxVal = Math.pow(10, len) - 1;
-
-        // Wymuszamy, by wynik był > 10 (poza tabliczką mnożenia w prostym sensie)
         const absoluteMin = n2 * 11;
         const effectiveMin = Math.max(minVal, absoluteMin);
 
@@ -377,85 +376,85 @@ const WrittenDivisionTrainer = () => {
     };
 
     return (
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <SafeAreaView style={styles.container}>
-                <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-                <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
-                <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: backgroundColor.interpolate({ inputRange: [-1, 0, 1], outputRange: ['rgba(255,0,0,0.2)', 'rgba(255,255,255,0)', 'rgba(0,255,0,0.2)'] }) }]} pointerEvents="none" />
+        <SafeAreaView style={styles.container}>
+            <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+            <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+            <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: backgroundColor.interpolate({ inputRange: [-1, 0, 1], outputRange: ['rgba(255,0,0,0.2)', 'rgba(255,255,255,0)', 'rgba(0,255,0,0.2)'] }) }]} pointerEvents="none" />
 
-                <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardContainer}>
+            <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardContainer}>
 
-                    {!isKeyboardVisible && (
-                        <View style={styles.topButtons}>
-                            <TouchableOpacity onPress={() => setShowScratchpad(true)} style={styles.topBtnItem}><Image source={require('../../../assets/pencil.png')} style={styles.iconTop} /><Text style={styles.buttonLabel}>Brudnopis</Text></TouchableOpacity>
-                            <TouchableOpacity onPress={() => setShowHint(!showHint)} style={styles.topBtnItem}><Image source={require('../../../assets/question.png')} style={styles.iconTop} /><Text style={styles.buttonLabel}>Pomoc</Text></TouchableOpacity>
-                        </View>
-                    )}
-
-                    {showHint && !isKeyboardVisible && (
-                        <View style={styles.hintBox}>
-                            <Text style={styles.hintTitle}>Dzielenie pisemne:</Text>
-                            <Text style={styles.hintText}>Wpisz wynik na samej górze. Możesz (ale nie musisz) wpisywać obliczenia pomocnicze.</Text>
-                        </View>
-                    )}
-
-                    <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={`${dividend} : ${divisor}`} />
-
-                    {/* ŚRODKOWA SEKCJA - ZAJMUJE DOSTĘPNE MIEJSCE (Flex 1) */}
-                    <View style={styles.mainContentSection}>
-                        <View style={styles.card}>
-                            <View style={styles.overlayBackground} />
-                            <Text style={styles.questionMain}>Dzielenie pisemne</Text>
-
-                            {/* SCROLL - elastyczny */}
-                            <View style={styles.scrollAreaContainer}>
-                                <ScrollView
-                                    style={{ flex: 1 }}
-                                    contentContainerStyle={styles.scrollContent}
-                                    showsVerticalScrollIndicator={true}
-                                    nestedScrollEnabled={true}
-                                >
-                                    <ScrollView horizontal={true} persistentScrollbar={true} style={{ flexGrow: 0 }}>
-                                        <View style={styles.divisionGrid}>
-
-                                            {gridConfig.length > 0 ? renderGridRow(gridConfig[0], 0) : null}
-
-                                            <View style={[styles.lineAboveDividend, { width: CELL_WIDTH * dividendLength + 10 }]} />
-
-                                            <View style={styles.row}>
-                                                {dividend.split('').map((d, i) => (
-                                                    <View key={`d-${i}`} style={styles.cell}><Text style={styles.digit}>{d}</Text></View>
-                                                ))}
-
-                                                <View style={styles.cell}><Text style={styles.operator}>:</Text></View>
-                                                <View style={styles.cell}><Text style={styles.digit}>{divisor}</Text></View>
-                                            </View>
-
-                                            {gridConfig.slice(1).map((rowConf, idx) => renderGridRow(rowConf, idx + 1))}
-
-                                        </View>
-                                    </ScrollView>
-                                </ScrollView>
-                            </View>
-
-                            <View style={styles.buttonContainer}>
-                                <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
-                            </View>
-                            <Text style={styles.counterTextSmall}>Zadanie: {taskCount} / {TASKS_LIMIT}</Text>
-                            {message ? <Text style={[styles.result, message.includes('Świetnie') ? styles.correctText : styles.errorText]}>{message}</Text> : null}
-                        </View>
+                {!isKeyboardVisible && (
+                    <View style={styles.topButtons}>
+                        <TouchableOpacity onPress={() => setShowScratchpad(true)} style={styles.topBtnItem}><Image source={require('../../../assets/pencil.png')} style={styles.iconTop} /><Text style={styles.buttonLabel}>Brudnopis</Text></TouchableOpacity>
+                        <TouchableOpacity onPress={() => setShowHint(!showHint)} style={styles.topBtnItem}><Image source={require('../../../assets/question.png')} style={styles.iconTop} /><Text style={styles.buttonLabel}>Pomoc</Text></TouchableOpacity>
                     </View>
+                )}
 
-                    {/* STOPKA (SOWY) - ZAWSZE NA DOLE, NIEZALEŻNIE OD KARTY */}
-                    {!isKeyboardVisible && (
-                        <View style={styles.footerSection}>
-                            <Image source={require('../../../assets/happy.png')} style={styles.iconSame} /><Text style={styles.counterTextIcons}>{correctCount}</Text>
-                            <Image source={require('../../../assets/sad.png')} style={styles.iconSame} /><Text style={styles.counterTextIcons}>{wrongCount}</Text>
+                {showHint && !isKeyboardVisible && (
+                    <View style={styles.hintBox}>
+                        <Text style={styles.hintTitle}>Dzielenie pisemne:</Text>
+                        <Text style={styles.hintText}>Wpisz wynik na samej górze. Możesz (ale nie musisz) wpisywać obliczenia pomocnicze.</Text>
+                    </View>
+                )}
+
+                <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={`${dividend} : ${divisor}`} />
+
+                {/* ŚRODKOWA SEKCJA */}
+                <View style={styles.mainContentSection}>
+                    <View style={styles.card}>
+                        <View style={styles.overlayBackground} />
+                        <Text style={styles.questionMain}>Dzielenie pisemne</Text>
+
+                        {/* SCROLL ВНУТРИ КАРТОЧКИ */}
+                        <View style={styles.scrollAreaContainer}>
+                            <ScrollView
+                                style={{ flex: 1 }}
+                                contentContainerStyle={styles.scrollContent}
+                                showsVerticalScrollIndicator={true}
+                                nestedScrollEnabled={true}
+                                keyboardShouldPersistTaps="handled"
+                                keyboardDismissMode="on-drag"
+                            >
+                                <ScrollView horizontal={true} persistentScrollbar={true} style={{ flexGrow: 0 }} keyboardShouldPersistTaps="handled">
+                                    <View style={styles.divisionGrid}>
+
+                                        {gridConfig.length > 0 ? renderGridRow(gridConfig[0], 0) : null}
+
+                                        <View style={[styles.lineAboveDividend, { width: CELL_WIDTH * dividendLength + 10 }]} />
+
+                                        <View style={styles.row}>
+                                            {dividend.split('').map((d, i) => (
+                                                <View key={`d-${i}`} style={styles.cell}><Text style={styles.digit}>{d}</Text></View>
+                                            ))}
+
+                                            <View style={styles.cell}><Text style={styles.operator}>:</Text></View>
+                                            <View style={styles.cell}><Text style={styles.digit}>{divisor}</Text></View>
+                                        </View>
+
+                                        {gridConfig.slice(1).map((rowConf, idx) => renderGridRow(rowConf, idx + 1))}
+
+                                    </View>
+                                </ScrollView>
+                            </ScrollView>
                         </View>
-                    )}
-                </KeyboardAvoidingView>
-            </SafeAreaView>
-        </TouchableWithoutFeedback>
+
+                        <View style={styles.buttonContainer}>
+                            <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
+                        </View>
+                        <Text style={styles.counterTextSmall}>Zadanie: {taskCount} / {TASKS_LIMIT}</Text>
+                        {message ? <Text style={[styles.result, message.includes('Świetnie') ? styles.correctText : styles.errorText]}>{message}</Text> : null}
+                    </View>
+                </View>
+
+                {/* STOPKA (SOWY) */}
+                {!isKeyboardVisible && (
+                    <View style={styles.footerSection}>
+                        <Image source={require('../../../assets/happy.png')} style={styles.iconSame} /><Text style={styles.counterTextIcons}>{correctCount}</Text>
+                        <Image source={require('../../../assets/sad.png')} style={styles.iconSame} /><Text style={styles.counterTextIcons}>{wrongCount}</Text>
+                    </View>
+                )}
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 };
 
@@ -463,37 +462,36 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     keyboardContainer: {
         flex: 1,
-        flexDirection: 'column', // Układ kolumnowy
-        justifyContent: 'space-between' // Rozsuwa górę, środek i dół
+        flexDirection: 'column',
+        justifyContent: 'space-between'
     },
 
-    // 1. Górne przyciski
     topButtons: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
         paddingRight: 20,
         paddingTop: 10,
-        height: 90, // Rezerwujemy miejsce u góry
+        height: 90,
         zIndex: 10
     },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
-    iconTop: { width: 60, height: 60, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
-    buttonLabel: { fontSize: 12, fontWeight: 'bold', color: '#007AFF', marginTop: 2 },
+    iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
+    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2 },
 
-    // 2. Środkowa sekcja (Karta) - Zajmuje całe wolne miejsce (Flex 1)
     mainContentSection: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 10,
-        paddingBottom: 10, // Margines od stopki
+        paddingBottom: 10,
     },
 
     card: {
         width: '98%',
         maxWidth: 500,
-        flex: 1, // Karta rozciąga się w rodzicu
-        maxHeight: '95%', // ...ale zostawia 5% marginesu
+        flex: 1,
+        // Ограничиваем высоту, чтобы было "фиксированное окно"
+        maxHeight: '80%',
         borderRadius: 20,
         padding: 15,
         alignItems: 'center',
@@ -501,7 +499,6 @@ const styles = StyleSheet.create({
     },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 20 },
 
-    // ScrollView zajmuje resztę miejsca w karcie
     scrollAreaContainer: {
         width: '100%',
         flex: 1,
@@ -510,16 +507,15 @@ const styles = StyleSheet.create({
     scrollContent: {
         flexGrow: 1,
         alignItems: 'center',
-        paddingBottom: 40, // Miejsce na dole, żeby ostatni wiersz był widoczny
+        paddingBottom: 40,
     },
 
-    // 3. Stopka (Sowy) - Stała wysokość
+    // Футер с отступом, чтобы поднять сов выше
     footerSection: {
-        height: 80,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingBottom: 10
+        paddingBottom: 40,
     },
 
     questionMain: { fontSize: 24, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 15, marginTop: 5 },
@@ -553,7 +549,7 @@ const styles = StyleSheet.create({
     counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 5 },
 
     iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    counterTextIcons: { fontSize: 24, fontWeight: 'bold', marginHorizontal: 8, textAlign: 'center', color: '#333' },
+    counterTextIcons: { fontSize: Math.max(14, combinedIconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
 
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
     drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },

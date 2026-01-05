@@ -69,7 +69,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         'Mnożenie przez liczby z zerami na końcu' : 'WrittenMultiplicationWithZerosTrainer',
         'Mnożenie pisemne przez liczby wielocyfrowe':'WrittenMultiDigitMultiplicationTrainer',
         'Dzielenie pisemne przez liczby jednocyfrowe' : 'WrittenDivisionTrainer',
-
+        'Działania pisemne. Zadania tekstowe' : 'WordProblemsTrainer',
     } as const;
 
     const getTrainerScreen = (key: string) => trainerScreenMap[key as keyof typeof trainerScreenMap];

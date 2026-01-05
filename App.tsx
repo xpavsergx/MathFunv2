@@ -96,6 +96,7 @@ import WrittenMultiplicationWithZerosTrainer from "./src/screens/screens_4_klass
 import WrittenMultiDigitMultiplicationTrainer
     from "./src/screens/screens_4_klassa/screens_4K3R/WrittenMultiDigitMultiplicationTrainer";
 import WrittenDivisionTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WrittenDivisionTrainer";
+import WordProblemsTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WordProblemsTrainer";
 
 
 
@@ -226,6 +227,11 @@ function HomeStackNavigator() {
                 name="WrittenDivisionTrainer"
                 component={WrittenDivisionTrainer}
                 options={({ route }) => ({ title: route.params?.subTopic || 'Dzielenie pisemne przez liczby jednocyfrowe' })}
+            />
+            <MainStack.Screen
+                name="WordProblemsTrainer"
+                component={WordProblemsTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Działania pisemne. Zadania tekstowe' })}
             />
 
             {/* EKRANY ZADAŃ TEKSTOWYCH */}

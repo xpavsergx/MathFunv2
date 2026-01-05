@@ -354,7 +354,12 @@
         "showInPractice": true,
         "questions": []
       },
-      "Działania pisemne. Zadania tekstowe": { "theoryTitle": "Zadania tekstowe z działaniami pisemnymi", "questions": [] }
+      "Działania pisemne. Zadania tekstowe": { "theoryTitle": "Zadania tekstowe z działaniami pisemnymi",
+        "isTrainer": true,
+        "practiceKeys": ["Działania pisemne. Zadania tekstowe"],
+        "showInPractice": true,
+        "questions": []
+      }
     },
     "FIGURY GEOMETRYCZNE": {
       "Proste, półproste, odcinki": { "theoryTitle": "Linie wokół nas: proste i odcinki", "questions": [] },
