@@ -382,7 +382,12 @@
         "showInPractice": true,
         "questions": []
       },
-      "Liczby mieszane": { "theoryTitle": "Całości i ułamki razem", "questions": [] },
+      "Liczby mieszane": { "theoryTitle": "Całości i ułamki razem",
+        "isTrainer": true,
+        "practiceKeys": ["Liczby mieszane"],
+        "showInPractice": true,
+        "questions": []
+      },
       "Ułamki i liczby mieszane na osi liczbowej": { "theoryTitle": "Ułamki na osi liczbowej", "questions": [] },
       "Porównywanie ułamków": { "theoryTitle": "Który ułamek większy?", "questions": [] },
       "Rozszerzanie i skracanie ułamków": { "theoryTitle": "Zmieniamy ułamki, nie zmieniając wartości", "questions": [] },

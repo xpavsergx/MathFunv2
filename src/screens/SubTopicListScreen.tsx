@@ -71,6 +71,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         'Dzielenie pisemne przez liczby jednocyfrowe' : 'WrittenDivisionTrainer',
         'Działania pisemne. Zadania tekstowe' : 'WordProblemsTrainer',
         'Ułamek jako część całości':'FractionsTrainer',
+        'Liczby mieszane':'MixedNumbersTrainer',
     } as const;
 
     const getTrainerScreen = (key: string) => trainerScreenMap[key as keyof typeof trainerScreenMap];

@@ -99,7 +99,7 @@ import WrittenDivisionTrainer from "./src/screens/screens_4_klassa/screens_4K3R/
 import WordProblemsTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WordProblemsTrainer";
 
 import FractionsTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsTrainer";
-
+import MixedNumbersTrainer from "./src/screens/screens_4_klassa/screens_4K4R/MixedNumbersTrainer";
 
 
 // --- Nawigacja ---
@@ -234,9 +234,14 @@ function HomeStackNavigator() {
                 options={({ route }) => ({ title: route.params?.subTopic || 'Działania pisemne. Zadania tekstowe' })}
             />
             <MainStack.Screen
+                name="MixedNumbersTrainer"
+                component={MixedNumbersTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Ułamek jako część całości' })}
+            />
+            <MainStack.Screen
                 name="FractionsTrainer"
                 component={FractionsTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Ułamek jako część całości' })}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Liczby mieszane' })}
             />
 
             {/* EKRANY ZADAŃ TEKSTOWYCH */}
