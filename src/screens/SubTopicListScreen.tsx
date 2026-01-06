@@ -70,6 +70,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         'Mnożenie pisemne przez liczby wielocyfrowe':'WrittenMultiDigitMultiplicationTrainer',
         'Dzielenie pisemne przez liczby jednocyfrowe' : 'WrittenDivisionTrainer',
         'Działania pisemne. Zadania tekstowe' : 'WordProblemsTrainer',
+        'Ułamek jako część całości':'FractionsTrainer',
     } as const;
 
     const getTrainerScreen = (key: string) => trainerScreenMap[key as keyof typeof trainerScreenMap];

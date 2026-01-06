@@ -98,7 +98,7 @@ import WrittenMultiDigitMultiplicationTrainer
 import WrittenDivisionTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WrittenDivisionTrainer";
 import WordProblemsTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WordProblemsTrainer";
 
-
+import FractionsTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsTrainer";
 
 
 
@@ -232,6 +232,11 @@ function HomeStackNavigator() {
                 name="WordProblemsTrainer"
                 component={WordProblemsTrainer}
                 options={({ route }) => ({ title: route.params?.subTopic || 'Działania pisemne. Zadania tekstowe' })}
+            />
+            <MainStack.Screen
+                name="FractionsTrainer"
+                component={FractionsTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Ułamek jako część całości' })}
             />
 
             {/* EKRANY ZADAŃ TEKSTOWYCH */}

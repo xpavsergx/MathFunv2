@@ -89,6 +89,7 @@ export type MainAppStackParamList = {
     WrittenMultiDigitMultiplicationTrainer:{ grade: number; topic: string; subTopic: string };
     WrittenDivisionTrainer:{ grade: number; topic: string; subTopic: string };
     WordProblemsTrainer:{ grade: number; topic: string; subTopic: string };
+    FractionsTrainer:{ grade: number; topic: string; subTopic: string };
     // Новые тренажёры
     DecimalSystemTrainer: { grade: number; topic: string; subTopic?: string };
     ComparingNumbersTrainer: { grade: number; topic: string; subTopic?: string };
