@@ -29,6 +29,13 @@ import DynamicDivisionBlock from "../Components/Grade4_3/DynamicDivisionBlock";
 import DynamicMultiplicationTwoDigitsBlock from "../Components/Grade4_3/DynamicMultiplicationTwoDigitsBlock";
 import FractionTheoryBlock from "../Components/Drade4_4/FractionTheoryBlock";
 import MixedNumbersTheory from "../Components/Drade4_4/MixedNumbersTheory";
+import FractionsTimelineBlock from "../Components/Drade4_4/FractionsTimelineBlock";
+import FractionsComparisonBlock from "../Components/Drade4_4/FractionsComparisonBlock";
+import FractionsExpansionBlock from "../Components/Drade4_4/FractionsExpansionBlock";
+import ImproperFractionsBlock from "../Components/Drade4_4/ImproperFractionsBlock";
+import FractionAsDivisionBlock from "../Components/Drade4_4/FractionAsDivisionBlock";
+import FractionsAdditionBlock from "../Components/Drade4_4/FractionsAdditionBlock";
+import FractionsSubtractionBlock from "../Components/Drade4_4/FractionsSubtractionBlock";
 
 type TheoryContentItem = {
     type: "paragraph" | "subHeader" | "listItem" | "example";
@@ -103,7 +110,15 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
             topic === "UŁAMKI ZWYKŁE" &&
             (
                 subTopic === "Ułamek jako część całości" ||
-                subTopic === "Liczby mieszane"
+                subTopic === "Liczby mieszane" ||
+                subTopic === "Ułamki i liczby mieszane na osi liczbowej" ||
+                subTopic === "Porównywanie ułamków" ||
+                subTopic === "Rozszerzanie i skracanie ułamków" ||
+                subTopic === "Ułamki niewłaściwe" ||
+                subTopic === "Ułamek jako wynik dzielenia" ||
+                subTopic === "Dodawanie ułamków zwykłych" ||
+                subTopic === "Odejmowanie ułamków zwykłych"
+
             )
         );
 
@@ -190,6 +205,27 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
                 )}
                 {subTopic === "Liczby mieszane" && (
                     <MixedNumbersTheory />
+                )}
+                {subTopic === "Ułamki i liczby mieszane na osi liczbowej" && (
+                    <FractionsTimelineBlock />
+                )}
+                {subTopic === "Porównywanie ułamków" && (
+                    <FractionsComparisonBlock />
+                )}
+                {subTopic === "Rozszerzanie i skracanie ułamków" && (
+                    <FractionsExpansionBlock />
+                )}
+                {subTopic === "Ułamki niewłaściwe" && (
+                    <ImproperFractionsBlock />
+                )}
+                {subTopic === "Ułamek jako wynik dzielenia" && (
+                    <FractionAsDivisionBlock />
+                )}
+                {subTopic === "Dodawanie ułamków zwykłych" && (
+                    <FractionsAdditionBlock />
+                )}
+                {subTopic === "Odejmowanie ułamków zwykłych" && (
+                    <FractionsSubtractionBlock />
                 )}
             </View>
         );
