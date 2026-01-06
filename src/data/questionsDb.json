@@ -376,7 +376,12 @@
       "Skala na planach": { "theoryTitle": "Czytamy mapy i plany", "questions": [] }
     },
     "UŁAMKI ZWYKŁE": {
-      "Ułamek jako część całości": { "theoryTitle": "Co to jest ułamek?", "questions": [] },
+      "Ułamek jako część całości": { "theoryTitle": "Co to jest ułamek?",
+        "isTrainer": true,
+        "practiceKeys": ["Ułamek jako część całości"],
+        "showInPractice": true,
+        "questions": []
+      },
       "Liczby mieszane": { "theoryTitle": "Całości i ułamki razem", "questions": [] },
       "Ułamki i liczby mieszane na osi liczbowej": { "theoryTitle": "Ułamki na osi liczbowej", "questions": [] },
       "Porównywanie ułamków": { "theoryTitle": "Który ułamek większy?", "questions": [] },
