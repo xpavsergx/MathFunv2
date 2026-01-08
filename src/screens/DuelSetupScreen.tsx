@@ -13,23 +13,18 @@ import {
     ScrollView
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
-// --- ✅ 1. ІМПОРТУЄМО ТИП ДЛЯ TAB NAVIGATOR ---
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import questionsDatabase from '../data/questionsDb.json';
+import firestore from '@react-native-firebase/firestore'; // Dodany import firestore
 
-// --- ✅ 2. ІМПОРТУЄМО ПРАВИЛЬНІ ТИПИ З ОКРЕМОГО ФАЙЛУ ---
 import { AppTabParamList, FriendsStackParamList } from '../navigation/types';
 import { sendDuelRequest } from '../services/friendService';
 import { COLORS, FONT_SIZES, PADDING, MARGIN } from '../styles/theme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
-// Тип для 'route' (без змін)
 type DuelSetupRouteProp = RouteProp<FriendsStackParamList, 'DuelSetup'>;
-// --- ✅ 3. ТИП ДЛЯ 'navigation' (тепер це Tab Navigator) ---
 type DuelNavigationProp = BottomTabNavigationProp<AppTabParamList>;
 
-// Типізація бази даних (без змін)
 type QuestionsDB = {
     [grade: string]: {
         [topic: string]: any;
@@ -39,12 +34,10 @@ const db: QuestionsDB = questionsDatabase;
 
 function DuelSetupScreen() {
     const route = useRoute<DuelSetupRouteProp>();
-    // --- ✅ 4. ВИКОРИСТОВУЄМО ПРАВИЛЬНИЙ ТИП НАВІГАЦІЇ ---
     const navigation = useNavigation<DuelNavigationProp>();
 
     const { friendId, friendEmail } = route.params;
 
-    // (Стани, класи, теми - без змін)
     const availableGrades = useMemo(() => Object.keys(db).map(Number), []);
     const [selectedGrade, setSelectedGrade] = useState<number>(availableGrades[0]);
     const [availableTopics, setAvailableTopics] = useState<string[]>([]);
@@ -53,7 +46,6 @@ function DuelSetupScreen() {
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
 
-    // (Стилі теми - без змін)
     const themeStyles = {
         container: { backgroundColor: isDarkMode ? COLORS.backgroundDark : COLORS.backgroundLight },
         card: { backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.white },
@@ -73,7 +65,6 @@ function DuelSetupScreen() {
         chipTextActive: { color: COLORS.white, },
     };
 
-    // (useEffect для оновлення тем - без змін)
     useEffect(() => {
         const topicsForGrade = db[selectedGrade];
         let newTopics: string[] = [];
@@ -86,41 +77,57 @@ function DuelSetupScreen() {
         }
     }, [selectedGrade]);
 
-    // --- ✅ 5. ОНОВЛЕНА ФУНКЦІЯ (використовує 'navigate' замість 'replace') ---
+    // --- ✅ POPRAWIONA FUNKCJA (Czekanie na akceptację bez osobnego Lobby) ---
     const handleStartDuel = async () => {
         if (!selectedTopic) {
-            Alert.alert("Błąd", "Nie wybrano tematu lub dla tej klasy nie ma jeszcze tematów.");
+            Alert.alert("Błąd", "Nie wybrano tematu.");
             return;
         }
 
-        setIsLoading(true);
+        setIsLoading(true); // Rozpoczęcie kręcenia się przycisku
         try {
             const newDuelId = await sendDuelRequest(friendId, selectedGrade, selectedTopic);
 
             if (newDuelId) {
-                // ВИРІШЕННЯ: Ми переходимо на вкладку 'HomeStack'
-                // і передаємо їй команду відкрити екран 'Test'
-                navigation.navigate('HomeStack', { // Назва вкладки
-                    screen: 'Test', // Екран всередині вкладки
-                    params: { // Параметри для екрану 'Test'
-                        grade: selectedGrade,
-                        topic: selectedTopic,
-                        mode: 'duel',
-                        testType: 'duel',
-                        duelId: newDuelId,
-                    }
-                });
+                // Słuchamy zmian w dokumencie pojedynku w czasie rzeczywistym
+                const unsubscribe = firestore()
+                    .collection('duels')
+                    .doc(newDuelId)
+                    .onSnapshot(doc => {
+                        if (!doc.exists) return;
+
+                        const data = doc.data();
+
+                        // Czekamy, aż przeciwnik zmieni status na 'active' w ActivityScreen
+                        if (data?.status === 'active') {
+                            unsubscribe(); // Przestajemy słuchać, bo zaczynamy grę
+                            setIsLoading(false);
+
+                            navigation.navigate('HomeStack', {
+                                screen: 'Test',
+                                params: {
+                                    grade: selectedGrade,
+                                    topic: selectedTopic,
+                                    mode: 'duel',
+                                    testType: 'duel',
+                                    duelId: newDuelId,
+                                }
+                            });
+                        }
+                    }, (error) => {
+                        console.error("Błąd nasłuchiwania pojedynku:", error);
+                        setIsLoading(false);
+                    });
             } else {
                 setIsLoading(false);
             }
         } catch (error) {
-            console.error("Błąd krytyczny podczas tworzenia pojedynku:", error);
-            Alert.alert("Błąd", "Nie udało się rozpocząć pojedynku.");
+            console.error("Błąd podczas tworzenia pojedynku:", error);
+            Alert.alert("Błąd", "Nie udało się wysłać wyzwania.");
             setIsLoading(false);
         }
     };
 
-    // (JSX - без змін)
     return (
         <SafeAreaView style={[styles.container, themeStyles.container]}>
             <ScrollView
@@ -134,7 +141,6 @@ function DuelSetupScreen() {
                         Rzucasz wyzwanie: <Text style={styles.friendName}>{friendEmail}</Text>
                     </Text>
 
-                    {/* (Вибір Класів) */}
                     <Text style={[styles.label, themeStyles.text]}>Wybierz klasę:</Text>
                     <ScrollView
                         horizontal
@@ -162,7 +168,6 @@ function DuelSetupScreen() {
                         ))}
                     </ScrollView>
 
-                    {/* (Вибір Тем) */}
                     <Text style={[styles.label, themeStyles.text]}>Wybierz temat:</Text>
                     <View style={styles.topicContainer}>
                         {availableTopics.length > 0 ? (
@@ -193,14 +198,16 @@ function DuelSetupScreen() {
                         )}
                     </View>
 
-                    {/* (Кнопка Старт) */}
                     <TouchableOpacity
                         style={[styles.button, themeStyles.button, isLoading && styles.disabledButton]}
                         onPress={handleStartDuel}
                         disabled={isLoading}
                     >
                         {isLoading ? (
-                            <ActivityIndicator size="small" color={COLORS.white} />
+                            <View style={styles.loadingWrapper}>
+                                <ActivityIndicator size="small" color={COLORS.white} />
+                                <Text style={styles.loadingText}>Czekam na akceptację...</Text>
+                            </View>
                         ) : (
                             <Text style={[styles.buttonText, themeStyles.buttonText]}>Rozpocznij Pojedynek</Text>
                         )}
@@ -211,16 +218,9 @@ function DuelSetupScreen() {
     );
 }
 
-// (Стилі - без змін)
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    scrollContainer: {
-        flexGrow: 1,
-        justifyContent: 'center',
-        padding: PADDING.medium,
-    },
+    container: { flex: 1 },
+    scrollContainer: { flexGrow: 1, justifyContent: 'center', padding: PADDING.medium },
     card: {
         borderRadius: 20,
         padding: PADDING.large,
@@ -232,30 +232,12 @@ const styles = StyleSheet.create({
         shadowRadius: 6,
         gap: MARGIN.medium,
     },
-    title: {
-        fontSize: FONT_SIZES.xlarge,
-        fontWeight: 'bold',
-    },
-    subtitle: {
-        fontSize: FONT_SIZES.medium,
-    },
-    friendName: {
-        fontWeight: 'bold',
-        color: COLORS.primary,
-    },
-    label: {
-        fontSize: FONT_SIZES.medium,
-        fontWeight: '500',
-        alignSelf: 'flex-start',
-    },
-    chipScrollContainer: {
-        width: '100%',
-        maxHeight: 60,
-    },
-    topicContainer: {
-        width: '100%',
-        gap: MARGIN.small,
-    },
+    title: { fontSize: FONT_SIZES.xlarge, fontWeight: 'bold' },
+    subtitle: { fontSize: FONT_SIZES.medium },
+    friendName: { fontWeight: 'bold', color: COLORS.primary },
+    label: { fontSize: FONT_SIZES.medium, fontWeight: '500', alignSelf: 'flex-start' },
+    chipScrollContainer: { width: '100%', maxHeight: 60 },
+    topicContainer: { width: '100%', gap: MARGIN.small },
     chip: {
         paddingVertical: PADDING.small + 2,
         paddingHorizontal: PADDING.medium,
@@ -264,32 +246,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    topicChip: {
-        marginRight: 0,
-        paddingVertical: PADDING.medium - 2,
-    },
-    chipText: {
-        fontSize: FONT_SIZES.medium,
-        fontWeight: '500',
-    },
+    topicChip: { marginRight: 0, paddingVertical: PADDING.medium - 2 },
+    chipText: { fontSize: FONT_SIZES.medium, fontWeight: '500' },
     chipActive: {},
-    chipTextActive: {
-        fontWeight: 'bold',
-    },
-    button: {
-        width: '100%',
-        paddingVertical: PADDING.medium,
-        borderRadius: 25,
-        alignItems: 'center',
-        marginTop: MARGIN.small,
-    },
-    buttonText: {
-        fontSize: FONT_SIZES.medium,
-        fontWeight: 'bold',
-    },
-    disabledButton: {
-        backgroundColor: COLORS.grey,
-    }
+    chipTextActive: { fontWeight: 'bold' },
+    button: { width: '100%', paddingVertical: PADDING.medium, borderRadius: 25, alignItems: 'center', marginTop: MARGIN.small },
+    buttonText: { fontSize: FONT_SIZES.medium, fontWeight: 'bold' },
+    disabledButton: { backgroundColor: COLORS.grey },
+    loadingWrapper: { flexDirection: 'row', alignItems: 'center' },
+    loadingText: { color: COLORS.white, marginLeft: 10, fontWeight: 'bold' }
 });
 
 export default DuelSetupScreen;

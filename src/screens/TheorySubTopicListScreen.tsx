@@ -42,6 +42,12 @@ function TheorySubTopicListScreen({ route, navigation }: TheorySubTopicListScree
                 "Zadania tekstowe, cz. 2",
                 "Sprawdzian końcowy",
                 "Działania pisemne. Zadania tekstowe",
+                "Zapisywanie wyrażeń dwumianowanych, cz. 2",
+                "Pojedynki - zestaw 1",
+                "Pojedynki - zestaw 2",
+                "Pojedynki - zestaw 3",
+                "Pojedynki - zestaw 4",
+                "Pojedynki - zestaw 5"
             ];
             return !hiddenTopics.includes(subTopicKey);
         });

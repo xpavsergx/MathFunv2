@@ -1,3 +1,5 @@
+// src/screens/SubTopicListScreen.tsx
+
 import React, { useMemo } from 'react';
 import {
     View,
@@ -13,8 +15,6 @@ import { MainAppStackParamList } from '../navigation/types';
 import questionsDatabase from '../data/questionsDb.json';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import CalendarTrainer from "./screens_4_klassa/screens_4K2R/CalendarTrainer";
-import WrittenSubtractionTrainer from "./screens_4_klassa/screens_4K3R/WrittenSubtractionTrainer";
 
 type SubTopicListProps = NativeStackScreenProps<MainAppStackParamList, 'SubTopicList'>;
 
@@ -32,7 +32,6 @@ const { width } = Dimensions.get('window');
 const PADDING_HORIZONTAL = 20;
 const GAP = 15;
 
-// Wymiary kafelków przeniesione z Teorii
 const UNIVERSAL_CARD_WIDTH = (width - (PADDING_HORIZONTAL * 2) - GAP) / 2;
 const CARD_HEIGHT = 150;
 
@@ -76,16 +75,32 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
 
     const getTrainerScreen = (key: string) => trainerScreenMap[key as keyof typeof trainerScreenMap];
 
+    // --- LOGIKA FILTROWANIA Z POPRAWKĄ ---
     const subTopicsWithQuestions = useMemo<SubTopicButton[]>(() => {
         const topicsForGrade = db[String(grade)];
         if (!topicsForGrade) return [];
         const subTopicsMap = topicsForGrade[topic] || {};
         const result: SubTopicButton[] = [];
 
+        // Lista technicznych kluczy, których NIE chcemy pokazywać w menu głównym
+        const hiddenTopics = [
+            "Pojedynki - zestaw 1",
+            "Pojedynki - zestaw 2",
+            "Pojedynki - zestaw 3",
+            "Pojedynki - zestaw 4",
+            "Pojedynki - zestaw 5"
+
+        ];
+
         Object.keys(subTopicsMap).forEach(subKey => {
+            // 1. Wykluczamy tematy z listy hiddenTopics
+            if (hiddenTopics.includes(subKey)) return;
+
             const subTopic = subTopicsMap[subKey];
             if (!subTopic) return;
-            if (subTopic.showInPractice === false && mode === 'training') return;
+
+            // 2. Obsługa flagi showInPractice z JSON-a
+            if (subTopic.showInPractice === false) return;
 
             if (subTopic.isTrainer && subTopic.practiceKeys?.length) {
                 subTopic.practiceKeys.forEach((pk: string) => {
@@ -99,12 +114,11 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     }, [db, grade, topic, mode]);
 
     const handleSubTopicPress = (item: SubTopicButton) => {
-        const isFinalTest = item.subTopicKey === 'Sprawdzian końcowy';
-        if (isFinalTest || mode === 'test') {
+        if (mode === 'test') {
             navigation.navigate('Test', {
                 grade, topic, subTopic: item.subTopicKey,
                 testType: 'subTopic',
-                mode: mode === 'training' ? 'learn' : 'assess',
+                mode: 'assess',
             });
             return;
         }
@@ -119,16 +133,8 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     };
 
     const renderTopicCard = (item: SubTopicButton, index: number) => {
-        const isFinalTest = item.subTopicKey === 'Sprawdzian końcowy';
-
-        // Dynamiczny dobór koloru i ikony
         let themeColor = mode === 'test' ? '#2196F3' : '#4CAF50';
         let iconName = mode === 'test' ? "clipboard-outline" : "fitness-outline";
-
-        if (isFinalTest) {
-            themeColor = '#FF5722';
-            iconName = "trophy-outline";
-        }
 
         return (
             <AnimatedTouchableOpacity
@@ -142,13 +148,11 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
                 activeOpacity={0.8}
             >
                 <Ionicons name={iconName as any} size={22} color={themeColor} style={styles.cardIcon} />
-
                 <View style={styles.cardTextContainer}>
                     <Text style={styles.topicTitle} numberOfLines={5}>
                         {(item.displayName || item.key).toUpperCase()}
                     </Text>
                 </View>
-
                 <Ionicons name="chevron-forward-outline" size={16} color={themeColor} style={styles.cardArrow} />
             </AnimatedTouchableOpacity>
         );
@@ -160,7 +164,6 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         const total = subTopicsWithQuestions.length;
 
         while (currentIndex < total) {
-            // Rząd 1: Pojedynczy wyśrodkowany
             if (currentIndex < total) {
                 layoutGroups.push(
                     <View key={`row-s-${currentIndex}`} style={styles.singleRow}>
@@ -170,7 +173,6 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
                 currentIndex++;
             }
 
-            // Rząd 2: Dwa kafelki obok siebie
             if (currentIndex < total) {
                 if (currentIndex + 1 < total) {
                     layoutGroups.push(
@@ -217,56 +219,15 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
 
 const styles = StyleSheet.create({
     backgroundImage: { flex: 1 },
-    overlay: {
-        flex: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.88)',
-        paddingTop: 30,
-    },
-    headerText: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#111827',
-        textAlign: 'center',
-        marginBottom: 30,
-        textTransform: 'uppercase',
-    },
-    scrollContent: {
-        paddingBottom: 60,
-        paddingHorizontal: PADDING_HORIZONTAL,
-    },
-    singleRow: {
-        width: '100%',
-        alignItems: 'center',
-        marginBottom: 30
-    },
-    twoRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-        marginBottom: 30,
-    },
-    topicCard: {
-        height: CARD_HEIGHT,
-        backgroundColor: 'white',
-        borderRadius: 18,
-        padding: 12,
-        elevation: 4,
-        borderWidth: 2.5,
-        justifyContent: 'space-between',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-    },
+    overlay: { flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.88)', paddingTop: 30 },
+    headerText: { fontSize: 22, fontWeight: 'bold', color: '#111827', textAlign: 'center', marginBottom: 30, textTransform: 'uppercase' },
+    scrollContent: { paddingBottom: 60, paddingHorizontal: PADDING_HORIZONTAL },
+    singleRow: { width: '100%', alignItems: 'center', marginBottom: 30 },
+    twoRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 30 },
+    topicCard: { height: CARD_HEIGHT, backgroundColor: 'white', borderRadius: 18, padding: 12, elevation: 4, borderWidth: 2.5, justifyContent: 'space-between' },
     cardIcon: { alignSelf: 'flex-start' },
     cardTextContainer: { flex: 1, justifyContent: 'center' },
-    topicTitle: {
-        fontSize: 16,
-        fontWeight: '900',
-        color: '#1F2937',
-        textAlign: 'center',
-        lineHeight: 20,
-    },
+    topicTitle: { fontSize: 16, fontWeight: '900', color: '#1F2937', textAlign: 'center', lineHeight: 20 },
     cardArrow: { alignSelf: 'flex-end' },
     emptyText: { textAlign: 'center', marginTop: 50, color: '#6B7280' },
 });

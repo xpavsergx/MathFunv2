@@ -36,6 +36,12 @@ import ImproperFractionsBlock from "../Components/Drade4_4/ImproperFractionsBloc
 import FractionAsDivisionBlock from "../Components/Drade4_4/FractionAsDivisionBlock";
 import FractionsAdditionBlock from "../Components/Drade4_4/FractionsAdditionBlock";
 import FractionsSubtractionBlock from "../Components/Drade4_4/FractionsSubtractionBlock";
+import SpecialDenominatorsBlock from "../Components/Grade4_5/SpecialDenominatorsBlock";
+import CompoundExpressionsPart1Block from "../Components/Grade4_5/CompoundExpressionsPart1Block";
+import EquivalentDecimalsBlock from "../Components/Grade4_5/EquivalentDecimalsBlock";
+import DecimalComparisonBlock from "../Components/Grade4_5/DecimalComparisonBlock";
+import DecimalAdditionBlock from "../Components/Grade4_5/DecimalAdditionBlock";
+import DecimalSubtractionBlock from "../Components/Grade4_5/DecimalSubtractionBlock";
 
 type TheoryContentItem = {
     type: "paragraph" | "subHeader" | "listItem" | "example";
@@ -120,8 +126,19 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
                 subTopic === "Odejmowanie ułamków zwykłych"
 
             )
+        ) ||
+        (
+            grade === "4" &&
+            topic === "UŁAMKI DZIESIĘTNE" &&
+            (
+                subTopic === "Ułamki o mianownikach 10, 100, 1000, ..." ||
+                subTopic === "Zapisywanie wyrażeń dwumianowanych, cz. 1" ||
+                subTopic === "Różne zapisy tego samego ułamka dziesiętnego" ||
+                subTopic === "Porównywanie ułamków dziesiętnych" ||
+                subTopic === "Dodawanie ułamków dziesiętnych" ||
+                subTopic === "Odejmowanie ułamków dziesiętnych"
+            )
         );
-
 
 
     if (isSpecialMemoryTopic) {
@@ -226,6 +243,24 @@ function TheoryDetailScreen({ route }: TheoryDetailScreenProps) {
                 )}
                 {subTopic === "Odejmowanie ułamków zwykłych" && (
                     <FractionsSubtractionBlock />
+                )}
+                {subTopic === "Ułamki o mianownikach 10, 100, 1000, ..." && (
+                    <SpecialDenominatorsBlock />
+                )}
+                {subTopic === "Zapisywanie wyrażeń dwumianowanych, cz. 1" && (
+                    <CompoundExpressionsPart1Block/>
+                )}
+                {subTopic === "Różne zapisy tego samego ułamka dziesiętnego" && (
+                    <EquivalentDecimalsBlock/>
+                )}
+                {subTopic === "Porównywanie ułamków dziesiętnych" && (
+                    <DecimalComparisonBlock/>
+                )}
+                {subTopic === "Dodawanie ułamków dziesiętnych" && (
+                    <DecimalAdditionBlock />
+                )}
+                {subTopic === "Odejmowanie ułamków dziesiętnych" && (
+                    <DecimalSubtractionBlock />
                 )}
             </View>
         );

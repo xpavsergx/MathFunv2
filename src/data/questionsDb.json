@@ -216,6 +216,148 @@
           }
         ]
       },
+      "Pojedynki - zestaw 1": {
+        "theoryTitle": "Liczby i działania - Nowy Balans",
+        "isTrainer": false,
+        "showInPractice": false,
+        "questions": [
+          {
+            "id": "duel_ld_easy_01",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Jaki jest wynik działania 73 - 39?",
+            "options": ["44", "34", "36", "46"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "73 - 30 = 43, a 43 - 9 = 34."
+          },
+          {
+            "id": "duel_ld_easy_02",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz w pamięci sumę liczb 33 i 55.",
+            "options": ["77", "88", "99", "85"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "30 + 50 = 80, 3 + 5 = 8. Razem 88."
+          },
+          {
+            "id": "duel_ld_easy_03",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Zaznacz wynik dodawania 63 + 28.",
+            "options": ["91", "81", "85", "95"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "60 + 20 = 80, 3 + 8 = 11. Razem 80 + 11 = 91."
+          },
+          {
+            "id": "duel_ld_easy_04",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Liczba jest o 7 większa od 48. Jaka to liczba?",
+            "options": ["53", "55", "54", "56"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "48 + 7 = 55."
+          },
+          {
+            "id": "duel_ld_easy_05",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Liczba jest o 6 mniejsza od 33. Jaka to liczba?",
+            "options": ["27", "26", "28", "29"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "33 - 6 = 27."
+          },
+          {
+            "id": "duel_ld_easy_06",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Jaki jest wynik działania 46 - 14?",
+            "options": ["32", "22", "34", "36"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "46 - 10 = 36, 36 - 4 = 32."
+          },
+          {
+            "id": "duel_ld_easy_07",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz: 5 * 8.",
+            "options": ["35", "40", "45", "50"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Z tabliczki mnożenia: 5 razy 8 to 40."
+          },
+          {
+            "id": "duel_ld_easy_08",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 100 - 25?",
+            "options": ["65", "75", "85", "55"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "100 - 20 = 80, 80 - 5 = 75."
+          },
+          {
+            "id": "duel_ld_easy_09",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Marek ma 10 zł, a Kasia ma o 5 zł więcej. Ile ma Kasia?",
+            "options": ["5 zł", "15 zł", "20 zł", "10 zł"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "10 + 5 = 15 zł."
+          },
+          {
+            "id": "duel_ld_med_01",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Dla ośmioosobowej grupy kupiono bilety po 8 zł każdy. Ile wydano?",
+            "options": ["16 zł", "72 zł", "64 zł", "56 zł"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "8 osób * 8 zł = 64 zł."
+          },
+          {
+            "id": "duel_ld_med_02",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile wynosi suma liczb dwucyfrowych większych od 42 i mniejszych od 46?",
+            "options": ["88", "132", "85", "129"],
+            "correctAnswerIndex": 3,
+            "correctAnswerExplanation": "Szukane liczby to 43, 44 i 45. 43+44+45 = 129."
+          },
+          {
+            "id": "duel_ld_med_03",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Iloczyn liczb 5 i 12 wynosi:",
+            "options": ["50", "60", "70", "55"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "5 * 10 = 50, 5 * 2 = 10. Razem 60."
+          },
+          {
+            "id": "duel_ld_hard_01",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Jola czytała książkę od strony 58 do 84 włącznie. Ile stron przeczytała?",
+            "options": ["26", "27", "25", "28"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "84 - 58 + 1 = 27."
+          },
+          {
+            "id": "duel_ld_hard_02",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Suma dwóch liczb to 70. Jeśli jeden składnik zmniejszymy o połowę, suma wyniesie 48. Jakie to liczby?",
+            "options": ["40 i 30", "44 i 26", "22 i 48", "35 i 35"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Różnica sum (70-48=22) to połowa jednej liczby. Liczba to 44, druga to 70-44=26."
+          },
+          {
+            "id": "duel_ld_hard_03",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Wojtek zamiast dodać liczbę do 136, odjął ją. Wynik był o 58 mniejszy od poprawnego. Co to za liczba?",
+            "options": ["58", "32", "29", "116"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Różnica między dodaniem a odjęciem to dwukrotność liczby. 58 : 2 = 29."
+          }
+        ]
+      },
       "Sprawdzian końcowy": {
         "isTrainer": false,
         "showInPractice": true,
@@ -314,6 +456,148 @@
         "practiceKeys": ["Godziny na zegarach"],
         "showInPractice": true,
         "questions": []
+      },
+      "Pojedynki - zestaw 2": {
+        "theoryTitle": "Systemy zapisywania liczb - Balans 9-3-3",
+        "isTrainer": false,
+        "showInPractice": false,
+        "questions": [
+          {
+            "id": "duel_sz_easy_01",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Który z poniższych zestawów składa się tylko z liczb większych od 150?",
+            "options": ["149, 151, 200", "152, 160, 115", "201, 155, 300", "150, 151, 152"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "W zestawie C każda liczba (201, 155, 300) jest większa od 150."
+          },
+          {
+            "id": "duel_sz_easy_02",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Zapisz cyframi liczbę: Pięćset osiem tysięcy trzysta czternaście.",
+            "options": ["508 314", "580 314", "508 340", "58 314"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Pięćset osiem tysięcy (508 000) i trzysta czternaście (314) to 508 314."
+          },
+          {
+            "id": "duel_sz_easy_03",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to metrów: 8 km i 40 m?",
+            "options": ["840 m", "8040 m", "8400 m", "80 040 m"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "8 km to 8000 m. Razem z 40 m daje to 8040 m."
+          },
+          {
+            "id": "duel_sz_easy_04",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Waga wskazuje 3 kg i 25 dag. Ile to łącznie dekagramów?",
+            "options": ["325 dag", "3025 dag", "3250 dag", "55 dag"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "3 kg to 300 dag. 300 + 25 = 325 dag."
+          },
+          {
+            "id": "duel_sz_easy_05",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "W którym przykładzie poprawnie wstawiono znak nierówności?",
+            "options": ["1003 < 901", "6019 > 6109", "1100 > 1001", "154 < 145"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Liczba 1100 jest większa od 1001."
+          },
+          {
+            "id": "duel_sz_easy_06",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Zegar wskazuje 13:45. Jaka godzina była 15 minut temu?",
+            "options": ["13:30", "12:30", "14:15", "15:00"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Odejmujemy 15 minut od 45: 45 - 15 = 30. Godzina to 13:30."
+          },
+          {
+            "id": "duel_sz_easy_07",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to metrów: 300 cm?",
+            "options": ["30 m", "3 m", "300 m", "0,3 m"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "100 cm to 1 metr, więc 300 cm to 3 metry."
+          },
+          {
+            "id": "duel_sz_easy_08",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz: 900 + 100.",
+            "options": ["1000", "800", "10000", "910"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "9 setek + 1 setka = 10 setek, czyli 1000."
+          },
+          {
+            "id": "duel_sz_easy_09",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile metrów ma 7 km?",
+            "options": ["70 m", "700 m", "7000 m", "70000 m"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Jeden kilometr to 1000 metrów, więc 7 km to 7000 m."
+          },
+          {
+            "id": "duel_sz_med_01",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Zegar wskazuje godzinę 16:20. Jaka godzina była 45 minut temu?",
+            "options": ["15:35", "15:45", "17:05", "15:25"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "20 minut wstecz to 16:00, kolejne 25 minut wstecz daje 15:35."
+          },
+          {
+            "id": "duel_sz_med_02",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Wskaż poprawny zapis liczby rzymskiej XLIV w systemie dziesiątkowym.",
+            "options": ["64", "44", "46", "54"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "XL (40) + IV (4) = 44."
+          },
+          {
+            "id": "duel_sz_med_03",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Tomek kupił zeszyt za 2,50 zł, długopis za 2 zł i kredki za 4 zł. Ile reszty otrzyma z 10 zł?",
+            "options": ["2,50 zł", "1,50 zł", "1,20 zł", "2,20 zł"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Suma: 2,50 + 2 + 4 = 8,50 zł. Reszta: 10,00 - 8,50 = 1,50 zł."
+          },
+          {
+            "id": "duel_sz_hard_01",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Wskaż zapis cyfrowy liczby siedmiocyfrowej: 7 milionów, 6 dziesiątek tysięcy, 3 setki, reszta to dwójki.",
+            "options": ["7 060 322", "7 600 322", "7 062 322", "7 620 322"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Liczba to 7 062 322, ale zgodnie z opisem (brak setek tysięcy i tysięcy): 7 060 322."
+          },
+          {
+            "id": "duel_sz_hard_02",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Ile kilogramów to 5 ton i 12 kilogramów?",
+            "options": ["512 kg", "5012 kg", "5120 kg", "50012 kg"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "5 ton = 5000 kg. 5000 + 12 = 5012 kg."
+          },
+          {
+            "id": "duel_sz_hard_03",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Wskaż poprawny zapis liczby rzymskiej XCIV w systemie dziesiątkowym.",
+            "options": ["114", "94", "96", "104"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "XC (90) + IV (4) = 94."
+          }
+        ]
       }
     },
     "DZIAŁANIA PISEMNE": {
@@ -359,21 +643,149 @@
         "practiceKeys": ["Działania pisemne. Zadania tekstowe"],
         "showInPractice": true,
         "questions": []
+      },
+      "Pojedynki - zestaw 3": {
+        "theoryTitle": "Działania pisemne - Balans 9-3-3",
+        "isTrainer": false,
+        "showInPractice": false,
+        "questions": [
+          {
+            "id": "duel_dp_easy_01",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz sumę liczb 238 i 451 sposobem pisemnym.",
+            "options": ["689", "699", "589", "679"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Dodajemy jedności (8+1=9), dziesiątki (3+5=8) i setki (2+4=6). Wynik to 689. [cite: 100]"
+          },
+          {
+            "id": "duel_dp_easy_02",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Wykonaj odejmowanie pisemne: 8647 - 6235.",
+            "options": ["2412", "2410", "2312", "2422"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Odejmujemy rzędami: 7-5=2, 4-3=1, 6-2=4, 8-6=2. Wynik to 2412. [cite: 103]"
+          },
+          {
+            "id": "duel_dp_easy_03",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 416 · 10?",
+            "options": ["4160", "416", "41600", "4106"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Mnożąc przez 10, dopisujemy jedno zero na końcu liczby."
+          },
+          {
+            "id": "duel_dp_easy_04",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Wykonaj dzielenie: 500 : 2.",
+            "options": ["250", "200", "150", "300"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Połowa z 500 to 250. [cite: 135]"
+          },
+          {
+            "id": "duel_dp_easy_05",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz: 2700 : 100.",
+            "options": ["27", "270", "2", "2700"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Dzieląc przez 100, skreślamy dwa zera na końcu liczby. [cite: 110]"
+          },
+          {
+            "id": "duel_dp_easy_06",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz sumę liczb 278 i 421 sposobem pisemnym.",
+            "options": ["699", "700", "689", "679"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "8+1=9, 7+2=9, 2+4=6. Wynik to 699. [cite: 126]"
+          },
+          {
+            "id": "duel_dp_easy_07",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Wykonaj odejmowanie pisemne: 5764 - 2743.",
+            "options": ["3021", "3121", "3011", "3031"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "4-3=1, 6-4=2, 7-7=0, 5-2=3. Wynik to 3021. [cite: 155]"
+          },
+          {
+            "id": "duel_dp_easy_08",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 300 · 60?",
+            "options": ["18000", "1800", "180", "180000"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "3 * 6 = 18, dopisujemy trzy zera. Wynik to 18 000. [cite: 136]"
+          },
+          {
+            "id": "duel_dp_easy_09",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Wykonaj dzielenie: 600 : 2.",
+            "options": ["300", "200", "400", "330"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Połowa z 600 to 300. [cite: 109]"
+          },
+          {
+            "id": "duel_dp_med_01",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz pisemnie sumę: 12456 + 24572.",
+            "options": ["37028", "36028", "37128", "37018"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Dodajemy rzędami z pamiętaniem o przeniesieniach. Wynik to 37 028. [cite: 101]"
+          },
+          {
+            "id": "duel_dp_med_02",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz pisemnie różnicę: 1075 - 868.",
+            "options": ["207", "217", "197", "208"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Wykonując odejmowanie pisemne z pożyczaniem, otrzymujemy 207. [cite: 108]"
+          },
+          {
+            "id": "duel_dp_med_03",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz pisemnie iloczyn: 284 · 17.",
+            "options": ["4828", "4728", "4928", "4818"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Mnożąc pisemnie przez 17, otrzymujemy wynik 4828. [cite: 111]"
+          },
+          {
+            "id": "duel_dp_hard_01",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Pan Kowalski zarabia miesięcznie 2795 zł. Ile pieniędzy zarobił przez pół roku?",
+            "options": ["16770 zł", "16740 zł", "15770 zł", "17770 zł"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Pół roku to 6 miesięcy. 2795 * 6 = 16 770 zł. [cite: 114]"
+          },
+          {
+            "id": "duel_dp_hard_02",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Pralkę za 1150 zł i lodówkę za 1760 zł kupiono na 6 równych rat. Ile wynosi jedna rata?",
+            "options": ["485 zł", "475 zł", "495 zł", "500 zł"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Suma: 1150 + 1760 = 2910 zł. Rata: 2910 : 6 = 485 zł. [cite: 115, 116]"
+          },
+          {
+            "id": "duel_dp_hard_03",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Pewną liczbę zmniejszono 9 razy, potem 5 razy, a następnie wynik zmniejszono o 297 i otrzymano 528. Co to za liczba?",
+            "options": ["37125", "36125", "37225", "38125"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Działamy od tyłu: (528 + 297) * 5 * 9 = 825 * 45 = 37 125. [cite: 143]"
+          }
+        ]
       }
-    },
-    "FIGURY GEOMETRYCZNE": {
-      "Proste, półproste, odcinki": { "theoryTitle": "Linie wokół nas: proste i odcinki", "questions": [] },
-      "Wzajemne położenie prostych": { "theoryTitle": "Jak proste mogą się spotykać?", "questions": [] },
-      "Odcinki prostopadłe i odcinki równoległe": { "theoryTitle": "Prostopadłe i równoległe - co to znaczy?", "questions": [] },
-      "Mierzenie długości": { "theoryTitle": "Mierzymy linijką", "questions": [] },
-      "Kąty": { "theoryTitle": "Co to jest kąt?", "questions": [] },
-      "Mierzenie kątów": { "theoryTitle": "Mierzymy kąty kątomierzem", "questions": [] },
-      "Wielokąty": { "theoryTitle": "Figury z wieloma kątami", "questions": [] },
-      "Prostokąty i kwadraty": { "theoryTitle": "Poznajemy prostokąty i kwadraty", "questions": [] },
-      "Obwody prostokątów i kwadratów": { "theoryTitle": "Liczymy obwody figur", "questions": [] },
-      "Koła i okręgi": { "theoryTitle": "Okrągłe kształty: koła i okręgi", "questions": [] },
-      "Co to jest skala?": { "theoryTitle": "Powiększamy i zmniejszamy: skala", "questions": [] },
-      "Skala na planach": { "theoryTitle": "Czytamy mapy i plany", "questions": [] }
     },
     "UŁAMKI ZWYKŁE": {
       "Ułamek jako część całości": { "theoryTitle": "Co to jest ułamek?",
@@ -394,7 +806,149 @@
       "Ułamki niewłaściwe": { "theoryTitle": "Gdy licznik jest większy od mianownika", "questions": [] },
       "Ułamek jako wynik dzielenia": { "theoryTitle": "Dzielenie a ułamki", "questions": [] },
       "Dodawanie ułamków zwykłych": { "theoryTitle": "Dodajemy ułamki", "questions": [] },
-      "Odejmowanie ułamków zwykłych": { "theoryTitle": "Odejmujemy ułamki", "questions": [] }
+      "Odejmowanie ułamków zwykłych": { "theoryTitle": "Odejmujemy ułamki", "questions": [] },
+      "Pojedynki - zestaw 4": {
+        "theoryTitle": "Ułamki zwykłe - Balans 9-3-3",
+        "isTrainer": false,
+        "showInPractice": false,
+        "questions": [
+          {
+            "id": "duel_uz_easy_01",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Jak nazywa się liczba nad kreską ułamkową w ułamku 3/4?",
+            "options": ["Mianownik", "Licznik", "Całość", "Iloraz"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Liczba nad kreską to licznik, a pod kreską to mianownik."
+          },
+          {
+            "id": "duel_uz_easy_02",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz sumę ułamków: 1/5 + 2/5.",
+            "options": ["3/10", "3/5", "1/5", "3/25"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Przy dodawaniu ułamków o tych samych mianownikach dodajemy tylko liczniki: 1+2=3. Mianownik pozostaje bez zmian."
+          },
+          {
+            "id": "duel_uz_easy_03",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 1/2 z liczby 12?",
+            "options": ["2", "4", "6", "12"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Połowa (1/2) z 12 to 12 podzielone na 2, czyli 6."
+          },
+          {
+            "id": "duel_uz_easy_04",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Wybierz poprawny znak: 3/10 ... 7/10.",
+            "options": ["=", ">", "<", "nie da się porównać"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Przy tych samych mianownikach większy jest ten ułamek, który ma większy licznik. 3 < 7, więc 3/10 < 7/10."
+          },
+          {
+            "id": "duel_uz_easy_05",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Wykonaj odejmowanie: 7/8 - 3/8.",
+            "options": ["4/0", "10/8", "4/8", "4/16"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Odejmujemy liczniki: 7-3=4. Mianownik zostaje ten sam: 8."
+          },
+          {
+            "id": "duel_uz_easy_06",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Zapisz ułamek cztery trzecie (4/3) w postaci liczby mieszanej.",
+            "options": ["1 i 1/3", "1 i 2/3", "1 i 3/4", "4 i 1/3"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "W 4 mieszczą się jedna 3 i zostaje 1 reszty. Zatem 4/3 = 1 i 1/3."
+          },
+          {
+            "id": "duel_uz_easy_07",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Który ułamek jest równy jednej całości?",
+            "options": ["1/2", "5/4", "5/5", "0/1"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Ułamek, w którym licznik jest taki sam jak mianownik, jest równy 1."
+          },
+          {
+            "id": "duel_uz_easy_08",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Co wskazuje mianownik ułamka?",
+            "options": ["Na ile części podzielono całość", "Ile części wzięto", "Ile jest całości", "Wynik mnożenia"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Mianownik mówi nam, na ile równych części została podzielona całość."
+          },
+          {
+            "id": "duel_uz_easy_09",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Pizza została podzielona na 8 kawałków. Zjedzono 3. Jaki ułamek pizzy został?",
+            "options": ["3/8", "8/3", "5/8", "1/8"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Było 8 kawałków, zjedzono 3, więc zostało 5. Zatem zostało 5/8 pizzy."
+          },
+          {
+            "id": "duel_uz_med_01",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Zamień liczbę mieszaną 2 i 1/4 na ułamek niewłaściwy.",
+            "options": ["3/4", "7/4", "9/4", "8/4"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Mnożymy całości przez mianownik i dodajemy licznik: (2 * 4) + 1 = 9. Wynik to 9/4."
+          },
+          {
+            "id": "duel_uz_med_02",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Skróć ułamek 4/8 przez 4.",
+            "options": ["1/2", "2/4", "1/4", "2/2"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Dzielimy licznik i mianownik przez 4: 4:4=1, 8:4=2. Otrzymujemy 1/2."
+          },
+          {
+            "id": "duel_uz_med_03",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "W klasie jest 18 uczniów. 1/3 z nich to chłopcy. Ilu jest chłopców?",
+            "options": ["3", "9", "6", "12"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Liczymy 1/3 z 18: 18 : 3 = 6."
+          },
+          {
+            "id": "duel_uz_hard_01",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Wybierz poprawny znak: 1/2 ... 1/5.",
+            "options": ["=", ">", "<", "nie da się porównać"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Przy tych samych licznikach większy jest ten ułamek, który ma MNIEJSZY mianownik. Zatem 1/2 > 1/5."
+          },
+          {
+            "id": "duel_uz_hard_02",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Oblicz: 1 - 2/7.",
+            "options": ["1/7", "5/7", "2/7", "7/2"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Jedna całość to 7/7. Zatem 7/7 - 2/7 = 5/7."
+          },
+          {
+            "id": "duel_uz_hard_03",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "W koszyku jest 30 jabłek. 2/5 z nich jest czerwonych. Ile jabłek czerwonych jest w koszyku?",
+            "options": ["6", "10", "12", "15"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Najpierw liczymy 1/5 z 30 (30:5=6), a potem mnożymy przez licznik (6*2=12). Wynik to 12."
+          }
+        ]
+      }
     },
     "UŁAMKI DZIESIĘTNE": {
       "Ułamki o mianownikach 10, 100, 1000, ...": { "theoryTitle": "Ułamki z przecinkiem", "questions": [] },
@@ -403,7 +957,149 @@
       "Różne zapisy tego samego ułamka dziesiętnego": { "theoryTitle": "Te same ułamki, różne zapisy", "questions": [] },
       "Porównywanie ułamków dziesiętnych": { "theoryTitle": "Który ułamek dziesiętний większy?", "questions": [] },
       "Dodawanie ułamków dziesiętnych": { "theoryTitle": "Dodajemy ułamki dziesiętne", "questions": [] },
-      "Odejmowanie ułamków dziesiętnych": { "theoryTitle": "Odejmujemy ułamki dziesiętne", "questions": [] }
+      "Odejmowanie ułamków dziesiętnych": { "theoryTitle": "Odejmujemy ułamki dziesiętne", "questions": [] },
+      "Pojedynki - zestaw 5": {
+        "theoryTitle": "Ułamki dziesiętne - Balans 9-3-3",
+        "isTrainer": false,
+        "showInPractice": false,
+        "questions": [
+          {
+            "id": "duel_ud_easy_01",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Zapisz ułamek 0,6 w postaci ułamka zwykłego.",
+            "options": ["6/100", "6/10", "1/6", "60/10"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Jedna cyfra po przecinku oznacza dziesiąte części, więc 0,6 to 6/10. [cite: 180]"
+          },
+          {
+            "id": "duel_ud_easy_02",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Jak zapisać ułamek siedem setnych (7/100) w postaci dziesiętnej?",
+            "options": ["0,7", "7,0", "0,007", "0,07"],
+            "correctAnswerIndex": 3,
+            "correctAnswerExplanation": "Mianownik 100 oznacza dwie cyfry po przecinku, czyli 0,07. [cite: 185]"
+          },
+          {
+            "id": "duel_ud_easy_03",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 3,45 zł w przeliczeniu na złote i grosze?",
+            "options": ["3 zł 45 gr", "34 zł 5 gr", "3 zł 5 gr", "345 zł"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Część przed przecinkiem to pełne złote, a po przecinku grosze. [cite: 189-191]"
+          },
+          {
+            "id": "duel_ud_easy_04",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Która z podanych liczb jest równa liczbie 2,72?",
+            "options": ["2,072", "2,7200", "27,2", "0,272"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Dopisanie zer na końcu ułamka dziesiętnego nie zmienia jego wartości. [cite: 202-203]"
+          },
+          {
+            "id": "duel_ud_easy_05",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Wstaw odpowiedni znak: 3,01 .... 3,1",
+            "options": ["=", ">", "<", "brak znaku"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "3,01 ma 0 części dziesiątych, a 3,1 ma 1 część dziesiątą, więc 3,01 < 3,1. [cite: 200-201]"
+          },
+          {
+            "id": "duel_ud_easy_06",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz w pamięci: 0,3 + 0,5",
+            "options": ["0,08", "8,0", "0,8", "1,3"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "3 dziesiąte + 5 dziesiątych = 8 dziesiątych (0,8)."
+          },
+          {
+            "id": "duel_ud_easy_07",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 1,5 - 0,2?",
+            "options": ["1,3", "1,7", "0,3", "1,03"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Odejmujemy części dziesiąte: 5 - 2 = 3. Wynik to 1,3."
+          },
+          {
+            "id": "duel_ud_easy_08",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Zapisz liczbę dziewięć i jedna setna w postaci dziesiętnej.",
+            "options": ["9,1", "0,91", "9,01", "91,0"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Dziewięć całości i jedna setna to 9,01. [cite: 181]"
+          },
+          {
+            "id": "duel_ud_easy_09",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Jak zapisać 18,27 kg w postaci wyrażenia dwumianowanego?",
+            "options": ["18 kg 27 dag", "182 kg 7 dag", "1 kg 827 dag", "18 kg 27 g"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "18 kg i 27 części setnych kilograma (czyli dekagramów). [cite: 188-189]"
+          },
+          {
+            "id": "duel_ud_med_01",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Kazik ma 1,36 m wzrostu, Olek 1,63 m, a Jacek 1,6 m. Który z chłopców jest najniższy?",
+            "options": ["Kazik", "Olek", "Jacek", "wszyscy są równi"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Porównujemy: 1,36 < 1,60 < 1,63. Najniższy jest Kazik. [cite: 193-196]"
+          },
+          {
+            "id": "duel_ud_med_02",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz sposobem pisemnym sumę: 5,82 + 3,17",
+            "options": ["8,99", "9,09", "8,09", "9,99"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Dodajemy rzędami: 2+7=9, 8+1=9, 5+3=8. Wynik to 8,99. [cite: 205]"
+          },
+          {
+            "id": "duel_ud_med_03",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ania wydała 2,52 zł, a Basia o 75 groszy więcej od Ani. Ile wydała Basia?",
+            "options": ["3,27 zł", "2,75 zł", "3,17 zł", "3,52 zł"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "2,52 + 0,75 = 3,27 zł. [cite: 235]"
+          },
+          {
+            "id": "duel_ud_hard_01",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Rower kosztował 650,99 zł. Cenę obniżono o 25,33 zł, a potem o kolejne 11,99 zł. Jaka była cena końcowa?",
+            "options": ["613,67 zł", "625,66 zł", "638,99 zł", "611,67 zł"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "650,99 - 25,33 = 625,66. Następnie 625,66 - 11,99 = 613,67 zł. [cite: 221-222]"
+          },
+          {
+            "id": "duel_ud_hard_02",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Które z poniższych zdań jest prawdziwe?",
+            "options": ["5 i ćwierć kg to 5,4 kg", "Dwa i pół metra to 2,5 m", "6,2 km to 6 i 2/5 km", "1 t 25 kg to 1,25 t"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Dwa i pół to 2,5. Ćwierć to 0,25 (więc 5,25 kg), a 1/5 to 0,2 (więc 6,2 km to 6 i 1/5 km). [cite: 226-231]"
+          },
+          {
+            "id": "duel_ud_hard_03",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Używając cyfr 2, 3, 4, 5, 6 (bez powtórzeń), wskaż liczbę z trzema cyframi po przecinku, która jest większa od 2,5 i mniejsza od 2,56.",
+            "options": ["2,563", "2,546", "2,465", "2,534"],
+            "correctAnswerIndex": 3,
+            "correctAnswerExplanation": "Liczba 2,534 jest większa od 2,500 i mniejsza od 2,560. [cite: 237-238]"
+          }
+        ]
+      }
     },
     "POLA FIGUR": {
       "Co to jest pole figury?": { "theoryTitle": "Ile miejsca zajmuje figura?", "questions": [] },
@@ -411,11 +1107,6 @@
       "Pole prostokąta": { "theoryTitle": "Liczymy pole prostokąta", "questions": [] },
       "Zależności między jednostkami pola": { "theoryTitle": "Przeliczamy jednostki pola", "questions": [] },
       "Wycinanki i układanki": { "theoryTitle": "Zabawy z polami figur", "questions": [] }
-    },
-    "PROSTOPADŁOŚCIANY I SZEŚCIANY": {
-      "Opis prostopadłościanu": { "theoryTitle": "Poznajemy prostopadłościany", "questions": [] },
-      "Siatki prostopadłościanów": { "theoryTitle": "Rozkładamy pudełka - siatki", "questions": [] },
-      "Pole powierzchni prostopadłościanu": { "theoryTitle": "Liczymy pole powierzchni pudełek", "questions": [] }
     }
   },
   "5": {

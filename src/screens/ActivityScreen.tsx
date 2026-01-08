@@ -1,3 +1,5 @@
+// src/screens/ActivityScreen.tsx
+
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity,
@@ -30,17 +32,16 @@ const ActivityScreen = () => {
     } | null>(null);
 
     // --- ПОШУК БАТЬКІВСЬКОГО РОЗДІЛУ ---
-    // Нам треба знати MainTopic (наприклад, "LICZBY"), щоб відкрити PracticeScreen
     const findParentTopic = (subTopicName: string): string => {
         const grade4Data = (questionsDatabase as any)["4"];
         if (!grade4Data) return 'LICZBY I DZIAŁANIA';
 
         for (const mainTopicKey in grade4Data) {
             if (grade4Data[mainTopicKey][subTopicName]) {
-                return mainTopicKey; // Знайшли батьківський розділ
+                return mainTopicKey;
             }
         }
-        return 'LICZBY I DZIAŁANIA'; // Дефолтне значення
+        return 'LICZBY I DZIAŁANIA';
     };
 
     useEffect(() => {
@@ -73,7 +74,6 @@ const ActivityScreen = () => {
                             reason: "W tym dziale robisz najwięcej błędów."
                         });
                     } else {
-                        // Якщо немає помилок, пропонуємо гру або розминку
                         setTrainerTask({
                             active: true,
                             topic: "Szybkie Liczenie",
@@ -88,7 +88,6 @@ const ActivityScreen = () => {
     }, [user]);
 
     // --- ДІЇ ---
-
     const handleDelete = (id: string) => deleteNotification(id);
 
     const handleClearAll = () => {
@@ -99,22 +98,15 @@ const ActivityScreen = () => {
         ]);
     };
 
-    // 🔥 ВИПРАВЛЕНА НАВІГАЦІЯ
     const handleTrainerAction = () => {
         if (!trainerTask) return;
 
         if (trainerTask.topic === "Szybkie Liczenie") {
-            // Навігація в інший стек (GamesStack)
             navigation.navigate('GamesStack', {
                 screen: 'SpeedyCountGame'
             });
         } else {
-            // Шукаємо головний розділ
             const parentTopic = findParentTopic(trainerTask.topic);
-
-            console.log(`Trainer Nav: HomeStack -> Practice -> ${parentTopic} / ${trainerTask.topic}`);
-
-            // Навігація в інший стек (HomeStack) -> екран Practice
             navigation.navigate('HomeStack', {
                 screen: 'Practice',
                 params: {
@@ -130,13 +122,42 @@ const ActivityScreen = () => {
         if (item.type === 'duel_request') {
             Alert.alert("⚔️ Pojedynek", "Przyjmujesz wyzwanie?", [
                 { text: "Nie", onPress: () => handleDelete(item.id) },
-                { text: "Tak", onPress: () => {
-                        // Перехід в тест (HomeStack -> Test)
-                        navigation.navigate('HomeStack', {
-                            screen: 'Test',
-                            params: { mode: 'assess', testType: 'duel', duelId: item.data?.duelId }
-                        });
-                        handleDelete(item.id);
+                { text: "Tak", onPress: async () => {
+                        const duelId = item.data?.duelId;
+                        if (!duelId) return;
+
+                        try {
+                            // --- ✅ ZMIANA: Pobieramy dane bezpośrednio z dokumentu duelu ---
+                            const duelDoc = await firestore().collection('duels').doc(duelId).get();
+
+                            if (duelDoc.exists) {
+                                const duelData = duelDoc.data();
+
+                                // Aktywujemy pojedynek (dla synchronizacji z Graczem 1)
+                                await firestore().collection('duels').doc(duelId).update({
+                                    status: 'active'
+                                });
+
+                                // Nawigacja do Testu z wymuszeniem typu String dla grade
+                                navigation.navigate('HomeStack', {
+                                    screen: 'Test',
+                                    params: {
+                                        mode: 'assess',
+                                        testType: 'duel',
+                                        duelId: duelId,
+                                        grade: String(duelData?.grade || "4"), // Naprawia "Brak pytań"
+                                        topic: duelData?.topic || 'LICZBY I DZIAŁANIA'
+                                    }
+                                });
+                                handleDelete(item.id);
+                            } else {
+                                Alert.alert("Błąd", "Pojedynek już nie istnieje.");
+                                handleDelete(item.id);
+                            }
+                        } catch (error) {
+                            console.error("Błąd akceptacji pojedynku:", error);
+                            Alert.alert("Błąd", "Problem z dołączeniem do gry.");
+                        }
                     }}
             ]);
         } else if (item.type === 'friend_request') {
@@ -158,7 +179,6 @@ const ActivityScreen = () => {
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
-                {/* --- 1. HERO CARD (ТРЕНЕР) --- */}
                 {trainerTask && (
                     <View style={styles.heroContainer}>
                         <View style={styles.heroHeaderRow}>
@@ -184,7 +204,6 @@ const ActivityScreen = () => {
                     </View>
                 )}
 
-                {/* --- 2. ЗАГОЛОВОК СПИСКУ --- */}
                 <View style={styles.listHeaderRow}>
                     <Text style={styles.sectionHeader}>Powiadomienia ({notifications.length})</Text>
                     {notifications.length > 0 && (
@@ -195,7 +214,6 @@ const ActivityScreen = () => {
                     )}
                 </View>
 
-                {/* --- 3. СПИСОК СПОВІЩЕНЬ --- */}
                 {notifications.length === 0 ? (
                     <View style={styles.emptyContainer}>
                         <Ionicons name="notifications-off-outline" size={60} color="#E0E0E0" />
@@ -243,8 +261,6 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F8F9FA' },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     scrollContent: { padding: PADDING.medium },
-
-    // HERO STYLES
     heroContainer: {
         backgroundColor: '#FFF', borderRadius: 20, padding: 20, marginBottom: 25,
         elevation: 4, shadowColor: COLORS.primary, shadowOpacity: 0.15, shadowRadius: 10,
@@ -264,14 +280,10 @@ const styles = StyleSheet.create({
         paddingVertical: 12, borderRadius: 12, marginTop: 15, elevation: 2
     },
     heroButtonText: { color: '#FFF', fontWeight: 'bold', fontSize: 16, marginRight: 8 },
-
-    // LIST HEADER
     listHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingHorizontal: 5 },
     sectionHeader: { fontSize: 16, fontWeight: 'bold', color: COLORS.grey },
     clearBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     clearText: { fontSize: 12, color: COLORS.error, fontWeight: '600' },
-
-    // CARD
     card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 14, marginBottom: 10, padding: 10, elevation: 1, borderWidth: 1, borderColor: '#FAFAFA' },
     contentRow: { flex: 1, flexDirection: 'row', alignItems: 'center' },
     iconBox: { width: 42, height: 42, borderRadius: 21, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
@@ -281,7 +293,6 @@ const styles = StyleSheet.create({
     actionBadge: { backgroundColor: COLORS.primary, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginRight: 5 },
     actionText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
     deleteBtn: { padding: 10 },
-
     emptyContainer: { alignItems: 'center', marginTop: 40, opacity: 0.7 },
     emptyText: { fontSize: 16, fontWeight: '600', color: COLORS.grey, marginTop: 15 }
 });
