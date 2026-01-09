@@ -100,8 +100,10 @@ import WordProblemsTrainer from "./src/screens/screens_4_klassa/screens_4K3R/Wor
 
 import FractionsTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsTrainer";
 import MixedNumbersTrainer from "./src/screens/screens_4_klassa/screens_4K4R/MixedNumbersTrainer";
-
-
+import FractionsNumberLineTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsNumberLineTrainer";
+import FractionComparisonTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionComparisonTrainer";
+import FractionsExpansionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsExpansionTrainer"
+import ImproperFractionsTrainer from "./src/screens/screens_4_klassa/screens_4K4R/ImproperFractionsTrainer"
 // --- Nawigacja ---
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainAppStackParamList>();
@@ -239,9 +241,29 @@ function HomeStackNavigator() {
                 options={({ route }) => ({ title: route.params?.subTopic || 'Ułamek jako część całości' })}
             />
             <MainStack.Screen
+                name="FractionsNumberLineTrainer"
+                component={FractionsNumberLineTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Ułamki i liczby mieszane na osi liczbowej' })}
+            />
+            <MainStack.Screen
                 name="FractionsTrainer"
                 component={FractionsTrainer}
                 options={({ route }) => ({ title: route.params?.subTopic || 'Liczby mieszane' })}
+            />
+            <MainStack.Screen
+                name="FractionComparisonTrainer"
+                component={FractionComparisonTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Porównywanie ułamków' })}
+            />
+            <MainStack.Screen
+                name="FractionsExpansionTrainer"
+                component={FractionsExpansionTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Rozszerzanie i skracanie ułamków' })}
+            />
+            <MainStack.Screen
+                name="ImproperFractionsTrainer"
+                component={ImproperFractionsTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Ułamki niewłaściwe' })}
             />
 
             {/* EKRANY ZADAŃ TEKSTOWYCH */}

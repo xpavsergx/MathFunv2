@@ -91,6 +91,10 @@ export type MainAppStackParamList = {
     WordProblemsTrainer:{ grade: number; topic: string; subTopic: string };
     FractionsTrainer:{ grade: number; topic: string; subTopic: string };
     MixedNumbersTrainer:{ grade: number; topic: string; subTopic: string };
+    FractionsNumberLineTrainer:{ grade: number; topic: string; subTopic: string };
+    FractionComparisonTrainer:{ grade: number; topic: string; subTopic: string };
+    FractionsExpansionTrainer:{ grade: number; topic: string; subTopic: string };
+    ImproperFractionsTrainer:{ grade: number; topic: string; subTopic: string };
     // Новые тренажёры
     DecimalSystemTrainer: { grade: number; topic: string; subTopic?: string };
     ComparingNumbersTrainer: { grade: number; topic: string; subTopic?: string };

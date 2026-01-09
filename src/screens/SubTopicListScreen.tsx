@@ -93,6 +93,10 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         'Działania pisemne. Zadania tekstowe' : 'WordProblemsTrainer',
         'Ułamek jako część całości':'FractionsTrainer',
         'Liczby mieszane':'MixedNumbersTrainer',
+        'Ułamki i liczby mieszane na osi liczbowej':'FractionsNumberLineTrainer',
+        'Porównywanie ułamków':'FractionComparisonTrainer',
+        'Rozszerzanie i skracanie ułamków':'FractionsExpansionTrainer',
+        'Ułamki niewłaściwe':'ImproperFractionsTrainer',
     } as const;
 
     const getTrainerScreen = (key: string) => trainerScreenMap[key as keyof typeof trainerScreenMap];
