@@ -175,21 +175,28 @@ const MathSprintScreen: React.FC = () => {
 
             {timeLeft > 0 ? (
                 <View style={styles.gameContent}>
-                    <Text style={styles.problemText}>{problemText}</Text>
+                    {/* ZMIANA: Dodano dynamiczny kolor tekstu zadania */}
+                    <Text style={[styles.problemText, { color: isDarkMode ? '#FFF' : '#333' }]}>
+                        {problemText}
+                    </Text>
                     <View style={styles.grid}>
                         {options.map(opt => (
                             <TouchableOpacity key={opt}
                                               style={[styles.gridBtn, {backgroundColor: getBtnColor(opt)}]}
                                               onPress={() => handleOptionPress(opt)}>
-                                <Text style={styles.gridBtnText}>{opt}</Text>
+                                {/* ZMIANA: Dodano dynamiczny kolor tekstu odpowiedzi */}
+                                <Text style={[styles.gridBtnText, { color: isDarkMode ? '#FFF' : '#333' }]}>
+                                    {opt}
+                                </Text>
                             </TouchableOpacity>
                         ))}
                     </View>
                 </View>
             ) : (
                 <View style={styles.gameOver}>
-                    <Text style={styles.gameOverTitle}>Koniec!</Text>
-                    <Text style={styles.gameOverScore}>Wynik: {correctCount}</Text>
+                    {/* ZMIANA: Dodano dynamiczne kolory dla ekranu końca gry */}
+                    <Text style={[styles.gameOverTitle, { color: isDarkMode ? '#FFF' : '#333' }]}>Koniec!</Text>
+                    <Text style={[styles.gameOverScore, { color: isDarkMode ? '#EEE' : '#333' }]}>Wynik: {correctCount}</Text>
                     <Text style={styles.rewards}>+{xpEarned} XP  |  +{coinsEarned} Monet</Text>
 
                     <TouchableOpacity style={styles.startBtn} onPress={() => setShowMainMenu(true)}>

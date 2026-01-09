@@ -112,7 +112,7 @@ const NumberMemoryGame = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#9C27B0' },
-    header: { flexDirection: 'row', justifyContent: 'space-between', padding: 20, alignItems: 'center' },
+    header: { flexDirection: 'row', justifyContent: 'space-between', padding: 50, alignItems: 'center' },
     title: { fontSize: 24, fontWeight: 'bold', color: 'white' },
     content: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
     centerBox: { alignItems: 'center', width: '100%' },

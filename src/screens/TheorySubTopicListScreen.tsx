@@ -1,3 +1,5 @@
+// src/screens/TheorySubTopicListScreen.tsx
+
 import React, { useMemo } from 'react';
 import {
     View,
@@ -7,6 +9,7 @@ import {
     Dimensions,
     ImageBackground,
     ScrollView,
+    useColorScheme, // Dodano
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TheoryStackParamList } from '../../App';
@@ -17,11 +20,10 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
 const PADDING_HORIZONTAL = 20;
-const GAP = 15; // Odstęp między kafelkami w rzędzie
+const GAP = 15;
 
-// Obliczamy JEDNĄ szerokość dla wszystkich kafelków na podstawie rzędu z dwoma elementami
 const UNIVERSAL_CARD_WIDTH = (width - (PADDING_HORIZONTAL * 2) - GAP) / 2;
-const CARD_HEIGHT = 150; // Stała wysokość dla wszystkich
+const CARD_HEIGHT = 150;
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -31,6 +33,27 @@ function TheorySubTopicListScreen({ route, navigation }: TheorySubTopicListScree
     const { grade, topic } = route.params;
     const db: any = questionsDatabase;
 
+    // ✅ OBSŁUGA TRYBU CIEMNEGO
+    const colorScheme = useColorScheme();
+    const isDarkMode = colorScheme === 'dark';
+
+    // ✅ DYNAMICZNE STYLE
+    const themeStyles = {
+        overlay: {
+            backgroundColor: isDarkMode ? 'rgba(18, 18, 18, 0.92)' : 'rgba(255, 255, 255, 0.88)',
+        },
+        card: {
+            backgroundColor: isDarkMode ? COLORS.cardDark : 'white',
+            borderColor: isDarkMode ? COLORS.accent : COLORS.accent, // Możesz zmienić na COLORS.primaryDarkTheme w dark
+        },
+        headerText: {
+            color: isDarkMode ? COLORS.textDark : '#111827',
+        },
+        topicTitle: {
+            color: isDarkMode ? COLORS.textDark : '#1F2937',
+        }
+    };
+
     const subTopics = useMemo(() => {
         const gradeData = db[grade];
         if (!gradeData) return [];
@@ -39,15 +62,9 @@ function TheorySubTopicListScreen({ route, navigation }: TheorySubTopicListScree
 
         return Object.keys(topicData).filter(subTopicKey => {
             const hiddenTopics = [
-                "Zadania tekstowe, cz. 2",
-                "Sprawdzian końcowy",
-                "Działania pisemne. Zadania tekstowe",
-                "Zapisywanie wyrażeń dwumianowanych, cz. 2",
-                "Pojedynki - zestaw 1",
-                "Pojedynki - zestaw 2",
-                "Pojedynki - zestaw 3",
-                "Pojedynki - zestaw 4",
-                "Pojedynki - zestaw 5"
+                "Zadania tekstowe, cz. 2", "Sprawdzian końcowy", "Działania pisemne. Zadania tekstowe",
+                "Zapisywanie wyrażeń dwumianowanych, cz. 2", "Pojedynki - zestaw 1",
+                "Pojedynki - zestaw 2", "Pojedynki - zestaw 3", "Pojedynki - zestaw 4", "Pojedynki - zestaw 5"
             ];
             return !hiddenTopics.includes(subTopicKey);
         });
@@ -66,8 +83,9 @@ function TheorySubTopicListScreen({ route, navigation }: TheorySubTopicListScree
                 entering={FadeInUp.delay(index * 50).duration(500)}
                 style={[
                     styles.topicCard,
+                    themeStyles.card, // Dynamiczne tło karty
                     {
-                        width: UNIVERSAL_CARD_WIDTH, // Teraz każdy kafelek ma tę samą szerokość
+                        width: UNIVERSAL_CARD_WIDTH,
                         borderColor: themeColor,
                     }
                 ]}
@@ -77,7 +95,7 @@ function TheorySubTopicListScreen({ route, navigation }: TheorySubTopicListScree
                 <Ionicons name="document-text-outline" size={22} color={themeColor} style={styles.cardIcon} />
 
                 <View style={styles.cardTextContainer}>
-                    <Text style={styles.topicTitle} numberOfLines={5}>
+                    <Text style={[styles.topicTitle, themeStyles.topicTitle]} numberOfLines={5}>
                         {item.toUpperCase()}
                     </Text>
                 </View>
@@ -93,7 +111,6 @@ function TheorySubTopicListScreen({ route, navigation }: TheorySubTopicListScree
         const totalTopics = subTopics.length;
 
         while (currentIndex < totalTopics) {
-            // Rząd 1: Jeden kafelek (wyśrodkowany)
             if (currentIndex < totalTopics) {
                 layoutGroups.push(
                     <View key={`row-single-${currentIndex}`} style={styles.singleRow}>
@@ -102,8 +119,6 @@ function TheorySubTopicListScreen({ route, navigation }: TheorySubTopicListScree
                 );
                 currentIndex++;
             }
-
-            // Rząd 2: Dwa kafelki obok siebie
             if (currentIndex < totalTopics) {
                 if (currentIndex + 1 < totalTopics) {
                     layoutGroups.push(
@@ -114,7 +129,6 @@ function TheorySubTopicListScreen({ route, navigation }: TheorySubTopicListScree
                     );
                     currentIndex += 2;
                 } else {
-                    // Jeśli został jeden na koniec
                     layoutGroups.push(
                         <View key={`row-single-end-${currentIndex}`} style={styles.singleRow}>
                             {renderTopicCard(subTopics[currentIndex], currentIndex)}
@@ -133,8 +147,8 @@ function TheorySubTopicListScreen({ route, navigation }: TheorySubTopicListScree
             style={styles.backgroundImage}
             resizeMode="cover"
         >
-            <View style={styles.overlay}>
-                <Text style={styles.headerText}>{topic}</Text>
+            <View style={[styles.overlay, themeStyles.overlay]}>
+                <Text style={[styles.headerText, themeStyles.headerText]}>{topic}</Text>
 
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
@@ -155,13 +169,11 @@ const styles = StyleSheet.create({
     backgroundImage: { flex: 1 },
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.88)',
         paddingTop: 30,
     },
     headerText: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#111827',
         textAlign: 'center',
         marginBottom: 30,
         textTransform: 'uppercase',
@@ -172,7 +184,7 @@ const styles = StyleSheet.create({
     },
     singleRow: {
         width: '100%',
-        alignItems: 'center', // Centruje pojedynczy kafelek
+        alignItems: 'center',
         marginBottom: 30
     },
     twoRow: {
@@ -183,7 +195,6 @@ const styles = StyleSheet.create({
     },
     topicCard: {
         height: CARD_HEIGHT,
-        backgroundColor: 'white',
         borderRadius: 18,
         padding: 12,
         elevation: 4,
@@ -197,9 +208,8 @@ const styles = StyleSheet.create({
     cardIcon: { alignSelf: 'flex-start' },
     cardTextContainer: { flex: 1, justifyContent: 'center' },
     topicTitle: {
-        fontSize: 16, // Nieco mniejszy font, aby zmieścić tekst w węższym kafelku
+        fontSize: 18,
         fontWeight: '900',
-        color: '#1F2937',
         textAlign: 'center',
         lineHeight: 20,
     },

@@ -2,21 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ActivityIndicator,
-    Image,
-    Modal,
-    FlatList,
-    Alert,
-    TextInput,
-    Platform,
-    KeyboardAvoidingView,
-    ScrollView,
-    SafeAreaView,
-    useColorScheme,
+    View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
+    Image, Modal, FlatList, Alert, TextInput, Platform,
+    KeyboardAvoidingView, ScrollView, SafeAreaView, useColorScheme, StatusBar
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -26,7 +14,7 @@ import { COLORS, FONT_SIZES, PADDING, MARGIN } from '../styles/theme';
 import { getAvatarImage } from '../utils/avatarUtils';
 
 interface UserData {
-    className: string | null;
+    userClass: string | null;
     avatar?: string;
     firstName?: string;
     unlockedAvatars?: string[];
@@ -35,7 +23,6 @@ interface UserData {
 export default function UserDetailsScreen() {
     const user = auth().currentUser;
     const navigation = useNavigation();
-
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
 
@@ -48,438 +35,298 @@ export default function UserDetailsScreen() {
     const [isEditing, setIsEditing] = useState(false);
     const [availableAvatars, setAvailableAvatars] = useState<string[]>([]);
 
-    // Динамічні стилі
     const themeStyles = {
-        background: { backgroundColor: isDarkMode ? COLORS.backgroundDark : '#F0F4F8' },
+        container: { backgroundColor: isDarkMode ? COLORS.backgroundDark : '#F0F4F8' },
         card: { backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.white },
         text: { color: isDarkMode ? COLORS.textDark : COLORS.textLight },
-        textSecondary: { color: isDarkMode ? COLORS.greyDarkTheme : COLORS.grey },
+        subtitleColor: isDarkMode ? COLORS.greyDarkTheme : COLORS.grey,
         input: {
             color: isDarkMode ? COLORS.textDark : COLORS.textLight,
-            borderColor: isDarkMode ? COLORS.greyDarkTheme : '#B0B0B0',
+            borderColor: isDarkMode ? COLORS.greyDarkTheme : '#E5E7EB',
+            backgroundColor: isDarkMode ? '#2C2C2E' : '#F9FAFB',
         },
         primaryColor: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary,
     };
 
-    // (useEffect, handleUpdateAvatar, handleSaveDetails, handleCancelEdit - без змін)
     useEffect(() => {
-        if (!user) {
+        if (!user) { setLoading(false); return; }
+        const unsubscribe = firestore().collection('users').doc(user.uid).onSnapshot(doc => {
+            if (doc.exists) {
+                const data = doc.data() as UserData;
+                const fName = data?.firstName || user?.displayName || '';
+                const cName = data?.userClass || 'Brak';
+                setUserData({
+                    userClass: cName,
+                    avatar: data?.avatar,
+                    firstName: fName,
+                    unlockedAvatars: data?.unlockedAvatars || []
+                });
+                setFirstName(fName);
+                setClassName(cName);
+                setAvailableAvatars(['avatar1', 'avatar2', 'avatar3', ...(data?.unlockedAvatars || [])]);
+            }
             setLoading(false);
-            return;
-        }
-        const unsubscribe = firestore()
-            .collection('users')
-            .doc(user.uid)
-            .onSnapshot(doc => {
-                if (doc.exists) {
-                    const data = doc.data() as UserData;
-                    const fName = data?.firstName || user?.displayName || '';
-                    const cName = data?.className || 'Brak';
-
-                    setUserData({
-                        className: cName,
-                        avatar: data?.avatar,
-                        firstName: fName,
-                        unlockedAvatars: data?.unlockedAvatars || []
-                    });
-                    setFirstName(fName);
-                    setClassName(cName);
-
-                    setAvailableAvatars([
-                        'avatar1', 'avatar2', 'avatar3',
-                        ...(data?.unlockedAvatars || [])
-                    ]);
-
-                } else {
-                    const fName = user?.displayName || '';
-                    setUserData({ className: 'Brak', avatar: 'avatar2', firstName: fName, unlockedAvatars: [] });
-                    setFirstName(fName);
-                    setClassName('Brak');
-                    setAvailableAvatars(['avatar1', 'avatar2', 'avatar3']);
-                }
-                setLoading(false);
-            }, error => {
-                console.error("Błąd pobierania danych użytkownika:", error);
-                setUserData(null);
-                setLoading(false);
-            });
+        });
         return () => unsubscribe();
     }, [user]);
-
-    const handleUpdateAvatar = async (avatarId: string) => {
-        if (!user) return;
-        try {
-            await firestore().collection('users').doc(user.uid).update({
-                avatar: avatarId
-            });
-            setModalVisible(false);
-        } catch (error) {
-            console.error("Błąd zapisu awatara:", error);
-            Alert.alert("Błąd", "Nie udało się zapisać awatara.");
-        }
-    };
 
     const handleSaveDetails = async () => {
         if (!user) return;
         setIsSaving(true);
         try {
-            const dataToSave = {
+            await firestore().collection('users').doc(user.uid).set({
                 firstName: firstName,
-                className: className,
-            };
-            await firestore().collection('users').doc(user.uid).set(dataToSave, { merge: true });
-
-            if (user.displayName !== firstName) {
-                await user.updateProfile({
-                    displayName: firstName
-                });
-            }
-
+                userClass: className,
+            }, { merge: true });
             Alert.alert("Sukces!", "Twoje dane zostały pomyślnie zaktualizowane.");
             setIsEditing(false);
-
         } catch (error) {
-            console.error("Błąd zapisu danych:", error);
             Alert.alert("Błąd", "Nie udało się zaktualizować danych.");
         }
         setIsSaving(false);
     };
 
-    const handleCancelEdit = () => {
-        setFirstName(userData?.firstName || '');
-        setClassName(userData?.className || 'Brak');
-        setIsEditing(false);
-    };
-
-
     if (loading) {
         return (
-            <SafeAreaView style={[styles.safeArea, themeStyles.background, { justifyContent: 'center' }]}>
+            <SafeAreaView style={[styles.safeArea, themeStyles.container, { justifyContent: 'center' }]}>
                 <ActivityIndicator size="large" color={themeStyles.primaryColor} />
             </SafeAreaView>
         );
     }
 
     return (
-        <SafeAreaView style={[styles.safeArea, themeStyles.background]}>
-            <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
-                keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
-            >
+        <SafeAreaView style={[styles.safeArea, themeStyles.container]}>
+            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+            <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
                 <ScrollView contentContainerStyle={styles.scrollContainer}>
 
+                    {/* Powiększony Awatar z obramowaniem */}
                     <View style={styles.avatarWrapper}>
-                        <TouchableOpacity
-                            style={[styles.avatarContainer, {borderColor: themeStyles.card.backgroundColor}]}
-                            onPress={() => setModalVisible(true)}
-                            activeOpacity={0.9}
-                        >
-                            <Image
-                                source={getAvatarImage(userData?.avatar)}
-                                style={styles.avatar}
-                            />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.editButton}
-                            onPress={() => setModalVisible(true)}
-                        >
-                            <Ionicons name="pencil" size={22} color="#FFFFFF" />
-                        </TouchableOpacity>
-                    </View>
-
-
-                    <View style={[styles.card, themeStyles.card]}>
-                        <View style={styles.row}>
-                            <Ionicons name="person-outline" size={24} color={themeStyles.primaryColor} />
-                            <Text style={[styles.label, themeStyles.textSecondary]}>Nick:</Text>
-                            {isEditing ? (
-                                <TextInput
-                                    style={[styles.input, themeStyles.input]}
-                                    value={firstName}
-                                    onChangeText={setFirstName}
-                                    placeholder="Wpisz nick"
-                                    placeholderTextColor={themeStyles.textSecondary.color}
+                        <View style={[styles.avatarOuterRing, { borderColor: themeStyles.primaryColor }]}>
+                            <View style={styles.avatarInnerCircle}>
+                                <Image
+                                    source={getAvatarImage(userData?.avatar)}
+                                    style={styles.avatarImage}
                                 />
-                            ) : (
-                                <Text style={[styles.value, themeStyles.text]}>{firstName || 'Brak'}</Text>
-                            )}
-                        </View>
-
-                        <View style={styles.row}>
-                            <Ionicons name="mail-outline" size={24} color={themeStyles.primaryColor} />
-                            <Text style={[styles.label, themeStyles.textSecondary]}>Email:</Text>
-                            <Text
-                                style={[styles.value, themeStyles.textSecondary]}
-                                numberOfLines={1}
-                                ellipsizeMode='tail'
-                            >
-                                {user?.email || 'Brak'}
-                            </Text>
-                        </View>
-
-                        <View style={styles.row}>
-                            <Ionicons name="school-outline" size={24} color={themeStyles.primaryColor} />
-                            <Text style={[styles.label, themeStyles.textSecondary]}>Klasa:</Text>
-                            {isEditing ? (
-                                <TextInput
-                                    style={[styles.input, themeStyles.input]}
-                                    value={className}
-                                    onChangeText={setClassName}
-                                    placeholder="Wpisz klasę"
-                                    placeholderTextColor={themeStyles.textSecondary.color}
-                                />
-                            ) : (
-                                <Text style={[styles.value, themeStyles.text]}>{className || 'Brak'}</Text>
-                            )}
-                        </View>
-
-                        <View style={styles.row}>
-                            <Ionicons name="shield-checkmark-outline" size={24} color={themeStyles.primaryColor} />
-                            <Text style={[styles.label, themeStyles.textSecondary]}>Potwierdzony:</Text>
-                            <Text style={[styles.value, themeStyles.textSecondary]}>
-                                {user?.emailVerified ? 'Tak' : 'Nie'}
-                            </Text>
-                        </View>
-                    </View>
-
-                    {isEditing ? (
-                        <>
-                            <TouchableOpacity style={styles.saveButton} onPress={handleSaveDetails} disabled={isSaving}>
-                                {isSaving ? (
-                                    <ActivityIndicator color="#FFFFFF" />
-                                ) : (
-                                    <>
-                                        <Ionicons name="save-outline" size={20} color="#fff" />
-                                        <Text style={styles.buttonText}>Zapisz zmiany</Text>
-                                    </>
-                                )}
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit} disabled={isSaving}>
-                                <Ionicons name="close-outline" size={20} color="#fff" />
-                                <Text style={styles.buttonText}>Anuluj</Text>
-                            </TouchableOpacity>
-                        </>
-                    ) : (
-                        <>
-                            <TouchableOpacity style={styles.editDataButton} onPress={() => setIsEditing(true)}>
-                                <Ionicons name="pencil-outline" size={20} color="#fff" />
-                                <Text style={styles.buttonText}>Edytuj dane</Text>
-                            </TouchableOpacity>
-                        </>
-                    )}
-
-
-                    <Modal
-                        animationType="fade"
-                        transparent={true}
-                        visible={modalVisible}
-                        onRequestClose={() => setModalVisible(false)}
-                    >
-                        <View style={styles.modalOverlay}>
-                            <View style={[styles.modalContent, themeStyles.card]}>
-                                <Text style={[styles.modalTitle, themeStyles.text]}>Wybierz awatar</Text>
-
-                                {/* --- ✅ ОСЬ ТУТ ЗМІНИ --- */}
-                                <FlatList
-                                    data={availableAvatars}
-                                    horizontal={true} // <-- 1. Додано
-                                    showsHorizontalScrollIndicator={false} // <-- 2. Додано (для чистоти)
-                                    // numColumns={3} // <-- 3. Видалено
-                                    keyExtractor={(item) => item}
-                                    renderItem={({ item }) => (
-                                        <TouchableOpacity
-                                            style={[
-                                                styles.avatarOption,
-                                                {borderColor: themeStyles.textSecondary.color},
-                                                userData?.avatar === item && {borderColor: themeStyles.primaryColor}
-                                            ]}
-                                            onPress={() => handleUpdateAvatar(item)}
-                                        >
-                                            <Image
-                                                source={getAvatarImage(item)}
-                                                style={styles.avatarOptionImage}
-                                            />
-                                        </TouchableOpacity>
-                                    )}
-                                />
-                                <TouchableOpacity
-                                    style={styles.modalCancelButton}
-                                    onPress={() => setModalVisible(false)}
-                                >
-                                    <Text style={[styles.modalCancelText, themeStyles.textSecondary]}>Anuluj</Text>
-                                </TouchableOpacity>
                             </View>
                         </View>
-                    </Modal>
+                        <TouchableOpacity
+                            style={[styles.editIconButton, { backgroundColor: themeStyles.primaryColor }]}
+                            onPress={() => setModalVisible(true)}
+                        >
+                            <Ionicons name="camera" size={24} color="#FFFFFF" />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Karta Danych */}
+                    <View style={[styles.infoCard, themeStyles.card]}>
+                        <Text style={[styles.sectionTitle, themeStyles.text]}>Informacje osobiste</Text>
+
+                        {/* Pole Nick */}
+                        <View style={styles.inputRow}>
+                            <Ionicons name="person-outline" size={24} color={themeStyles.primaryColor} />
+                            <View style={styles.inputContainer}>
+                                <Text style={[styles.label, { color: themeStyles.subtitleColor }]}>Nick</Text>
+                                {isEditing ? (
+                                    <TextInput
+                                        style={[styles.textInput, themeStyles.input]}
+                                        value={firstName}
+                                        onChangeText={setFirstName}
+                                    />
+                                ) : (
+                                    <Text style={[styles.valueText, themeStyles.text]}>{firstName || 'Nie ustawiono'}</Text>
+                                )}
+                            </View>
+                        </View>
+
+                        {/* Pole Email */}
+                        <View style={styles.inputRow}>
+                            <Ionicons name="mail-outline" size={24} color={themeStyles.primaryColor} />
+                            <View style={styles.inputContainer}>
+                                <Text style={[styles.label, { color: themeStyles.subtitleColor }]}>Email</Text>
+                                <Text style={[styles.valueText, themeStyles.text]}>{user?.email}</Text>
+                            </View>
+                        </View>
+
+                        {/* Pole Klasa */}
+                        <View style={styles.inputRow}>
+                            <Ionicons name="school-outline" size={24} color={themeStyles.primaryColor} />
+                            <View style={styles.inputContainer}>
+                                <Text style={[styles.label, { color: themeStyles.subtitleColor }]}>Klasa</Text>
+                                {isEditing ? (
+                                    <TextInput
+                                        style={[styles.textInput, themeStyles.input]}
+                                        value={className}
+                                        onChangeText={setClassName}
+                                        keyboardType="numeric"
+                                    />
+                                ) : (
+                                    <Text style={[styles.valueText, themeStyles.text]}>Klasa {className}</Text>
+                                )}
+                            </View>
+                        </View>
+
+                        {/* ✅ DODANE: Pole Potwierdzony */}
+                        <View style={styles.inputRow}>
+                            <Ionicons name="shield-checkmark-outline" size={24} color={themeStyles.primaryColor} />
+                            <View style={styles.inputContainer}>
+                                <Text style={[styles.label, { color: themeStyles.subtitleColor }]}>Potwierdzony</Text>
+                                <Text style={[styles.valueText, themeStyles.text]}>
+                                    {user?.emailVerified ? 'Tak' : 'Nie'}
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* Przyciski Akcji */}
+                    <View style={styles.buttonContainer}>
+                        {isEditing ? (
+                            <View style={styles.editActions}>
+                                <TouchableOpacity
+                                    style={[styles.actionButton, { backgroundColor: COLORS.correct }]}
+                                    onPress={handleSaveDetails}
+                                >
+                                    {isSaving ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Zapisz</Text>}
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.actionButton, { backgroundColor: COLORS.grey }]}
+                                    onPress={() => setIsEditing(false)}
+                                >
+                                    <Text style={styles.buttonText}>Anuluj</Text>
+                                </TouchableOpacity>
+                            </View>
+                        ) : (
+                            <TouchableOpacity
+                                style={[styles.mainButton, { backgroundColor: themeStyles.primaryColor }]}
+                                onPress={() => setIsEditing(true)}
+                            >
+                                <Ionicons name="create-outline" size={20} color="#fff" />
+                                <Text style={[styles.buttonText, { marginLeft: 8 }]}>Edytuj dane</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+
                 </ScrollView>
             </KeyboardAvoidingView>
+
+            {/* Modal wyboru awatara */}
+            <Modal visible={modalVisible} transparent animationType="fade">
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, themeStyles.card]}>
+                        <Text style={[styles.modalTitle, themeStyles.text]}>Wybierz postać</Text>
+                        <FlatList
+                            data={availableAvatars}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            keyExtractor={(item) => item}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={styles.avatarOptionWrapper}
+                                    onPress={() => {
+                                        firestore().collection('users').doc(user?.uid).update({ avatar: item });
+                                        setModalVisible(false);
+                                    }}
+                                >
+                                    <Image source={getAvatarImage(item)} style={styles.avatarOption} />
+                                </TouchableOpacity>
+                            )}
+                        />
+                        <TouchableOpacity style={styles.closeModal} onPress={() => setModalVisible(false)}>
+                            <Text style={{ color: themeStyles.primaryColor, fontWeight: 'bold' }}>Zamknij</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    safeArea: {
-        flex: 1,
-    },
-    scrollContainer: {
-        flexGrow: 1,
-        alignItems: 'center',
-        padding: PADDING.medium,
-        paddingTop: PADDING.large,
-    },
-    avatarWrapper: {
-        width: 180,
-        height: 180,
-        marginBottom: MARGIN.large,
-        position: 'relative',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    avatarContainer: {
-        width: '100%',
-        height: '100%',
+    safeArea: { flex: 1 },
+    scrollContainer: { paddingBottom: 40, paddingTop: 20 },
+
+    // Powiększony Avatar
+    avatarWrapper: { alignSelf: 'center', marginBottom: 30, position: 'relative' },
+    avatarOuterRing: {
+        width: 180, // Powiększone
+        height: 180, // Powiększone
         borderRadius: 90,
-        borderWidth: 4,
-        elevation: 5,
+        borderWidth: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 8,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        backgroundColor: 'transparent',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+    },
+    avatarInnerCircle: {
+        width: 164,
+        height: 164,
+        borderRadius: 82,
+        backgroundColor: '#FFFFFF',
         overflow: 'hidden',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    avatar: {
-        width: '100%',
-        height: '100%',
-        resizeMode: 'contain',
-    },
-    editButton: {
+    avatarImage: { width: 130, height: 130, resizeMode: 'contain' },
+    editIconButton: {
         position: 'absolute',
         bottom: 8,
         right: 8,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        borderRadius: 20,
-        padding: 8,
-        elevation: 6,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 4,
+        borderColor: '#fff',
     },
-    card: {
-        borderRadius: 16,
+
+    // Info Card
+    infoCard: {
+        marginHorizontal: PADDING.medium,
+        borderRadius: 20,
         padding: PADDING.large,
-        width: '100%',
         elevation: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 5,
+        shadowRadius: 10,
     },
-    row: {
+    sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 25 },
+    inputRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 25 },
+    inputContainer: { marginLeft: 15, flex: 1 },
+    label: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 2, letterSpacing: 0.5 },
+    valueText: { fontSize: 17, fontWeight: '500' },
+    textInput: {
+        borderWidth: 1,
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        fontSize: 16,
+        marginTop: 5,
+    },
+
+    // Buttons
+    buttonContainer: { paddingHorizontal: PADDING.medium, marginTop: 30 },
+    mainButton: {
         flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: MARGIN.large,
-    },
-    label: {
-        fontSize: FONT_SIZES.medium,
-        fontWeight: '600',
-        marginLeft: MARGIN.small,
-        width: 130,
-    },
-    value: {
-        fontSize: FONT_SIZES.medium,
-        marginLeft: MARGIN.small,
-        flex: 1,
-        paddingVertical: 6,
-    },
-    input: {
-        flex: 1,
-        fontSize: FONT_SIZES.medium,
-        borderBottomWidth: 1,
-        paddingVertical: 5,
-        marginLeft: MARGIN.small,
-    },
-    saveButton: {
-        flexDirection: 'row',
-        backgroundColor: COLORS.primary,
-        paddingVertical: PADDING.medium,
-        paddingHorizontal: PADDING.large,
-        borderRadius: 25,
-        alignItems: 'center',
+        height: 55,
+        borderRadius: 15,
         justifyContent: 'center',
-        marginTop: MARGIN.large,
+        alignItems: 'center',
         elevation: 3,
-        width: '100%',
     },
-    buttonText: {
-        color: COLORS.white,
-        fontSize: FONT_SIZES.medium,
-        fontWeight: 'bold',
-        marginLeft: MARGIN.small,
-    },
-    editDataButton: {
-        flexDirection: 'row',
-        backgroundColor: '#2563EB',
-        paddingVertical: PADDING.medium,
-        paddingHorizontal: PADDING.large,
-        borderRadius: 25,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: MARGIN.large,
-        elevation: 3,
-        width: '100%',
-    },
-    cancelButton: {
-        flexDirection: 'row',
-        backgroundColor: COLORS.grey,
-        paddingVertical: PADDING.small,
-        paddingHorizontal: PADDING.large,
-        borderRadius: 25,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: MARGIN.medium,
-        width: '100%',
-    },
-    modalOverlay: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    },
-    modalContent: {
-        width: '90%',
-        maxWidth: 400,
-        borderRadius: 20,
-        paddingVertical: PADDING.large,
-        paddingHorizontal: PADDING.medium,
-        alignItems: 'center',
-        elevation: 10,
-    },
-    modalTitle: {
-        fontSize: FONT_SIZES.xlarge,
-        fontWeight: 'bold',
-        marginBottom: MARGIN.medium,
-    },
-    avatarOption: {
-        margin: MARGIN.small,
-        borderWidth: 3,
-        borderRadius: 50,
-        padding: 3,
-    },
-    avatarOptionImage: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-    },
-    modalCancelButton: {
-        marginTop: MARGIN.medium,
-        paddingVertical: PADDING.small,
-        paddingHorizontal: PADDING.medium,
-    },
-    modalCancelText: {
-        fontSize: FONT_SIZES.medium,
-        fontWeight: '500',
-    },
+    editActions: { flexDirection: 'row', justifyContent: 'space-between' },
+    actionButton: { flex: 0.48, height: 55, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
+    buttonText: { color: '#fff', fontSize: 17, fontWeight: 'bold' },
+
+    // Modal
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' },
+    modalContent: { width: '90%', borderRadius: 25, padding: 25, alignItems: 'center' },
+    modalTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 20 },
+    avatarOptionWrapper: { padding: 10 },
+    avatarOption: { width: 90, height: 90, resizeMode: 'contain' },
+    closeModal: { marginTop: 20, padding: 10 }
 });

@@ -156,7 +156,7 @@ const SequenceGame = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#009688' }, // Teal
-    header: { flexDirection: 'row', justifyContent: 'space-between', padding: 20, alignItems: 'center' },
+    header: { flexDirection: 'row', justifyContent: 'space-between', padding: 50, alignItems: 'center' },
     stats: { flexDirection: 'row', gap: 20 },
     statText: { color: 'white', fontSize: 20, fontWeight: 'bold' },
 

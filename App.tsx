@@ -28,7 +28,7 @@ import TopicListScreen from './src/screens/TopicListScreen';
 import SubTopicListScreen from './src/screens/SubTopicListScreen';
 import TestScreen from './src/screens/TestScreen';
 import PracticeScreen from './src/screens/PracticeScreen';
-
+import TrainerStatsScreen from './src/screens/TrainerStatsScreen';
 // --- Ekrany: Trenerzy ---
 
 // ❗ Upewnij się, że pliki istnieją w podanych ścieżkach
@@ -303,6 +303,7 @@ function ProfileStackNavigator() {
             <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} options={{ title: 'Profil', headerShown: false }} />
             <ProfileStack.Screen name="UserDetails" component={UserDetailsScreen} options={{ title: 'Dane użytkownika' }} />
             <ProfileStack.Screen name="StatsScreen" component={StatsScreen} options={{ title: 'Moje Statystyki' }} />
+            <ProfileStack.Screen name="TrainerStats" component={TrainerStatsScreen} options={{ title: 'Statystyki Trenerów' }}/>
             <ProfileStack.Screen name="Store" component={StoreScreen} options={{ title: 'Sklep' }} />
         </ProfileStack.Navigator>
     );

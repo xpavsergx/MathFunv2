@@ -149,7 +149,7 @@ const GreaterLesserGame = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#E91E63' }, // Рожевий
-    header: { flexDirection: 'row', justifyContent: 'space-between', padding: 20, alignItems: 'center' },
+    header: { flexDirection: 'row', justifyContent: 'space-between', padding: 50, alignItems: 'center' },
     scoreBadge: { backgroundColor: 'rgba(0,0,0,0.2)', padding: 10, borderRadius: 15 },
     timerBadge: { backgroundColor: 'rgba(0,0,0,0.2)', padding: 10, borderRadius: 15 },
     scoreText: { color: 'white', fontWeight: 'bold', fontSize: 18 },

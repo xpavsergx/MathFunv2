@@ -9,10 +9,12 @@ import {
     Dimensions,
     ImageBackground,
     ScrollView,
+    useColorScheme, // Dodano
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainAppStackParamList } from '../navigation/types';
 import questionsDatabase from '../data/questionsDb.json';
+import { COLORS } from '../styles/theme'; // Dodano
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
@@ -40,6 +42,26 @@ const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpaci
 function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     const { grade, topic, mode } = route.params;
     const db: QuestionsDatabaseType = questionsDatabase as QuestionsDatabaseType;
+
+    // ✅ OBSŁUGA TRYBU CIEMNEGO
+    const colorScheme = useColorScheme();
+    const isDarkMode = colorScheme === 'dark';
+
+    // ✅ DYNAMICZNE STYLE TEMATYCZNE
+    const themeStyles = {
+        overlay: {
+            backgroundColor: isDarkMode ? 'rgba(18, 18, 18, 0.92)' : 'rgba(255, 255, 255, 0.88)',
+        },
+        headerText: {
+            color: isDarkMode ? COLORS.textDark : '#111827',
+        },
+        card: {
+            backgroundColor: isDarkMode ? COLORS.cardDark : 'white',
+        },
+        topicTitle: {
+            color: isDarkMode ? COLORS.textDark : '#1F2937',
+        }
+    };
 
     const trainerScreenMap = {
         'Dodawanie i odejmowanie': 'PlusMinusTrainer',
@@ -75,31 +97,21 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
 
     const getTrainerScreen = (key: string) => trainerScreenMap[key as keyof typeof trainerScreenMap];
 
-    // --- LOGIKA FILTROWANIA Z POPRAWKĄ ---
     const subTopicsWithQuestions = useMemo<SubTopicButton[]>(() => {
         const topicsForGrade = db[String(grade)];
         if (!topicsForGrade) return [];
         const subTopicsMap = topicsForGrade[topic] || {};
         const result: SubTopicButton[] = [];
 
-        // Lista technicznych kluczy, których NIE chcemy pokazywać w menu głównym
         const hiddenTopics = [
-            "Pojedynki - zestaw 1",
-            "Pojedynki - zestaw 2",
-            "Pojedynki - zestaw 3",
-            "Pojedynki - zestaw 4",
-            "Pojedynki - zestaw 5"
-
+            "Pojedynki - zestaw 1", "Pojedynki - zestaw 2", "Pojedynki - zestaw 3",
+            "Pojedynki - zestaw 4", "Pojedynki - zestaw 5"
         ];
 
         Object.keys(subTopicsMap).forEach(subKey => {
-            // 1. Wykluczamy tematy z listy hiddenTopics
             if (hiddenTopics.includes(subKey)) return;
-
             const subTopic = subTopicsMap[subKey];
             if (!subTopic) return;
-
-            // 2. Obsługa flagi showInPractice z JSON-a
             if (subTopic.showInPractice === false) return;
 
             if (subTopic.isTrainer && subTopic.practiceKeys?.length) {
@@ -142,6 +154,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
                 entering={FadeInUp.delay(index * 50).duration(500)}
                 style={[
                     styles.topicCard,
+                    themeStyles.card, // ✅ Dynamiczne tło
                     { width: UNIVERSAL_CARD_WIDTH, borderColor: themeColor }
                 ]}
                 onPress={() => handleSubTopicPress(item)}
@@ -149,7 +162,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
             >
                 <Ionicons name={iconName as any} size={22} color={themeColor} style={styles.cardIcon} />
                 <View style={styles.cardTextContainer}>
-                    <Text style={styles.topicTitle} numberOfLines={5}>
+                    <Text style={[styles.topicTitle, themeStyles.topicTitle]} numberOfLines={5}>
                         {(item.displayName || item.key).toUpperCase()}
                     </Text>
                 </View>
@@ -201,8 +214,8 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
             style={styles.backgroundImage}
             resizeMode="cover"
         >
-            <View style={styles.overlay}>
-                <Text style={styles.headerText}>
+            <View style={[styles.overlay, themeStyles.overlay]}>
+                <Text style={[styles.headerText, themeStyles.headerText]}>
                     {mode === 'test' ? 'Wybierz test' : 'Wybierz ćwiczenie'}
                 </Text>
                 <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -219,15 +232,15 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
 
 const styles = StyleSheet.create({
     backgroundImage: { flex: 1 },
-    overlay: { flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.88)', paddingTop: 30 },
-    headerText: { fontSize: 22, fontWeight: 'bold', color: '#111827', textAlign: 'center', marginBottom: 30, textTransform: 'uppercase' },
+    overlay: { flex: 1, paddingTop: 30 },
+    headerText: { fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginBottom: 30, textTransform: 'uppercase' },
     scrollContent: { paddingBottom: 60, paddingHorizontal: PADDING_HORIZONTAL },
     singleRow: { width: '100%', alignItems: 'center', marginBottom: 30 },
     twoRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 30 },
-    topicCard: { height: CARD_HEIGHT, backgroundColor: 'white', borderRadius: 18, padding: 12, elevation: 4, borderWidth: 2.5, justifyContent: 'space-between' },
+    topicCard: { height: CARD_HEIGHT, borderRadius: 18, padding: 12, elevation: 4, borderWidth: 2.5, justifyContent: 'space-between' },
     cardIcon: { alignSelf: 'flex-start' },
     cardTextContainer: { flex: 1, justifyContent: 'center' },
-    topicTitle: { fontSize: 16, fontWeight: '900', color: '#1F2937', textAlign: 'center', lineHeight: 20 },
+    topicTitle: { fontSize: 20, fontWeight: '900', textAlign: 'center', lineHeight: 20 },
     cardArrow: { alignSelf: 'flex-end' },
     emptyText: { textAlign: 'center', marginTop: 50, color: '#6B7280' },
 });

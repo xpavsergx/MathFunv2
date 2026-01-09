@@ -1,3 +1,5 @@
+// src/screens/TopicListScreen.tsx
+
 import React, { useMemo } from 'react';
 import {
     View,
@@ -7,6 +9,7 @@ import {
     ImageBackground,
     ScrollView,
     Dimensions,
+    useColorScheme, // Dodano
 } from 'react-native';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -32,6 +35,26 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
     const { grade } = route.params;
     const db: QuestionsDatabase = (questionsDatabase as any).default || questionsDatabase;
 
+    // ✅ OBSŁUGA TRYBU CIEMNEGO
+    const colorScheme = useColorScheme();
+    const isDarkMode = colorScheme === 'dark';
+
+    // ✅ DYNAMICZNE STYLE TEMATYCZNE
+    const themeStyles = {
+        overlay: {
+            backgroundColor: isDarkMode ? 'rgba(18, 18, 18, 0.92)' : 'rgba(255, 255, 255, 0.85)',
+        },
+        headerText: {
+            color: isDarkMode ? COLORS.textDark : '#111827',
+        },
+        card: {
+            backgroundColor: isDarkMode ? COLORS.cardDark : 'white',
+        },
+        topicTitle: {
+            color: isDarkMode ? COLORS.textDark : '#1F2937',
+        }
+    };
+
     const topics = useMemo(() => {
         const topicsForGrade = db[String(grade)];
         return topicsForGrade ? Object.keys(topicsForGrade) : [];
@@ -44,10 +67,9 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
         });
     };
 
-    // --- ZMIANA: Tutaj ustawiliśmy kolor pomarańczowy (COLORS.accent) ---
     const renderTopicCard = (item: string, index: number) => {
         const isRightAligned = index % 2 !== 0;
-        const themeColor = COLORS.accent; // To jest Twój pomarańczowy z MainScreen
+        const themeColor = COLORS.accent; // Pomarańczowy akcent pozostaje bez zmian dla spójności
 
         return (
             <AnimatedTouchableOpacity
@@ -55,24 +77,23 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
                 entering={FadeInUp.delay(index * 100).duration(500)}
                 style={[
                     styles.topicCard,
+                    themeStyles.card, // Dynamiczne tło karty
                     {
                         alignSelf: isRightAligned ? 'flex-end' : 'flex-start',
-                        borderColor: themeColor, // Ramka pomarańczowa
+                        borderColor: themeColor,
                     }
                 ]}
                 onPress={() => handleTopicPress(item)}
                 activeOpacity={0.8}
             >
-                {/* Ikona książki w kolorze pomarańczowym */}
                 <Ionicons name="book-outline" size={26} color={themeColor} style={styles.cardIcon} />
 
                 <View style={styles.cardTextContainer}>
-                    <Text style={styles.topicTitle} numberOfLines={3}>
+                    <Text style={[styles.topicTitle, themeStyles.topicTitle]} numberOfLines={3}>
                         {item.toUpperCase()}
                     </Text>
                 </View>
 
-                {/* Strzałka w kolorze pomarańczowym */}
                 <Ionicons name="chevron-forward-outline" size={20} color={themeColor} style={styles.cardArrow} />
             </AnimatedTouchableOpacity>
         );
@@ -80,8 +101,8 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
 
     return (
         <ImageBackground source={backgroundImage} style={styles.backgroundImage} resizeMode="cover">
-            <View style={styles.overlay}>
-                <Text style={styles.headerText}>TEORIA: WYBIERZ DZIAŁ</Text>
+            <View style={[styles.overlay, themeStyles.overlay]}>
+                <Text style={[styles.headerText, themeStyles.headerText]}>TEORIA: WYBIERZ DZIAŁ</Text>
 
                 <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     {topics.length === 0 ? (
@@ -101,14 +122,12 @@ const styles = StyleSheet.create({
     backgroundImage: { flex: 1, width: '100%', height: '100%' },
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.85)',
         paddingHorizontal: 20,
         paddingTop: 25,
     },
     headerText: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#111827',
         textAlign: 'center',
         marginBottom: 30,
     },
@@ -117,16 +136,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
     },
     pathContainer: { width: '100%' },
-    // --- ZMIANA: Nowe style kafelka ---
     topicCard: {
         width: CARD_WIDTH,
         height: 130,
-        backgroundColor: 'white',
         borderRadius: 18,
         padding: 15,
         marginBottom: 25,
         elevation: 5,
-        borderWidth: 3, // Grubsza linia, żeby kolor był widoczny
+        borderWidth: 3,
         justifyContent: 'space-between',
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 3 },
@@ -136,9 +153,8 @@ const styles = StyleSheet.create({
     cardIcon: { alignSelf: 'flex-start' },
     cardTextContainer: { flex: 1, justifyContent: 'center' },
     topicTitle: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: '900',
-        color: '#1F2937',
         textAlign: 'left',
     },
     cardArrow: { alignSelf: 'flex-end' },

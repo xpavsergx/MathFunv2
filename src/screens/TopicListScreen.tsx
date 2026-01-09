@@ -1,3 +1,5 @@
+// src/screens/TopicListScreen.tsx
+
 import React, { useMemo } from 'react';
 import {
     View,
@@ -7,6 +9,7 @@ import {
     ImageBackground,
     ScrollView,
     Dimensions,
+    useColorScheme, // Dodano do obsługi motywu
 } from 'react-native';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -24,7 +27,6 @@ type QuestionsDatabase = {
 };
 
 const { width } = Dimensions.get('window');
-// Stała szerokość kafelka (65% szerokości ekranu)
 const CARD_WIDTH = width * 0.65;
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
@@ -32,6 +34,10 @@ const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpaci
 function TopicListScreen({ route, navigation }: TopicListProps) {
     const { grade, mode } = route.params;
     const db: QuestionsDatabase = (questionsDatabase as any).default || questionsDatabase;
+
+    // ✅ OBSŁUGA TRYBU CIEMNEGO
+    const colorScheme = useColorScheme();
+    const isDarkMode = colorScheme === 'dark';
 
     const topics = useMemo(() => {
         const topicsForGrade = db[String(grade)];
@@ -46,8 +52,24 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
         });
     };
 
-    // Dobór koloru i ikony na podstawie trybu (Ćwiczenia/Testy)
+    // ✅ DYNAMICZNE STYLE TEMATYCZNE
+    const themeStyles = {
+        overlay: {
+            backgroundColor: isDarkMode ? 'rgba(18, 18, 18, 0.92)' : 'rgba(255, 255, 255, 0.88)',
+        },
+        headerText: {
+            color: isDarkMode ? COLORS.textDark : '#111827',
+        },
+        card: {
+            backgroundColor: isDarkMode ? COLORS.cardDark : 'white',
+        },
+        topicTitle: {
+            color: isDarkMode ? COLORS.textDark : '#1F2937',
+        }
+    };
+
     const isTest = mode === 'test';
+    // Zachowujemy Twoje kolory: Niebieski dla testów, Zielony dla ćwiczeń
     const themeColor = isTest ? '#2196F3' : '#4CAF50';
     const themeIcon = isTest ? 'clipboard-outline' : 'fitness-outline';
 
@@ -60,6 +82,7 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
                 entering={FadeInUp.delay(index * 100).duration(500)}
                 style={[
                     styles.topicCard,
+                    themeStyles.card, // ✅ Dynamiczne tło karty
                     {
                         alignSelf: isRightAligned ? 'flex-end' : 'flex-start',
                         borderColor: themeColor,
@@ -71,7 +94,7 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
                 <Ionicons name={themeIcon as any} size={24} color={themeColor} style={styles.cardIcon} />
 
                 <View style={styles.cardTextContainer}>
-                    <Text style={styles.topicTitle} numberOfLines={3}>
+                    <Text style={[styles.topicTitle, themeStyles.topicTitle]} numberOfLines={3}>
                         {item.toUpperCase()}
                     </Text>
                 </View>
@@ -83,8 +106,8 @@ function TopicListScreen({ route, navigation }: TopicListProps) {
 
     return (
         <ImageBackground source={backgroundImage} style={styles.backgroundImage} resizeMode="cover">
-            <View style={styles.overlay}>
-                <Text style={styles.headerText}>
+            <View style={[styles.overlay, themeStyles.overlay]}>
+                <Text style={[styles.headerText, themeStyles.headerText]}>
                     {isTest ? 'TESTY: WYBIERZ DZIAŁ' : 'ĆWICZENIA: WYBIERZ DZIAŁ'}
                 </Text>
 
@@ -106,14 +129,12 @@ const styles = StyleSheet.create({
     backgroundImage: { flex: 1, width: '100%', height: '100%' },
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.88)',
         paddingHorizontal: 20,
         paddingTop: 30,
     },
     headerText: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#111827',
         textAlign: 'center',
         marginBottom: 25,
         textTransform: 'uppercase'
@@ -126,11 +147,9 @@ const styles = StyleSheet.create({
     },
     topicCard: {
         width: CARD_WIDTH,
-        minHeight: 130, // Zmieniono na minHeight dla elastyczności
-        backgroundColor: 'white',
+        minHeight: 130,
         borderRadius: 22,
         padding: 15,
-        // KLUCZOWA ZMIANA: Zmieniono z -5 na 20 (dodatni margines), aby usunąć nachodzenie
         marginBottom: 20,
         elevation: 5,
         borderWidth: 3,
@@ -144,12 +163,11 @@ const styles = StyleSheet.create({
     cardTextContainer: {
         flex: 1,
         justifyContent: 'center',
-        paddingVertical: 10, // Dodatkowy padding wewnątrz kafelka
+        paddingVertical: 10,
     },
     topicTitle: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: '900',
-        color: '#1F2937',
         textAlign: 'center',
         lineHeight: 20,
     },
