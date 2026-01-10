@@ -18,6 +18,7 @@ import { MainAppStackParamList } from '../../src/navigation/types';
 import { COLORS, FONT_SIZES, MARGIN, PADDING } from '../styles/theme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { updateDuelStats } from '../services/userStatsService';
+import { updateQuestProgress } from '../services/dailyQuestService';
 
 // (Типи, інтерфейси - без змін)
 type DuelResultRouteProp = RouteProp<MainAppStackParamList, 'DuelResult'>;
@@ -110,6 +111,10 @@ function DuelResultScreen() {
                 }
 
                 setOutcome(newOutcome);
+
+                if (newOutcome === 'win') {
+                    updateQuestProgress('DUEL_WIN');
+                }
 
                 if (data.status === 'pending') {
                     await duelRef.update({ status: 'completed' });

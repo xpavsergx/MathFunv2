@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { COLORS } from '../styles/theme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { awardXpAndCoins } from '../services/xpService';
+import { updateQuestProgress } from '../services/dailyQuestService';
 
 const GreaterLesserGame = () => {
     const navigation = useNavigation();
@@ -73,6 +74,9 @@ const GreaterLesserGame = () => {
         const xp = score * 3;
         const coins = score;
         awardXpAndCoins(xp, coins);
+        if (score > 0) {
+            updateQuestProgress('GAMES_PLAYED');
+        }
         Alert.alert("Koniec!", `Wynik: ${score}\nNagroda: +${xp} XP, +${coins} Monet`, [
             { text: "Menu", onPress: () => navigation.goBack() },
             { text: "Jeszcze raz", onPress: startGame }

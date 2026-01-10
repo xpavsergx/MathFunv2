@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { COLORS, FONT_SIZES } from '../styles/theme';
 import { awardXpAndCoins } from '../services/xpService';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { updateQuestProgress } from '../services/dailyQuestService';
 
 const NumberMemoryGame = () => {
     const navigation = useNavigation();
@@ -55,6 +56,9 @@ const NumberMemoryGame = () => {
                     }}
             ]);
         } else {
+            if (level > 1) {
+                updateQuestProgress('GAMES_PLAYED');
+            }
             Alert.alert("Błąd!", `Poprawna liczba to: ${currentNumber}\nTwój wynik: Poziom ${level}`, [
                 { text: "Zagraj ponownie", onPress: startGame },
                 { text: "Wyjdź", onPress: () => navigation.goBack() }

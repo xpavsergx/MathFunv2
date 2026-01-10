@@ -127,24 +127,45 @@ function MainScreen() {
         gradeButtonBackground: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary,
         gradeButtonText: { color: isDarkMode ? COLORS.textDark : COLORS.white },
     };
+    // --- POMOCNICZA FUNKCJA BLOKADY ---
+    const checkGradeLock = (onSuccess: () => void) => {
+        if (selectedGrade === 5 || selectedGrade === 6) {
+            Alert.alert(
+                "Wkrótce dostępne",
+                `Materiały dla klasy ${selectedGrade} pojawią się w kolejnej aktualizacji!`,
+                [{ text: "Rozumiem" }]
+            );
+            return;
+        }
+        onSuccess();
+    };
 
     // --- ДІЇ НАВІГАЦІЇ ---
 
     // 1. Вправи (Training Mode)
     const handleTrainingAction = () => {
         if (selectedGrade === null) { Alert.alert("Wybierz klasę", "Proszę wybrać klasę."); return; }
-        navigation.navigate('TopicList', { grade: selectedGrade, mode: 'training' });
+        // Dodajemy blokadę:
+        checkGradeLock(() => {
+            navigation.navigate('TopicList', { grade: selectedGrade, mode: 'training' });
+        });
     };
 
     // 2. Тести (Test Mode)
     const handleTestsAction = () => {
         if (selectedGrade === null) { Alert.alert("Wybierz klasę", "Proszę wybrać klasę."); return; }
-        navigation.navigate('TopicList', { grade: selectedGrade, mode: 'test' });
+        // Dodajemy blokadę:
+        checkGradeLock(() => {
+            navigation.navigate('TopicList', { grade: selectedGrade, mode: 'test' });
+        });
     };
 
     const handleTheoryAction = () => {
         if (selectedGrade === null) { Alert.alert("Wybierz klasę", "Proszę wybrać klasę."); return; }
-        navigation.navigate('TheoryTopicList', { grade: String(selectedGrade) });
+        // Dodajemy blokadę:
+        checkGradeLock(() => {
+            navigation.navigate('TheoryTopicList', { grade: String(selectedGrade) });
+        });
     };
 
     const handleGamesPress = () => navigation.navigate('GamesStack' as never);
@@ -183,6 +204,7 @@ function MainScreen() {
                                                       onPress={() => setSelectedGrade(grade)}>
                                         <Text style={[styles.gradeButtonText, isSelected ? styles.gradeButtonTextSelected : themeStyles.gradeButtonText]}>
                                             Klasa {grade} {grade === defaultGrade ? '⭐' : ''}
+                                            {(grade === 5 || grade === 6) ? ' 🔒' : ''}
                                         </Text>
                                     </TouchableOpacity>
                                 );
@@ -283,9 +305,24 @@ const styles = StyleSheet.create({
     bigCardSubtitle: { fontSize: 11 },
     questSectionVertical: { paddingHorizontal: PADDING.medium },
     questListVertical: { gap: 10 },
-    questItem: { flexDirection: 'row', alignItems: 'center', padding: 10, borderRadius: 10, borderWidth: 1 },
-    questItemCompleted: { backgroundColor: '#E8F5E9', borderColor: COLORS.correct },
-    questItemInProgress: { borderColor: COLORS.primary },
+    questItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        borderRadius: 16, // Bardziej zaokrąglone rogi pasują do reszty
+        borderWidth: 1.5,
+        marginBottom: 4,
+    },
+    questItemCompleted: {
+        // Zmieniamy na ciemną zieleń, która nie razi w oczy
+        backgroundColor: 'rgba(76, 175, 80, 0.15)',
+        borderColor: COLORS.correct,
+    },
+    questItemInProgress: {
+        // Przezroczyste tło z obramowaniem koloru głównego
+        backgroundColor: 'rgba(33, 150, 243, 0.05)',
+        borderColor: 'rgba(33, 150, 243, 0.3)',
+    },
     questDetails: { flex: 1 },
     questTitle: { fontWeight: 'bold', fontSize: 14 },
     questProgress: { fontSize: 12, fontWeight: 'bold', marginTop: 4 },

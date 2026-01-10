@@ -13,6 +13,7 @@ import MatchstickSymbol from '../Components/MatchstickSymbol';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { awardXpAndCoins } from '../services/xpService';
+import { updateQuestProgress } from '../services/dailyQuestService';
 
 // Розширена база рівнів
 const PUZZLE_LEVELS = [
@@ -137,6 +138,9 @@ function MatchstickEquationGame() {
             setStatus('solved');
             // 🎉 НАГОРОДА 🎉
             awardXpAndCoins(20, 5);
+
+            updateQuestProgress('GAMES_PLAYED');
+
             Alert.alert("Brawo!", "Rozwiązane! Otrzymujesz +20 XP i +5 Monet.");
         } else {
             Alert.alert("Błąd", "Równanie niepoprawne. Spróbuj jeszcze raz.");

@@ -329,7 +329,14 @@ function FriendsStackNavigator() {
                     fontWeight: 'bold',
                 },
             }} />
-            <FriendsStackNav.Screen name="DuelSetup" component={DuelSetupScreen} options={{ title: 'Ustawienia pojedynku' }} />
+            <FriendsStackNav.Screen name="DuelSetup" component={DuelSetupScreen} options={{ title: 'Ustawienia pojedynku',
+                headerStyle: {
+                    backgroundColor: '#00BDD6', // To dodało ten turkusowy kolor
+                },
+                headerTintColor: '#fff', // To zmieniło kolor tekstu i strzałki na biały
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },}} />
         </FriendsStackNav.Navigator>
     );
 }

@@ -11,6 +11,7 @@ import { COLORS, FONT_SIZES, PADDING, MARGIN } from '../styles/theme';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { xpService } from '../services/xpService';
+import { updateQuestProgress } from '../services/dailyQuestService';
 
 type Equation = { text: string; isCorrect: boolean; };
 
@@ -107,6 +108,7 @@ function SpeedyCountGame() {
             setCoinsEarned(coins);
             xpService.addXP(currentUser.uid, xp, xp, 0);
             firestore().collection('users').doc(currentUser.uid).update({ coins: firestore.FieldValue.increment(coins) });
+            updateQuestProgress('GAMES_PLAYED');
         }
     }, [gameState, currentUser]);
 

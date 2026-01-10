@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { COLORS } from '../styles/theme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { awardXpAndCoins } from '../services/xpService';
+import { updateQuestProgress } from '../services/dailyQuestService';
 
 type Sequence = {
     seq: (number | string)[]; // [2, 4, 6, '?']
@@ -102,6 +103,10 @@ const SequenceGame = () => {
         const xp = finalScore * 10;
         const coins = finalScore * 3;
         awardXpAndCoins(xp, coins);
+
+        if (finalScore > 0) {
+            updateQuestProgress('GAMES_PLAYED');
+        }
         Alert.alert("Koniec gry!", `Wynik: ${finalScore}\n+${xp} XP`, [
             { text: "Menu", onPress: () => navigation.goBack() },
             { text: "Jeszcze raz", onPress: startGame }

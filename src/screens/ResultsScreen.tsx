@@ -10,6 +10,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { saveTestResults } from '../services/xpService';
 import { checkAndGrantAchievements } from '../services/achievementService';
 import auth from '@react-native-firebase/auth';
+import { updateQuestProgress } from '../services/dailyQuestService';
 
 type ResultsProps = NativeStackScreenProps<MainAppStackParamList, 'Results'>;
 
@@ -45,6 +46,7 @@ function ResultsScreen({ route, navigation }: ResultsProps) {
             if (currentUser) {
                 setTimeout(() => {
                     checkAndGrantAchievements(currentUser.uid);
+                    updateQuestProgress('TEST_COMPLETE');
                 }, 1500);
             }
         }

@@ -10,6 +10,7 @@ import auth from '@react-native-firebase/auth';
 import { xpService } from '../services/xpService';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, FONT_SIZES } from '../styles/theme';
+import { updateQuestProgress } from '../services/dailyQuestService';
 
 type GameMode = 'multiply' | 'add' | 'mix';
 
@@ -114,6 +115,7 @@ const MathSprintScreen: React.FC = () => {
             setCoinsEarned(coins);
             xpService.addXP(currentUser.uid, xp, xp, 0);
             firestore().collection('users').doc(currentUser.uid).update({ coins: firestore.FieldValue.increment(coins) });
+            updateQuestProgress('GAMES_PLAYED');
         }
     }, [isRunning, timeLeft]);
 

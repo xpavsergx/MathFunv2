@@ -1,9 +1,6 @@
-// src/services/dailyQuestService.ts
-
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { isToday } from 'date-fns';
-import { xpService } from './xpService';
 import Toast from 'react-native-toast-message';
 
 // Типи завдань
@@ -26,11 +23,11 @@ export const QUEST_DEFINITIONS = [
         reward: { xp: 100, coins: 20 },
     },
     {
-        id: 'duel_1',
-        type: 'DUEL_WIN',
-        title: 'Wygraj 1 pojedynek',
-        target: 1,
-        reward: { xp: 150, coins: 50 },
+        id: 'test_2', // Nowe ID dla drugiego zadania
+        type: 'TEST_COMPLETE', // Ten sam typ!
+        title: 'Mistrz wiedzy (2 testy)',
+        target: 2, // Musi rozwiązać dwa
+        reward: { xp: 150, coins: 40 },
     },
 ];
 
@@ -65,13 +62,14 @@ const getAndResetQuests = async (): Promise<DailyQuestsData> => {
         completed: {},
     };
 
-    if (!isToday(quests.lastUpdated.toDate())) {
+    // Скидаємо завдання, якщо дата не сьогоднішня
+    if (!quests.lastUpdated || !isToday(quests.lastUpdated.toDate())) {
         quests = {
             lastUpdated: firestore.Timestamp.now(),
             progress: {},
             completed: {},
         };
-        userRef.update({ dailyQuests: quests });
+        await userRef.update({ dailyQuests: quests });
     }
 
     return quests;
@@ -109,35 +107,44 @@ export const updateQuestProgress = async (type: QuestType) => {
 
     try {
         const questsData = await getAndResetQuests();
-
         const questsToUpdate = QUEST_DEFINITIONS.filter(q => q.type === type);
 
         let needsUpdate = false;
 
         for (const quest of questsToUpdate) {
+            // Оновлюємо тільки якщо завдання ще не виконане
             if (!questsData.completed[quest.id]) {
-                const newProgress = (questsData.progress[quest.id] || 0) + 1;
+                const currentProgress = questsData.progress[quest.id] || 0;
+                const newProgress = currentProgress + 1;
+
                 questsData.progress[quest.id] = newProgress;
                 needsUpdate = true;
 
+                // Перевіряємо, чи досягнуто цілі
                 if (newProgress >= quest.target) {
                     questsData.completed[quest.id] = true;
 
                     const { xp, coins } = quest.reward;
-                    await xpService.addXP(userRef.id, xp, xp, 0);
+
+                    // ✅ ПРАВИЛЬНЕ НАРАХУВАННЯ: Використовуємо FieldValue.increment
                     await userRef.update({
+                        xp: firestore.FieldValue.increment(xp),
                         coins: firestore.FieldValue.increment(coins)
                     });
 
+                    // Показуємо гарне сповіщення
                     Toast.show({
                         type: 'success',
-                        text1: 'Zadanie Ukończone!',
-                        text2: `Zdobyłeś: ${quest.title} (+${xp} XP, +${coins} 🪙)`,
+                        text1: 'Zadanie Ukończone! 🌟',
+                        text2: `Otrzymałeś: ${quest.title} (+${xp} XP, +${coins} 🪙)`,
+                        visibilityTime: 4000,
+                        position: 'top'
                     });
                 }
             }
         }
 
+        // Записуємо оновлений прогрес в базу
         if (needsUpdate) {
             await userRef.update({
                 'dailyQuests.progress': questsData.progress,

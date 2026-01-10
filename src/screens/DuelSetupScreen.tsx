@@ -83,7 +83,14 @@ function DuelSetupScreen() {
             Alert.alert("Błąd", "Nie wybrano tematu.");
             return;
         }
-
+        if (selectedGrade === 5 || selectedGrade === 6) {
+            Alert.alert(
+                "Wkrótce dostępne",
+                `Pojedynki dla klasy ${selectedGrade} będą dostępne wkrótce. Wybierz klasę 4, aby zagrać teraz!`,
+                [{ text: "OK" }]
+            );
+            return;
+        }
         setIsLoading(true); // Rozpoczęcie kręcenia się przycisku
         try {
             const newDuelId = await sendDuelRequest(friendId, selectedGrade, selectedTopic);
@@ -147,25 +154,37 @@ function DuelSetupScreen() {
                         showsHorizontalScrollIndicator={false}
                         style={styles.chipScrollContainer}
                     >
-                        {availableGrades.map(grade => (
-                            <TouchableOpacity
-                                key={grade}
-                                style={[
-                                    styles.chip,
-                                    themeStyles.chip,
-                                    selectedGrade === grade && [styles.chipActive, themeStyles.chipActive]
-                                ]}
-                                onPress={() => setSelectedGrade(grade)}
-                            >
-                                <Text style={[
-                                    styles.chipText,
-                                    themeStyles.chipText,
-                                    selectedGrade === grade && [styles.chipTextActive, themeStyles.chipTextActive]
-                                ]}>
-                                    Klasa {grade}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
+                        {availableGrades.map(grade => {
+                            // ✅ 1. Sprawdzamy, czy klasa powinna być zablokowana
+                            const isLocked = grade === 5 || grade === 6;
+
+                            return (
+                                <TouchableOpacity
+                                    key={grade}
+                                    // ✅ 2. Wyłączamy klikalność dla klasy 5 i 6
+                                    disabled={isLocked}
+                                    style={[
+                                        styles.chip,
+                                        themeStyles.chip,
+                                        selectedGrade === grade && [styles.chipActive, themeStyles.chipActive],
+                                        // ✅ 3. Dodajemy styl dla zablokowanego przycisku (szary i półprzezroczysty)
+                                        isLocked && { opacity: 0.5, backgroundColor: isDarkMode ? '#1C1C1E' : '#D1D1D6' }
+                                    ]}
+                                    onPress={() => setSelectedGrade(grade)}
+                                >
+                                    <Text style={[
+                                        styles.chipText,
+                                        themeStyles.chipText,
+                                        selectedGrade === grade && [styles.chipTextActive, themeStyles.chipTextActive],
+                                        // ✅ 4. Zmieniamy kolor tekstu dla zablokowanych na ciemniejszy szary
+                                        isLocked && { color: '#8E8E93' }
+                                    ]}>
+                                        Klasa {grade}
+                                        {isLocked ? ' 🔒' : ''}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
                     </ScrollView>
 
                     <Text style={[styles.label, themeStyles.text]}>Wybierz temat:</Text>
