@@ -33,6 +33,249 @@
             "options": ["50", "60", "58", "62"],
             "correctAnswerIndex": 1,
             "correctAnswerExplanation": "48 + 12 = 60."
+          },
+          {
+            "id": "q4_add",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz sumę: 37 + 13",
+            "options": ["40", "50", "47", "53"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "30 + 10 = 40, 7 + 3 = 10. Razem 50."
+          },
+          {
+            "id": "q5_sub",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 100 - 25?",
+            "options": ["75", "85", "65", "80"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "100 - 20 = 80, 80 - 5 = 75."
+          },
+          {
+            "id": "q6_add",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka liczba jest o 19 większa od 41?",
+            "options": ["50", "61", "60", "59"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "41 + 19 = (41 + 9) + 10 = 50 + 10 = 60."
+          },
+          {
+            "id": "q7_sub",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz: 64 - 14",
+            "options": ["40", "50", "54", "44"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Odejmujemy te same jednostki: 64 - 4 = 60, 60 - 10 = 50."
+          },
+          {
+            "id": "q8_add",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 150 + 45?",
+            "options": ["190", "205", "195", "185"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "150 + 40 = 190, 190 + 5 = 195."
+          },
+          {
+            "id": "q9_sub",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz różnicę: 200 - 55",
+            "options": ["145", "155", "135", "150"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "200 - 50 = 150, 150 - 5 = 145."
+          },
+          {
+            "id": "q10_add",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Dodaj w pamięci: 28 + 22",
+            "options": ["40", "48", "52", "50"],
+            "correctAnswerIndex": 3,
+            "correctAnswerExplanation": "20 + 20 = 40, 8 + 2 = 10. Razem 50."
+          },
+          {
+            "id": "q11_sub",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka liczba jest o 15 mniejsza od 85?",
+            "options": ["60", "75", "70", "80"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "85 - 5 = 80, 80 - 10 = 70."
+          },
+          {
+            "id": "q12_add",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 76 + 24",
+            "options": ["100", "90", "110", "96"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "70 + 20 = 90, 6 + 4 = 10. Razem 100."
+          },
+          {
+            "id": "q13_sub",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 90 - 32?",
+            "options": ["62", "58", "68", "52"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "90 - 30 = 60, 60 - 2 = 58."
+          },
+          {
+            "id": "q14_add",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Suma liczb 125 i 25 to:",
+            "options": ["140", "155", "145", "150"],
+            "correctAnswerIndex": 3,
+            "correctAnswerExplanation": "125 + 20 = 145, 145 + 5 = 150."
+          },
+          {
+            "id": "q15_sub",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Różnica liczb 140 i 15 to:",
+            "options": ["125", "135", "115", "130"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "140 - 10 = 130, 130 - 5 = 125."
+          },
+          {
+            "id": "q16_add",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 59 + 21?",
+            "options": ["70", "81", "80", "79"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "59 + 1 = 60, 60 + 20 = 80."
+          },
+          {
+            "id": "q17_sub",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz: 300 - 50",
+            "options": ["200", "255", "250", "240"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "300 - 50 = 250."
+          },
+          {
+            "id": "q18_add",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Dodaj 16 do 34:",
+            "options": ["50", "40", "44", "54"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "34 + 6 = 40, 40 + 10 = 50."
+          },
+          {
+            "id": "q19_sub",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Odejmij 24 od 60:",
+            "options": ["46", "36", "44", "34"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "60 - 20 = 40, 40 - 4 = 36."
+          },
+          {
+            "id": "q20_add",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka liczba jest o 35 większa od 65?",
+            "options": ["100", "90", "110", "95"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "65 + 5 = 70, 70 + 30 = 100."
+          },
+          {
+            "id": "q21_sub",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 110 - 45",
+            "options": ["75", "65", "55", "70"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "110 - 40 = 70, 70 - 5 = 65."
+          },
+          {
+            "id": "q22_add",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 44 + 46?",
+            "options": ["80", "90", "100", "86"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "40 + 40 = 80, 4 + 6 = 10. Razem 90."
+          },
+          {
+            "id": "q23_sub",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 180 - 90?",
+            "options": ["80", "100", "70", "90"],
+            "correctAnswerIndex": 3,
+            "correctAnswerExplanation": "18 dziesiątek minus 9 dziesiątek to 9 dziesiątek, czyli 90."
+          },
+          {
+            "id": "q24_add",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Suma 220 + 80 to:",
+            "options": ["300", "280", "310", "290"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "220 + 80 = 300."
+          },
+          {
+            "id": "q25_sub",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Różnica 220 - 40 to:",
+            "options": ["190", "180", "170", "200"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "220 - 20 = 200, 200 - 20 = 180."
+          },
+          {
+            "id": "q26_add",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz: 12 + 18 + 5",
+            "options": ["30", "35", "25", "40"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "12 + 18 = 30, 30 + 5 = 35."
+          },
+          {
+            "id": "q27_sub",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Odejmij w pamięci: 75 - 28",
+            "options": ["47", "53", "57", "43"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "75 - 25 = 50, 50 - 3 = 47."
+          },
+          {
+            "id": "q28_add",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 39 + 39?",
+            "options": ["78", "68", "79", "88"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "40 + 40 = 80, 80 - 2 = 78."
+          },
+          {
+            "id": "q29_sub",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 92 - 19",
+            "options": ["83", "73", "71", "81"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "92 - 20 = 72, 72 + 1 = 73."
+          },
+          {
+            "id": "q30_add",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka liczba jest o 27 większa od 53?",
+            "options": ["70", "80", "90", "83"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "53 + 7 = 60, 60 + 20 = 80."
           }
         ]
       },
@@ -68,6 +311,249 @@
             "options": ["18", "81", "99", "72"],
             "correctAnswerIndex": 1,
             "correctAnswerExplanation": "9 · 9 = 81."
+          },
+          {
+            "id": "q4_mult",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 8 · 4?",
+            "options": ["32", "28", "36", "40"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Z tabliczki mnożenia: 8 · 4 = 32."
+          },
+          {
+            "id": "q5_div",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz: 45 : 5",
+            "options": ["7", "8", "9", "10"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Ponieważ 9 · 5 = 45."
+          },
+          {
+            "id": "q6_mult",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile wynosi 12 · 3?",
+            "options": ["33", "36", "39", "42"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "10 · 3 = 30 i 2 · 3 = 6. Razem 36."
+          },
+          {
+            "id": "q7_div",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Wynik dzielenia 80 : 4 to:",
+            "options": ["20", "40", "15", "25"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "8 dziesiątek podzielić na 4 to 2 dziesiątki, czyli 20."
+          },
+          {
+            "id": "q8_mult",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 50 · 6",
+            "options": ["30", "300", "350", "250"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "5 · 6 = 30, dopisujemy jedno zero i otrzymujemy 300."
+          },
+          {
+            "id": "q9_div",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 100 : 4?",
+            "options": ["20", "30", "25", "50"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Połowa ze 100 to 50, a połowa z 50 to 25."
+          },
+          {
+            "id": "q10_mult",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Iloczyn liczb 7 i 8 wynosi:",
+            "options": ["54", "56", "63", "49"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "7 · 8 = 56."
+          },
+          {
+            "id": "q11_div",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Iloraz liczb 63 i 9 wynosi:",
+            "options": ["6", "8", "7", "9"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Ponieważ 7 · 9 = 63."
+          },
+          {
+            "id": "q12_mult",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 15 · 2?",
+            "options": ["30", "25", "35", "40"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "15 + 15 = 30."
+          },
+          {
+            "id": "q13_div",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 120 : 6",
+            "options": ["10", "20", "30", "60"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "12 : 6 = 2, dopisujemy zero i otrzymujemy 20."
+          },
+          {
+            "id": "q14_mult",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 9 · 4?",
+            "options": ["32", "34", "38", "36"],
+            "correctAnswerIndex": 3,
+            "correctAnswerExplanation": "9 · 4 = 36."
+          },
+          {
+            "id": "q15_div",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 32 : 8?",
+            "options": ["4", "5", "6", "3"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Ponieważ 4 · 8 = 32."
+          },
+          {
+            "id": "q16_mult",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz iloczyn: 11 · 7",
+            "options": ["70", "77", "88", "71"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "7 · 10 = 70, 7 · 1 = 7. Razem 77."
+          },
+          {
+            "id": "q17_div",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 48 : 4?",
+            "options": ["10", "14", "12", "16"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "40 : 4 = 10, 8 : 4 = 2. Razem 12."
+          },
+          {
+            "id": "q18_mult",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Wynik mnożenia 6 · 8 to:",
+            "options": ["42", "48", "54", "36"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "6 · 8 = 48."
+          },
+          {
+            "id": "q19_div",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka liczba pomnożona przez 7 daje 49?",
+            "options": ["6", "7", "8", "9"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "7 · 7 = 49."
+          },
+          {
+            "id": "q20_mult",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 25 · 4?",
+            "options": ["100", "75", "125", "80"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Dwa razy po 25 to 50, a dwa razy po 50 to 100."
+          },
+          {
+            "id": "q21_div",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 90 : 3",
+            "options": ["20", "40", "30", "33"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "9 : 3 = 3, dopisujemy zero: 30."
+          },
+          {
+            "id": "q22_mult",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 5 · 9?",
+            "options": ["40", "45", "50", "35"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "5 · 9 = 45."
+          },
+          {
+            "id": "q23_div",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Wynik dzielenia 24 : 3 to:",
+            "options": ["7", "9", "6", "8"],
+            "correctAnswerIndex": 3,
+            "correctAnswerExplanation": "Ponieważ 8 · 3 = 24."
+          },
+          {
+            "id": "q24_mult",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 13 · 3?",
+            "options": ["36", "39", "43", "33"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "10 · 3 = 30 i 3 · 3 = 9. Razem 39."
+          },
+          {
+            "id": "q25_div",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 66 : 6",
+            "options": ["10", "12", "11", "6"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "60 : 6 = 10 i 6 : 6 = 1. Razem 11."
+          },
+          {
+            "id": "q26_mult",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 20 · 7?",
+            "options": ["140", "120", "160", "270"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "2 · 7 = 14, dopisujemy zero: 140."
+          },
+          {
+            "id": "q27_div",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 400 : 5?",
+            "options": ["70", "90", "80", "60"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "40 : 5 = 8, dopisujemy pozostałe zero: 80."
+          },
+          {
+            "id": "q28_mult",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz: 4 · 7",
+            "options": ["24", "28", "32", "21"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Z tabliczki mnożenia: 4 · 7 = 28."
+          },
+          {
+            "id": "q29_div",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 18 : 2?",
+            "options": ["9", "8", "7", "6"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Połowa z 18 to 9."
+          },
+          {
+            "id": "q30_mult",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 14 · 2?",
+            "options": ["24", "26", "28", "30"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "14 + 14 = 28."
           }
         ]
       },
@@ -94,6 +580,258 @@
             "options": ["o 70", "o 60", "o 80", "o 50"],
             "correctAnswerIndex": 0,
             "correctAnswerExplanation": "120 - 50 = 70."
+          },
+          {
+            "id": "q3_more",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "O ile liczba 20 jest większa od 13?",
+            "options": ["o 7", "o 8", "o 6", "o 5"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "20 - 13 = 7."
+          },
+          {
+            "id": "q4_less",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "O ile liczba 12 jest mniejsza od 30?",
+            "options": ["o 16", "o 20", "o 18", "o 22"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "30 - 12 = 18."
+          },
+          {
+            "id": "q5_more",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 100 jest większa od 45?",
+            "options": ["o 55", "o 65", "o 45", "o 60"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "100 - 45 = 55."
+          },
+          {
+            "id": "q6_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 35 jest mniejsza od 82?",
+            "options": ["o 57", "o 47", "o 43", "o 53"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "82 - 35 = 47."
+          },
+          {
+            "id": "q7_more",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "O ile liczba 77 jest większa od 70?",
+            "options": ["o 17", "o 10", "o 7", "o 3"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "77 - 70 = 7."
+          },
+          {
+            "id": "q8_less",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "O ile liczba 14 jest mniejsza od 25?",
+            "options": ["o 11", "o 9", "o 15", "o 12"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "25 - 14 = 11."
+          },
+          {
+            "id": "q9_more",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 140 jest większa od 90?",
+            "options": ["o 60", "o 40", "o 30", "o 50"],
+            "correctAnswerIndex": 3,
+            "correctAnswerExplanation": "140 - 90 = 50."
+          },
+          {
+            "id": "q10_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 28 jest mniejsza od 100?",
+            "options": ["o 82", "o 72", "o 62", "o 78"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "100 - 28 = 72."
+          },
+          {
+            "id": "q11_more",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ania ma 15 lat, a jej brat 7. O ile lat Ania jest starsza?",
+            "options": ["o 6 lat", "o 9 lat", "o 8 lat", "o 7 lat"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "15 - 7 = 8."
+          },
+          {
+            "id": "q12_less",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Zeszyt kosztuje 4 zł, a piórnik 20 zł. O ile złotych zeszyt jest tańszy?",
+            "options": ["o 16 zł", "o 14 zł", "o 24 zł", "o 18 zł"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "20 - 4 = 16."
+          },
+          {
+            "id": "q13_more",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 250 jest większa od 180?",
+            "options": ["o 60", "o 70", "o 80", "o 90"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "250 - 180 = 70."
+          },
+          {
+            "id": "q14_less",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "O ile liczba 44 jest mniejsza od 60?",
+            "options": ["o 26", "o 24", "o 16", "o 14"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "60 - 44 = 16."
+          },
+          {
+            "id": "q15_more",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "O ile liczba 88 jest większa od 33?",
+            "options": ["o 55", "o 44", "o 66", "o 50"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "88 - 33 = 55."
+          },
+          {
+            "id": "q16_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 19 jest mniejsza od 51?",
+            "options": ["o 31", "o 33", "o 32", "o 42"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "51 - 19 = 32."
+          },
+          {
+            "id": "q17_more",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 63 jest większa od 27?",
+            "options": ["o 46", "o 34", "o 44", "o 36"],
+            "correctAnswerIndex": 3,
+            "correctAnswerExplanation": "63 - 27 = 36."
+          },
+          {
+            "id": "q18_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 125 jest mniejsza od 200?",
+            "options": ["o 75", "o 85", "o 65", "o 175"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "200 - 125 = 75."
+          },
+          {
+            "id": "q19_more",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "O ile liczba 1000 jest większa od 991?",
+            "options": ["o 11", "o 9", "o 19", "o 7"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "1000 - 991 = 9."
+          },
+          {
+            "id": "q20_less",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "O ile liczba 2 jest mniejsza od 100?",
+            "options": ["o 88", "o 98", "o 97", "o 99"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "100 - 2 = 98."
+          },
+          {
+            "id": "q21_more",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 42 jest większa od 14?",
+            "options": ["o 28", "o 38", "o 26", "o 32"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "42 - 14 = 28."
+          },
+          {
+            "id": "q22_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 67 jest mniejsza od 91?",
+            "options": ["o 34", "o 23", "o 31", "o 24"],
+            "correctAnswerIndex": 3,
+            "correctAnswerExplanation": "91 - 67 = 24."
+          },
+          {
+            "id": "q23_more",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 500 jest większa od 250?",
+            "options": ["o 350", "o 150", "o 250", "o 200"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "500 - 250 = 250."
+          },
+          {
+            "id": "q24_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 333 jest mniejsza od 400?",
+            "options": ["o 67", "o 77", "o 57", "o 63"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "400 - 333 = 67."
+          },
+          {
+            "id": "q25_more",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "W koszyku jest 30 jabłek i 12 gruszek. O ile więcej jest jabłek?",
+            "options": ["o 12", "o 22", "o 18", "o 8"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "30 - 12 = 18."
+          },
+          {
+            "id": "q26_less",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Tomek ma 8 zł, a Kasia 50 zł. O ile mniej pieniędzy ma Tomek?",
+            "options": ["o 42 zł", "o 32 zł", "o 48 zł", "o 52 zł"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "50 - 8 = 42."
+          },
+          {
+            "id": "q27_more",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 102 jest większa od 88?",
+            "options": ["o 12", "o 24", "o 16", "o 14"],
+            "correctAnswerIndex": 3,
+            "correctAnswerExplanation": "102 - 88 = 14."
+          },
+          {
+            "id": "q28_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 49 jest mniejsza od 110?",
+            "options": ["o 61", "o 51", "o 71", "o 69"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "110 - 49 = 61."
+          },
+          {
+            "id": "q29_more",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 95 jest większa od 37?",
+            "options": ["o 57", "o 58", "o 68", "o 62"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "95 - 37 = 58."
+          },
+          {
+            "id": "q30_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "O ile liczba 16 jest mniejsza od 64?",
+            "options": ["o 48", "o 58", "o 44", "o 52"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "64 - 16 = 48."
           }
         ]
       },
@@ -111,6 +849,267 @@
             "options": ["2 razy", "4 razy", "5 razy", "10 razy"],
             "correctAnswerIndex": 1,
             "correctAnswerExplanation": "20 : 5 = 4."
+          },
+          {
+            "id": "q2_times",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile razy liczba 18 jest większa od 6?",
+            "options": ["2 razy", "3 razy", "4 razy", "6 razy"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "18 : 6 = 3."
+          },
+          {
+            "id": "q3_times_less",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile razy liczba 4 jest mniejsza od 32?",
+            "options": ["6 razy", "7 razy", "8 razy", "9 razy"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "32 : 4 = 8."
+          },
+          {
+            "id": "q4_times",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile razy liczba 50 jest większa od 10?",
+            "options": ["5 razy", "10 razy", "2 razy", "50 razy"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "50 : 10 = 5."
+          },
+          {
+            "id": "q5_times_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 7 jest mniejsza od 49?",
+            "options": ["6 razy", "8 razy", "7 razy", "5 razy"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "49 : 7 = 7."
+          },
+          {
+            "id": "q6_times",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 100 jest większa od 25?",
+            "options": ["2 razy", "5 razy", "10 razy", "4 razy"],
+            "correctAnswerIndex": 3,
+            "correctAnswerExplanation": "100 : 25 = 4."
+          },
+          {
+            "id": "q7_times_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 12 jest mniejsza od 60?",
+            "options": ["5 razy", "4 razy", "6 razy", "3 razy"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "60 : 12 = 5."
+          },
+          {
+            "id": "q8_times",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Kasia ma 24 cukierki, a Tomek ma 8. Ile razy więcej cukierków ma Kasia?",
+            "options": ["2 razy", "4 razy", "3 razy", "5 razy"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "24 : 8 = 3."
+          },
+          {
+            "id": "q9_times_less",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Zeszyt kosztuje 3 zł, a książka 30 zł. Ile razy tańszy jest zeszyt?",
+            "options": ["10 razy", "5 razy", "20 razy", "3 razy"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "30 : 3 = 10."
+          },
+          {
+            "id": "q10_times",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 81 jest większa od 9?",
+            "options": ["7 razy", "8 razy", "9 razy", "10 razy"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "81 : 9 = 9."
+          },
+          {
+            "id": "q11_times_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 15 jest mniejsza od 45?",
+            "options": ["2 razy", "3 razy", "4 razy", "5 razy"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "45 : 15 = 3."
+          },
+          {
+            "id": "q12_times",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile razy liczba 1000 jest większa od 100?",
+            "options": ["100 razy", "10 razy", "5 razy", "2 razy"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "1000 : 100 = 10."
+          },
+          {
+            "id": "q13_times_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 20 jest mniejsza od 120?",
+            "options": ["5 razy", "4 razy", "6 razy", "10 razy"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "120 : 20 = 6."
+          },
+          {
+            "id": "q14_times",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 56 jest większa od 8?",
+            "options": ["6 razy", "7 razy", "8 razy", "9 razy"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "56 : 8 = 7."
+          },
+          {
+            "id": "q15_times_less",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile razy liczba 2 jest mniejsza od 22?",
+            "options": ["10 razy", "11 razy", "12 razy", "20 razy"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "22 : 2 = 11."
+          },
+          {
+            "id": "q16_times",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 64 jest większa od 4?",
+            "options": ["16 razy", "12 razy", "14 razy", "18 razy"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "64 : 4 = 16."
+          },
+          {
+            "id": "q17_times_less",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile razy liczba 9 jest mniejsza od 54?",
+            "options": ["4 razy", "5 razy", "6 razy", "7 razy"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "54 : 9 = 6."
+          },
+          {
+            "id": "q18_times",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 75 jest większa od 25?",
+            "options": ["2 razy", "3 razy", "4 razy", "5 razy"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "75 : 25 = 3."
+          },
+          {
+            "id": "q19_times_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 11 jest mniejsza od 121?",
+            "options": ["10 razy", "11 razy", "12 razy", "9 razy"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "121 : 11 = 11."
+          },
+          {
+            "id": "q20_times",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile razy liczba 40 jest większa od 5?",
+            "options": ["6 razy", "7 razy", "8 razy", "9 razy"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "40 : 5 = 8."
+          },
+          {
+            "id": "q21_times_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 13 jest mniejsza od 39?",
+            "options": ["2 razy", "3 razy", "4 razy", "5 razy"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "39 : 13 = 3."
+          },
+          {
+            "id": "q22_times",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 90 jest większa od 15?",
+            "options": ["4 razy", "5 razy", "6 razy", "7 razy"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "90 : 15 = 6."
+          },
+          {
+            "id": "q23_times_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 8 jest mniejsza od 88?",
+            "options": ["10 razy", "11 razy", "12 razy", "8 razy"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "88 : 8 = 11."
+          },
+          {
+            "id": "q24_times",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 48 jest większa od 12?",
+            "options": ["3 razy", "4 razy", "5 razy", "6 razy"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "48 : 12 = 4."
+          },
+          {
+            "id": "q25_times_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 6 jest mniejsza od 42?",
+            "options": ["6 razy", "7 razy", "8 razy", "9 razy"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "42 : 6 = 7."
+          },
+          {
+            "id": "q26_times",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 150 jest większa od 50?",
+            "options": ["2 razy", "3 razy", "4 razy", "5 razy"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "150 : 50 = 3."
+          },
+          {
+            "id": "q27_times_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 14 jest mniejsza od 28?",
+            "options": ["2 razy", "3 razy", "4 razy", "10 razy"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "28 : 14 = 2."
+          },
+          {
+            "id": "q28_times",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile razy liczba 36 jest większa od 6?",
+            "options": ["4 razy", "5 razy", "6 razy", "7 razy"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "36 : 6 = 6."
+          },
+          {
+            "id": "q29_times_less",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 25 jest mniejsza od 125?",
+            "options": ["4 razy", "5 razy", "6 razy", "10 razy"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "125 : 25 = 5."
+          },
+          {
+            "id": "q30_times",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile razy liczba 72 jest większa od 12?",
+            "options": ["5 razy", "6 razy", "7 razy", "8 razy"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "72 : 12 = 6."
           }
         ]
       },
@@ -128,6 +1127,267 @@
             "options": ["1", "2", "3", "0"],
             "correctAnswerIndex": 1,
             "correctAnswerExplanation": "3 · 3 = 9, 11 - 9 = 2. Reszta to 2."
+          },
+          {
+            "id": "q2_rem",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz resztę z dzielenia: 13 : 4",
+            "options": ["1", "2", "3", "0"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "W 13 mieszczą się trzy czwórki (4 · 3 = 12). 13 - 12 = 1. Reszta to 1."
+          },
+          {
+            "id": "q3_rem",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile wynosi reszta z dzielenia 17 przez 5?",
+            "options": ["1", "2", "3", "4"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "5 · 3 = 15. 17 - 15 = 2. Reszta to 2."
+          },
+          {
+            "id": "q4_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Wykonaj dzielenie z resztą: 22 : 6",
+            "options": ["3 r 4", "3 r 2", "4 r 2", "2 r 4"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "6 · 3 = 18. 22 - 18 = 4. Wynik to 3 reszty 4."
+          },
+          {
+            "id": "q5_rem",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Jaka jest reszta z dzielenia 20 przez 3?",
+            "options": ["0", "1", "2", "3"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "3 · 6 = 18. 20 - 18 = 2. Reszta to 2."
+          },
+          {
+            "id": "q6_rem",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 10 : 7?",
+            "options": ["1 r 3", "1 r 2", "2 r 1", "1 r 1"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "W 10 mieści się jedna siódemka. 10 - 7 = 3. Wynik to 1 reszty 3."
+          },
+          {
+            "id": "q7_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka jest reszta z dzielenia 34 przez 8?",
+            "options": ["1", "2", "3", "4"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "8 · 4 = 32. 34 - 32 = 2. Reszta to 2."
+          },
+          {
+            "id": "q8_rem",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Rozdzielamy 14 cukierków dla 4 osób. Ile zostanie reszty?",
+            "options": ["1", "2", "3", "0"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Każdy dostanie po 3 cukierki (4 · 3 = 12). Zostaną 2 (14 - 12 = 2)."
+          },
+          {
+            "id": "q9_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 47 : 9",
+            "options": ["5 r 2", "5 r 1", "6 r 1", "4 r 8"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "9 · 5 = 45. 47 - 45 = 2. Wynik to 5 reszty 2."
+          },
+          {
+            "id": "q10_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka jest największa możliwa reszta przy dzieleniu przez 5?",
+            "options": ["5", "6", "4", "0"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Reszta musi być zawsze mniejsza od dzielnika. Dla 5 największą resztą jest 4."
+          },
+          {
+            "id": "q11_rem",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile wynosi reszta z dzielenia 30 przez 10?",
+            "options": ["1", "10", "5", "0"],
+            "correctAnswerIndex": 3,
+            "correctAnswerExplanation": "30 dzieli się przez 10 bez reszty (10 · 3 = 30), więc reszta wynosi 0."
+          },
+          {
+            "id": "q12_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 25 : 4?",
+            "options": ["6 r 1", "5 r 5", "6 r 2", "7 r 1"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "4 · 6 = 24. 25 - 24 = 1. Wynik to 6 reszty 1."
+          },
+          {
+            "id": "q13_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka jest reszta z dzielenia 50 przez 7?",
+            "options": ["1", "2", "3", "4"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "7 · 7 = 49. 50 - 49 = 1. Reszta to 1."
+          },
+          {
+            "id": "q14_rem",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz resztę: 19 : 2",
+            "options": ["0", "1", "2", "0.5"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Liczba 19 jest nieparzysta. 2 · 9 = 18. 19 - 18 = 1."
+          },
+          {
+            "id": "q15_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Wykonaj działanie: 38 : 5",
+            "options": ["7 r 3", "7 r 1", "8 r 3", "6 r 8"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "5 · 7 = 35. 38 - 35 = 3. Wynik to 7 reszty 3."
+          },
+          {
+            "id": "q16_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 60 : 9?",
+            "options": ["6 r 6", "7 r 3", "6 r 4", "5 r 15"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "9 · 6 = 54. 60 - 54 = 6. Wynik to 6 reszty 6."
+          },
+          {
+            "id": "q17_rem",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Jaka jest reszta z dzielenia 15 przez 4?",
+            "options": ["1", "2", "3", "4"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "4 · 3 = 12. 15 - 12 = 3. Reszta to 3."
+          },
+          {
+            "id": "q18_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka jest reszta z dzielenia 41 przez 6?",
+            "options": ["1", "5", "4", "3"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "6 · 6 = 36. 41 - 36 = 5. Reszta to 5."
+          },
+          {
+            "id": "q19_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 29 : 3?",
+            "options": ["8 r 5", "9 r 1", "9 r 2", "10 r 1"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "3 · 9 = 27. 29 - 27 = 2. Wynik to 9 reszty 2."
+          },
+          {
+            "id": "q20_rem",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz resztę z dzielenia 8 przez 3",
+            "options": ["0", "1", "2", "3"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "3 · 2 = 6. 8 - 6 = 2. Reszta to 2."
+          },
+          {
+            "id": "q21_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Dzielimy 55 przez 8. Wynik to:",
+            "options": ["6 r 7", "7 r 1", "6 r 9", "5 r 15"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "8 · 6 = 48. 55 - 48 = 7. Wynik to 6 reszty 7."
+          },
+          {
+            "id": "q22_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka jest reszta z dzielenia 100 przez 9?",
+            "options": ["1", "9", "0", "10"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "9 · 11 = 99. 100 - 99 = 1. Reszta to 1."
+          },
+          {
+            "id": "q23_rem",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 14 : 5?",
+            "options": ["2 r 2", "2 r 4", "3 r 1", "2 r 1"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "5 · 2 = 10. 14 - 10 = 4. Wynik to 2 reszty 4."
+          },
+          {
+            "id": "q24_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Reszta z dzielenia 26 przez 4 wynosi:",
+            "options": ["1", "2", "3", "0"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "4 · 6 = 24. 26 - 24 = 2."
+          },
+          {
+            "id": "q25_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 33 : 10",
+            "options": ["3 r 3", "3 r 1", "3 r 0", "10 r 3"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "10 · 3 = 30. 33 - 30 = 3. Wynik to 3 reszty 3."
+          },
+          {
+            "id": "q26_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka jest reszta z dzielenia 44 przez 7?",
+            "options": ["1", "2", "3", "4"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "7 · 6 = 42. 44 - 42 = 2. Reszta to 2."
+          },
+          {
+            "id": "q27_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 17 : 6?",
+            "options": ["2 r 5", "3 r 1", "2 r 4", "2 r 3"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "6 · 2 = 12. 17 - 12 = 5. Wynik to 2 reszty 5."
+          },
+          {
+            "id": "q28_rem",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Czy 16 : 4 ma resztę?",
+            "options": ["Tak, reszta 1", "Tak, reszta 2", "Nie, reszta 0", "Tak, reszta 4"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "16 jest podzielne przez 4 bez reszty (4 · 4 = 16)."
+          },
+          {
+            "id": "q29_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka jest reszta z dzielenia 23 przez 5?",
+            "options": ["1", "2", "3", "4"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "5 · 4 = 20. 23 - 20 = 3."
+          },
+          {
+            "id": "q30_rem",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 53 : 6",
+            "options": ["8 r 5", "9 r 1", "8 r 3", "7 r 11"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "6 · 8 = 48. 53 - 48 = 5. Wynik to 8 reszty 5."
           }
         ]
       },
@@ -145,6 +1405,267 @@
             "options": ["10", "25", "15", "20"],
             "correctAnswerIndex": 1,
             "correctAnswerExplanation": "5² = 5 · 5 = 25."
+          },
+          {
+            "id": "q2_pow",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 3²?",
+            "options": ["6", "9", "12", "5"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "3² = 3 · 3 = 9."
+          },
+          {
+            "id": "q3_pow",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz wartość 2³:",
+            "options": ["6", "4", "8", "12"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "2³ = 2 · 2 · 2 = 8."
+          },
+          {
+            "id": "q4_pow",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 10²?",
+            "options": ["20", "100", "1000", "10"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "10² = 10 · 10 = 100."
+          },
+          {
+            "id": "q5_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 4³?",
+            "options": ["12", "16", "32", "64"],
+            "correctAnswerIndex": 3,
+            "correctAnswerExplanation": "4³ = 4 · 4 · 4 = 16 · 4 = 64."
+          },
+          {
+            "id": "q6_pow",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Wskaż wynik działania 7²:",
+            "options": ["14", "49", "42", "56"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "7² = 7 · 7 = 49."
+          },
+          {
+            "id": "q7_pow",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 1³?",
+            "options": ["1", "3", "0", "111"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "1³ = 1 · 1 · 1 = 1."
+          },
+          {
+            "id": "q8_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz 6²:",
+            "options": ["12", "36", "42", "24"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "6² = 6 · 6 = 36."
+          },
+          {
+            "id": "q9_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Wartość 5³ wynosi:",
+            "options": ["15", "75", "125", "25"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "5³ = 5 · 5 · 5 = 25 · 5 = 125."
+          },
+          {
+            "id": "q10_pow",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile to jest 0²?",
+            "options": ["0", "2", "1", "00"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "0² = 0 · 0 = 0."
+          },
+          {
+            "id": "q11_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 9²?",
+            "options": ["18", "72", "81", "90"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "9² = 9 · 9 = 81."
+          },
+          {
+            "id": "q12_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz 3³:",
+            "options": ["9", "18", "27", "81"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "3³ = 3 · 3 · 3 = 9 · 3 = 27."
+          },
+          {
+            "id": "q13_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 8²?",
+            "options": ["16", "64", "56", "80"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "8² = 8 · 8 = 64."
+          },
+          {
+            "id": "q14_pow",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Kwadrat liczby 4 to:",
+            "options": ["8", "12", "16", "20"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "4² = 4 · 4 = 16."
+          },
+          {
+            "id": "q15_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Sześcian liczby 2 to:",
+            "options": ["4", "6", "8", "10"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "2³ = 2 · 2 · 2 = 8."
+          },
+          {
+            "id": "q16_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 11²?",
+            "options": ["110", "121", "131", "111"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "11² = 11 · 11 = 121."
+          },
+          {
+            "id": "q17_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 12²?",
+            "options": ["144", "122", "120", "148"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "12² = 12 · 12 = 144."
+          },
+          {
+            "id": "q18_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 10³?",
+            "options": ["100", "1000", "30", "300"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "10³ = 10 · 10 · 10 = 1000."
+          },
+          {
+            "id": "q19_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz 15²:",
+            "options": ["225", "250", "150", "200"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "15² = 15 · 15 = 225."
+          },
+          {
+            "id": "q20_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 1³ + 1²?",
+            "options": ["1", "2", "3", "5"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "1³ = 1, 1² = 1. 1 + 1 = 2."
+          },
+          {
+            "id": "q21_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Wynik działania 2² + 3² to:",
+            "options": ["10", "13", "12", "25"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "2² = 4, 3² = 9. 4 + 9 = 13."
+          },
+          {
+            "id": "q22_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 20²?",
+            "options": ["40", "200", "400", "800"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "20² = 20 · 20 = 400."
+          },
+          {
+            "id": "q23_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Liczba 49 to kwadrat liczby:",
+            "options": ["6", "8", "7", "9"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "7 · 7 = 49."
+          },
+          {
+            "id": "q24_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Liczba 27 to sześcian liczby:",
+            "options": ["3", "9", "2", "4"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "3 · 3 · 3 = 27."
+          },
+          {
+            "id": "q25_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 13²?",
+            "options": ["169", "139", "166", "196"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "13² = 13 · 13 = 169."
+          },
+          {
+            "id": "q26_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Która liczba jest większa: 2³ czy 3²?",
+            "options": ["2³", "3²", "Są równe", "Nie da się określić"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "2³ = 8, 3² = 9. 9 > 8."
+          },
+          {
+            "id": "q27_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest 0³?",
+            "options": ["0", "3", "1", "Nie istnieje"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "0 · 0 · 0 = 0."
+          },
+          {
+            "id": "q28_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz 5² + 5:",
+            "options": ["25", "15", "30", "125"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "5² = 25, 25 + 5 = 30."
+          },
+          {
+            "id": "q29_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest (2 + 1)²?",
+            "options": ["5", "6", "9", "4"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "(2+1)² = 3² = 9."
+          },
+          {
+            "id": "q30_pow",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile wynosi kwadrat liczby 1?",
+            "options": ["1", "2", "0", "11"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "1 · 1 = 1."
           }
         ]
       },
@@ -162,6 +1683,267 @@
             "options": ["8", "6", "4", "10"],
             "correctAnswerIndex": 1,
             "correctAnswerExplanation": "Najpierw mnożenie: 2 · 2 = 4. Potem dodawanie: 2 + 4 = 6."
+          },
+          {
+            "id": "q2_order",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Oblicz: 10 - 2 · 3",
+            "options": ["24", "4", "16", "8"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Najpierw mnożenie: 2 · 3 = 6. Potem odejmowanie: 10 - 6 = 4."
+          },
+          {
+            "id": "q3_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest: (5 + 5) · 2?",
+            "options": ["15", "25", "20", "12"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Najpierw działanie w nawiasie: 5 + 5 = 10. Potem mnożenie: 10 · 2 = 20."
+          },
+          {
+            "id": "q4_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 12 : 3 + 2",
+            "options": ["6", "2.4", "4", "5"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Najpierw dzielenie: 12 : 3 = 4. Potem dodawanie: 4 + 2 = 6."
+          },
+          {
+            "id": "q5_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Wynik działania 20 - 10 : 2 to:",
+            "options": ["5", "15", "10", "12"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Najpierw dzielenie: 10 : 2 = 5. Potem odejmowanie: 20 - 5 = 15."
+          },
+          {
+            "id": "q6_order",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Oblicz: 3² + 4",
+            "options": ["10", "13", "25", "49"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Najpierw potęgowanie: 3² = 9. Potem dodawanie: 9 + 4 = 13."
+          },
+          {
+            "id": "q7_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest: 2 · (15 - 5)?",
+            "options": ["25", "20", "10", "30"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Najpierw nawias: 15 - 5 = 10. Potem mnożenie: 2 · 10 = 20."
+          },
+          {
+            "id": "q8_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 100 - 50 + 20",
+            "options": ["30", "70", "170", "50"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Dodawanie i odejmowanie wykonujemy po kolei od lewej do prawej: 100 - 50 = 50, 50 + 20 = 70."
+          },
+          {
+            "id": "q9_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest: 18 : 2 · 3?",
+            "options": ["3", "27", "9", "6"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Mnożenie i dzielenie wykonujemy po kolei od lewej: 18 : 2 = 9, 9 · 3 = 27."
+          },
+          {
+            "id": "q10_order",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Oblicz: 5 + 2 · 3²",
+            "options": ["63", "23", "41", "21"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Najpierw potęga: 3² = 9. Potem mnożenie: 2 · 9 = 18. Na końcu dodawanie: 5 + 18 = 23."
+          },
+          {
+            "id": "q11_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: (10 + 20) : (2 + 4)",
+            "options": ["5", "10", "6", "15"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Najpierw nawiasy: 30 : 6 = 5."
+          },
+          {
+            "id": "q12_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest: 4 · 5 - 2 · 3?",
+            "options": ["54", "14", "12", "18"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Mnożenia: 20 i 6. Odejmowanie: 20 - 6 = 14."
+          },
+          {
+            "id": "q13_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 30 : 5 · 2",
+            "options": ["3", "12", "6", "15"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Po kolei od lewej: 30 : 5 = 6, 6 · 2 = 12."
+          },
+          {
+            "id": "q14_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest: 8 + 12 : 4?",
+            "options": ["5", "11", "8", "10"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Najpierw dzielenie: 12 : 4 = 3. Potem 8 + 3 = 11."
+          },
+          {
+            "id": "q15_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: (8 + 12) : 4",
+            "options": ["5", "11", "6", "4"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Najpierw nawias: 20 : 4 = 5."
+          },
+          {
+            "id": "q16_order",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Ile to jest: 2³ + 2²?",
+            "options": ["10", "12", "8", "16"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Potęgi: 8 + 4 = 12."
+          },
+          {
+            "id": "q17_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 50 - (10 + 5) · 2",
+            "options": ["70", "20", "35", "40"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Nawias: 15. Mnożenie: 15 · 2 = 30. Odejmowanie: 50 - 30 = 20."
+          },
+          {
+            "id": "q18_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 7 · 3 + 2",
+            "options": ["35", "23", "21", "25"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Mnożenie: 21 + 2 = 23."
+          },
+          {
+            "id": "q19_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 7 · (3 + 2)",
+            "options": ["35", "23", "21", "25"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Nawias: 5. Potem 7 · 5 = 35."
+          },
+          {
+            "id": "q20_order",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Ile to jest: 10 + 10 : 10 - 10?",
+            "options": ["1", "10", "0", "11"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Najpierw dzielenie: 10 : 10 = 1. Potem 10 + 1 - 10 = 1."
+          },
+          {
+            "id": "q21_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 45 : 9 + 5 · 2",
+            "options": ["20", "15", "10", "25"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Dzielenie i mnożenie: 5 + 10 = 15."
+          },
+          {
+            "id": "q22_order",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Oblicz: 2 + 3 · (4 + 1)",
+            "options": ["25", "17", "15", "20"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Nawias: 5. Mnożenie: 3 · 5 = 15. Dodawanie: 2 + 15 = 17."
+          },
+          {
+            "id": "q23_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest: 100 : 10 : 2?",
+            "options": ["20", "5", "10", "2"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Po kolei: 100 : 10 = 10, 10 : 2 = 5."
+          },
+          {
+            "id": "q24_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 4 + 4 + 4 · 0",
+            "options": ["0", "8", "12", "4"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Najpierw mnożenie: 4 · 0 = 0. Potem 4 + 4 + 0 = 8."
+          },
+          {
+            "id": "q25_order",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Oblicz: (2 + 3)²",
+            "options": ["13", "25", "10", "7"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Najpierw nawias: 5. Potem 5² = 25."
+          },
+          {
+            "id": "q26_order",
+            "type": "practice",
+            "difficulty": "trudne",
+            "questionText": "Oblicz: 2² · 3²",
+            "options": ["36", "12", "18", "24"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Potęgi: 4 · 9 = 36."
+          },
+          {
+            "id": "q27_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest: 60 : (2 · 3)?",
+            "options": ["90", "10", "6", "30"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Nawias: 6. Potem 60 : 6 = 10."
+          },
+          {
+            "id": "q28_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 10 - 3 + 2",
+            "options": ["5", "9", "11", "7"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Po kolei od lewej: 10 - 3 = 7, 7 + 2 = 9."
+          },
+          {
+            "id": "q29_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Oblicz: 10 - (3 + 2)",
+            "options": ["5", "9", "11", "7"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Najpierw nawias: 5. Potem 10 - 5 = 5."
+          },
+          {
+            "id": "q30_order",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile to jest: 5 · 8 : 4?",
+            "options": ["40", "2", "10", "20"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Po kolei: 5 · 8 = 40, 40 : 4 = 10."
           }
         ]
       },
@@ -179,6 +1961,267 @@
             "options": ["7", "8", "9", "10"],
             "correctAnswerIndex": 1,
             "correctAnswerExplanation": "5 + 3 = 8."
+          },
+          {
+            "id": "q2_word",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "W koszyku było 15 jajek. Mama zużyła 6 do ciasta. Ile jajek zostało?",
+            "options": ["9", "11", "8", "10"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "15 - 6 = 9."
+          },
+          {
+            "id": "q3_word",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Jeden zeszyt kosztuje 4 zł. Ile zapłacisz za 5 takich zeszytów?",
+            "options": ["15 zł", "20 zł", "25 zł", "10 zł"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "5 · 4 = 20 zł."
+          },
+          {
+            "id": "q4_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Tomek ma 12 samochodzików, a jego brat ma o 5 więcej. Ile samochodzików ma brat Tomka?",
+            "options": ["7", "15", "17", "18"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "12 + 5 = 17."
+          },
+          {
+            "id": "q5_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "W klasie jest 24 uczniów. Pani podzieliła ich na 4 równe grupy. Ilu uczniów jest w jednej grupie?",
+            "options": ["4", "8", "6", "10"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "24 : 4 = 6."
+          },
+          {
+            "id": "q6_word",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Na parkingu stało 10 aut. Odjechały 3, a przyjechało 5. Ile aut stoi teraz?",
+            "options": ["12", "15", "7", "8"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "10 - 3 + 5 = 12."
+          },
+          {
+            "id": "q7_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Piotrek ma 40 zł. Chce kupić piłkę za 25 zł i loda za 6 zł. Ile reszty mu zostanie?",
+            "options": ["15 zł", "9 zł", "11 zł", "10 zł"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "40 - (25 + 6) = 40 - 31 = 9."
+          },
+          {
+            "id": "q8_word",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Pies ma 4 łapy. Ile łap ma razem 7 psów?",
+            "options": ["24", "28", "32", "21"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "7 · 4 = 28."
+          },
+          {
+            "id": "q9_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Kasia przeczytała 10 stron książki rano i dwa razy tyle wieczorem. Ile stron przeczytała wieczorem?",
+            "options": ["5", "20", "30", "12"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "10 · 2 = 20."
+          },
+          {
+            "id": "q10_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "W pudełku mieści się 6 jajek. Ile pudełek potrzeba, aby spakować 36 jajek?",
+            "options": ["5", "6", "10", "4"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "36 : 6 = 6."
+          },
+          {
+            "id": "q11_word",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Zuzia miała 50 naklejek. Dała koleżance 15. Ile naklejek ma teraz?",
+            "options": ["45", "35", "40", "30"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "50 - 15 = 35."
+          },
+          {
+            "id": "q12_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jeden pączek kosztuje 3 zł. Marcin kupił 4 pączki i dał banknot 20 zł. Ile reszty otrzymał?",
+            "options": ["12 zł", "8 zł", "17 zł", "10 zł"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "20 - (4 · 3) = 20 - 12 = 8."
+          },
+          {
+            "id": "q13_word",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Na drzewie siedziało 18 ptaków. Odleciało 9. Ile ptaków zostało?",
+            "options": ["8", "7", "10", "9"],
+            "correctAnswerIndex": 3,
+            "correctAnswerExplanation": "18 - 9 = 9."
+          },
+          {
+            "id": "q14_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Słoik dżemu kosztuje 8 zł. Ile słoików dżemu można kupić za 32 zł?",
+            "options": ["3", "4", "5", "6"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "32 : 8 = 4."
+          },
+          {
+            "id": "q15_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "W jednej paczce są 24 kredki. Ile kredek jest w 2 takich paczkach?",
+            "options": ["26", "48", "44", "50"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "24 · 2 = 48."
+          },
+          {
+            "id": "q16_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Antek jest o 4 lata starszy od Ewy. Ewa ma 9 lat. Ile lat ma Antek?",
+            "options": ["5", "12", "13", "14"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "9 + 4 = 13."
+          },
+          {
+            "id": "q17_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "W autobusie jechało 20 osób. Na przystanku wysiadło 5, a wsiadło 8. Ile osób jest teraz w autobusie?",
+            "options": ["15", "28", "23", "17"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "20 - 5 + 8 = 23."
+          },
+          {
+            "id": "q18_word",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Pająk ma 8 nóg. Ile nóg ma razem 3 pająki?",
+            "options": ["24", "16", "32", "11"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "3 · 8 = 24."
+          },
+          {
+            "id": "q19_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Babcia miała 20 pierogów. Rozdała je równo czwórce wnucząt. Po ile pierogów dostało każde dziecko?",
+            "options": ["4", "5", "6", "10"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "20 : 4 = 5."
+          },
+          {
+            "id": "q20_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Film w kinie trwa 2 godziny. Ile to minut? (1 godzina = 60 minut)",
+            "options": ["100 min", "62 min", "120 min", "200 min"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "2 · 60 = 120."
+          },
+          {
+            "id": "q21_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Klocki kosztują 80 zł, a lalka jest o 20 zł tańsza. Ile kosztuje lalka?",
+            "options": ["100 zł", "60 zł", "70 zł", "50 zł"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "80 - 20 = 60."
+          },
+          {
+            "id": "q22_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "W ogrodzie rośnie 5 rzędów tulipanów po 10 w każdym rzędzie. Ile tulipanów rośnie w ogrodzie?",
+            "options": ["15", "50", "60", "40"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "5 · 10 = 50."
+          },
+          {
+            "id": "q23_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Karol ma 10 zł. Chce kupić batoniki po 2 zł. Ile batoników może kupić?",
+            "options": ["2", "4", "5", "8"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "10 : 2 = 5."
+          },
+          {
+            "id": "q24_word",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "W karmniku było 7 wróbli. Przyleciało jeszcze 6. Ile ptaków jest teraz?",
+            "options": ["11", "12", "13", "14"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "7 + 6 = 13."
+          },
+          {
+            "id": "q25_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Marek zebrał 16 grzybów, a Basia połowę tego co Marek. Ile grzybów zebrała Basia?",
+            "options": ["10", "8", "4", "12"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "16 : 2 = 8."
+          },
+          {
+            "id": "q26_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Z 10 metrów materiału krawcowa uszyła 5 jednakowych poszewek. Ile metrów zużyła na jedną poszewkę?",
+            "options": ["2 m", "5 m", "1 m", "3 m"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "10 : 5 = 2."
+          },
+          {
+            "id": "q27_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Bilet do kina kosztuje 15 zł. Ile zapłaci tata z synem za dwa bilety?",
+            "options": ["17 zł", "30 zł", "25 zł", "20 zł"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "15 · 2 = 30."
+          },
+          {
+            "id": "q28_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "W wazonie było 12 kwiatów. Trzy zwiędły i zostały wyrzucone. Ile kwiatów zostało?",
+            "options": ["15", "10", "9", "8"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "12 - 3 = 9."
+          },
+          {
+            "id": "q29_word",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Pudełko kredek kosztuje 10 zł. Ile kosztują 3 takie pudełka?",
+            "options": ["13 zł", "20 zł", "30 zł", "40 zł"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "3 · 10 = 30."
+          },
+          {
+            "id": "q30_word",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Grześ ma 20 naklejek, a Staś o 5 mniej. Ile naklejek ma Staś?",
+            "options": ["25", "15", "10", "18"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "20 - 5 = 15."
           }
         ]
       },
@@ -196,6 +2239,267 @@
             "options": ["12", "13", "14", "15"],
             "correctAnswerIndex": 2,
             "correctAnswerExplanation": "20 - 6 = 14."
+          },
+          {
+            "id": "q3_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "W klasie jest 25 uczniów. Na wycieczkę pojechało 18. Ilu uczniów zostało w szkole?",
+            "options": ["7", "8", "6", "9"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "25 - 18 = 7."
+          },
+          {
+            "id": "q4_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ania kupiła 3 batony po 4 zł każdy. Dała sprzedawcy 20 zł. Ile reszty otrzymała?",
+            "options": ["12 zł", "8 zł", "10 zł", "6 zł"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "3 · 4 = 12 zł kosztowały batony. 20 - 12 = 8 zł reszty."
+          },
+          {
+            "id": "q5_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "W sadzie rośnie 6 rzędów jabłoni po 8 drzew w każdym rzędzie. Ile drzew rośnie w sadzie?",
+            "options": ["42", "48", "54", "56"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "6 · 8 = 48."
+          },
+          {
+            "id": "q6_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Tomek ma 40 naklejek. Chce je rozdzielić równo między 6 kolegów. Ile naklejek zostanie Tomkowi?",
+            "options": ["2", "4", "6", "0"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "40 : 6 = 6 reszty 4. Zostaną mu 4 naklejki."
+          },
+          {
+            "id": "q7_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Bilet do zoo kosztuje 15 zł. Rodzina 4-osobowa zapłaci za bilety:",
+            "options": ["45 zł", "60 zł", "50 zł", "75 zł"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "4 · 15 = 60 zł."
+          },
+          {
+            "id": "q8_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Zuzia ma 24 kredki. Jej siostra ma o połowę mniej. Ile kredek mają razem?",
+            "options": ["12", "30", "36", "48"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Siostra ma 24 : 2 = 12. Razem: 24 + 12 = 36."
+          },
+          {
+            "id": "q9_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jeden pająk ma 8 nóg, a jedna mucha ma 6 nóg. Ile nóg mają razem 2 pająki i 3 muchy?",
+            "options": ["28", "30", "34", "36"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "2 · 8 = 16 (pająki), 3 · 6 = 18 (muchy). 16 + 18 = 34."
+          },
+          {
+            "id": "q10_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Pociąg miał 12 wagonów. Na stacji odczepiono 4 wagony, a potem doczepiono 7 nowych. Ile wagonów ma teraz pociąg?",
+            "options": ["15", "16", "14", "13"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "12 - 4 = 8. 8 + 7 = 15."
+          },
+          {
+            "id": "q11_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Mama upiekła 30 babeczek. Poustawiała je na talerzykach po 4 sztuki. Ile talerzyków jest pełnych?",
+            "options": ["6", "7", "8", "9"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "30 : 4 = 7 reszty 2. Pełnych talerzyków jest 7."
+          },
+          {
+            "id": "q12_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Książka ma 100 stron. Adam przeczytał 40 stron wczoraj i 35 dzisiaj. Ile stron zostało mu do przeczytania?",
+            "options": ["25", "35", "15", "30"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "100 - (40 + 35) = 100 - 75 = 25."
+          },
+          {
+            "id": "q13_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Zeszyt kosztuje 3 zł, a piórnik jest o 15 zł droższy. Ile kosztują razem?",
+            "options": ["18 zł", "21 zł", "24 zł", "15 zł"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Piórnik: 3 + 15 = 18 zł. Razem: 3 + 18 = 21 zł."
+          },
+          {
+            "id": "q14_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "W pudełku mieści się 10 jajek. Ile pudełek trzeba kupić, aby zapakować 42 jajka?",
+            "options": ["4", "5", "6", "42"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "4 pełne pudełka to 40 jajek. Zostają 2 jajka, więc potrzebne jest 5. pudełko."
+          },
+          {
+            "id": "q15_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Liczba 48 jest ile razy większa od 8?",
+            "options": ["4 razy", "6 razy", "8 razy", "7 razy"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "48 : 8 = 6."
+          },
+          {
+            "id": "q16_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Półka ma 3 poziomy. Na każdym poziomie stoi po 12 książek. Jeśli zabierzemy 6 książek, ile zostanie?",
+            "options": ["30", "36", "42", "24"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "3 · 12 = 36. 36 - 6 = 30."
+          },
+          {
+            "id": "q17_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Gra komputerowa kosztuje 90 zł. Kamil odkłada co tydzień 10 zł. Po ilu tygodniach będzie mógł ją kupić?",
+            "options": ["8", "9", "10", "12"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "90 : 10 = 9."
+          },
+          {
+            "id": "q18_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "W ogrodzie jest 15 białych róż, a czerwonych jest 3 razy więcej. Ile jest czerwonych róż?",
+            "options": ["30", "45", "18", "60"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "15 · 3 = 45."
+          },
+          {
+            "id": "q19_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Kilogram jabłek kosztuje 4 zł. Ile zapłacisz za 2 kg jabłek i 1 kg gruszek, które są o 2 zł droższe od jabłek?",
+            "options": ["10 zł", "12 zł", "14 zł", "16 zł"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "2 kg jabłek = 8 zł. 1 kg gruszek = 4+2=6 zł. 8 + 6 = 14 zł."
+          },
+          {
+            "id": "q20_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Samochód spala 7 litrów paliwa na 100 km. Ile litrów spali na trasie 300 km?",
+            "options": ["14", "21", "28", "35"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "300 km to trzy setki. 3 · 7 = 21 litrów."
+          },
+          {
+            "id": "q21_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Dziadek ma 72 lata, a jego wnuk jest o 60 lat młodszy. Ile lat ma wnuk?",
+            "options": ["6", "8", "12", "14"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "72 - 60 = 12."
+          },
+          {
+            "id": "q22_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Rowerzysta jedzie z prędkością 15 km na godzinę. Jaką drogę pokona w 3 godziny?",
+            "options": ["30 km", "45 km", "60 km", "50 km"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "15 · 3 = 45."
+          },
+          {
+            "id": "q23_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Suma trzech liczb wynosi 30. Pierwsza to 10, druga to 12. Jaka jest trzecia liczba?",
+            "options": ["6", "8", "10", "4"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "30 - (10 + 12) = 30 - 22 = 8."
+          },
+          {
+            "id": "q24_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "W wazonie było 21 tulipanów. Chcemy zrobić bukiety po 5 kwiatów. Ile tulipanów zostanie?",
+            "options": ["1", "2", "3", "0"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "21 : 5 = 4 reszty 1."
+          },
+          {
+            "id": "q25_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ola miała 50 zł. Kupiła dwie książki po 18 zł każda. Ile pieniędzy jej zostało?",
+            "options": ["14 zł", "24 zł", "32 zł", "16 zł"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "2 · 18 = 36. 50 - 36 = 14."
+          },
+          {
+            "id": "q26_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jeśli liczbę 7 powiększysz 4 razy, a następnie odejmiesz 3, to otrzymasz:",
+            "options": ["25", "31", "28", "21"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "7 · 4 = 28. 28 - 3 = 25."
+          },
+          {
+            "id": "q27_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Tuzin to 12 sztuk. Ile to są 4 tuziny?",
+            "options": ["36", "48", "60", "44"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "4 · 12 = 48."
+          },
+          {
+            "id": "q28_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Marek ma 16 lat. Jest 2 razy starszy od swojego brata. Ile lat ma brat Marka?",
+            "options": ["32", "14", "8", "10"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "16 : 2 = 8."
+          },
+          {
+            "id": "q29_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "W sklepie było 100 kg ziemniaków. Sprzedano 4 worki po 15 kg. Ile kg ziemniaków zostało?",
+            "options": ["40", "60", "50", "30"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "4 · 15 = 60. 100 - 60 = 40."
+          },
+          {
+            "id": "q30_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Prostokąt ma boki 5 cm i 3 cm. Obwód tego prostokąta wynosi:",
+            "options": ["8 cm", "15 cm", "16 cm", "11 cm"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "2 · 5 + 2 · 3 = 10 + 6 = 16 cm."
+          },
+          {
+            "id": "q31_word2",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Ile minut upłynie od 10:15 do 11:00?",
+            "options": ["35", "45", "55", "15"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "60 - 15 = 45."
           }
         ]
       },
@@ -213,6 +2517,267 @@
             "options": ["12", "14", "15", "16"],
             "correctAnswerIndex": 2,
             "correctAnswerExplanation": "(10 + 20) : 2 = 15."
+          },
+          {
+            "id": "q2_axis",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Jeśli na osi liczbowej przesuniesz się z punktu 7 o 5 jednostek w prawo, to na jakiej liczbie się znajdziesz?",
+            "options": ["2", "11", "12", "13"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "7 + 5 = 12."
+          },
+          {
+            "id": "q3_axis",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Jeśli na osi liczbowej przesuniesz się z punktu 15 o 6 jednostek w lewo, to na jakiej liczbie się znajdziesz?",
+            "options": ["9", "21", "11", "8"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "15 - 6 = 9."
+          },
+          {
+            "id": "q4_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka jest odległość na osi między liczbą 4 a liczbą 19?",
+            "options": ["14", "15", "16", "23"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "19 - 4 = 15."
+          },
+          {
+            "id": "q5_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka liczba leży dokładnie w środku między 30 a 50?",
+            "options": ["35", "45", "40", "38"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Odległość to 20, połowa odległości to 10. 30 + 10 = 40."
+          },
+          {
+            "id": "q6_axis",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Która liczba leży bliżej zera na osi liczbowej: 5 czy 8?",
+            "options": ["5", "8", "Leżą tak samo", "Zero"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Liczba 5 jest w odległości 5 jednostek od zera, a 8 w odległości 8."
+          },
+          {
+            "id": "q7_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Na osi liczbowej zaznaczono punkty A=12 i B=20. Ile jednostek ma odcinek AB?",
+            "options": ["6", "8", "10", "32"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "20 - 12 = 8."
+          },
+          {
+            "id": "q8_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Punkt startowy to 50. Wykonano skok o 10 w lewo i o 5 w prawo. Na jakiej liczbie jesteś?",
+            "options": ["45", "65", "55", "35"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "50 - 10 + 5 = 45."
+          },
+          {
+            "id": "q9_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka liczba znajduje się o 12 jednostek na prawo od liczby 88?",
+            "options": ["76", "98", "100", "110"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "88 + 12 = 100."
+          },
+          {
+            "id": "q10_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Na osi liczbowej między 0 a 100 wyznaczono 4 równe odcinki. Jaka liczba kończy pierwszy odcinek?",
+            "options": ["20", "25", "10", "50"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "100 : 4 = 25."
+          },
+          {
+            "id": "q11_axis",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Jeśli punkt A=10 przesuniemy o 10 jednostek w prawo, to otrzymamy:",
+            "options": ["0", "10", "20", "100"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "10 + 10 = 20."
+          },
+          {
+            "id": "q12_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Liczba x leży o 5 jednostek na lewo od 5. Jaka to liczba?",
+            "options": ["10", "5", "0", "1"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "5 - 5 = 0."
+          },
+          {
+            "id": "q13_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Odległość między liczbami 123 a 130 na osi wynosi:",
+            "options": ["10", "8", "7", "6"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "130 - 123 = 7."
+          },
+          {
+            "id": "q14_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka liczba na osi leży w połowie drogi między 0 a 1000?",
+            "options": ["100", "500", "250", "900"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "1000 : 2 = 500."
+          },
+          {
+            "id": "q15_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jeśli stoisz na liczbie 40 i pójdziesz 15 kroków w lewo, a potem 20 w prawo, gdzie będziesz?",
+            "options": ["45", "35", "55", "25"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "40 - 15 + 20 = 45."
+          },
+          {
+            "id": "q16_axis",
+            "type": "practice",
+            "difficulty": "łatwe",
+            "questionText": "Ile liczb naturalnych leży na osi między 1 a 4?",
+            "options": ["1", "2", "3", "4"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Są to liczby 2 i 3."
+          },
+          {
+            "id": "q17_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka liczba leży o 3 jednostki na lewo od środka odcinka między 10 a 20?",
+            "options": ["12", "15", "18", "7"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "Środek to 15. 15 - 3 = 12."
+          },
+          {
+            "id": "q18_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Długość odcinka na osi od 45 do 60 wynosi:",
+            "options": ["10", "15", "20", "25"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "60 - 45 = 15."
+          },
+          {
+            "id": "q19_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Który punkt leży najdalej od liczby 50?",
+            "options": ["45", "56", "40", "58"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "Odległości to odpowiednio: 5, 6, 10, 8. 10 jest największa."
+          },
+          {
+            "id": "q20_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Liczba o 14 większa od 26 to na osi ruch o 14 jednostek w:",
+            "options": ["lewo", "prawo", "górę", "dół"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "Dodawanie to ruch w prawą stronę osi."
+          },
+          {
+            "id": "q21_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Na osi zaznaczono punkty co 5 jednostek (0, 5, 10...). Jaką współrzędną ma czwarty punkt po zerze?",
+            "options": ["15", "20", "25", "10"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "4 · 5 = 20."
+          },
+          {
+            "id": "q22_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka liczba leży w połowie między 15 a 25?",
+            "options": ["18", "19", "20", "21"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "(15 + 25) : 2 = 20."
+          },
+          {
+            "id": "q23_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Odległość między liczbami 98 a 102 wynosi:",
+            "options": ["2", "4", "6", "10"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "102 - 98 = 4."
+          },
+          {
+            "id": "q24_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jeśli zaczniesz w punkcie 0 i wykonasz 3 skoki po 4 jednostki w prawo, gdzie będziesz?",
+            "options": ["7", "12", "10", "15"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "3 · 4 = 12."
+          },
+          {
+            "id": "q25_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Liczba x leży dokładnie między 100 a 200. Jaka to liczba?",
+            "options": ["125", "150", "175", "140"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "100 + 50 = 150."
+          },
+          {
+            "id": "q26_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jeśli z liczby 33 cofniesz się o 13 jednostek, to otrzymasz:",
+            "options": ["20", "10", "23", "13"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "33 - 13 = 20."
+          },
+          {
+            "id": "q27_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Która liczba na osi jest oddalona o 7 jednostek od liczby 10?",
+            "options": ["3", "17", "3 lub 17", "tylko 17"],
+            "correctAnswerIndex": 2,
+            "correctAnswerExplanation": "10 - 7 = 3 oraz 10 + 7 = 17."
+          },
+          {
+            "id": "q28_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Współrzędna punktu to 45. Przesunięto go o 5 w prawo i 10 w lewo. Nowa współrzędna to:",
+            "options": ["40", "50", "35", "45"],
+            "correctAnswerIndex": 0,
+            "correctAnswerExplanation": "45 + 5 - 10 = 40."
+          },
+          {
+            "id": "q29_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Środek odcinka o końcach 0 i 50 to:",
+            "options": ["20", "25", "30", "15"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "50 : 2 = 25."
+          },
+          {
+            "id": "q30_axis",
+            "type": "practice",
+            "difficulty": "średnie",
+            "questionText": "Jaka jest odległość między liczbami 77 a 88?",
+            "options": ["10", "11", "12", "9"],
+            "correctAnswerIndex": 1,
+            "correctAnswerExplanation": "88 - 77 = 11."
           }
         ]
       },
