@@ -3,43 +3,50 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, SafeAreaView, Platform } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { MainAppStackParamList } from '../../src/navigation/types'; // Перевірте шлях
+import { MainAppStackParamList } from '../../src/navigation/types';
 import { COLORS, PADDING, MARGIN } from '../styles/theme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
-// Імпортуємо нову функцію
 import { saveTestResults } from '../services/xpService';
+import { checkAndGrantAchievements } from '../services/achievementService';
+import auth from '@react-native-firebase/auth';
 
 type ResultsProps = NativeStackScreenProps<MainAppStackParamList, 'Results'>;
 
 function ResultsScreen({ route, navigation }: ResultsProps) {
     const { score, total, originalTestParams, mode } = route.params;
-
-    // Використовуємо ref, щоб збереження спрацювало тільки 1 раз при монтуванні
     const hasSaved = useRef(false);
 
     const percentage = Math.round((score / total) * 100);
     const isPassed = percentage >= 50;
 
-    // Розрахунок нагород
     const xpReward = mode === 'assess' ? score * 20 : score * 5;
     const coinsReward = mode === 'assess' ? score * 5 : score * 1;
 
     useEffect(() => {
         if (!hasSaved.current) {
-            hasSaved.current = true; // Блокуємо повторний виклик
+            hasSaved.current = true;
 
-            // 🔥 ВИКЛИКАЄМО НОВУ ФУНКЦІЮ ЗБЕРЕЖЕННЯ
-            // Беремо назву теми з параметрів тесту (subTopic або topic)
+            // Pobieramy aktualnego użytkownika
+            const currentUser = auth().currentUser;
+
             const topicName = originalTestParams.subTopic || originalTestParams.topic || "Ogólne";
 
+            // 1. Zapisujemy wyniki XP i monet
             saveTestResults(
                 xpReward,
                 coinsReward,
-                total,  // Всього питань
-                score,  // Правильних відповідей
+                total,
+                score,
                 topicName
             );
+
+            // 2. Sprawdzamy odznaki
+            if (currentUser) {
+                setTimeout(() => {
+                    checkAndGrantAchievements(currentUser.uid);
+                }, 1500);
+            }
         }
     }, []);
 
@@ -48,7 +55,6 @@ function ResultsScreen({ route, navigation }: ResultsProps) {
     };
 
     const handleBackToList = () => {
-        // Якщо це був тест з ActivityScreen (дуель), краще вернутися на головну
         if (originalTestParams.testType === 'duel') {
             navigation.popToTop();
         } else {

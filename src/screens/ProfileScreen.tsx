@@ -139,7 +139,7 @@ const ProfileScreen = () => {
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <TouchableOpacity onPress={() => { setSelectedAchievement(item); setModalVisible(true); }}>
-                            <AchievementBadge badge={item} />
+                            <AchievementBadge badge={item as any} />
                         </TouchableOpacity>
                     )}
                 />

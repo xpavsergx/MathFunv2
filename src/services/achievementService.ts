@@ -10,6 +10,11 @@ import { UserStats } from './userStatsService'; // Імпортуємо тип
 interface FullUserData extends UserStats {
     level?: number;
     xp?: number;
+    stats?: {
+        testsCompleted?: number;
+        correctAnswers?: number;
+        totalQuestionsSolved?: number;
+    };
     // --- ✅ ЗМІНА ТИПУ ЗБЕРІГАННЯ ---
     // Замість string[] (масиву), ми будемо зберігати об'єкт (map)
     // earnedAchievements: string[]; // (СТАРИЙ ТИП)
@@ -92,19 +97,33 @@ export async function checkAndGrantAchievements(userId: string): Promise<void> {
 // Функція checkCondition залишається без змін (як у попередній відповіді)
 function checkCondition(data: FullUserData, achievement: Achievement): boolean {
     const { criteriaType, criteriaValue } = achievement;
+
+    // 1. Wyciągamy pod-obiekt stats z bazy (tam są wyniki testów)
+    const stats = data.stats || {};
+
     switch (criteriaType) {
         case 'testsCompleted':
-            return (data.testsCompleted || 0) >= criteriaValue;
+            // W bazie: stats.testsCompleted
+            return (stats.testsCompleted || 0) >= criteriaValue;
+
         case 'correctAnswersTotal':
-            return (data.correctAnswersTotal || 0) >= criteriaValue;
+            // W bazie: sprawdzamy stats.correctAnswersTotal lub starsze stats.correctAnswers
+            const answers =  stats.correctAnswers || 0;
+            return answers >= criteriaValue;
+
         case 'flawlessTests':
+            // W bazie: to pole jest na zewnątrz, obok XP (wg Twojej struktury)
             return (data.flawlessTests || 0) >= criteriaValue;
+
         case 'duelsWon':
+            // W bazie: pojedynki są na głównym poziomie dokumentu
             return (data.duelsWon || 0) >= criteriaValue;
-        case 'friendsAdded':
-            return (data.friendsCount || 0) >= criteriaValue;
+
         case 'levelReached':
-            return (data.level || 1) >= criteriaValue;
+            // Poziom obliczamy z XP, które jest na głównym poziomie
+            const level = Math.floor((data.xp || 0) / 1000) + 1;
+            return level >= criteriaValue;
+
         default:
             return false;
     }

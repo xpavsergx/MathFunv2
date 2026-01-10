@@ -2,6 +2,7 @@
 export const COLORS = {
     primary: '#00BCD4', // Turkusowy/Aqua
     accent: '#FF9800', // Pomarańczowy (dla aktywnej klasy)
+    error: '#FF5252',
     // Jasny motyw
     backgroundLight: '#E0F7FA', // Jasno-turkusowe tło
     textLight: '#333333', // Ciemnoszary tekst
