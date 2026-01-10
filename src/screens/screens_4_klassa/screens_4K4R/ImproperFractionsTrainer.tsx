@@ -12,9 +12,9 @@ import firestore from '@react-native-firebase/firestore';
 const EXERCISE_ID = "ImproperFractionsTrainer_cl4";
 const { width: screenWidth } = Dimensions.get('window');
 const TASKS_LIMIT = 35;
-const combinedIconSize = screenWidth * 0.25;
+const combinedIconSize = screenWidth * 0.22;
 
-// --- MODAL BRUDNOPISU (Bez zmian) ---
+// --- MODAL BRUDNOPISU ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
@@ -50,7 +50,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
     );
 };
 
-// --- WIZUALIZACJA (Bez zmian) ---
+// --- WIZUALIZACJA ---
 const ImproperVisuals = ({ num, den, type }: { num: number, den: number, type: 'circle' | 'rect' }) => {
     const shapeSize = 70;
     const margin = 10;
@@ -135,7 +135,6 @@ const ImproperFractionsTrainer = () => {
     const [showHint, setShowHint] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
-    // --- DODANO: Referencja do historii zadań ---
     const historyRef = useRef<Set<string>>(new Set());
 
     const numInputRef = useRef<TextInput>(null);
@@ -160,11 +159,9 @@ const ImproperFractionsTrainer = () => {
         let uniqueKey = "";
         let attemptCount = 0;
 
-        // --- PĘTLA DO GENEROWANIA UNIKALNYCH ZADAŃ ---
         do {
             const typeRoll = Math.random();
 
-            // 1. ZADANIA WIZUALNE (40%)
             if (typeRoll < 0.40) {
                 const den = [3, 4, 5, 6, 8][rnd(0, 4)];
                 const whole = rnd(1, 2);
@@ -180,13 +177,11 @@ const ImproperFractionsTrainer = () => {
                     correctDen: den,
                     visType: visType
                 };
-                // Klucz unikalności: typ-licznik-mianownik-typ_wizualizacji
                 uniqueKey = `visual-${num}-${den}-${visType}`;
             }
-            // 2. ZAMIANA LICZBY MIESZANEJ (40%)
             else if (typeRoll < 0.80) {
                 const den = rnd(2, 9);
-                const whole = rnd(1, 5); // Zwiększono zakres
+                const whole = rnd(1, 5);
                 const extra = rnd(1, den - 1);
                 const correctNum = whole * den + extra;
 
@@ -202,9 +197,8 @@ const ImproperFractionsTrainer = () => {
                 };
                 uniqueKey = `mixed-${whole}-${extra}-${den}`;
             }
-            // 3. LICZBA CAŁKOWITA NA UŁAMEK (20%)
             else {
-                const whole = rnd(2, 8); // Zwiększono zakres
+                const whole = rnd(2, 8);
                 const den = rnd(2, 6);
                 const correctNum = whole * den;
 
@@ -222,7 +216,6 @@ const ImproperFractionsTrainer = () => {
             attemptCount++;
         } while (historyRef.current.has(uniqueKey) && attemptCount < 20);
 
-        // Zapisz wygenerowane zadanie w historii
         historyRef.current.add(uniqueKey);
 
         setTask(newTask);
@@ -244,17 +237,9 @@ const ImproperFractionsTrainer = () => {
             InteractionManager.runAfterInteractions(() => awardXpAndCoins(10, 2));
             const currentUser = auth().currentUser;
             if (currentUser) {
-                firestore()
-                    .collection('users')
-                    .doc(currentUser.uid)
-                    .collection('exerciseStats')
-                    .doc(EXERCISE_ID)
-                    .set({
-                        totalCorrect: firestore.FieldValue.increment(1)
-                    }, { merge: true })
-                    .catch(error => console.error("Błąd zapisu do bazy:", error));
+                firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                    .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
             }
-
         } else {
             setStatus('wrong');
             if (attempts === 0) {
@@ -274,15 +259,8 @@ const ImproperFractionsTrainer = () => {
                 InteractionManager.runAfterInteractions(() => {
                     const currentUser = auth().currentUser;
                     if (currentUser) {
-                        firestore()
-                            .collection('users')
-                            .doc(currentUser.uid)
-                            .collection('exerciseStats')
-                            .doc(EXERCISE_ID)
-                            .set({
-                                totalWrong: firestore.FieldValue.increment(1)
-                            }, { merge: true })
-                            .catch(error => console.error("Błąd zapisu błędnych:", error));
+                        firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                            .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
                     }
                 });
             }
@@ -311,8 +289,14 @@ const ImproperFractionsTrainer = () => {
                 <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardContainer}>
                     {!isKeyboardVisible && (
                         <View style={styles.topButtons}>
-                            <TouchableOpacity onPress={() => setShowScratchpad(true)} style={styles.topBtnItem}><Image source={require('../../../assets/pencil.png')} style={styles.iconTop} /><Text style={styles.buttonLabel}>Brudnopis</Text></TouchableOpacity>
-                            <TouchableOpacity onPress={() => setShowHint(!showHint)} style={styles.topBtnItem}><Image source={require('../../../assets/question.png')} style={styles.iconTop} /><Text style={styles.buttonLabel}>Pomoc</Text></TouchableOpacity>
+                            <TouchableOpacity onPress={() => setShowScratchpad(true)} style={styles.topBtnItem}>
+                                <Image source={require('../../../assets/pencil.png')} style={styles.iconTop} />
+                                <Text style={styles.buttonLabel}>Brudnopis</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => setShowHint(!showHint)} style={styles.topBtnItem}>
+                                <Image source={require('../../../assets/question.png')} style={styles.iconTop} />
+                                <Text style={styles.buttonLabel}>Pomoc</Text>
+                            </TouchableOpacity>
                         </View>
                     )}
 
@@ -380,16 +364,16 @@ const ImproperFractionsTrainer = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    keyboardContainer: { flex: 1, justifyContent: 'center' },
-    centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 20 },
-    topButtons: { position: 'absolute', top: 25, right: 20, flexDirection: 'row', zIndex: 10 },
+    keyboardContainer: { flex: 1 },
+    centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 90, paddingBottom: 160, paddingHorizontal: 10 },
+    topButtons: { position: 'absolute', top: 15, right: 20, flexDirection: 'row', zIndex: 100 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
-    iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
-    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255,255,255,0.8)', textShadowRadius: 3 },
-    hintBox: { position: 'absolute', top: 100, right: 20, padding: 15, backgroundColor: '#fff', borderRadius: 15, width: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
+    iconTop: { width: 55, height: 55, resizeMode: 'contain' },
+    buttonLabel: { fontSize: 11, fontWeight: 'bold', color: '#007AFF', marginTop: -2 },
+    hintBox: { position: 'absolute', top: 100, right: 20, padding: 15, backgroundColor: '#fff', borderRadius: 15, width: 260, zIndex: 101, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
     hintTitle: { fontWeight: 'bold', color: '#007AFF', marginBottom: 5 },
     hintText: { fontSize: 14, color: '#333' },
-    card: { width: '92%', maxWidth: 450, borderRadius: 25, padding: 25, alignItems: 'center', alignSelf: 'center', elevation: 4, shadowColor: "#000", shadowOpacity: 0.1, shadowRadius: 10 },
+    card: { width: '92%', maxWidth: 450, borderRadius: 25, padding: 25, alignItems: 'center', alignSelf: 'center' },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.94)', borderRadius: 25 },
     headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#333', marginBottom: 15 },
     questionText: { fontSize: 19, color: '#2c3e50', textAlign: 'center', fontWeight: '500', lineHeight: 28, marginBottom: 20 },
@@ -408,13 +392,13 @@ const styles = StyleSheet.create({
     inputError: { borderColor: '#dc3545', backgroundColor: '#fbe9eb', color: '#dc3545' },
     mainBtn: { marginTop: 25, backgroundColor: '#007AFF', paddingHorizontal: 40, paddingVertical: 14, borderRadius: 15 },
     mainBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 15 },
+    counterTextSmall: { fontSize: 12, fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 15 },
     msg: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
-    iconsBottom: { position: 'absolute', bottom: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
+    iconsBottom: { position: 'absolute', bottom: 25, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%', zIndex: 100 },
     iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    counterTextIcons: { fontSize: Math.max(14, combinedIconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
+    counterTextIcons: { fontSize: 20, marginHorizontal: 8, textAlign: 'center', color: '#333', fontWeight: 'bold' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' },
     drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
     drawingHeader: { height: 55, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, backgroundColor: '#f0f0f0' },

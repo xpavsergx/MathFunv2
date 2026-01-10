@@ -20,18 +20,20 @@ import {
     InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native'; // DODANE
 
+// --- INTEGRACJA Z FIREBASE ---
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { awardXpAndCoins } from '../../../services/xpService';
 
 const EXERCISE_ID = "divisionWithRemainder";
-const TASKS_LIMIT = 50; // Лимит 50, как в других тренажерах
+const TASKS_LIMIT = 50;
 
 const { width: screenWidth } = Dimensions.get('window');
 const isSmallDevice = screenWidth < 380;
 
-// --- КОМПОНЕНТ РИСОВАЛКИ (БРУДНОПИС) ---
+// --- KOMПОНЕНТ РИСОВАЛКИ (БРУДНОПИС) ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
@@ -78,26 +80,27 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const DivisionWithRemainderScreen = () => {
+    const navigation = useNavigation(); // DODANE
     // --- STATE ---
     const [dividend, setDividend] = useState<number>(0);
     const [divisor, setDivisor] = useState<number>(0);
 
-    // Inputs
     const [quotient, setQuotient] = useState<string>('');
     const [remainder, setRemainder] = useState<string>('');
 
-    // Validation
     const [correctQuotientInput, setCorrectQuotientInput] = useState<boolean | null>(null);
     const [correctRemainderInput, setCorrectRemainderInput] = useState<boolean | null>(null);
 
-    // Game Logic
     const [readyForNext, setReadyForNext] = useState<boolean>(false);
     const [correctCount, setCorrectCount] = useState<number>(0);
     const [wrongCount, setWrongCount] = useState<number>(0);
     const [taskCount, setTaskCount] = useState<number>(0);
     const [firstAttempt, setFirstAttempt] = useState<boolean>(true);
 
-    // UI State
+    // --- NOWE STANY DLA RAPORTU ---
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
+
     const [message, setMessage] = useState('');
     const [showScratchpad, setShowScratchpad] = useState(false);
     const [showHint, setShowHint] = useState(false);
@@ -113,14 +116,20 @@ const DivisionWithRemainderScreen = () => {
     }, []);
 
     const nextTask = () => {
+        // Blokada raportu co 10 zadań
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
+
         if (taskCount >= TASKS_LIMIT) {
             setMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
             setReadyForNext(false);
             return;
         }
 
-        const newDivisor = Math.floor(Math.random() * 9) + 2; // 2..10
-        const newDividend = Math.floor(Math.random() * 91) + 10; // 10..100
+        const newDivisor = Math.floor(Math.random() * 9) + 2;
+        const newDividend = Math.floor(Math.random() * 91) + 10;
 
         setDividend(newDividend);
         setDivisor(newDivisor);
@@ -138,14 +147,13 @@ const DivisionWithRemainderScreen = () => {
 
     const toggleScratchpad = () => setShowScratchpad(prev => !prev);
     const toggleHint = () => setShowHint(prev => !prev);
-
     const getHintText = () => `${dividend} = ${divisor} × ? + reszta`;
 
     const handleCheck = () => {
         Keyboard.dismiss();
 
         requestAnimationFrame(() => {
-            if (!quotient || !remainder) {
+            if (quotient === '' || remainder === '') {
                 setMessage('Wpisz wynik i resztę!');
                 return;
             }
@@ -159,13 +167,13 @@ const DivisionWithRemainderScreen = () => {
             const isRemainderCorrect = numRemainder === correctRemainder;
             const isCorrect = isQuotientCorrect && isRemainderCorrect;
 
-            // Обновляем UI состояния валидации
             setCorrectQuotientInput(isQuotientCorrect);
             setCorrectRemainderInput(isRemainderCorrect);
 
             if (isCorrect) {
                 Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
                 setCorrectCount(prev => prev + 1);
+                setSessionCorrect(prev => prev + 1); // Zwiększamy licznik serii
                 setMessage('Świetnie! ✅');
                 setReadyForNext(true);
                 setShowHint(false);
@@ -186,7 +194,6 @@ const DivisionWithRemainderScreen = () => {
 
                 if (firstAttempt) {
                     setMessage('Błąd! Spróbuj ponownie.');
-                    // Если ошибка, очищаем только неверные поля для удобства, или оставляем красными
                     if (!isQuotientCorrect) setQuotient('');
                     if (!isRemainderCorrect) setRemainder('');
                     setFirstAttempt(false);
@@ -253,6 +260,58 @@ const DivisionWithRemainderScreen = () => {
                     )}
 
                     <DrawingModal visible={showScratchpad} onClose={toggleScratchpad} problemText={problemString} />
+
+                    {/* MODAL PODSUMOWANIA CO 10 ZADAŃ */}
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
+                                        Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
+                                    </Text>
+                                </View>
+                                <Text style={styles.suggestionText}>
+                                    {sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Dobra robota! Trenuj dalej, aby być jeszcze lepszym."}
+                                </Text>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#28a745' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            setSessionCorrect(0);
+                                            // Bezpośrednie wywołanie nowej gry (zadanie 11, 21 itd)
+                                            const newDivisor = Math.floor(Math.random() * 9) + 2;
+                                            const newDividend = Math.floor(Math.random() * 91) + 10;
+                                            setDividend(newDividend);
+                                            setDivisor(newDivisor);
+                                            setQuotient('');
+                                            setRemainder('');
+                                            setMessage('');
+                                            setReadyForNext(false);
+                                            setFirstAttempt(true);
+                                            setCorrectQuotientInput(null);
+                                            setCorrectRemainderInput(null);
+                                            setTaskCount(prev => prev + 1);
+                                            backgroundColor.setValue(0);
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Kontynuuj</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#007AFF' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            navigation.goBack(); // POWRÓT DO PODTEMATÓW
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Inny temat</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
 
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
@@ -322,27 +381,24 @@ const DivisionWithRemainderScreen = () => {
 
 // Styles
 const iconSize = screenWidth * 0.25;
-const inputWidth = isSmallDevice ? screenWidth * 0.35 : 120; // Чуть шире поля
+const inputWidth = isSmallDevice ? screenWidth * 0.35 : 120;
 const inputFontSize = 22;
 
 const styles = StyleSheet.create({
     keyboardContainer: { flex: 1, justifyContent: 'center' },
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 20 },
 
-    // Top Buttons
     topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
     iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
     buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255, 255, 255, 0.8)', textShadowRadius: 3 },
 
-    // Hint Box
     hintBox: {
         position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF'
     },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
     hintText: { fontSize: 16, color: '#333', lineHeight: 22, textAlign: 'center' },
 
-    // Card
     card: { width: '95%', maxWidth: 480, borderRadius: 20, padding: 20, alignItems: 'center', marginTop: 20, alignSelf: 'center' },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
 
@@ -350,13 +406,11 @@ const styles = StyleSheet.create({
     taskTextMain: { fontSize: isSmallDevice ? 32 : 40, fontWeight: 'bold', marginBottom: 10, color: '#333', textAlign: 'center' },
     subTitle: { fontSize: 16, marginBottom: 20, color: '#555', textAlign: 'center' },
 
-    // Math Layout
     mathContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20, width: '100%' },
     inputGroup: { alignItems: 'center' },
-    rText: { fontSize: 24, fontWeight: 'bold', color: '#555', marginHorizontal: 10, marginTop: -20 }, // marginTop чтобы выровнять по центру с input
+    rText: { fontSize: 24, fontWeight: 'bold', color: '#555', marginHorizontal: 10, marginTop: -20 },
     labelBottom: { fontSize: 12, color: '#888', marginTop: 4 },
 
-    // Inputs
     input: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#fafafa', color: '#333' },
     correctFinal: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#28a745', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#d4edda', color: '#155724' },
     errorFinal: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#dc3545', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#f8d7da', color: '#721c24' },
@@ -366,15 +420,12 @@ const styles = StyleSheet.create({
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
 
-    // Counter
     counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
 
-    // Bottom Icons
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: iconSize, height: iconSize, resizeMode: 'contain', marginHorizontal: 10 },
     counterTextIcons: { fontSize: Math.max(14, iconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
 
-    // Modal
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
     drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
     drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, backgroundColor: '#f0f0f0', borderBottomWidth: 1, borderBottomColor: '#ccc' },
@@ -385,6 +436,15 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
+
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
 });
 
 export default DivisionWithRemainderScreen;

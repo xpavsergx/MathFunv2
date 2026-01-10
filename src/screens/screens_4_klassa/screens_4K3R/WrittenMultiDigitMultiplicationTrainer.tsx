@@ -13,9 +13,9 @@ const EXERCISE_ID = "WrittenMultiDigitMultiplicationTrainer";
 
 const { width: screenWidth } = Dimensions.get('window');
 const TASKS_LIMIT = 50;
-const combinedIconSize = screenWidth * 0.25;
-const CELL_WIDTH = 48; // Stała szerokość komórki
-const GRID_WIDTH_COLS = 7; // Liczba kolumn w siatce
+const combinedIconSize = screenWidth * 0.22;
+const CELL_WIDTH = 48;
+const GRID_WIDTH_COLS = 7;
 
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
@@ -54,7 +54,6 @@ const WrittenMultiDigitMultiplicationTrainer = () => {
     const [num2, setNum2] = useState('');
     const [fullResult, setFullResult] = useState(0);
 
-    // Pola odpowiedzi
     const [partial1, setPartial1] = useState<string[]>([]);
     const [partial2, setPartial2] = useState<string[]>([]);
     const [finalRes, setFinalRes] = useState<string[]>([]);
@@ -84,21 +83,16 @@ const WrittenMultiDigitMultiplicationTrainer = () => {
     const generateProblem = () => {
         setMessage(''); setIsCorrect(null); setReadyForNext(false); setFirstAttempt(true);
         backgroundColor.setValue(0);
-
         const n1 = Math.floor(1000 + Math.random() * 8999);
         const n2 = Math.floor(11 + Math.random() * 88);
-
         setNum1(n1.toString());
         setNum2(n2.toString());
         setFullResult(n1 * n2);
-
         setPartial1(new Array(GRID_WIDTH_COLS).fill(''));
         setPartial2(new Array(GRID_WIDTH_COLS).fill(''));
         setFinalRes(new Array(GRID_WIDTH_COLS).fill(''));
         setCarriesTop(new Array(GRID_WIDTH_COLS).fill(''));
-
         inputRefs.current = {};
-
         setTimeout(() => {
             const startKey = `p1-${GRID_WIDTH_COLS - 1}`;
             if (inputRefs.current[startKey]) inputRefs.current[startKey]?.focus();
@@ -110,14 +104,11 @@ const WrittenMultiDigitMultiplicationTrainer = () => {
         const newArr = [...arr];
         newArr[index] = cleanVal;
         arrSetter(newArr);
-
         if (cleanVal !== '') {
             const nextIndex = index - 1;
             if (nextIndex >= 0) {
                 const nextKey = `${type}-${nextIndex}`;
-                if (inputRefs.current[nextKey]) {
-                    inputRefs.current[nextKey]?.focus();
-                }
+                if (inputRefs.current[nextKey]) inputRefs.current[nextKey]?.focus();
             }
         }
     };
@@ -126,12 +117,9 @@ const WrittenMultiDigitMultiplicationTrainer = () => {
         const p1Val = parseInt(partial1.join(''), 10);
         const p2Val = parseInt(partial2.join(''), 10);
         const finalVal = parseInt(finalRes.join(''), 10);
-
         const expectedP1 = parseInt(num1) * (parseInt(num2) % 10);
         const expectedP2 = parseInt(num1) * Math.floor(parseInt(num2) / 10);
-
         const isFilled = finalRes.some(d => d !== '') && partial1.some(d => d !== '');
-
         if (!isFilled) { setMessage('Wypełnij kratki!'); return; }
 
         if (finalVal === fullResult && p1Val === expectedP1 && p2Val === expectedP2) {
@@ -140,44 +128,19 @@ const WrittenMultiDigitMultiplicationTrainer = () => {
             InteractionManager.runAfterInteractions(() => awardXpAndCoins(10, 2));
             const currentUser = auth().currentUser;
             if (currentUser) {
-                firestore()
-                    .collection('users')
-                    .doc(currentUser.uid)
-                    .collection('exerciseStats')
-                    .doc(EXERCISE_ID)
-                    .set({
-                        totalCorrect: firestore.FieldValue.increment(1)
-                    }, { merge: true })
-                    .catch(error => console.error("Błąd zapisu do bazy:", error));
+                firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                    .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
             }
-
         } else {
             Animated.timing(backgroundColor, { toValue: -1, duration: 500, useNativeDriver: false }).start();
-            InteractionManager.runAfterInteractions(() => {
-                const currentUser = auth().currentUser;
-                if (currentUser) {
-                    firestore()
-                        .collection('users')
-                        .doc(currentUser.uid)
-                        .collection('exerciseStats')
-                        .doc(EXERCISE_ID)
-                        .set({
-                            totalWrong: firestore.FieldValue.increment(1)
-                        }, { merge: true })
-                        .catch(error => console.error("Błąd zapisu błędnych:", error));
-                }
-            });
             if (firstAttempt) {
                 setMessage('Błąd. Spróbuj jeszcze raz.');
                 setFirstAttempt(false);
                 setIsCorrect(false);
-
-                // CZYŚCIMY WSZYSTKO PRZY BŁĘDZIE
                 setPartial1(new Array(GRID_WIDTH_COLS).fill(''));
                 setPartial2(new Array(GRID_WIDTH_COLS).fill(''));
                 setFinalRes(new Array(GRID_WIDTH_COLS).fill(''));
                 setCarriesTop(new Array(GRID_WIDTH_COLS).fill(''));
-
                 setTimeout(() => {
                     const startKey = `p1-${GRID_WIDTH_COLS - 1}`;
                     if (inputRefs.current[startKey]) inputRefs.current[startKey]?.focus();
@@ -210,15 +173,21 @@ const WrittenMultiDigitMultiplicationTrainer = () => {
                 <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardContainer}>
                     {!isKeyboardVisible && (
                         <View style={styles.topButtons}>
-                            <TouchableOpacity onPress={() => setShowScratchpad(true)} style={styles.topBtnItem}><Image source={require('../../../assets/pencil.png')} style={styles.iconTop} /><Text style={styles.buttonLabel}>Brudnopis</Text></TouchableOpacity>
-                            <TouchableOpacity onPress={() => setShowHint(!showHint)} style={styles.topBtnItem}><Image source={require('../../../assets/question.png')} style={styles.iconTop} /><Text style={styles.buttonLabel}>Pomoc</Text></TouchableOpacity>
+                            <TouchableOpacity onPress={() => setShowScratchpad(true)} style={styles.topBtnItem}>
+                                <Image source={require('../../../assets/pencil.png')} style={styles.iconTop} />
+                                <Text style={styles.buttonLabel}>Brudnopis</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => setShowHint(!showHint)} style={styles.topBtnItem}>
+                                <Image source={require('../../../assets/question.png')} style={styles.iconTop} />
+                                <Text style={styles.buttonLabel}>Pomoc</Text>
+                            </TouchableOpacity>
                         </View>
                     )}
 
                     {showHint && !isKeyboardVisible && (
                         <View style={styles.hintBox}>
-                            <Text style={styles.hintTitle}>Mnożenie wielocyfrowe:</Text>
-                            <Text style={styles.hintText}>1. Pomnóż górną liczbę przez jedności (pierwszy rząd).{'\n'}2. Pomnóż przez dziesiątki (drugi rząd, przesuń w lewo).{'\n'}3. Dodaj oba wyniki.</Text>
+                            <Text style={styles.hintTitle}>Mnożenie pisemne:</Text>
+                            <Text style={styles.hintText}>1. Pomnóż górną liczbę przez jedności.{'\n'}2. Pomnóż przez dziesiątki (przesuń w lewo).{'\n'}3. Dodaj oba wyniki.</Text>
                         </View>
                     )}
 
@@ -230,8 +199,6 @@ const WrittenMultiDigitMultiplicationTrainer = () => {
                             <Text style={styles.questionMain}>Mnożenie pisemne</Text>
 
                             <View style={styles.columnContainer}>
-
-                                {/* 1. Pamięć (Carries) */}
                                 <View style={[styles.row, {marginBottom: 5}]}>
                                     {carriesTop.map((c, i) => (
                                         <View key={`carry-${i}`} style={styles.cellWrapper}>
@@ -250,17 +217,12 @@ const WrittenMultiDigitMultiplicationTrainer = () => {
                                     ))}
                                 </View>
 
-                                {/* BLOK LICZB (MNOŻNA I MNOŻNIK) - Z LINIĄ */}
                                 <View style={styles.numbersBox}>
-                                    {/* Num 1 */}
                                     <View style={styles.row}>
                                         {n1Arr.map((d, i) => (
-                                            <View key={`n1-${i}`} style={styles.cellWrapper}>
-                                                <Text style={styles.digit}>{d}</Text>
-                                            </View>
+                                            <View key={`n1-${i}`} style={styles.cellWrapper}><Text style={styles.digit}>{d}</Text></View>
                                         ))}
                                     </View>
-                                    {/* Num 2 */}
                                     <View style={styles.row}>
                                         {n2Arr.map((d, i) => (
                                             <View key={`n2-${i}`} style={styles.cellWrapper}>
@@ -270,9 +232,7 @@ const WrittenMultiDigitMultiplicationTrainer = () => {
                                     </View>
                                 </View>
 
-                                {/* BLOK WYNIKÓW CZĄSTKOWYCH - Z LINIĄ */}
                                 <View style={styles.numbersBox}>
-                                    {/* Partial 1 */}
                                     <View style={styles.row}>
                                         {partial1.map((d, i) => (
                                             <View key={`p1-${i}`} style={styles.cellWrapper}>
@@ -290,12 +250,10 @@ const WrittenMultiDigitMultiplicationTrainer = () => {
                                             </View>
                                         ))}
                                     </View>
-                                    {/* Partial 2 */}
                                     <View style={styles.row}>
                                         {partial2.map((d, i) => (
                                             <View key={`p2-${i}`} style={styles.cellWrapper}>
                                                 {i === 0 ? <Text style={styles.digit}>+</Text> : null}
-                                                {/* Schodek: nie pokazujemy ostatniej kratki */}
                                                 {i < GRID_WIDTH_COLS - 1 && i >= GRID_WIDTH_COLS - (num1.length + 2) ? (
                                                     <View style={[styles.inputCell, isCorrect === false && styles.errorFinalCell]}>
                                                         <TextInput
@@ -312,7 +270,6 @@ const WrittenMultiDigitMultiplicationTrainer = () => {
                                     </View>
                                 </View>
 
-                                {/* WYNIK KOŃCOWY */}
                                 <View style={[styles.row, {marginTop: 5}]}>
                                     {finalRes.map((d, i) => (
                                         <View key={`f-${i}`} style={styles.cellWrapper}>
@@ -328,7 +285,6 @@ const WrittenMultiDigitMultiplicationTrainer = () => {
                                         </View>
                                     ))}
                                 </View>
-
                             </View>
 
                             <View style={styles.buttonContainer}>
@@ -353,23 +309,44 @@ const WrittenMultiDigitMultiplicationTrainer = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    keyboardContainer: { flex: 1, justifyContent: 'center' },
+    keyboardContainer: { flex: 1 },
     centerContent: {
         flexGrow: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingTop: 20,
+        paddingTop: 80,
+        paddingBottom: 150,
         paddingHorizontal: 10,
-        paddingBottom: 140 // Duży padding na dole, aby uniknąć kolizji z ikonami
     },
-    topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
-    topBtnItem: { alignItems: 'center', marginLeft: 15 },
-    iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
-    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2 },
-    hintBox: { position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
+    // Przywrócono ikonki obok siebie po prawej stronie
+    topButtons: {
+        position: 'absolute',
+        top: 15,              // Wyżej
+        right: 20,            // Do prawej krawędzi
+        flexDirection: 'row', // Obok siebie
+        alignItems: 'center',
+        zIndex: 100
+    },
+    topBtnItem: {
+        alignItems: 'center',
+        marginLeft: 15,       // Odstęp między ołówkiem a pytajnikiem
+    },
+    iconTop: {
+        width: 50,
+        height: 50,
+        resizeMode: 'contain'
+    },
+    buttonLabel: {
+        fontSize: 11,
+        fontWeight: 'bold',
+        color: '#007AFF',
+        marginTop: -2
+    },
+    hintBox: { position: 'absolute', top: 100, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 101, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
     hintText: { fontSize: 14, color: '#333', textAlign: 'center', lineHeight: 20 },
-    card: { width: '95%', maxWidth: 480, borderRadius: 20, padding: 20, marginTop: 20, alignItems: 'center', alignSelf: 'center' },
+
+    card: { width: '95%', maxWidth: 480, borderRadius: 20, padding: 20, alignItems: 'center', alignSelf: 'center' },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
     questionMain: { fontSize: 24, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 20 },
 
@@ -380,11 +357,11 @@ const styles = StyleSheet.create({
 
     digit: { fontSize: 34, fontWeight: 'bold', width: 46, textAlign: 'center', fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', color: '#222' },
 
-    carryCell: { width: 46, height: 35, justifyContent: 'center', alignItems: 'center', marginHorizontal: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, backgroundColor: '#f9f9f9' },
+    carryCell: { width: 42, height: 32, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#ccc', borderRadius: 4, backgroundColor: '#f9f9f9' },
     carryInput: { width: '100%', height: '100%', fontSize: 18, textAlign: 'center', color: '#888', padding: 0 },
 
-    inputCell: { width: 46, height: 55, borderWidth: 2, borderColor: '#ccc', borderRadius: 8, marginHorizontal: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
-    mainInput: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', color: '#007AFF', width: '100%', height: '100%', padding: 0 },
+    inputCell: { width: 44, height: 52, borderWidth: 2, borderColor: '#ccc', borderRadius: 8, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
+    mainInput: { fontSize: 26, fontWeight: 'bold', textAlign: 'center', color: '#007AFF', width: '100%', height: '100%', padding: 0 },
 
     correctFinalCell: { borderColor: '#28a745', backgroundColor: '#d4edda' },
     errorFinalCell: { borderColor: '#dc3545', backgroundColor: '#f8d7da' },
@@ -393,10 +370,19 @@ const styles = StyleSheet.create({
     result: { fontSize: 18, fontWeight: '700', marginTop: 15, textAlign: 'center' },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
-    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
-    iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
+    counterTextSmall: { fontSize: 12, fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
+
+    iconsBottom: {
+        position: 'absolute',
+        bottom: 25,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        zIndex: 100
+    },
     iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    counterTextIcons: { fontSize: Math.max(14, combinedIconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' }, // Zmieniono font na standardowy
+    counterTextIcons: { fontSize: 20, marginHorizontal: 8, textAlign: 'center', color: '#333', fontWeight: 'bold' },
 
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
     drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },

@@ -17,11 +17,11 @@ import {
     KeyboardAvoidingView,
     TouchableWithoutFeedback,
     ScrollView,
-    InteractionManager
 } from 'react-native';
 import Svg, { Path, Line, Text as SvgText, G } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native'; // DODANE DO NAWIGACJI
 
-// --- INTEGRACJA Z FIREBASE (Bez zmian) ---
+// --- INTEGRACJA Z FIREBASE ---
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { awardXpAndCoins } from '../../../services/xpService';
@@ -29,9 +29,8 @@ import { awardXpAndCoins } from '../../../services/xpService';
 const EXERCISE_ID = "fractionsNumberLine_cl4";
 const TASKS_LIMIT = 30;
 const screenWidth = Dimensions.get('window').width;
-const combinedIconSize = screenWidth * 0.25;
+const combinedIconSize = screenWidth * 0.22;
 
-// --- FUNKCJE POMOCNICZE ---
 const rnd = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 const getCanonicalParts = (value: number, denominator: number) => {
@@ -45,7 +44,6 @@ const getCanonicalParts = (value: number, denominator: number) => {
     return { whole, num, den, isInteger: false };
 };
 
-// --- DANE ZADANIA ---
 type NumberLineTask = {
     start: number;
     stepVal: number;
@@ -56,7 +54,6 @@ type NumberLineTask = {
     hint: string;
 };
 
-// --- GENERATOR ZADAŃ ---
 const generateTask = (): NumberLineTask => {
     const types = [2, 3, 4, 5, 6, 8, 10];
     const denominator = types[rnd(0, types.length - 1)];
@@ -69,7 +66,6 @@ const generateTask = (): NumberLineTask => {
 
     const ticksCount = rnd(5, 7);
     const hiddenIndex = rnd(1, ticksCount - 2);
-
     const totalParts = (startInteger * denominator) + hiddenIndex;
     const answer = totalParts / denominator;
 
@@ -80,11 +76,9 @@ const generateTask = (): NumberLineTask => {
     else partsName = `${denominator} równych części`;
 
     const hint = `Jeden cały odcinek (np. od 0 do 1) podzielono na ${partsName}.\nJeden mały skok to ułamek 1/${denominator}.`;
-
     return { start: startInteger, stepVal, denominator, hiddenIndex, answer, ticksCount, hint };
 };
 
-// --- RYSOWANIE OSI ---
 const NumberLineRenderer = ({ task }: { task: NumberLineTask }) => {
     const canvasWidth = 350;
     const canvasHeight = 160;
@@ -95,10 +89,8 @@ const NumberLineRenderer = ({ task }: { task: NumberLineTask }) => {
 
     const renderTickLabel = (x: number, y: number, value: number, isHidden: boolean) => {
         if (isHidden) return <SvgText x={x} y={y + 10} fill="#E63946" fontSize="32" fontWeight="bold" textAnchor="middle">?</SvgText>;
-
         const { whole, num, den, isInteger } = getCanonicalParts(value, task.denominator);
         const textColor = "#333";
-
         if (isInteger) return <SvgText x={x} y={y} fill={textColor} fontSize="18" fontWeight="600" textAnchor="middle">{whole}</SvgText>;
 
         const fontSizeWhole = 18;
@@ -130,22 +122,18 @@ const NumberLineRenderer = ({ task }: { task: NumberLineTask }) => {
         );
     }
 
-    const lineStartX = 5;
-    const lineEndX = canvasWidth - 15;
-
     return (
         <View style={styles.svgContainer}>
             <Svg width="100%" height="100%" viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}>
-                <Line x1={lineStartX} y1={lineY} x2={lineEndX} y2={lineY} stroke="#333" strokeWidth="3" />
-                <Path d={`M ${lineEndX - 10} ${lineY - 7} L ${lineEndX + 5} ${lineY} L ${lineEndX - 10} ${lineY + 7}`} stroke="#333" strokeWidth="3" fill="none" />
-                {task.start > 0 && <Path d={`M ${lineStartX} ${lineY} L ${lineStartX + 15} ${lineY}`} stroke="#333" strokeWidth="3" strokeDasharray="4, 4" />}
+                <Line x1={5} y1={lineY} x2={canvasWidth - 15} y2={lineY} stroke="#333" strokeWidth="3" />
+                <Path d={`M ${canvasWidth - 25} ${lineY - 7} L ${canvasWidth - 10} ${lineY} L ${canvasWidth - 25} ${lineY + 7}`} stroke="#333" strokeWidth="3" fill="none" />
+                {task.start > 0 && <Path d={`M 5 ${lineY} L 20 ${lineY}`} stroke="#333" strokeWidth="3" strokeDasharray="4, 4" />}
                 {ticks}
             </Svg>
         </View>
     );
 };
 
-// --- BRUDNOPIS ---
 const DrawingModal = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
@@ -174,8 +162,8 @@ const DrawingModal = ({ visible, onClose }: { visible: boolean; onClose: () => v
     );
 };
 
-// --- GŁÓWNY EKRAN ---
 const FractionsNumberLineTrainerPL = () => {
+    const navigation = useNavigation(); // DO PRZEKIEROWANIA DO PODTEMATÓW
     const [taskData, setTaskData] = useState<NumberLineTask | null>(null);
     const [userWhole, setUserWhole] = useState('');
     const [userNum, setUserNum] = useState('');
@@ -193,8 +181,10 @@ const FractionsNumberLineTrainerPL = () => {
     const [isNumCorrect, setIsNumCorrect] = useState<boolean | null>(null);
     const [isDenCorrect, setIsDenCorrect] = useState<boolean | null>(null);
 
-    const backgroundColor = useRef(new Animated.Value(0)).current;
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
 
+    const backgroundColor = useRef(new Animated.Value(0)).current;
     const wholeInputRef = useRef<TextInput>(null);
     const numInputRef = useRef<TextInput>(null);
     const denInputRef = useRef<TextInput>(null);
@@ -206,11 +196,17 @@ const FractionsNumberLineTrainerPL = () => {
     }, []);
 
     const nextTask = () => {
+        if (counter > 0 && counter % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
+
         if (counter >= TASKS_LIMIT) {
-            setMessage(`Gratulacje! 🎉 Ukończono ${TASKS_LIMIT} zadań!`);
+            setMessage(`Gratulacje! 🎉 Ukończono arkusz!`);
             setReadyForNext(false);
             return;
         }
+
         const t = generateTask();
         setTaskData(t);
         setUserWhole(''); setUserNum(''); setUserDen('');
@@ -228,44 +224,28 @@ const FractionsNumberLineTrainerPL = () => {
     const handleCheck = () => {
         Keyboard.dismiss();
         if (!taskData) return;
-
         if (!userWhole && !userNum && !userDen) { setMessage('Wpisz odpowiedź!'); return; }
         if ((userNum && !userDen) || (!userNum && userDen)) { setMessage('Uzupełnij obie części ułamka!'); return; }
 
         const w = userWhole === '' ? 0 : parseInt(userWhole);
         const n = userNum === '' ? 0 : parseInt(userNum);
         const d = userDen === '' ? 1 : parseInt(userDen);
-
         if (d === 0) { setMessage('Mianownik nie może być 0!'); return; }
 
         const userValue = w + (n / d);
         const isCorrectTotal = Math.abs(userValue - taskData.answer) < 0.001;
-
         const currentUser = auth().currentUser;
         const statsDocRef = currentUser ? firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID) : null;
 
         if (isCorrectTotal) {
             setIsWholeCorrect(true); setIsNumCorrect(true); setIsDenCorrect(true);
             setCorrectCount(prev => prev + 1);
+            setSessionCorrect(prev => prev + 1);
             statsDocRef?.set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setMessage('Świetnie! ✅');
             awardXpAndCoins(5, 1);
             setReadyForNext(true);
-            InteractionManager.runAfterInteractions(() => {
-                awardXpAndCoins(5, 1);
-                if (currentUser) {
-                    firestore()
-                        .collection('users')
-                        .doc(currentUser.uid)
-                        .collection('exerciseStats')
-                        .doc(EXERCISE_ID)
-                        .set({
-                            totalCorrect: firestore.FieldValue.increment(1)
-                        }, { merge: true })
-                        .catch(error => console.error("Błąd zapisu sukcesu:", error));
-                }
-            });
         } else {
             if (attemptsLeft === 2) {
                 setAttemptsLeft(1);
@@ -274,16 +254,10 @@ const FractionsNumberLineTrainerPL = () => {
                     Animated.timing(backgroundColor, { toValue: -1, duration: 300, useNativeDriver: false }),
                     Animated.timing(backgroundColor, { toValue: 0, duration: 300, useNativeDriver: false }),
                 ]).start();
-
                 const correctParts = getCanonicalParts(taskData.answer, taskData.denominator);
-                const targetWhole = correctParts.whole;
-                if (w !== targetWhole) { setIsWholeCorrect(false); setUserWhole(''); } else { setIsWholeCorrect(true); }
-
-                const targetNum = correctParts.num;
-                if (n !== targetNum) { setIsNumCorrect(false); setUserNum(''); } else { setIsNumCorrect(true); }
-
-                const targetDen = correctParts.den;
-                if (d !== targetDen) { setIsDenCorrect(false); setUserDen(''); } else { setIsDenCorrect(true); }
+                if (w !== correctParts.whole) { setIsWholeCorrect(false); setUserWhole(''); } else { setIsWholeCorrect(true); }
+                if (n !== correctParts.num) { setIsNumCorrect(false); setUserNum(''); } else { setIsNumCorrect(true); }
+                if (d !== correctParts.den) { setIsDenCorrect(false); setUserDen(''); } else { setIsDenCorrect(true); }
             } else {
                 setAttemptsLeft(0);
                 setWrongCount(prev => prev + 1);
@@ -294,19 +268,6 @@ const FractionsNumberLineTrainerPL = () => {
                 setMessage(`Błąd. Poprawna odpowiedź: ${correctStr}`);
                 setIsWholeCorrect(false); setIsNumCorrect(false); setIsDenCorrect(false);
                 setReadyForNext(true);
-                InteractionManager.runAfterInteractions(() => {
-                    if (currentUser) {
-                        firestore()
-                            .collection('users')
-                            .doc(currentUser.uid)
-                            .collection('exerciseStats')
-                            .doc(EXERCISE_ID)
-                            .set({
-                                totalWrong: firestore.FieldValue.increment(1)
-                            }, { merge: true })
-                            .catch(error => console.error("Błąd zapisu błędu:", error));
-                    }
-                });
             }
         }
     };
@@ -333,16 +294,57 @@ const FractionsNumberLineTrainerPL = () => {
                             </View>
                         </View>
                     )}
+
                     {showHint && taskData && !isKeyboardVisible && (
                         <View style={styles.hintBox}>
                             <Text style={styles.hintTitle}>Podpowiedź:</Text>
                             <Text style={styles.hintText}>{taskData.hint}</Text>
                         </View>
                     )}
+
                     <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} />
 
+                    {/* MODAL RAPORTU - POPRAWIONY PRZYCISK */}
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={[styles.card, { backgroundColor: '#fff', padding: 25 }]}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
+                                        Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
+                                    </Text>
+                                </View>
+                                <Text style={styles.suggestionText}>
+                                    {sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Dobra robota! Trenuj dalej, aby być jeszcze lepszym."}
+                                </Text>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#28a745' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            setSessionCorrect(0);
+                                            nextTask();
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Kontynuuj</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#007AFF' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            navigation.goBack(); // POWRÓT DO PODTEMATÓW
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Inny temat</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
-                        <View style={[styles.card, { backgroundColor: 'transparent' }]}>
+                        <View style={styles.card}>
                             <View style={styles.overlayBackground} />
                             <Text style={styles.title}>Ułamki na Osi</Text>
                             <Text style={styles.taskLabel}>Jaką liczbę ukryto pod "?"</Text>
@@ -357,11 +359,7 @@ const FractionsNumberLineTrainerPL = () => {
                                 <View style={styles.wholeContainer}>
                                     <TextInput
                                         ref={wholeInputRef}
-                                        style={[
-                                            styles.wholeInput,
-                                            isWholeCorrect === false && styles.inputError,
-                                            isWholeCorrect === true && styles.inputCorrect
-                                        ]}
+                                        style={[styles.wholeInput, isWholeCorrect === false && styles.inputError, isWholeCorrect === true && styles.inputCorrect]}
                                         keyboardType="numeric"
                                         value={userWhole}
                                         onChangeText={setUserWhole}
@@ -369,31 +367,21 @@ const FractionsNumberLineTrainerPL = () => {
                                         placeholderTextColor="#ddd"
                                         editable={!readyForNext}
                                         maxLength={2}
-                                        // --- ZMIANA: blurOnSubmit={false} ---
                                         blurOnSubmit={false}
                                         onSubmitEditing={() => numInputRef.current?.focus()}
                                         returnKeyType="next"
                                     />
                                     <Text style={styles.labelSmall}>Całości</Text>
                                 </View>
-
                                 <View style={styles.fractionContainer}>
                                     <TextInput
                                         ref={numInputRef}
-                                        style={[
-                                            styles.fractionInput,
-                                            isNumCorrect === false && styles.inputError,
-                                            isNumCorrect === true && styles.inputCorrect
-                                        ]}
+                                        style={[styles.fractionInput, isNumCorrect === false && styles.inputError, isNumCorrect === true && styles.inputCorrect]}
                                         keyboardType="numeric"
                                         value={userNum}
-                                        onChangeText={(v) => {
-                                            setUserNum(v);
-                                            if(v.length >= 1) denInputRef.current?.focus();
-                                        }}
+                                        onChangeText={(v) => { setUserNum(v); if(v.length >= 1) denInputRef.current?.focus(); }}
                                         editable={!readyForNext}
                                         maxLength={2}
-                                        // --- ZMIANA: blurOnSubmit={false} ---
                                         blurOnSubmit={false}
                                         onSubmitEditing={() => denInputRef.current?.focus()}
                                         returnKeyType="next"
@@ -403,17 +391,12 @@ const FractionsNumberLineTrainerPL = () => {
                                     <View style={styles.fractionLine} />
                                     <TextInput
                                         ref={denInputRef}
-                                        style={[
-                                            styles.fractionInput,
-                                            isDenCorrect === false && styles.inputError,
-                                            isDenCorrect === true && styles.inputCorrect
-                                        ]}
+                                        style={[styles.fractionInput, isDenCorrect === false && styles.inputError, isDenCorrect === true && styles.inputCorrect]}
                                         keyboardType="numeric"
                                         value={userDen}
                                         onChangeText={setUserDen}
                                         editable={!readyForNext}
                                         maxLength={2}
-                                        // Mianownik może zamykać klawiaturę (default)
                                         returnKeyType="done"
                                         placeholder="M"
                                         placeholderTextColor="#ddd"
@@ -446,10 +429,10 @@ const FractionsNumberLineTrainerPL = () => {
 const styles = StyleSheet.create({
     keyboardContainer: { flex: 1, justifyContent: 'center' },
     centerContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 20 },
-    topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
-    iconTop: { width: 80, height: 80, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
-    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255, 255, 255, 0.8)', textShadowRadius: 3 },
-    hintBox: { position: 'absolute', top: 130, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 15, maxWidth: 280, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
+    topButtons: { position: 'absolute', top: 25, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 100 },
+    iconTop: { width: 60, height: 60, resizeMode: 'contain' },
+    buttonLabel: { fontSize: 12, fontWeight: 'bold', color: '#007AFF', marginTop: -2, textShadowColor: 'rgba(255, 255, 255, 0.8)', textShadowRadius: 3 },
+    hintBox: { position: 'absolute', top: 95, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 15, maxWidth: 280, zIndex: 101, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
     hintText: { fontSize: 15, color: '#333', lineHeight: 22 },
     card: { width: '95%', maxWidth: 450, borderRadius: 20, padding: 20, alignItems: 'center' },
@@ -471,10 +454,10 @@ const styles = StyleSheet.create({
     result: { fontSize: 18, fontWeight: '700', marginTop: 20, textAlign: 'center' },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
-    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
-    iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
+    counterTextSmall: { fontSize: 12, fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
+    iconsBottom: { position: 'absolute', bottom: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%', zIndex: 100 },
     iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    counterTextIcons: { fontSize: Math.max(14, combinedIconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
+    counterTextIcons: { fontSize: 18, marginHorizontal: 8, textAlign: 'center', color: '#333', fontWeight: 'bold' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
     drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
     drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, backgroundColor: '#f0f0f0', borderBottomWidth: 1, borderBottomColor: '#ccc' },
@@ -482,6 +465,13 @@ const styles = StyleSheet.create({
     headerButton: { padding: 5 },
     headerButtonText: { fontSize: 16, color: '#007AFF' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
 });
 
 export default FractionsNumberLineTrainerPL;
