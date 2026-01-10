@@ -1120,13 +1120,6 @@
           }
         ]
       }
-    },
-    "POLA FIGUR": {
-      "Co to jest pole figury?": { "theoryTitle": "Ile miejsca zajmuje figura?", "questions": [] },
-      "Jednostki pola": { "theoryTitle": "W czym mierzymy pole?", "questions": [] },
-      "Pole prostokąta": { "theoryTitle": "Liczymy pole prostokąta", "questions": [] },
-      "Zależności między jednostkami pola": { "theoryTitle": "Przeliczamy jednostki pola", "questions": [] },
-      "Wycinanki i układanki": { "theoryTitle": "Zabawy z polami figur", "questions": [] }
     }
   },
   "5": {

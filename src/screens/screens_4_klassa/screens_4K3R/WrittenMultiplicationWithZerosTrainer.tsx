@@ -5,6 +5,7 @@ import {
     Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager
 } from 'react-native';
 import Svg, { Path, Line } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native'; // DODANE
 import { awardXpAndCoins } from '../../../services/xpService';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -49,6 +50,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const WrittenMultiplicationWithZerosTrainer = () => {
+    const navigation = useNavigation(); // DODANE
     const [num1Base, setNum1Base] = useState('0');
     const [num1Zeros, setNum1Zeros] = useState(0);
     const [num2Base, setNum2Base] = useState('0');
@@ -63,6 +65,11 @@ const WrittenMultiplicationWithZerosTrainer = () => {
     const [wrongCount, setWrongCount] = useState<number>(0);
     const [taskCount, setTaskCount] = useState<number>(0);
     const [firstAttempt, setFirstAttempt] = useState<boolean>(true);
+
+    // NOWE STANY RAPORTU
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
+
     const [message, setMessage] = useState('');
     const [showScratchpad, setShowScratchpad] = useState(false);
     const [showHint, setShowHint] = useState(false);
@@ -127,34 +134,22 @@ const WrittenMultiplicationWithZerosTrainer = () => {
 
         if (userRes === fullResult) {
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
-            setCorrectCount(c => c + 1); setMessage('Świetnie! ✅'); setReadyForNext(true); setIsCorrect(true);
+            setCorrectCount(c => c + 1);
+            setSessionCorrect(s => s + 1); // LICZNIK SESJI
+            setMessage('Świetnie! ✅'); setReadyForNext(true); setIsCorrect(true);
             InteractionManager.runAfterInteractions(() => awardXpAndCoins(5, 1));
             const currentUser = auth().currentUser;
             if (currentUser) {
-                firestore()
-                    .collection('users')
-                    .doc(currentUser.uid)
-                    .collection('exerciseStats')
-                    .doc(EXERCISE_ID)
-                    .set({
-                        totalCorrect: firestore.FieldValue.increment(1)
-                    }, { merge: true })
-                    .catch(error => console.error("Błąd zapisu do bazy:", error));
+                firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                    .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
             }
         } else {
             Animated.timing(backgroundColor, { toValue: -1, duration: 500, useNativeDriver: false }).start();
             InteractionManager.runAfterInteractions(() => {
                 const currentUser = auth().currentUser;
                 if (currentUser) {
-                    firestore()
-                        .collection('users')
-                        .doc(currentUser.uid)
-                        .collection('exerciseStats')
-                        .doc(EXERCISE_ID)
-                        .set({
-                            totalWrong: firestore.FieldValue.increment(1)
-                        }, { merge: true })
-                        .catch(error => console.error("Błąd zapisu błędnych:", error));
+                    firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                        .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
                 }
             });
             if (firstAttempt) {
@@ -168,6 +163,12 @@ const WrittenMultiplicationWithZerosTrainer = () => {
     };
 
     const nextTask = () => {
+        // Blokada raportu co 10 zadań
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
+
         if (taskCount >= TASKS_LIMIT) { setMessage('Koniec! 🏆'); return; }
         setTaskCount(t => t + 1); generateProblem();
     };
@@ -200,13 +201,32 @@ const WrittenMultiplicationWithZerosTrainer = () => {
 
                     <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={`${num1Base}${"0".repeat(num1Zeros)} × ${num2Base}${"0".repeat(num2Zeros)}`} />
 
+                    {/* MODAL MILESTONE */}
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%</Text>
+                                </View>
+                                <Text style={styles.suggestionText}>{sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}</Text>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Inny temat</Text></TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
                             <View style={styles.overlayBackground} />
                             <Text style={styles.questionMain}>Mnożenie z zerami</Text>
 
+
+
                             <View style={[styles.mathGrid, { width: (totalGridWidth + 1) * CELL_SIZE }]}>
-                                {/* Memory Row */}
                                 <View style={styles.row}>
                                     <View style={styles.cell} />
                                     {new Array(totalGridWidth).fill(0).map((_, i) => {
@@ -221,7 +241,6 @@ const WrittenMultiplicationWithZerosTrainer = () => {
                                     })}
                                 </View>
 
-                                {/* Row 1 */}
                                 <View style={styles.row}>
                                     <View style={styles.cell} />
                                     {num1Base.padStart(totalBaseCols, ' ').split('').concat(new Array(num1Zeros).fill('0')).map((d, i) => (
@@ -229,7 +248,6 @@ const WrittenMultiplicationWithZerosTrainer = () => {
                                     ))}
                                 </View>
 
-                                {/* Row 2 + Operator */}
                                 <View style={styles.row}>
                                     <View style={styles.cell}><Text style={styles.digit}>×</Text></View>
                                     {new Array(totalBaseCols - 1).fill(' ').concat(num2Base.split('')).concat(new Array(num2Zeros).fill('0')).map((d, i) => (
@@ -237,7 +255,6 @@ const WrittenMultiplicationWithZerosTrainer = () => {
                                     ))}
                                 </View>
 
-                                {/* Lines and Dashed separator */}
                                 <View style={styles.separatorContainer}>
                                     <View style={styles.horizontalLine} />
                                     <View style={[styles.dashedLine, { left: (totalBaseCols + 1) * CELL_SIZE - 1 }]}>
@@ -245,7 +262,6 @@ const WrittenMultiplicationWithZerosTrainer = () => {
                                     </View>
                                 </View>
 
-                                {/* Result Cells */}
                                 <View style={styles.row}>
                                     <View style={styles.cell} />
                                     {userDigits.map((d, i) => {
@@ -273,7 +289,9 @@ const WrittenMultiplicationWithZerosTrainer = () => {
                     </ScrollView>
 
                     {!isKeyboardVisible && (
-                        <View style={styles.iconsBottom}><Image source={require('../../../assets/happy.png')} style={styles.iconSame} /><Text style={styles.counterTextIcons}>{correctCount}</Text><Image source={require('../../../assets/sad.png')} style={styles.iconSame} /><Text style={styles.counterTextIcons}>{wrongCount}</Text></View>
+                        <View style={styles.iconsBottom}>
+                            <Image source={require('../../../assets/happy.png')} style={styles.iconSame} /><Text style={styles.counterTextIcons}>{correctCount}</Text><Image source={require('../../../assets/sad.png')} style={styles.iconSame} /><Text style={styles.counterTextIcons}>{wrongCount}</Text>
+                        </View>
                     )}
                 </KeyboardAvoidingView>
             </View>
@@ -328,6 +346,14 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
 });
 
 export default WrittenMultiplicationWithZerosTrainer;

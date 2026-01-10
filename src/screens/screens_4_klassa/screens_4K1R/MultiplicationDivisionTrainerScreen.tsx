@@ -20,10 +20,10 @@ import {
     InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native'; // DODANE
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-// Make sure this path is correct for your project structure
 import { awardXpAndCoins } from '../../../services/xpService';
 
 const EXERCISE_ID = "combinedDecompositionTrainer";
@@ -32,11 +32,9 @@ const TASKS_LIMIT = 100;
 const { width: screenWidth } = Dimensions.get('window');
 const isSmallDevice = screenWidth < 380;
 
-// Element sizes
 const combinedIconSize = screenWidth * 0.25;
 const combinedInputSize = isSmallDevice ? 70 : 90;
 
-// --- DRAWING COMPONENT (BRUDNOPIS) ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
@@ -93,22 +91,17 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const CombinedDecompositionTrainer = () => {
-    // --- STATE: Game Mode ---
+    const navigation = useNavigation(); // DODANE
     const [mode, setMode] = useState<'multiplication' | 'division'>('multiplication');
-
-    // --- STATE: Numbers ---
     const [mainNumber, setMainNumber] = useState<number>(0);
     const [operand, setOperand] = useState<number>(0);
 
-    // --- STATE: Inputs ---
     const [decomp1, setDecomp1] = useState<string>('');
     const [decomp2, setDecomp2] = useState<string>('');
     const [partial1, setPartial1] = useState<string>('');
     const [partial2, setPartial2] = useState<string>('');
     const [final, setFinal] = useState<string>('');
 
-    // --- STATE: Validation ---
-    // null = empty (neutral), true = correct, false = error
     const [validation, setValidation] = useState({
         decomp1: null as boolean | null,
         decomp2: null as boolean | null,
@@ -117,12 +110,16 @@ const CombinedDecompositionTrainer = () => {
         final: null as boolean | null,
     });
 
-    // --- STATE: UI & Game Logic ---
     const [readyForNext, setReadyForNext] = useState<boolean>(false);
     const [correctCount, setCorrectCount] = useState<number>(0);
     const [wrongCount, setWrongCount] = useState<number>(0);
     const [taskCount, setTaskCount] = useState<number>(0);
     const [firstAttempt, setFirstAttempt] = useState<boolean>(true);
+
+    // --- NOWE STANY RAPORTU ---
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
+
     const [message, setMessage] = useState('');
     const [showScratchpad, setShowScratchpad] = useState(false);
     const [showHint, setShowHint] = useState(false);
@@ -139,6 +136,12 @@ const CombinedDecompositionTrainer = () => {
     }, []);
 
     const nextTask = () => {
+        // Blokada raportu co 10 zadań
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
+
         if (taskCount >= TASKS_LIMIT) {
             setMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
             setReadyForNext(false);
@@ -184,7 +187,6 @@ const CombinedDecompositionTrainer = () => {
     const toggleScratchpad = () => setShowScratchpad(prev => !prev);
     const toggleHint = () => setShowHint(prev => !prev);
 
-    // --- MAIN CHECK FUNCTION ---
     const handleCheck = () => {
         Keyboard.dismiss();
 
@@ -200,7 +202,6 @@ const CombinedDecompositionTrainer = () => {
             const p2 = Number(partial2);
             const fin = Number(final);
 
-            // Initialize validation state
             let valState = {
                 decomp1: null as boolean | null,
                 decomp2: null as boolean | null,
@@ -212,35 +213,23 @@ const CombinedDecompositionTrainer = () => {
             let isFinalCorrect = false;
 
             if (mode === 'multiplication') {
-                // --- MULTIPLICATION ---
                 const correctTens = Math.floor(mainNumber / 10) * 10;
                 const correctOnes = mainNumber % 10;
                 const correctFinal = mainNumber * operand;
-
-                // Check final
                 valState.final = (fin === correctFinal);
                 isFinalCorrect = valState.final;
-
-                // Check partials ONLY if filled
                 if (decomp1.trim() !== '') valState.decomp1 = (d1 === correctTens);
                 if (decomp2.trim() !== '') valState.decomp2 = (d2 === correctOnes);
                 if (partial1.trim() !== '') valState.partial1 = (p1 === correctTens * operand);
                 if (partial2.trim() !== '') valState.partial2 = (p2 === correctOnes * operand);
-
             } else {
-                // --- DIVISION ---
                 const correctFinal = mainNumber / operand;
-
-                // Check final
                 valState.final = (fin === correctFinal);
                 isFinalCorrect = valState.final;
-
-                // Decomposition for division
                 if (decomp1.trim() !== '' && decomp2.trim() !== '') {
                     const isValidDecomp = (d1 + d2 === mainNumber) && (d1 % operand === 0) && (d2 % operand === 0) && d1 > 0 && d2 > 0;
                     valState.decomp1 = isValidDecomp;
                     valState.decomp2 = isValidDecomp;
-
                     if (isValidDecomp) {
                         if (partial1.trim() !== '') valState.partial1 = (p1 === d1 / operand);
                         if (partial2.trim() !== '') valState.partial2 = (p2 === d2 / operand);
@@ -248,22 +237,20 @@ const CombinedDecompositionTrainer = () => {
                         if (partial1.trim() !== '') valState.partial1 = false;
                         if (partial2.trim() !== '') valState.partial2 = false;
                     }
-                }
-                else if (decomp1.trim() !== '' || decomp2.trim() !== '') {
+                } else if (decomp1.trim() !== '' || decomp2.trim() !== '') {
                     if (decomp1.trim() !== '') valState.decomp1 = false;
                     if (decomp2.trim() !== '') valState.decomp2 = false;
                 }
             }
 
             setValidation(valState);
-
             const hasErrors = Object.values(valState).includes(false);
             const isSuccess = isFinalCorrect && !hasErrors;
 
             if (isSuccess) {
-                // SUCCESS
                 Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
                 setCorrectCount(prev => prev + 1);
+                setSessionCorrect(prev => prev + 1); // Licznik sesji
                 setMessage('Świetnie! ✅');
                 setReadyForNext(true);
                 setShowHint(false);
@@ -277,18 +264,13 @@ const CombinedDecompositionTrainer = () => {
                     }
                 });
             } else {
-                // ERROR
                 Animated.sequence([
                     Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
                     Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
                 ]).start();
 
                 if (firstAttempt) {
-                    if (isFinalCorrect && hasErrors) {
-                        setMessage('Wynik dobry, ale sprawdź obliczenia pomocnicze.');
-                    } else {
-                        setMessage('Błąd! Spróbuj ponownie.');
-                    }
+                    setMessage(isFinalCorrect && hasErrors ? 'Wynik dobry, ale sprawdź obliczenia pomocnicze.' : 'Błąd! Spróbuj ponownie.');
                     setFirstAttempt(false);
                 } else {
                     const correctAns = mode === 'multiplication' ? mainNumber * operand : mainNumber / operand;
@@ -361,6 +343,47 @@ const CombinedDecompositionTrainer = () => {
 
                     <DrawingModal visible={showScratchpad} onClose={toggleScratchpad} problemText={problemString} />
 
+                    {/* MODAL PODSUMOWANIA CO 10 ZADAŃ */}
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
+                                        Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
+                                    </Text>
+                                </View>
+                                <Text style={styles.suggestionText}>
+                                    {sessionCorrect >= 8
+                                        ? "Rewelacyjnie! Jesteś mistrzem!"
+                                        : "Trenuj dalej, aby być jeszcze lepszym."}
+                                </Text>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#28a745' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            setSessionCorrect(0);
+                                            nextTask();
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Kontynuuj</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#007AFF' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            navigation.goBack();
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Inny temat</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
                             <View style={styles.overlayBackground} />
@@ -372,7 +395,6 @@ const CombinedDecompositionTrainer = () => {
                                 {mode === 'multiplication' ? 'Rozłóż liczbę i pomnóż (opcjonalnie)' : 'Rozłóż liczbę i podziel (opcjonalnie)'}
                             </Text>
 
-                            {/* --- STEP 1: DECOMPOSITION --- */}
                             <View style={styles.row}>
                                 <View style={styles.col}>
                                     <Text style={styles.stepLabel}>Rozkład</Text>
@@ -401,13 +423,11 @@ const CombinedDecompositionTrainer = () => {
                                 </View>
                             </View>
 
-                            {/* --- ARROWS --- */}
                             <View style={styles.arrowRow}>
                                 <Text style={styles.arrowText}>↓ {step2Op} {operand}</Text>
                                 <Text style={styles.arrowText}>↓ {step2Op} {operand}</Text>
                             </View>
 
-                            {/* --- STEP 2: PARTIAL RESULTS --- */}
                             <View style={styles.row}>
                                 <TextInput
                                     style={getFieldStyle('partial1')}
@@ -430,7 +450,6 @@ const CombinedDecompositionTrainer = () => {
                                 />
                             </View>
 
-                            {/* --- FINAL ARROWS --- */}
                             <View style={styles.arrowRow}>
                                 <Text style={styles.arrowText}>↘</Text>
                                 <Text style={styles.arrowText}>↙</Text>
@@ -473,67 +492,43 @@ const CombinedDecompositionTrainer = () => {
     );
 };
 
-// Styles
 const fontSizeInput = 20;
 
 const styles = StyleSheet.create({
     keyboardContainer: { flex: 1, justifyContent: 'center' },
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 20 },
-
-    // Top Buttons
     topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
     iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
     buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255, 255, 255, 0.8)', textShadowRadius: 3 },
-
-    // Hint Box
-    hintBox: {
-        position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF'
-    },
+    hintBox: { position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
     hintText: { fontSize: 14, color: '#333', lineHeight: 20, textAlign: 'center' },
-
-    // Card
     card: { width: '95%', maxWidth: 480, borderRadius: 20, padding: 20, alignItems: 'center', marginTop: 20, alignSelf: 'center' },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
-
     taskLabel: { fontSize: 18, fontWeight: '700', marginBottom: 5, color: '#007AFF', textAlign: 'center', textTransform: 'uppercase' },
     taskTextMain: { fontSize: isSmallDevice ? 28 : 36, fontWeight: 'bold', marginBottom: 5, color: '#333', textAlign: 'center' },
     subTitle: { fontSize: 16, marginBottom: 20, color: '#555', textAlign: 'center' },
-
-    // Math Layout
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 5 },
     col: { alignItems: 'center' },
     stepLabel: { fontSize: 12, color: '#777', marginBottom: 4 },
     plusSign: { fontSize: 24, fontWeight: 'bold', color: '#555', marginHorizontal: 10, marginTop: 15 },
-
     arrowRow: { flexDirection: 'row', justifyContent: 'space-around', width: '60%', marginBottom: 10 },
     arrowText: { fontSize: 16, fontWeight: 'bold', color: '#007AFF' },
-
-    // Inputs (Small)
     input: { width: combinedInputSize, height: 50, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: fontSizeInput, backgroundColor: '#fafafa', color: '#333' },
     correctInput: { width: combinedInputSize, height: 50, borderWidth: 2, borderColor: '#28a745', borderRadius: 10, textAlign: 'center', fontSize: fontSizeInput, backgroundColor: '#d4edda', color: '#155724' },
     errorInput: { width: combinedInputSize, height: 50, borderWidth: 2, borderColor: '#dc3545', borderRadius: 10, textAlign: 'center', fontSize: fontSizeInput, backgroundColor: '#f8d7da', color: '#721c24' },
-
-    // Final Input (Big)
     finalInput: { width: 180, height: 56, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: 24, backgroundColor: '#fafafa', marginTop: 10, color: '#333' },
     correctFinal: { width: 180, height: 56, borderWidth: 2, borderColor: '#28a745', borderRadius: 10, textAlign: 'center', fontSize: 24, backgroundColor: '#d4edda', marginTop: 10, color: '#155724' },
     errorFinal: { width: 180, height: 56, borderWidth: 2, borderColor: '#dc3545', borderRadius: 10, textAlign: 'center', fontSize: 24, backgroundColor: '#f8d7da', marginTop: 10, color: '#721c24' },
-
     buttonContainer: { marginTop: 20, width: '80%', borderRadius: 10, overflow: 'hidden' },
     result: { fontSize: 18, fontWeight: '700', marginTop: 15, textAlign: 'center' },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
-
-    // Counter
     counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
-
-    // Bottom Icons
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
     counterTextIcons: { fontSize: Math.max(14, combinedIconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
-
-    // Modal
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
     drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
     drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, backgroundColor: '#f0f0f0', borderBottomWidth: 1, borderBottomColor: '#ccc' },
@@ -544,6 +539,16 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
+
+    // MILESTONE STYLES
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
 });
 
 export default CombinedDecompositionTrainer;

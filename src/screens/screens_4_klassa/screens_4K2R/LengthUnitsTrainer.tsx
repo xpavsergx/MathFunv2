@@ -5,6 +5,7 @@ import {
     Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native'; // Dodane dla nawigacji
 import { awardXpAndCoins } from '../../../services/xpService';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -47,6 +48,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const LengthUnitsTrainer = () => {
+    const navigation = useNavigation(); // Dodane dla nawigacji
     const [questionText, setQuestionText] = useState('');
     const [subQuestionText, setSubQuestionText] = useState('');
     const [correctAnswer, setCorrectAnswer] = useState('');
@@ -69,6 +71,10 @@ const LengthUnitsTrainer = () => {
 
     const [isInput1Correct, setIsInput1Correct] = useState<boolean | null>(null);
     const [isInput2Correct, setIsInput2Correct] = useState<boolean | null>(null);
+
+    // Nowe stany raportu
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const [usedTasks, setUsedTasks] = useState<Set<string>>(new Set());
     const backgroundColor = useRef(new Animated.Value(0)).current;
@@ -140,7 +146,9 @@ const LengthUnitsTrainer = () => {
 
         if (check1 && check2) {
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
-            setCorrectCount(prev => prev + 1); setMessage('Świetnie! ✅'); setReadyForNext(true);
+            setCorrectCount(prev => prev + 1);
+            setSessionCorrect(prev => prev + 1); // Licznik serii
+            setMessage('Świetnie! ✅'); setReadyForNext(true);
             setIsCorrect(true);
             InteractionManager.runAfterInteractions(() => { awardXpAndCoins(5, 1);
                 const currentUser = auth().currentUser;
@@ -175,7 +183,7 @@ const LengthUnitsTrainer = () => {
             if (!check1 && !selectedVal) setUserInput('');
             if (!check2) setUserInput2('');
 
-            if (firstAttempt) { setMessage('Błąd. Spróbuj еще raz.'); setFirstAttempt(false); }
+            if (firstAttempt) { setMessage('Błąd. Spróbuj jeszcze raz.'); setFirstAttempt(false); }
             else {
                 const res = correctAnswer2 !== '' ? `${correctAnswer} i ${correctAnswer2}` : correctAnswer;
                 setMessage(`Prawidłowy wynik: ${res}`); setReadyForNext(true);
@@ -185,6 +193,12 @@ const LengthUnitsTrainer = () => {
     };
 
     const nextTask = () => {
+        // Blokada raportu co 10 zadań
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
+
         if (taskCount >= TASKS_LIMIT) { setMessage('Koniec! 🏆'); return; }
         generateProblem();
         setUserInput(''); setUserInput2(''); setIsCorrect(null); setMessage('');
@@ -211,6 +225,42 @@ const LengthUnitsTrainer = () => {
                         <View style={styles.hintBox}><Text style={styles.hintTitle}>Podpowiedź:</Text><Text style={styles.hintText}>{hintText}</Text></View>
                     )}
                     <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={subQuestionText} />
+
+                    {/* MODAL MILESTONE */}
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
+                                        Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
+                                    </Text>
+                                </View>
+                                <Text style={styles.suggestionText}>
+                                    {sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}
+                                </Text>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]}
+                                                      onPress={() => {
+                                                          setShowMilestone(false);
+                                                          setSessionCorrect(0);
+                                                          nextTask();
+                                                      }}>
+                                        <Text style={styles.mButtonText}>Kontynuuj</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]}
+                                                      onPress={() => {
+                                                          setShowMilestone(false);
+                                                          navigation.goBack();
+                                                      }}>
+                                        <Text style={styles.mButtonText}>Inny temat</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
                             <View style={styles.overlayBackground} />
@@ -307,6 +357,16 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
+
+    // MILESTONE STYLES
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
 });
 
 export default LengthUnitsTrainer;

@@ -5,6 +5,7 @@ import {
     Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager
 } from 'react-native';
 import Svg, { Path, Rect, G } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native'; // DODANE
 import { awardXpAndCoins } from '../../../services/xpService';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -50,7 +51,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
     );
 };
 
-// --- ВИЗУАЛИЗАЦИЯ ФИГУР ---
+// --- WIZUALIZACJA FIGUR ---
 const FractionShape = ({ total, shaded, type }: { total: number, shaded: number, type: string }) => {
     const size = 150;
     const center = size / 2;
@@ -83,8 +84,9 @@ const FractionShape = ({ total, shaded, type }: { total: number, shaded: number,
     );
 };
 
-// --- ГЛАВНЫЙ КОМПОНЕНТ ---
+// --- GŁÓWNY KOMPONENT ---
 const FractionsTrainer = () => {
+    const navigation = useNavigation(); // Hook nawigacji
     const [questionText, setQuestionText] = useState('');
     const [currentHint, setCurrentHint] = useState('');
     const [taskData, setTaskData] = useState({ total: 4, shaded: 1, type: '', isTextTask: false });
@@ -97,6 +99,11 @@ const FractionsTrainer = () => {
     const [correctCount, setCorrectCount] = useState(0);
     const [wrongCount, setWrongCount] = useState(0);
     const [taskCount, setTaskCount] = useState(0);
+
+    // Nowe stany dla raportu co 10 zadań
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
+
     const [message, setMessage] = useState('');
     const [showScratchpad, setShowScratchpad] = useState(false);
     const [showHint, setShowHint] = useState(false);
@@ -120,7 +127,7 @@ const FractionsTrainer = () => {
         setReadyForNext(false); setUserNum(''); setUserDen('');
         setAttempts(0); backgroundColor.setValue(0); setShowHint(false);
 
-        const isVisual = Math.random() < 0.55; // 55% шанс на фигурки
+        const isVisual = Math.random() < 0.55;
         let total = 1, shaded = 1, q = "", hint = "", isText = true, type = "";
 
         if (isVisual) {
@@ -176,31 +183,28 @@ const FractionsTrainer = () => {
 
         if (isNCorrect && isDCorrect) {
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
-            setCorrectCount(c => c + 1); setMessage('Doskonale! ✅');
+            setCorrectCount(c => c + 1);
+            setSessionCorrect(prev => prev + 1);
+            setMessage('Doskonale! ✅');
             setReadyForNext(true);
             InteractionManager.runAfterInteractions(() => awardXpAndCoins(10, 2));
             const currentUser = auth().currentUser;
             if (currentUser) {
-                firestore()
-                    .collection('users')
-                    .doc(currentUser.uid)
-                    .collection('exerciseStats')
-                    .doc(EXERCISE_ID)
-                    .set({
-                        totalCorrect: firestore.FieldValue.increment(1)
-                    }, { merge: true })
-                    .catch(error => console.error("Błąd zapisu do bazy:", error));
+                firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                    .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true })
+                    .catch(error => console.error(error));
             }
         } else {
             const nextAttempt = attempts + 1;
             setAttempts(nextAttempt);
             if (nextAttempt < 2) {
                 setMessage('Popraw błędy! ❌');
-                // --- МОДИФИКАЦИЯ: Очищаем только неверное поле ---
                 if (!isNCorrect) setUserNum('');
                 if (!isDCorrect) setUserDen('');
-                // -------------------------------------------------
-                Animated.sequence([Animated.timing(backgroundColor, { toValue: -1, duration: 400, useNativeDriver: false }), Animated.timing(backgroundColor, { toValue: 0, duration: 400, useNativeDriver: false })]).start();
+                Animated.sequence([
+                    Animated.timing(backgroundColor, { toValue: -1, duration: 400, useNativeDriver: false }),
+                    Animated.timing(backgroundColor, { toValue: 0, duration: 400, useNativeDriver: false })
+                ]).start();
             } else {
                 setMessage(`Wynik: ${taskData.shaded}/${taskData.total}`);
                 setWrongCount(w => w + 1); setReadyForNext(true);
@@ -208,15 +212,9 @@ const FractionsTrainer = () => {
                 InteractionManager.runAfterInteractions(() => {
                     const currentUser = auth().currentUser;
                     if (currentUser) {
-                        firestore()
-                            .collection('users')
-                            .doc(currentUser.uid)
-                            .collection('exerciseStats')
-                            .doc(EXERCISE_ID)
-                            .set({
-                                totalWrong: firestore.FieldValue.increment(1)
-                            }, { merge: true })
-                            .catch(error => console.error("Błąd zapisu błędnych:", error));
+                        firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                            .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true })
+                            .catch(error => console.error(error));
                     }
                 });
             }
@@ -224,6 +222,10 @@ const FractionsTrainer = () => {
     };
 
     const nextTask = () => {
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
         if (taskCount >= TASKS_LIMIT) { setMessage('Koniec! 🏆'); return; }
         setTaskCount(t => t + 1); generateProblem();
     };
@@ -242,6 +244,23 @@ const FractionsTrainer = () => {
                             <TouchableOpacity onPress={() => setShowHint(!showHint)} style={styles.topBtnItem}><Image source={require('../../../assets/question.png')} style={styles.iconTop} /><Text style={styles.buttonLabel}>Pomoc</Text></TouchableOpacity>
                         </View>
                     )}
+
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRowMilestone}>
+                                    <Text style={styles.statsTextMilestone}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsTextMilestone, { color: '#28a745', marginTop: 5 }]}>Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%</Text>
+                                </View>
+                                <Text style={styles.suggestionTextMilestone}>{sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}</Text>
+                                <div style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Inny temat</Text></TouchableOpacity>
+                                </div>
+                            </View>
+                        </View>
+                    </Modal>
 
                     {showHint && !isKeyboardVisible && (
                         <View style={styles.hintBox}><Text style={styles.hintTitle}>Pomoc:</Text><Text style={styles.hintText}>{currentHint}</Text></View>
@@ -319,10 +338,20 @@ const styles = StyleSheet.create({
     drawingTitle: { fontSize: 18, fontWeight: 'bold' },
     headerButton: { padding: 10 },
     headerButtonText: { color: '#007AFF', fontWeight: '600' },
-    problemPreviewContainer: { backgroundColor: '#eef6fc', padding: 12, alignItems: 'center' },
+    problemPreviewContainer: { backgroundColor: '#f9f9f9', padding: 12, alignItems: 'center' },
     problemPreviewLabel: { fontSize: 13, color: '#666' },
-    problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', textAlign: 'center' },
-    canvas: { flex: 1, backgroundColor: '#fff' },
+    problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#222', textAlign: 'center' },
+    canvas: { flex: 1, backgroundColor: '#ffffff' },
+
+    // MILESTONE STYLES
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRowMilestone: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsTextMilestone: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionTextMilestone: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', display: 'flex' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
 });
 
 export default FractionsTrainer;

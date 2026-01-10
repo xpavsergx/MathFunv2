@@ -5,6 +5,7 @@ import {
     Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager
 } from 'react-native';
 import Svg, { Path, Rect, G } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native'; // DODANE
 import { awardXpAndCoins } from '../../../services/xpService';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -109,34 +110,29 @@ const ImproperVisuals = ({ num, den, type }: { num: number, den: number, type: '
 
 // --- GŁÓWNY KOMPONENT ---
 const ImproperFractionsTrainer = () => {
+    const navigation = useNavigation(); // Hook nawigacji
     const [task, setTask] = useState({
-        type: 'visual',
-        q: '',
-        h: '',
-        correctNum: 0,
-        correctDen: 1,
-        visType: 'circle' as 'circle' | 'rect',
-        mixedWhole: 0,
-        mixedNum: 0,
-        mixedDen: 0
+        type: 'visual', q: '', h: '', correctNum: 0, correctDen: 1,
+        visType: 'circle' as 'circle' | 'rect', mixedWhole: 0, mixedNum: 0, mixedDen: 0
     });
 
     const [userNum, setUserNum] = useState('');
     const [userDen, setUserDen] = useState('');
-
     const [status, setStatus] = useState<'neutral' | 'correct' | 'wrong'>('neutral');
     const [msg, setMsg] = useState('');
     const [attempts, setAttempts] = useState(0);
     const [ready, setReady] = useState(false);
 
+    // Statystyki i Raport co 10
     const [stats, setStats] = useState({ correct: 0, wrong: 0, count: 0 });
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const [showScratchpad, setShowScratchpad] = useState(false);
     const [showHint, setShowHint] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
     const historyRef = useRef<Set<string>>(new Set());
-
     const numInputRef = useRef<TextInput>(null);
     const denInputRef = useRef<TextInput>(null);
     const bgAnim = useRef(new Animated.Value(0)).current;
@@ -161,63 +157,32 @@ const ImproperFractionsTrainer = () => {
 
         do {
             const typeRoll = Math.random();
-
             if (typeRoll < 0.40) {
                 const den = [3, 4, 5, 6, 8][rnd(0, 4)];
                 const whole = rnd(1, 2);
                 const extra = rnd(1, den - 1);
                 const num = whole * den + extra;
                 const visType = Math.random() > 0.5 ? 'circle' : 'rect';
-
-                newTask = {
-                    type: 'visual',
-                    q: 'Zapisz zamalowaną część jako ułamek niewłaściwy.',
-                    h: `Policz wszystkie zamalowane małe kawałki - to będzie licznik. Mianownik to liczba kawałków w JEDNEJ figurze.`,
-                    correctNum: num,
-                    correctDen: den,
-                    visType: visType
-                };
+                newTask = { type: 'visual', q: 'Zapisz zamalowaną część jako ułamek niewłaściwy.', h: `Policz wszystkie zamalowane małe kawałki - to będzie licznik. Mianownik to liczba kawałków w JEDNEJ figurze.`, correctNum: num, correctDen: den, visType: visType };
                 uniqueKey = `visual-${num}-${den}-${visType}`;
-            }
-            else if (typeRoll < 0.80) {
+            } else if (typeRoll < 0.80) {
                 const den = rnd(2, 9);
                 const whole = rnd(1, 5);
                 const extra = rnd(1, den - 1);
                 const correctNum = whole * den + extra;
-
-                newTask = {
-                    type: 'mixed_to_improper',
-                    q: 'Zamień liczbę mieszaną na ułamek niewłaściwy.',
-                    h: `Pomnóż całość (${whole}) razy mianownik (${den}) i dodaj licznik (${extra}).`,
-                    correctNum: correctNum,
-                    correctDen: den,
-                    mixedWhole: whole,
-                    mixedNum: extra,
-                    mixedDen: den
-                };
+                newTask = { type: 'mixed_to_improper', q: 'Zamień liczbę mieszaną na ułamek niewłaściwy.', h: `Pomnóż całość (${whole}) razy mianownik (${den}) i dodaj licznik (${extra}).`, correctNum: correctNum, correctDen: den, mixedWhole: whole, mixedNum: extra, mixedDen: den };
                 uniqueKey = `mixed-${whole}-${extra}-${den}`;
-            }
-            else {
+            } else {
                 const whole = rnd(2, 8);
                 const den = rnd(2, 6);
                 const correctNum = whole * den;
-
-                newTask = {
-                    type: 'integer_to_improper',
-                    q: `Przedstaw liczbę ${whole} jako ułamek o mianowniku ${den}.`,
-                    h: `Musisz pomnożyć liczbę ${whole} przez mianownik ${den}, aby otrzymać licznik.`,
-                    correctNum: correctNum,
-                    correctDen: den,
-                    mixedWhole: whole
-                };
+                newTask = { type: 'integer_to_improper', q: `Przedstaw liczbę ${whole} jako ułamek o mianowniku ${den}.`, h: `Musisz pomnożyć liczbę ${whole} przez mianownik ${den}, aby otrzymać licznik.`, correctNum: correctNum, correctDen: den, mixedWhole: whole };
                 uniqueKey = `int-${whole}-${den}`;
             }
-
             attemptCount++;
         } while (historyRef.current.has(uniqueKey) && attemptCount < 20);
 
         historyRef.current.add(uniqueKey);
-
         setTask(newTask);
         setTimeout(() => numInputRef.current?.focus(), 400);
     };
@@ -226,13 +191,14 @@ const ImproperFractionsTrainer = () => {
         if (!userNum || !userDen) { setMsg('Wpisz obie liczby!'); return; }
         const n = parseInt(userNum);
         const d = parseInt(userDen);
-        const isCorrect = n === task.correctNum && d === task.correctDen;
+        const isCorrectResult = n === task.correctNum && d === task.correctDen;
 
-        if (isCorrect) {
+        if (isCorrectResult) {
             setStatus('correct');
             setMsg('Doskonale! ✅');
             Animated.timing(bgAnim, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setStats(s => ({ ...s, correct: s.correct + 1 }));
+            setSessionCorrect(prev => prev + 1);
             setReady(true);
             InteractionManager.runAfterInteractions(() => awardXpAndCoins(10, 2));
             const currentUser = auth().currentUser;
@@ -256,18 +222,20 @@ const ImproperFractionsTrainer = () => {
                 setReady(true);
                 setStats(s => ({ ...s, wrong: s.wrong + 1 }));
                 Animated.timing(bgAnim, { toValue: -1, duration: 500, useNativeDriver: false }).start();
-                InteractionManager.runAfterInteractions(() => {
-                    const currentUser = auth().currentUser;
-                    if (currentUser) {
-                        firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
-                            .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-                    }
-                });
+                const currentUser = auth().currentUser;
+                if (currentUser) {
+                    firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                        .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+                }
             }
         }
     };
 
     const nextTask = () => {
+        if (stats.count > 0 && stats.count % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
         if (stats.count >= TASKS_LIMIT) { setMsg('Koniec treningu! 🏆'); return; }
         setStats(s => ({ ...s, count: s.count + 1 }));
         generateProblem();
@@ -299,6 +267,24 @@ const ImproperFractionsTrainer = () => {
                             </TouchableOpacity>
                         </View>
                     )}
+
+                    {/* MODAL MILESTONE */}
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRowMilestone}>
+                                    <Text style={styles.statsTextMilestone}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsTextMilestone, { color: '#28a745', marginTop: 5 }]}>Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%</Text>
+                                </View>
+                                <Text style={styles.suggestionTextMilestone}>{sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}</Text>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Inny temat</Text></TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
 
                     {showHint && !isKeyboardVisible && (
                         <View style={styles.hintBox}><Text style={styles.hintTitle}>Wskazówka:</Text><Text style={styles.hintText}>{task.h}</Text></View>
@@ -409,6 +395,16 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 13, color: '#666' },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#fff' },
+
+    // MILESTONE STYLES
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRowMilestone: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsTextMilestone: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionTextMilestone: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
 });
 
 export default ImproperFractionsTrainer;

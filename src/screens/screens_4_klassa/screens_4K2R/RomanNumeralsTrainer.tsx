@@ -5,6 +5,7 @@ import {
     Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native'; // Dodane dla nawigacji
 import { awardXpAndCoins } from '../../../services/xpService';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -47,6 +48,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const RomanNumeralsTrainer = () => {
+    const navigation = useNavigation(); // Dodane dla nawigacji
     const [questionText, setQuestionText] = useState('');
     const [subQuestionText, setSubQuestionText] = useState('');
     const [correctAnswer, setCorrectAnswer] = useState('');
@@ -65,6 +67,10 @@ const RomanNumeralsTrainer = () => {
     const [hintText, setHintText] = useState('');
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
     const [isInputWrong, setIsInputWrong] = useState<boolean | null>(null);
+
+    // Nowe stany raportu
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const [usedTasks, setUsedTasks] = useState<Set<string>>(new Set());
     const backgroundColor = useRef(new Animated.Value(0)).current;
@@ -98,19 +104,11 @@ const RomanNumeralsTrainer = () => {
         let finalData: any = {};
         let id = "";
         while (true) {
-            // ИСПРАВЛЕННАЯ ЛОГИКА ВЕСОВ:
             const rangeRoll = Math.random();
             let val;
-            if (rangeRoll < 0.6) {
-                // 60% — Маленькие числа (1-100)
-                val = Math.floor(Math.random() * 99) + 1;
-            } else if (rangeRoll < 0.9) {
-                // 30% — Трехзначные числа (100-1000)
-                val = Math.floor(Math.random() * 900) + 100;
-            } else {
-                // 10% — Четырехзначные числа (1000-3000)
-                val = Math.floor(Math.random() * 2000) + 1000;
-            }
+            if (rangeRoll < 0.6) val = Math.floor(Math.random() * 99) + 1;
+            else if (rangeRoll < 0.9) val = Math.floor(Math.random() * 900) + 100;
+            else val = Math.floor(Math.random() * 2000) + 1000;
 
             const type = Math.random();
             let q = ''; let sub = ''; let ans = ''; let hint = ''; let opts: string[] = [];
@@ -120,7 +118,6 @@ const RomanNumeralsTrainer = () => {
                 ans = val.toString();
                 q = 'Zapisz liczbę w systemie dziesiątkowym:';
                 sub = `${roman} = ...`;
-
                 let specials = [];
                 if (roman.includes('CM')) specials.push('CM (900)');
                 if (roman.includes('CD')) specials.push('CD (400)');
@@ -128,15 +125,10 @@ const RomanNumeralsTrainer = () => {
                 if (roman.includes('XL')) specials.push('XL (40)');
                 if (roman.includes('IX')) specials.push('IX (9)');
                 if (roman.includes('IV')) specials.push('IV (4)');
-
-                hint = specials.length > 0
-                    ? `Pamiętaj о tych parach: ${specials.join(', ')}.`
-                    : `Wartości znaków: I(1), V(5), X(10), L(50), C(100), D(500), M(1000).`;
-
+                hint = specials.length > 0 ? `Pamiętaj o tych parach: ${specials.join(', ')}.` : `Wartości znaków: I(1), V(5), X(10), L(50), C(100), D(500), M(1000).`;
                 if (Math.random() < 0.4) {
                     q = 'Wybierz poprawną liczbę:';
-                    const s = new Set<string>();
-                    s.add(ans);
+                    const s = new Set<string>(); s.add(ans);
                     while (s.size < 4) {
                         const fake = (val + (Math.random() > 0.5 ? 1 : 10) * (Math.floor(Math.random() * 3) + 1)).toString();
                         if (parseInt(fake) > 0) s.add(fake);
@@ -149,19 +141,14 @@ const RomanNumeralsTrainer = () => {
                 q = 'Zapisz liczbę w systemie rzymskim:';
                 sub = `${val} = ...`;
                 hint = "I (1), V (5), X (10), L (50)\nC (100), D (500), M (1000)\n\nXL (40), XC (90), CD (400), CM (900)";
-
                 if (Math.random() < 0.4) {
                     q = 'Wybierz poprawny zapis rzymski:';
-                    const s = new Set<string>();
-                    s.add(ans);
-                    while (s.size < 4) {
-                        s.add(toRoman(val + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 2) + 1)));
-                    }
+                    const s = new Set<string>(); s.add(ans);
+                    while (s.size < 4) s.add(toRoman(val + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 2) + 1)));
                     opts = Array.from(s).sort(() => Math.random() - 0.5);
                 }
                 id = `a2r-${val}`;
             }
-
             if (!usedTasks.has(id)) {
                 finalData = { q, sub, ans, hint, opts };
                 setUsedTasks(prev => new Set(prev).add(id));
@@ -183,20 +170,15 @@ const RomanNumeralsTrainer = () => {
 
         if (isOk) {
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
-            setCorrectCount(prev => prev + 1); setMessage('Świetnie! ✅'); setReadyForNext(true);
+            setCorrectCount(prev => prev + 1);
+            setSessionCorrect(prev => prev + 1); // Licznik serii
+            setMessage('Świetnie! ✅'); setReadyForNext(true);
             setIsCorrect(true);
             InteractionManager.runAfterInteractions(() => { awardXpAndCoins(5, 1);
                 const currentUser = auth().currentUser;
                 if (currentUser) {
-                    firestore()
-                        .collection('users')
-                        .doc(currentUser.uid)
-                        .collection('exerciseStats')
-                        .doc(EXERCISE_ID)
-                        .set({
-                            totalCorrect: firestore.FieldValue.increment(1)
-                        }, { merge: true })
-                        .catch(error => console.error("Błąd zapisu do bazy:", error));
+                    firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                        .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
                 }
             });
         } else {
@@ -204,15 +186,8 @@ const RomanNumeralsTrainer = () => {
             InteractionManager.runAfterInteractions(() => {
                 const currentUser = auth().currentUser;
                 if (currentUser) {
-                    firestore()
-                        .collection('users')
-                        .doc(currentUser.uid)
-                        .collection('exerciseStats')
-                        .doc(EXERCISE_ID)
-                        .set({
-                            totalWrong: firestore.FieldValue.increment(1)
-                        }, { merge: true })
-                        .catch(error => console.error("Błąd zapisu błędnych:", error));
+                    firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                        .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
                 }
             });
             setIsCorrect(false);
@@ -224,6 +199,10 @@ const RomanNumeralsTrainer = () => {
     };
 
     const nextTask = () => {
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
         if (taskCount >= TASKS_LIMIT) { setMessage('Koniec! 🏆'); return; }
         generateProblem();
         setUserInput(''); setIsCorrect(null); setMessage('');
@@ -250,12 +229,33 @@ const RomanNumeralsTrainer = () => {
                         <View style={styles.hintBox}><Text style={styles.hintTitle}>Podpowiedź:</Text><Text style={styles.hintText}>{hintText}</Text></View>
                     )}
                     <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={subQuestionText} />
+
+                    {/* MODAL MILESTONE */}
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%</Text>
+                                </View>
+                                <Text style={styles.suggestionText}>{sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}</Text>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Inny temat</Text></TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
                             <View style={styles.overlayBackground} />
                             <Text style={styles.questionMain}>{questionText}</Text>
-                            <Text style={styles.subQuestion}>{subQuestionText}</Text>
 
+
+
+                            <Text style={styles.subQuestion}>{subQuestionText}</Text>
                             {options.length > 0 ? (
                                 <View style={styles.testContainer}>
                                     {options.map((opt, index) => {
@@ -272,17 +272,12 @@ const RomanNumeralsTrainer = () => {
                                 </View>
                             ) : (
                                 <View style={{ width: '100%', alignItems: 'center' }}>
-                                    <TextInput
-                                        style={[styles.finalInput, isCorrect === true && styles.correctFinal, isInputWrong && styles.errorFinal]}
-                                        autoCapitalize="characters" value={userInput} onChangeText={setUserInput} editable={!readyForNext} placeholder="?"
-                                    />
+                                    <TextInput style={[styles.finalInput, isCorrect === true && styles.correctFinal, isInputWrong && styles.errorFinal]} autoCapitalize="characters" value={userInput} onChangeText={setUserInput} editable={!readyForNext} placeholder="?" />
                                 </View>
                             )}
-
                             {(options.length === 0 || readyForNext) && (
                                 <View style={styles.buttonContainer}><Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : () => handleCheck()} color="#007AFF" /></View>
                             )}
-
                             <Text style={styles.counterTextSmall}>Zadanie: {taskCount} / {TASKS_LIMIT}</Text>
                             {message ? <Text style={[styles.result, message.includes('Świetnie') ? styles.correctText : styles.errorText]}>{message}</Text> : null}
                         </View>
@@ -336,6 +331,14 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
 });
 
 export default RomanNumeralsTrainer;

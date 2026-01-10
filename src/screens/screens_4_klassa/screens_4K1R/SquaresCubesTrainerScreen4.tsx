@@ -20,6 +20,7 @@ import {
     InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native'; // DODANE
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -31,7 +32,7 @@ const TASKS_LIMIT = 50;
 const { width: screenWidth } = Dimensions.get('window');
 const isSmallDevice = screenWidth < 380;
 
-// --- КОМПОНЕНТ РИСОВАЛКИ (БРУДНОПИС) ---
+// --- KOMPONENT BRUDNOPISU ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
@@ -78,6 +79,8 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const SquaresCubesTrainerScreen4 = () => {
+    const navigation = useNavigation(); // DODANE
+
     // --- STATE LOGIC ---
     const [baseNumber, setBaseNumber] = useState<number>(0);
     const [power, setPower] = useState<2 | 3>(2);
@@ -90,6 +93,10 @@ const SquaresCubesTrainerScreen4 = () => {
     const [wrongCount, setWrongCount] = useState<number>(0);
     const [taskCount, setTaskCount] = useState<number>(0);
     const [firstAttempt, setFirstAttempt] = useState<boolean>(true);
+
+    // --- NOWE STANY DLA RAPORTU ---
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const [message, setMessage] = useState('');
     const [showScratchpad, setShowScratchpad] = useState(false);
@@ -107,6 +114,12 @@ const SquaresCubesTrainerScreen4 = () => {
     }, []);
 
     const nextTask = () => {
+        // Blokada raportu co 10 zadań
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
+
         if (taskCount >= TASKS_LIMIT) {
             setMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
             setReadyForNext(false);
@@ -114,8 +127,6 @@ const SquaresCubesTrainerScreen4 = () => {
         }
 
         const newPower: 2 | 3 = Math.random() > 0.5 ? 2 : 3;
-        // Для квадратов: 1..20
-        // Для кубов: 1..5 (чтобы не было слишком сложно для устного счета)
         const newBase = newPower === 2
             ? Math.floor(Math.random() * 20) + 1
             : Math.floor(Math.random() * 5) + 1;
@@ -123,7 +134,6 @@ const SquaresCubesTrainerScreen4 = () => {
         setBaseNumber(newBase);
         setPower(newPower);
 
-        // --- Подсказка ---
         let hint = "";
         if (newPower === 2) hint = `${newBase} · ${newBase}`;
         else hint = `${newBase} · ${newBase} · ${newBase}`;
@@ -160,6 +170,7 @@ const SquaresCubesTrainerScreen4 = () => {
             if (isCorrect) {
                 Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
                 setCorrectCount(prev => prev + 1);
+                setSessionCorrect(prev => prev + 1); // LICZNIK SERII
                 setMessage('Świetnie! ✅');
                 setReadyForNext(true);
                 setShowHint(false);
@@ -180,7 +191,7 @@ const SquaresCubesTrainerScreen4 = () => {
 
                 if (firstAttempt) {
                     setMessage('Błąd! Spróbuj ponownie.');
-                    setAnswer(''); // Очищаем для второй попытки
+                    setAnswer('');
                     setFirstAttempt(false);
                 } else {
                     setMessage(`Błąd! Poprawnie: ${correctResult}`);
@@ -209,7 +220,6 @@ const SquaresCubesTrainerScreen4 = () => {
         outputRange: ['rgba(255, 0, 0, 0.2)', 'rgba(255, 255, 255, 0)', 'rgba(0, 255, 0, 0.2)']
     });
 
-    // Текст для предпросмотра в рисовалке
     const problemString = `${baseNumber}${power === 2 ? '²' : '³'}`;
 
     return (
@@ -246,13 +256,51 @@ const SquaresCubesTrainerScreen4 = () => {
 
                     <DrawingModal visible={showScratchpad} onClose={toggleScratchpad} problemText={problemString} />
 
+                    {/* MODAL RAPORTU CO 10 ZADAŃ */}
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
+                                        Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
+                                    </Text>
+                                </View>
+                                <Text style={styles.suggestionText}>
+                                    {sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}
+                                </Text>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#28a745' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            setSessionCorrect(0);
+                                            nextTask();
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Kontynuuj</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#007AFF' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            navigation.goBack();
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Inny temat</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
                             <View style={styles.overlayBackground} />
 
                             <Text style={styles.taskLabel}>TRENER: POTĘGI</Text>
 
-                            {/* --- ОТОБРАЖЕНИЕ ЧИСЛА СО СТЕПЕНЬЮ --- */}
                             <View style={styles.mathDisplay}>
                                 <Text style={styles.baseText}>{baseNumber}</Text>
                                 <Text style={styles.powerText}>{power}</Text>
@@ -328,7 +376,7 @@ const styles = StyleSheet.create({
 
     mathDisplay: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', marginBottom: 15 },
     baseText: { fontSize: 50, fontWeight: 'bold', color: '#333' },
-    powerText: { fontSize: 26, fontWeight: 'bold', color: '#333', marginTop: 6 }, // Немного опущен вниз относительно верха строки
+    powerText: { fontSize: 26, fontWeight: 'bold', color: '#333', marginTop: 6 },
 
     subTitle: { fontSize: 16, marginBottom: 20, color: '#555', textAlign: 'center' },
 
@@ -361,6 +409,16 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
+
+    // MILESTONE STYLES
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
 });
 
 export default SquaresCubesTrainerScreen4;

@@ -15,9 +15,11 @@ import {
     Modal,
     Platform,
     KeyboardAvoidingView,
-    TouchableWithoutFeedback
+    TouchableWithoutFeedback,
+    InteractionManager
 } from 'react-native';
 import Svg, { Path, Line, Text as SvgText, G } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native';
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -113,7 +115,7 @@ const NumberLineRenderer = ({ task }: { task: NumberLineTask }) => {
     );
 };
 
-// --- CZERNOWIK ---
+// --- BRUDNOPIS ---
 const DrawingModal = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
@@ -144,6 +146,7 @@ const DrawingModal = ({ visible, onClose }: { visible: boolean; onClose: () => v
 
 // --- GŁÓWNY EKRAN ---
 const NumberLineTrainerScreen4 = () => {
+    const navigation = useNavigation();
     const [taskData, setTaskData] = useState<NumberLineTask | null>(null);
     const [userAnswer, setUserAnswer] = useState('');
     const [firstAttempt, setFirstAttempt] = useState(true);
@@ -156,6 +159,11 @@ const NumberLineTrainerScreen4 = () => {
     const [showHint, setShowHint] = useState(false);
     const [showScratchpad, setShowScratchpad] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+    // --- NOWE STANY RAPORTU ---
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
+
     const backgroundColor = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -165,6 +173,12 @@ const NumberLineTrainerScreen4 = () => {
     }, []);
 
     const nextTask = () => {
+        // Blokada raportu co 10 zadań
+        if (counter > 0 && counter % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
+
         if (counter >= TASKS_LIMIT) {
             setMessage(`Gratulacje! 🎉 Ukończono ${TASKS_LIMIT} zadań!`);
             setReadyForNext(false);
@@ -199,6 +213,7 @@ const NumberLineTrainerScreen4 = () => {
             if (isCorrect) {
                 setCorrectInput(true);
                 setCorrectCount(prev => prev + 1);
+                setSessionCorrect(prev => prev + 1); // Licznik sesji
                 statsDocRef?.set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
                 Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
                 setMessage('Świetnie! ✅');
@@ -257,11 +272,55 @@ const NumberLineTrainerScreen4 = () => {
                     )}
                     <DrawingModal visible={showScratchpad} onClose={toggleScratchpad} />
 
+                    {/* MODAL RAPORTU CO 10 ZADAŃ */}
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
+                                        Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
+                                    </Text>
+                                </View>
+                                <Text style={styles.suggestionText}>
+                                    {sessionCorrect >= 8
+                                        ? "Rewelacyjnie! Jesteś mistrzem!"
+                                        : "Trenuj dalej, aby być jeszcze lepszym."}
+                                </Text>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#28a745' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            setSessionCorrect(0);
+                                            nextTask();
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Kontynuuj</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#007AFF' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            navigation.goBack();
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Inny temat</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
                     <View style={styles.centerContent}>
                         <Animated.View style={[styles.card, { backgroundColor: 'transparent' }]}>
                             <View style={styles.overlayBackground} />
                             <Text style={styles.title}>Oś Liczbowa</Text>
                             <Text style={styles.taskLabel}>Jaką liczbę ukryto pod znakiem zapytania?</Text>
+
+
+
                             {taskData && <NumberLineRenderer task={taskData} />}
                             <TextInput
                                 style={[getValidationStyle(), styles.finalInput]}
@@ -314,15 +373,10 @@ const styles = StyleSheet.create({
     finalInput: { width: 120 },
     buttonContainer: { marginTop: 10, width: '80%', borderRadius: 10, overflow: 'hidden' },
     result: { fontSize: 18, fontWeight: '700', marginTop: 20, textAlign: 'center' },
-
-    // --- SKOPIOWANE STYLE DLA ZGODNOŚCI ---
     counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
-
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: iconSize, height: iconSize, resizeMode: 'contain', marginHorizontal: 10 },
     counterTextIcons: { fontSize: Math.max(14, iconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
-    // -------------------------------------
-
     correctFinal: { width: 120, height: 50, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 24, backgroundColor: '#d4edda', borderColor: '#28a745', color: '#155724', marginBottom: 15 },
     errorFinal: { width: 120, height: 50, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 24, backgroundColor: '#f8d7da', borderColor: '#dc3545', color: '#721c24', marginBottom: 15 },
     correctText: { color: '#28a745' },
@@ -334,6 +388,16 @@ const styles = StyleSheet.create({
     headerButton: { padding: 5 },
     headerButtonText: { fontSize: 16, color: '#007AFF' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
+
+    // MILESTONE STYLES
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
 });
 
 export default NumberLineTrainerScreen4;

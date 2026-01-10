@@ -20,7 +20,9 @@ import {
     InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native'; // DODANE
 
+// --- INTEGRACJA Z FIREBASE ---
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { awardXpAndCoins } from '../../../services/xpService';
@@ -31,7 +33,7 @@ const TASKS_LIMIT = 50;
 const { width: screenWidth } = Dimensions.get('window');
 const isSmallDevice = screenWidth < 380;
 
-// --- КОМПОНЕНТ РИСОВАЛКИ ---
+// --- KOMPONENT BRUDNOPISU ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
@@ -78,18 +80,13 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const HowManyTimesTrainerScreen4 = () => {
+    const navigation = useNavigation(); // DODANE
+
     // --- STATE LOGIC ---
-    // baseNumber - это всегда МЕНЬШЕЕ число в паре.
-    // Если задача "умножить": вопрос про baseNumber.
-    // Если задача "разделить": вопрос про (baseNumber * multiplier).
     const [baseNumber, setBaseNumber] = useState<number>(0);
     const [multiplier, setMultiplier] = useState<number>(0);
-
-    // Тип операции: "во сколько раз больше" или "во сколько раз меньше" (для текста)
     const [type, setType] = useState<'więcej' | 'mniej'>('więcej');
-    // Тип задачи: "найди число" или "узнай во сколько раз" (хотя в этом тренажере чаще ищут число)
     const [taskType, setTaskType] = useState<'znajdz' | 'ile_razy'>('znajdz');
-
     const [answer, setAnswer] = useState<string>('');
 
     // --- STATE UI ---
@@ -99,6 +96,10 @@ const HowManyTimesTrainerScreen4 = () => {
     const [wrongCount, setWrongCount] = useState<number>(0);
     const [taskCount, setTaskCount] = useState<number>(0);
     const [firstAttempt, setFirstAttempt] = useState<boolean>(true);
+
+    // --- NOWE STANY DLA RAPORTU ---
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const [message, setMessage] = useState('');
     const [showScratchpad, setShowScratchpad] = useState(false);
@@ -115,8 +116,13 @@ const HowManyTimesTrainerScreen4 = () => {
         return () => { k1.remove(); k2.remove(); };
     }, []);
 
-    // --- ГЕНЕРАЦИЯ ЗАДАНИЙ (4 КЛАСС) ---
     const nextTask = () => {
+        // Blokada raportu co 10 zadań
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
+
         if (taskCount >= TASKS_LIMIT) {
             setMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
             setReadyForNext(false);
@@ -125,66 +131,44 @@ const HowManyTimesTrainerScreen4 = () => {
 
         const modeRandom = Math.random();
         let newMultiplier: number;
-        let newSmallBase: number; // Это меньшее число (основа)
+        let newSmallBase: number;
 
         if (modeRandom < 0.5) {
-            // РЕЖИМ 1: Таблица умножения (50% шанса)
-            // Результат строго до 100.
-            newMultiplier = Math.floor(Math.random() * 8) + 2; // 2..9
+            newMultiplier = Math.floor(Math.random() * 8) + 2;
             const maxBase = Math.floor(100 / newMultiplier);
             newSmallBase = Math.floor(Math.random() * (maxBase - 1)) + 2;
         }
         else if (modeRandom < 0.8) {
-            // РЕЖИМ 2: Устный счет с десятками (30% шанса)
-            // Результат до 150. (Например: 40 * 3, 12 * 4, 25 * 4, 50 * 3)
-            newMultiplier = Math.floor(Math.random() * 3) + 2; // 2, 3 или 4 (чтобы было легко)
-
-            // Генерируем "круглые" или "полукруглые" числа (10, 12, 15, 20, 25, 30, 40, 50)
+            newMultiplier = Math.floor(Math.random() * 3) + 2;
             const easyBases = [10, 12, 15, 20, 25, 30, 40, 50, 60, 70];
-            // Фильтруем, чтобы результат не превышал 150
             const validBases = easyBases.filter(b => b * newMultiplier <= 150);
-
             newSmallBase = validBases[Math.floor(Math.random() * validBases.length)];
         }
         else {
-            // РЕЖИМ 3: Простые большие числа (20% шанса)
-            // Сотни: 100, 200, 300, 400. Множитель: 2 или 3 (только если просто).
-            newMultiplier = 2; // В основном умножаем/делим на 2, это база для 4 класса
+            newMultiplier = 2;
             const bigRoundBases = [100, 200, 300, 400];
             newSmallBase = bigRoundBases[Math.floor(Math.random() * bigRoundBases.length)];
-
-            // Редкий кейс: 100 * 3 или 100 * 4
             if (newSmallBase === 100 && Math.random() > 0.5) {
-                newMultiplier = Math.floor(Math.random() * 3) + 3; // 3, 4, 5
+                newMultiplier = Math.floor(Math.random() * 3) + 3;
             }
         }
 
         setBaseNumber(newSmallBase);
         setMultiplier(newMultiplier);
 
-        // Случайные типы вопроса
         const newType: 'więcej' | 'mniej' = Math.random() > 0.5 ? 'więcej' : 'mniej';
         const newTaskType: 'znajdz' | 'ile_razy' = Math.random() > 0.5 ? 'znajdz' : 'ile_razy';
 
         setType(newType);
         setTaskType(newTaskType);
 
-        // --- ПОДСКАЗКА ---
         const bigVal = newSmallBase * newMultiplier;
         const smallVal = newSmallBase;
 
         let hint = "";
         if (newTaskType === 'znajdz') {
-            // Задача: найти число
-            if (newType === 'więcej') {
-                // "В 2 раза больше чем 200" -> 200 * 2
-                hint = `Pomnóż ${smallVal} przez ${newMultiplier}.`;
-            } else {
-                // "В 2 раза меньше чем 400" -> 400 / 2
-                hint = `Podziel ${bigVal} przez ${newMultiplier}.`;
-            }
+            hint = newType === 'więcej' ? `Pomnóż ${smallVal} przez ${newMultiplier}.` : `Podziel ${bigVal} przez ${newMultiplier}.`;
         } else {
-            // Задача: во сколько раз?
             hint = `Podziel liczbę większą (${bigVal}) przez mniejszą (${smallVal}).`;
         }
         setHintText(hint);
@@ -214,23 +198,9 @@ const HowManyTimesTrainerScreen4 = () => {
             const numAnswer = Number(answer.replace(',', '.'));
             let correctResult: number;
 
-            // --- РАСЧЕТ ПРАВИЛЬНОГО ОТВЕТА ---
-            // baseNumber - это маленькое число (S)
-            // multiplier - это множитель (M)
-            // Большое число (B) = S * M
-
             if (taskType === 'znajdz') {
-                if (type === 'więcej') {
-                    // "Найди число в M раз больше, чем S" -> Ответ: B
-                    correctResult = baseNumber * multiplier;
-                } else {
-                    // "Найди число в M раз меньше, чем B" -> Ответ: S
-                    // Но в тексте задачи мы показываем B.
-                    // Текст задачи: "Znajdź liczbę M razy mniejszą niż (baseNumber * multiplier)"
-                    correctResult = baseNumber;
-                }
+                correctResult = type === 'więcej' ? baseNumber * multiplier : baseNumber;
             } else {
-                // "Во сколько раз..." -> Ответ всегда multiplier
                 correctResult = multiplier;
             }
 
@@ -240,6 +210,7 @@ const HowManyTimesTrainerScreen4 = () => {
             if (isCorrect) {
                 Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
                 setCorrectCount(prev => prev + 1);
+                setSessionCorrect(prev => prev + 1); // Licznik sesji
                 setMessage('Świetnie! ✅');
                 setReadyForNext(true);
                 setShowHint(false);
@@ -289,23 +260,18 @@ const HowManyTimesTrainerScreen4 = () => {
         outputRange: ['rgba(255, 0, 0, 0.2)', 'rgba(255, 255, 255, 0)', 'rgba(0, 255, 0, 0.2)']
     });
 
-    // --- ФОРМИРОВАНИЕ ТЕКСТА ЗАДАЧИ ---
     const getTaskText = () => {
         const small = baseNumber;
         const big = baseNumber * multiplier;
 
         if (taskType === 'znajdz') {
-            // "Найди число..."
             return type === 'więcej'
                 ? `Znajdź liczbę ${multiplier} razy większą niż ${small}`
                 : `Znajdź liczbę ${multiplier} razy mniejszą niż ${big}`;
         } else {
-            // "Во сколько раз..."
-            if (type === 'więcej') {
-                return `Ile razy liczba ${big} jest większa niż ${small}?`;
-            } else {
-                return `Ile razy liczba ${small} jest mniejsza niż ${big}?`;
-            }
+            return type === 'więcej'
+                ? `Ile razy liczba ${big} jest większa niż ${small}?`
+                : `Ile razy liczba ${small} jest mniejsza niż ${big}?`;
         }
     };
 
@@ -345,14 +311,52 @@ const HowManyTimesTrainerScreen4 = () => {
 
                     <DrawingModal visible={showScratchpad} onClose={toggleScratchpad} problemText={problemString} />
 
+                    {/* MODAL RAPORTU CO 10 ZADAŃ */}
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
+                                        Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
+                                    </Text>
+                                </View>
+                                <Text style={styles.suggestionText}>
+                                    {sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}
+                                </Text>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#28a745' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            setSessionCorrect(0);
+                                            // Bezpośredni reset i nowe zadanie
+                                            nextTask();
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Kontynuuj</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#007AFF' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            navigation.goBack(); // POWRÓT DO PODTEMATÓW
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Inny temat</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
                             <View style={styles.overlayBackground} />
 
                             <Text style={styles.taskLabel}>TRENER: Ile razy...</Text>
-
                             <Text style={styles.taskTextMain}>{problemString}</Text>
-
                             <Text style={styles.subTitle}>Wpisz odpowiedź</Text>
 
                             <TextInput
@@ -401,29 +405,24 @@ const styles = StyleSheet.create({
     keyboardContainer: { flex: 1, justifyContent: 'center' },
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 20 },
 
-    // Top Buttons
     topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
     iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
     buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255, 255, 255, 0.8)', textShadowRadius: 3 },
 
-    // Hint Box
     hintBox: {
         position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF'
     },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
     hintText: { fontSize: 16, color: '#333', lineHeight: 22, textAlign: 'center' },
 
-    // Card
     card: { width: '95%', maxWidth: 480, borderRadius: 20, padding: 20, alignItems: 'center', marginTop: 20, alignSelf: 'center' },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
 
-    // Headings
     taskLabel: { fontSize: 18, fontWeight: '700', marginBottom: 15, color: '#007AFF', textAlign: 'center', textTransform: 'uppercase' },
     taskTextMain: { fontSize: isSmallDevice ? 24 : 32, fontWeight: 'bold', marginBottom: 20, color: '#333', textAlign: 'center', lineHeight: 36 },
     subTitle: { fontSize: 16, marginBottom: 20, color: '#555', textAlign: 'center' },
 
-    // Inputs
     input: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#fafafa', marginBottom: 15, color: '#333' },
     correctFinal: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#28a745', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#d4edda', marginBottom: 15, color: '#155724' },
     errorFinal: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#dc3545', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#f8d7da', marginBottom: 15, color: '#721c24' },
@@ -433,15 +432,12 @@ const styles = StyleSheet.create({
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
 
-    // Counter
     counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
 
-    // Bottom Icons
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: iconSize, height: iconSize, resizeMode: 'contain', marginHorizontal: 10 },
     counterTextIcons: { fontSize: Math.max(14, iconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
 
-    // Modal
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
     drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
     drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, backgroundColor: '#f0f0f0', borderBottomWidth: 1, borderBottomColor: '#ccc' },
@@ -452,6 +448,16 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
+
+    // MILESTONE STYLES
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
 });
 
 export default HowManyTimesTrainerScreen4;

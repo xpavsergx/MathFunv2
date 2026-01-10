@@ -20,6 +20,7 @@ import {
     InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native'; // Dodane dla nawigacji
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -30,7 +31,7 @@ const TASKS_LIMIT = 30;
 
 const { width: screenWidth } = Dimensions.get('window');
 const isSmallDevice = screenWidth < 380;
-const combinedIconSize = screenWidth * 0.25; // ТОЧНО КАК В ЭТАЛОНЕ
+const combinedIconSize = screenWidth * 0.25;
 
 // --- BRUDNOPIS ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
@@ -66,6 +67,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const MonetaryUnitsTrainer = () => {
+    const navigation = useNavigation(); // Dodane dla nawigacji
     const [questionText, setQuestionText] = useState('');
     const [subQuestionText, setSubQuestionText] = useState('');
     const [correctAnswer, setCorrectAnswer] = useState('');
@@ -83,6 +85,10 @@ const MonetaryUnitsTrainer = () => {
     const [showHint, setShowHint] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
+    // Nowe stany raportu
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
+
     const backgroundColor = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -93,6 +99,12 @@ const MonetaryUnitsTrainer = () => {
     }, []);
 
     const nextTask = () => {
+        // Blokada raportu co 10 zadań
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
+
         if (taskCount >= TASKS_LIMIT) {
             setMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
             setReadyForNext(false);
@@ -160,6 +172,7 @@ const MonetaryUnitsTrainer = () => {
         if (isOk) {
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setCorrectCount(prev => prev + 1);
+            setSessionCorrect(prev => prev + 1); // Licznik serii
             setMessage('Świetnie! ✅');
             setReadyForNext(true);
             InteractionManager.runAfterInteractions(() => {
@@ -245,6 +258,47 @@ const MonetaryUnitsTrainer = () => {
 
                     <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={questionText} />
 
+                    {/* MODAL MILESTONE */}
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
+                                        Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
+                                    </Text>
+                                </View>
+                                <Text style={styles.suggestionText}>
+                                    {sessionCorrect >= 8
+                                        ? "Rewelacyjnie! Jesteś mistrzem!"
+                                        : "Trenuj dalej, aby być jeszcze lepszym."}
+                                </Text>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#28a745' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            setSessionCorrect(0);
+                                            nextTask();
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Kontynuuj</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#007AFF' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            navigation.goBack();
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Inny temat</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
                             <View style={styles.overlayBackground} />
@@ -254,6 +308,8 @@ const MonetaryUnitsTrainer = () => {
                             <View style={styles.mainDisplayContainer}>
                                 <Text style={styles.rangeText}>{subQuestionText}</Text>
                             </View>
+
+
 
                             <TextInput
                                 style={isCorrect === true ? styles.correctFinal : (isCorrect === false ? styles.errorFinal : styles.finalInput)}
@@ -312,12 +368,9 @@ const styles = StyleSheet.create({
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
     counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
-
-    // --- СЕКЦИЯ ИКОНОК (ОДИН В ОДИН ИЗ ЭТАЛОНА) ---
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
     counterTextIcons: { fontSize: Math.max(14, combinedIconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
-
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
     drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
     drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, backgroundColor: '#f0f0f0' },
@@ -328,6 +381,16 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase' },
     problemPreviewTextSmall: { fontSize: 18, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
+
+    // MILESTONE STYLES
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
 });
 
 export default MonetaryUnitsTrainer;

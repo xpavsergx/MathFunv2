@@ -316,7 +316,7 @@ const FractionsNumberLineTrainerPL = () => {
                                     </Text>
                                 </View>
                                 <Text style={styles.suggestionText}>
-                                    {sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Dobra robota! Trenuj dalej, aby być jeszcze lepszym."}
+                                    {sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}
                                 </Text>
                                 <View style={styles.milestoneButtons}>
                                     <TouchableOpacity

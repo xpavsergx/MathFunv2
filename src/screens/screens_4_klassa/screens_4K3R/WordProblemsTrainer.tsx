@@ -5,6 +5,7 @@ import {
     Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native'; // Dodane dla nawigacji
 import { awardXpAndCoins } from '../../../services/xpService';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -52,6 +53,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 
 // --- GŁÓWNY KOMPONENT ---
 const WordProblemsTrainer = () => {
+    const navigation = useNavigation(); // Hook nawigacji
     const [questionText, setQuestionText] = useState('');
     const [correctAnswer, setCorrectAnswer] = useState<number>(0);
     const [unit, setUnit] = useState('');
@@ -60,12 +62,16 @@ const WordProblemsTrainer = () => {
     const [userAnswer, setUserAnswer] = useState('');
     const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
     const [readyForNext, setReadyForNext] = useState<boolean>(false);
-    const [attempts, setAttempts] = useState(0); // Licznik prób dla bieżącego zadania
+    const [attempts, setAttempts] = useState(0);
 
     const [correctCount, setCorrectCount] = useState(0);
     const [wrongCount, setWrongCount] = useState(0);
     const [taskCount, setTaskCount] = useState(0);
     const [message, setMessage] = useState('');
+
+    // Nowe stany raportu (Milestone)
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const [showScratchpad, setShowScratchpad] = useState(false);
     const [showHint, setShowHint] = useState(false);
@@ -86,150 +92,101 @@ const WordProblemsTrainer = () => {
         setReadyForNext(false);
         setUserAnswer('');
         setShowHint(false);
-        setAttempts(0); // Resetujemy próby przy nowym zadaniu
+        setAttempts(0);
         backgroundColor.setValue(0);
 
         const type = Math.floor(Math.random() * 13);
-        let q = "";
-        let ans = 0;
-        let u = "";
-        let h = "";
-
+        let q = ""; let ans = 0; let u = ""; let h = "";
         const rnd = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
         switch (type) {
-            case 0: // WYCIECZKA
-                const students = rnd(15, 25);
-                const studentPrice = rnd(12, 25);
-                const teachers = rnd(2, 4);
-                const teacherPrice = rnd(20, 40);
+            case 0:
+                const students = rnd(15, 25); const studentPrice = rnd(12, 25);
+                const teachers = rnd(2, 4); const teacherPrice = rnd(20, 40);
                 ans = (students * studentPrice) + (teachers * teacherPrice);
                 q = `Klasa wybrała się do muzeum. Kupiono ${students} biletów ulgowych po ${studentPrice} zł oraz ${teachers} bilety dla opiekunów po ${teacherPrice} zł. Ile zapłacono łącznie za wszystkie bilety?`;
-                u = "zł";
-                h = "Oblicz osobno koszt biletów dla uczniów i koszt biletów dla opiekunów. Potem dodaj do siebie te dwie kwoty.";
+                u = "zł"; h = "Oblicz osobno koszt biletów dla uczniów i koszt biletów dla opiekunów. Potem dodaj do siebie te dwie kwoty.";
                 break;
-            case 1: // OSZCZĘDZANIE
-                const weeks = rnd(8, 12);
-                const weeklySave = rnd(15, 30);
-                const piggBankStart = rnd(120, 250);
+            case 1:
+                const weeks = rnd(8, 12); const weeklySave = rnd(15, 30); const piggBankStart = rnd(120, 250);
                 ans = piggBankStart + (weeks * weeklySave);
                 q = `Tomek zbiera na nowy rower. W skarbonce ma już ${piggBankStart} zł. Postanowił, że przez najbliższe ${weeks} tygodni będzie odkładał po ${weeklySave} zł tygodniowo. Ile pieniędzy uzbiera łącznie?`;
-                u = "zł";
-                h = "Najpierw policz, ile Tomek uzbiera przez te tygodnie. Potem dodaj to do pieniędzy, które już ma w skarbonce.";
+                u = "zł"; h = "Najpierw policz, ile Tomek uzbiera przez te tygodnie. Potem dodaj to do pieniędzy, które już ma w skarbonce.";
                 break;
-            case 2: // PIŁKI
-                const ballPrice = rnd(30, 60);
-                const numBalls = rnd(3, 8);
-                const netPrice = rnd(100, 300);
+            case 2:
+                const ballPrice = rnd(30, 60); const numBalls = rnd(3, 8); const netPrice = rnd(100, 300);
                 const totalInvoice = netPrice + (numBalls * ballPrice);
                 ans = ballPrice;
                 q = `Szkoła zakupiła sprzęt za ${totalInvoice} zł. Kupiono siatkę za ${netPrice} zł oraz ${numBalls} jednakowych piłek. Ile kosztowała jedna piłka?`;
-                u = "zł";
-                h = "Od całej kwoty odejmij cenę siatki. Wynik podziel przez liczbę piłek, aby poznać cenę jednej.";
+                u = "zł"; h = "Od całej kwoty odejmij cenę siatki. Wynik podziel przez liczbę piłek.";
                 break;
-            case 3: // SŁOIKI
-                const jars = rnd(6, 12);
-                const honeyWeightDag = rnd(30, 60);
-                const emptyJarWeightDag = rnd(20, 35);
+            case 3:
+                const jars = rnd(6, 12); const honeyWeightDag = rnd(30, 60); const emptyJarWeightDag = rnd(20, 35);
                 const totalWeightDag = jars * (honeyWeightDag + emptyJarWeightDag);
                 ans = emptyJarWeightDag;
-                q = `Babcia przygotowała ${jars} słoików z miodem. Pełne słoiki ważą razem ${totalWeightDag} dag. W każdym słoiku jest ${honeyWeightDag} dag miodu. Ile waży pysty słoik?`;
-                u = "dag";
-                h = "Oblicz wagę samego miodu (pomnóż ilość słoików przez wagę miodu). Odejmij to od wagi całkowitej, a wynik podziel przez liczbę słoików.";
+                q = `Babcia przygotowała ${jars} słoików z miodem. Pełne słoiki ważą razem ${totalWeightDag} dag. W każdym słoiku jest ${honeyWeightDag} dag miodu. Ile waży pusty słoik?`;
+                u = "dag"; h = "Oblicz wagę samego miodu. Odejmij to od wagi całkowitej, a wynik podziel przez liczbę słoików.";
                 break;
-            case 4: // MAKULATURA
-                const classA = rnd(120, 300);
-                const multiplier = rnd(2, 3);
-                const classB = classA * multiplier;
-                ans = classA + classB;
+            case 4:
+                const classA = rnd(120, 300); const multiplier = rnd(2, 3);
+                ans = classA + (classA * multiplier);
                 q = `Klasa IVa zebrała ${classA} kg makulatury, a klasa IVb zebrała ${multiplier} razy więcej. Ile kilogramów makulatury zebrały obie klasy łącznie?`;
-                u = "kg";
-                h = "Najpierw policz ile zebrała klasa IVb (pomnóż wynik klasy IVa). Następnie dodaj wyniki obu klas do siebie.";
+                u = "kg"; h = "Najpierw policz ile zebrała klasa IVb, a następnie dodaj wyniki obu klas.";
                 break;
-            case 5: // KSIĄŻKA
-                const pagesSat = rnd(50, 120);
-                const diff = rnd(15, 40);
-                const pagesSun = pagesSat - diff;
+            case 5:
+                const pagesSat = rnd(50, 120); const diff = rnd(15, 40); const pagesSun = pagesSat - diff;
                 ans = pagesSat + pagesSun;
                 q = `Ania w sobotę przeczytała ${pagesSat} stron, a w niedzielę o ${diff} stron mniej. Ile stron przeczytała Ania w ciągu tego weekendu?`;
-                u = "str";
-                h = "Oblicz ile stron Ania przeczytała w niedzielę (odejmowanie). Potem dodaj strony z soboty i niedzieli.";
+                u = "str"; h = "Oblicz ile stron Ania przeczytała w niedzielę, potem dodaj strony z obu dni.";
                 break;
-            case 6: // SADZONKI
-                const rows = rnd(12, 20);
-                const perRow = rnd(15, 25);
-                const extra = rnd(8, 19);
+            case 6:
+                const rows = rnd(12, 20); const perRow = rnd(15, 25); const extra = rnd(8, 19);
                 ans = (rows * perRow) + extra;
                 q = `W szkółce leśnej posadzono sosny w ${rows} rzędach, po ${perRow} drzewek w każdym. Obok posadzono dodatkowo ${extra} sosen. Ile łącznie drzewek posadzono?`;
-                u = "szt";
-                h = "Pomnóż liczbę rzędów przez liczbę drzewek w jednym rzędzie. Do wyniku dodaj te kilka dodatkowych drzewek.";
+                u = "szt"; h = "Pomnóż liczbę rzędów przez drzewka w rzędzie, a potem dodaj te dodatkowe.";
                 break;
-            case 7: // RESZTA
-                const budget = [100, 200, 500][rnd(0, 2)];
-                const item1 = rnd(25, 60);
-                const item2 = rnd(15, 35);
+            case 7:
+                const budget = [100, 200, 500][rnd(0, 2)]; const item1 = rnd(25, 60); const item2 = rnd(15, 35);
                 ans = budget - (item1 + item2);
                 q = `Kasia miała banknot ${budget} zł. Kupiła książkę za ${item1} zł i piórnik za ${item2} zł. Ile reszty otrzymała?`;
-                u = "zł";
-                h = "Najpierw dodaj do siebie ceny zakupów. Potem odejmij tę sumę od banknotu, który miała Kasia.";
+                u = "zł"; h = "Odejmij sumę cen zakupów od banknotu Kasi.";
                 break;
-            case 8: // OBWÓD
-                const width = rnd(8, 25);
-                const length = width + rnd(5, 15);
+            case 8:
+                const width = rnd(8, 25); const length = width + rnd(5, 15);
                 ans = 2 * width + 2 * length;
                 q = `Ogródek pana Jana ma kształt prostokąta o szerokości ${width} m i długości ${length} m. Ile metrów siatki potrzeba na ogrodzenie tego ogródka?`;
-                u = "m";
-                h = "Obwód prostokąta to suma wszystkich boków. Dodaj do siebie: dwa razy długość i dwa razy szerokość.";
+                u = "m"; h = "Obwód prostokąta to suma wszystkich czterech boków.";
                 break;
-            case 9: // DRUKARKA
-                const minutesBase = rnd(3, 6);
-                const pagesBase = minutesBase * rnd(12, 20);
-                const minutesTarget = rnd(8, 15);
-                const speed = pagesBase / minutesBase;
-                ans = speed * minutesTarget;
-                q = `Szybka drukarka wydrukowała ${pagesBase} stron w ciągu ${minutesBase} minut. Ile stron wydrukuje ta drukarka w ciągu ${minutesTarget} minut, pracując tak samo szybko?`;
-                u = "str";
-                h = "Najpierw oblicz, ile stron drukuje się w ciągu 1 minuty (dzielenie). Potem pomnóż ten wynik przez nową liczbę minut.";
+            case 9:
+                const minB = rnd(3, 6); const pagB = minB * rnd(12, 20); const minT = rnd(8, 15);
+                ans = (pagB / minB) * minT;
+                q = `Szybka drukarka wydrukowała ${pagB} stron w ciągu ${minB} minut. Ile stron wydrukuje ta drukarka w ciągu ${minT} minut, pracując tak samo szybko?`;
+                u = "str"; h = "Oblicz wydajność na 1 minutę, a potem pomnóż przez czas docelowy.";
                 break;
-            case 10: // KSIĄŻKA OD KOŃCA
-                const daysReading = rnd(4, 7);
-                const pagesPerDay = rnd(15, 30);
-                const pagesLeft = rnd(40, 90);
-                ans = (daysReading * pagesPerDay) + pagesLeft;
-                q = `Bartek czytał lekturę przez ${daysReading} dni, po ${pagesPerDay} stron dziennie. Do końca książki zostało mu jeszcze ${pagesLeft} stron. Ile stron ma cała książka?`;
-                u = "str";
-                h = "Policz ile stron Bartek już przeczytał (dni razy strony). Do tego wyniku dodaj liczbę stron, które mu zostały.";
+            case 10:
+                const dR = rnd(4, 7); const pD = rnd(15, 30); const pL = rnd(40, 90);
+                ans = (dR * pD) + pL;
+                q = `Bartek czytał lekturę przez ${dR} dni, po ${pD} stron dziennie. Do końca książki zostało mu jeszcze ${pL} stron. Ile stron ma cała książka?`;
+                u = "str"; h = "Dodaj przeczytane strony (dni * strony/dzień) do stron pozostałych.";
                 break;
-            case 11: // HARCERZE
-                const groupSize = rnd(4, 8);
-                const tentCount = rnd(12, 25);
-                const extraPeople = rnd(1, 3);
-                ans = (tentCount * groupSize) + extraPeople;
-                q = `Na obozie harcerskim rozbito ${tentCount} namiotów. W każdym śpi ${groupSize} osób. Oprócz tego w bazie jest ${extraPeople} opiekunów. Ile osób jest łącznie na obozie?`;
-                u = "os";
-                h = "Pomnóż liczbę namiotów przez liczbę osób w jednym namiocie. Na koniec dodaj liczbę opiekunów.";
+            case 11:
+                const gS = rnd(4, 8); const tC = rnd(12, 25); const eP = rnd(1, 3);
+                ans = (tC * gS) + eP;
+                q = `Na obozie harcerskim rozbito ${tC} namiotów. W każdym śpi ${gS} osób. Oprócz tego w bazie jest ${eP} opiekunów. Ile osób jest łącznie na obozie?`;
+                u = "os"; h = "Pomnóż liczbę namiotów przez osoby, a potem dodaj opiekunów.";
                 break;
-            case 12: // WIEK
-                const grandChildAge = rnd(4, 9);
-                const multiplierAge = rnd(6, 9);
-                const grandPaAge = grandChildAge * multiplierAge;
-                ans = multiplierAge;
-                q = `Dziadek Stanisław ma ${grandPaAge} lat, a jego wnuczek Jaś ma ${grandChildAge} lat. Ile razy starszy jest dziadek od wnuczka?`;
-                u = "razy";
-                h = "Pytanie 'ile razy' oznacza dzielenie. Podziel wiek dziadka przez wiek wnuczka.";
+            case 12:
+                const gCA = rnd(4, 9); const mLA = rnd(6, 9); const gPA = gCA * mLA;
+                ans = mLA;
+                q = `Dziadek Stanisław ma ${gPA} lat, a jego wnuczek Jaś ma ${gCA} lat. Ile razy starszy jest dziadek od wnuczka?`;
+                u = "razy"; h = "Podziel wiek dziadka przez wiek wnuczka.";
                 break;
             default:
-                ans = 100;
-                q = "Zadanie domyślne: 50 + 50?";
-                u = "";
-                h = "Dodaj liczby.";
+                ans = 10; q = "Ile to 5 + 5?"; u = ""; h = "Dodaj.";
                 break;
         }
 
-        setQuestionText(q);
-        setCorrectAnswer(ans);
-        setUnit(u);
-        setCurrentHint(h);
+        setQuestionText(q); setCorrectAnswer(ans); setUnit(u); setCurrentHint(h);
     };
 
     const handleCheck = () => {
@@ -240,72 +197,49 @@ const WordProblemsTrainer = () => {
         }
 
         if (userVal === correctAnswer) {
-            // POPRAWNA ODPOWIEDŹ
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setCorrectCount(c => c + 1);
+            setSessionCorrect(s => s + 1);
             setMessage('Doskonale! ✅');
             setReadyForNext(true);
             setIsCorrect(true);
             InteractionManager.runAfterInteractions(() => awardXpAndCoins(10, 2));
             const currentUser = auth().currentUser;
             if (currentUser) {
-                firestore()
-                    .collection('users')
-                    .doc(currentUser.uid)
-                    .collection('exerciseStats')
-                    .doc(EXERCISE_ID)
-                    .set({
-                        totalCorrect: firestore.FieldValue.increment(1)
-                    }, { merge: true })
-                    .catch(error => console.error("Błąd zapisu do bazy:", error));
+                firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                    .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
             }
         } else {
-            // BŁĘDNA ODPOWIEDŹ
             const nextAttempt = attempts + 1;
             setAttempts(nextAttempt);
-
             if (nextAttempt < 2) {
-                // PIERWSZA PRÓBA
                 setIsCorrect(false);
                 setMessage('Błędny wynik. Spróbuj jeszcze raz! ❌');
-
-                // Krótki błysk tła na czerwono i powrót
                 Animated.sequence([
                     Animated.timing(backgroundColor, { toValue: -1, duration: 500, useNativeDriver: false }),
                     Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false })
                 ]).start();
-
-                // Pozwalamy użytkownikowi poprawić (nie ustawiamy readyForNext)
-                setTimeout(() => {
-                    setIsCorrect(null); // Убираем красную рамку
-                    setUserAnswer('');  // ОЧИЩАЕМ НЕПРАВИЛЬНЫЙ ОТВЕТ
-                }, 1000);
+                setTimeout(() => { setIsCorrect(null); setUserAnswer(''); }, 1000);
             } else {
-                // DRUGA PRÓBA (KONIEC MOŻLIWOŚCI)
                 Animated.timing(backgroundColor, { toValue: -1, duration: 500, useNativeDriver: false }).start();
                 setMessage(`Niestety źle. Poprawny wynik to: ${correctAnswer} ${unit}`);
                 setWrongCount(w => w + 1);
                 setReadyForNext(true);
                 setIsCorrect(false);
-                InteractionManager.runAfterInteractions(() => {
-                    const currentUser = auth().currentUser;
-                    if (currentUser) {
-                        firestore()
-                            .collection('users')
-                            .doc(currentUser.uid)
-                            .collection('exerciseStats')
-                            .doc(EXERCISE_ID)
-                            .set({
-                                totalWrong: firestore.FieldValue.increment(1)
-                            }, { merge: true })
-                            .catch(e => console.error("Błąd zapisu błędnych:", e));
-                    }
-                });
+                const currentUser = auth().currentUser;
+                if (currentUser) {
+                    firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                        .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+                }
             }
         }
     };
 
     const nextTask = () => {
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
         if (taskCount >= TASKS_LIMIT) { setMessage('Koniec treningu! 🏆'); return; }
         setTaskCount(t => t + 1);
         generateProblem();
@@ -346,44 +280,53 @@ const WordProblemsTrainer = () => {
 
                     <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={questionText} />
 
+                    {/* MODAL RAPORTU CO 10 ZADAŃ */}
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
+                                        Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
+                                    </Text>
+                                </View>
+                                <Text style={styles.suggestionText}>
+                                    {sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}
+                                </Text>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]}
+                                                      onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}>
+                                        <Text style={styles.mButtonText}>Kontynuuj</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]}
+                                                      onPress={() => { setShowMilestone(false); navigation.goBack(); }}>
+                                        <Text style={styles.mButtonText}>Inny temat</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
                             <View style={styles.overlayBackground} />
-
                             <Text style={styles.headerTitle}>Zadanie z treścią</Text>
-
-                            <View style={styles.questionBox}>
-                                <Text style={styles.questionText}>{questionText}</Text>
-                            </View>
-
+                            <View style={styles.questionBox}><Text style={styles.questionText}>{questionText}</Text></View>
                             <View style={styles.answerSection}>
                                 <Text style={styles.answerLabel}>Odpowiedź:</Text>
                                 <View style={styles.inputWrapper}>
                                     <TextInput
-                                        style={[
-                                            styles.mainInput,
-                                            isCorrect === true && styles.inputCorrect,
-                                            isCorrect === false && styles.inputError
-                                        ]}
-                                        keyboardType="numeric"
-                                        placeholder="?"
-                                        placeholderTextColor="#ccc"
-                                        value={userAnswer}
-                                        onChangeText={setUserAnswer}
-                                        editable={!readyForNext}
+                                        style={[styles.mainInput, isCorrect === true && styles.inputCorrect, isCorrect === false && styles.inputError]}
+                                        keyboardType="numeric" placeholder="?" placeholderTextColor="#ccc"
+                                        value={userAnswer} onChangeText={setUserAnswer} editable={!readyForNext}
                                     />
                                     <Text style={styles.unitText}>{unit}</Text>
                                 </View>
                             </View>
-
                             <View style={styles.buttonContainer}>
-                                <Button
-                                    title={readyForNext ? 'Następne zadanie' : 'Sprawdź wynik'}
-                                    onPress={readyForNext ? nextTask : handleCheck}
-                                    color="#007AFF"
-                                />
+                                <Button title={readyForNext ? 'Następne zadanie' : 'Sprawdź wynik'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
                             </View>
-
                             <Text style={styles.counterTextSmall}>Zadanie: {taskCount} / {TASKS_LIMIT}</Text>
                             {message ? <Text style={[styles.result, message.includes('Doskonale') ? styles.correctText : styles.errorText]}>{message}</Text> : null}
                         </View>
@@ -444,6 +387,16 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#666', marginBottom: 2 },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#222', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#fff' },
+
+    // MILESTONE STYLES
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
 });
 
 export default WordProblemsTrainer;

@@ -20,6 +20,7 @@ import {
     InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native'; // Dodane dla nawigacji
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -72,6 +73,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const MentalMathLargeNumbers = () => {
+    const navigation = useNavigation(); // Dodane dla nawigacji
     const [questionText, setQuestionText] = useState('');
     const [mainDisplay, setMainDisplay] = useState<React.ReactNode>(null);
     const [options, setOptions] = useState<string[]>([]);
@@ -89,6 +91,10 @@ const MentalMathLargeNumbers = () => {
     const [showHint, setShowHint] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
+    // Nowe stany raportu
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
+
     const backgroundColor = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -99,6 +105,12 @@ const MentalMathLargeNumbers = () => {
     }, []);
 
     const nextTask = () => {
+        // Blokada raportu co 10 zadań
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
+
         if (taskCount >= TASKS_LIMIT) {
             setMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
             setReadyForNext(false);
@@ -123,26 +135,20 @@ const MentalMathLargeNumbers = () => {
         let currentOptions: string[] = [];
         let display: React.ReactNode = null;
 
-        // 1. Умножение и деление на 10, 100 (на основе упр. 9 и 6)
         if (typeRand < 0.20) {
             const units = ["tys.", "mln", "mld"];
             const selectedUnit = units[Math.floor(Math.random() * units.length)];
             const baseValue = [1, 10, 100, 150][Math.floor(Math.random() * 4)];
             const isMultiply = Math.random() > 0.5;
             const factor = isMultiply ? 10 : 100;
-
             qText = isMultiply ? `Zapisz cyframi liczbę ${factor} razy większą niż:` : `Zapisz cyframi liczbę ${factor} razy mniejszą niż:`;
             display = <Text style={styles.rangeText}>{baseValue} {selectedUnit}</Text>;
-
             let numericValue = baseValue;
             if (selectedUnit === "tys.") numericValue *= 1000;
             if (selectedUnit === "mln") numericValue *= 1000000;
             if (selectedUnit === "mld") numericValue *= 1000000000;
-
             ans = (isMultiply ? numericValue * factor : numericValue / factor).toString();
             hint = isMultiply ? "Dopisz odpowiednią liczbę zer." : "Skreśl odpowiednią liczbę zer.";
-
-            // 2. Сложное умножение круглых чисел (на основе упр. 10 и 5)
         } else if (typeRand < 0.40) {
             const a = [11, 12, 13, 15, 21, 25, 80][Math.floor(Math.random() * 7)];
             const b = [2, 3, 4, 5, 9][Math.floor(Math.random() * 5)];
@@ -150,31 +156,24 @@ const MentalMathLargeNumbers = () => {
             const zerosB = [1, 10, 100][Math.floor(Math.random() * 3)];
             const valA = a * zerosA;
             const valB = b * zerosB;
-
             qText = "Oblicz iloczyn (pomnóż cyfry i dopisz zera):";
             display = <Text style={styles.rangeText}>{formatNumber(valA)} · {formatNumber(valB)}</Text>;
             ans = (valA * valB).toString();
             hint = `Pomnóż ${a} · ${b}, a potem dopisz wszystkie zera z obu liczb.`;
-
-            // 3. Деление со "сокращением" нулей (на основе упр. 11 и 7)
         } else if (typeRand < 0.60) {
             const divisors = [20, 30, 40, 50, 700, 800, 4000];
             const div = divisors[Math.floor(Math.random() * divisors.length)];
             const baseRes = [12, 15, 20, 30, 40, 60][Math.floor(Math.random() * 6)];
             const num = div * baseRes;
-
             qText = "Oblicz iloraz (możesz skreślić zera):";
             display = <Text style={styles.rangeText}>{formatNumber(num)} : {formatNumber(div)}</Text>;
             ans = baseRes.toString();
             hint = "Skreśl taką samą liczbę zer w obu liczbach przed dzieleniem.";
-
-            // 4. Сравнение без вычислений (на основе упр. 12)
         } else if (typeRand < 0.80) {
             const base = Math.floor(Math.random() * 500) + 300;
             const mod1 = Math.floor(Math.random() * 50) + 10;
             const mod2 = mod1 + (Math.random() > 0.5 ? 10 : -10);
             const isAddition = Math.random() > 0.5;
-
             qText = "Wstaw znak bez obliczania:";
             display = (
                 <View style={styles.comparisonRow}>
@@ -183,25 +182,19 @@ const MentalMathLargeNumbers = () => {
                     <Text style={styles.bigNumberSmall}>{base} {isAddition ? '+' : '-'} {mod2}</Text>
                 </View>
             );
-
             if (isAddition) ans = mod1 > mod2 ? '>' : '<';
             else ans = mod1 > mod2 ? '<' : '>';
-
             currentOptions = ['<', '>', '='];
             hint = isAddition ? "Większy składnik daje większą sumę." : "Większa odejmowana liczba daje mniejszy wynik.";
-
-            // 5. Изменение на 200 (на основе упр. 1)
         } else {
             const num = [570, 900, 1350, 2100, 10481][Math.floor(Math.random() * 5)];
             const diff = 200;
             const isMore = Math.random() > 0.5;
-
             qText = isMore ? `Liczba o ${diff} większa to:` : `Liczba o ${diff} mniejsza to:`;
             display = <Text style={styles.rangeText}>{formatNumber(num)}</Text>;
             ans = (isMore ? num + diff : num - diff).toString();
             hint = `Wykonaj ${isMore ? 'dodawanie' : 'odejmowanie'}: ${num} ${isMore ? '+' : '-'} ${diff}.`;
         }
-
         setQuestionText(qText);
         setMainDisplay(display);
         setCorrectAnswer(ans);
@@ -222,6 +215,7 @@ const MentalMathLargeNumbers = () => {
         if (isOk) {
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setCorrectCount(prev => prev + 1);
+            setSessionCorrect(prev => prev + 1); // Licznik serii
             setMessage('Świetnie! ✅');
             setReadyForNext(true);
             InteractionManager.runAfterInteractions(() => {
@@ -280,6 +274,47 @@ const MentalMathLargeNumbers = () => {
                     )}
 
                     <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={questionText} />
+
+                    {/* MODAL MILESTONE */}
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
+                                        Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
+                                    </Text>
+                                </View>
+                                <Text style={styles.suggestionText}>
+                                    {sessionCorrect >= 8
+                                        ? "Rewelacyjnie! Jesteś mistrzem!"
+                                        : "Trenuj dalej, aby być jeszcze lepszym."}
+                                </Text>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#28a745' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            setSessionCorrect(0);
+                                            nextTask();
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Kontynuuj</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#007AFF' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            navigation.goBack();
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Inny temat</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
 
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
@@ -392,6 +427,16 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase' },
     problemPreviewTextSmall: { fontSize: 18, fontWeight: '600', color: '#007AFF' },
     canvas: { flex: 1, backgroundColor: '#fff' },
+
+    // MILESTONE STYLES
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold' }
 });
 
 export default MentalMathLargeNumbers;

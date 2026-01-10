@@ -5,6 +5,7 @@ import {
     Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native'; // Dodane dla nawigacji
 import { awardXpAndCoins } from '../../../services/xpService';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -48,6 +49,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const WrittenMultiplicationTrainer = () => {
+    const navigation = useNavigation(); // Hook nawigacji
     const [num1, setNum1] = useState<string>('');
     const [num2, setNum2] = useState<string>('');
     const [fullResult, setFullResult] = useState<number>(0);
@@ -65,6 +67,10 @@ const WrittenMultiplicationTrainer = () => {
     const [showHint, setShowHint] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
+    // Nowe stany raportu co 10 zadań
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
+
     const inputRefs = useRef<(TextInput | null)[]>([]);
     const backgroundColor = useRef(new Animated.Value(0)).current;
 
@@ -80,13 +86,13 @@ const WrittenMultiplicationTrainer = () => {
         setIsCorrect(null);
         setReadyForNext(false);
         setFirstAttempt(true);
+        setShowHint(false);
         backgroundColor.setValue(0);
 
-        // Losowanie typu: 2x1, 3x1 lub 4x1
         const lengths = [2, 3, 3, 4];
         const l1 = lengths[Math.floor(Math.random() * lengths.length)];
         const n1 = Math.floor(Math.pow(10, l1-1) + Math.random() * (Math.pow(10, l1) - Math.pow(10, l1-1)));
-        const n2 = Math.floor(2 + Math.random() * 8); // Liczba jednocyfrowa (2-9)
+        const n2 = Math.floor(2 + Math.random() * 8);
 
         const prod = n1 * n2;
         const prodStr = prod.toString();
@@ -95,7 +101,6 @@ const WrittenMultiplicationTrainer = () => {
         setNum2(n2.toString());
         setFullResult(prod);
 
-        // Przygotowanie komórek
         const displayLen = prodStr.length;
         setUserDigits(new Array(displayLen).fill(''));
         setCarries(new Array(displayLen).fill(''));
@@ -130,36 +135,23 @@ const WrittenMultiplicationTrainer = () => {
         if (userRes === fullResult) {
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setCorrectCount(c => c + 1);
+            setSessionCorrect(s => s + 1); // Licznik serii
             setMessage('Świetnie! ✅');
             setReadyForNext(true);
             setIsCorrect(true);
             InteractionManager.runAfterInteractions(() => awardXpAndCoins(5, 1));
             const currentUser = auth().currentUser;
             if (currentUser) {
-                firestore()
-                    .collection('users')
-                    .doc(currentUser.uid)
-                    .collection('exerciseStats')
-                    .doc(EXERCISE_ID)
-                    .set({
-                        totalCorrect: firestore.FieldValue.increment(1)
-                    }, { merge: true })
-                    .catch(error => console.error("Błąd zapisu do bazy:", error));
+                firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                    .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
             }
         } else {
             Animated.timing(backgroundColor, { toValue: -1, duration: 500, useNativeDriver: false }).start();
             InteractionManager.runAfterInteractions(() => {
                 const currentUser = auth().currentUser;
                 if (currentUser) {
-                    firestore()
-                        .collection('users')
-                        .doc(currentUser.uid)
-                        .collection('exerciseStats')
-                        .doc(EXERCISE_ID)
-                        .set({
-                            totalWrong: firestore.FieldValue.increment(1)
-                        }, { merge: true })
-                        .catch(error => console.error("Błąd zapisu błędnych:", error));
+                    firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                        .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
                 }
             });
             if (firstAttempt) {
@@ -178,6 +170,10 @@ const WrittenMultiplicationTrainer = () => {
     };
 
     const nextTask = () => {
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
         if (taskCount >= TASKS_LIMIT) { setMessage('Koniec! 🏆'); return; }
         setTaskCount(t => t + 1);
         generateProblem();
@@ -222,13 +218,32 @@ const WrittenMultiplicationTrainer = () => {
 
                     <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={`${num1} × ${num2}`} />
 
+                    {/* MODAL MILSTONE */}
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%</Text>
+                                </View>
+                                <Text style={styles.suggestionText}>{sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}</Text>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Inny temat</Text></TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
                             <View style={styles.overlayBackground} />
                             <Text style={styles.questionMain}>Mnożenie pisemne</Text>
 
+
+
                             <View style={styles.columnContainer}>
-                                {/* Przeniesienia (Carries) */}
                                 <View style={[styles.row, { marginBottom: 5 }]}>
                                     <View style={styles.opSpace} />
                                     {carries.map((c, i) => (
@@ -256,7 +271,6 @@ const WrittenMultiplicationTrainer = () => {
                                     </View>
                                 </View>
 
-                                {/* Wynik końcowy */}
                                 <View style={styles.row}>
                                     <View style={styles.opSpace} />
                                     {userDigits.map((d, i) => (
@@ -280,11 +294,7 @@ const WrittenMultiplicationTrainer = () => {
                             </View>
 
                             <View style={styles.buttonContainer}>
-                                <Button
-                                    title={readyForNext ? 'Dalej' : 'Sprawdź'}
-                                    onPress={readyForNext ? nextTask : handleCheck}
-                                    color="#007AFF"
-                                />
+                                <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
                             </View>
 
                             <Text style={styles.counterTextSmall}>Zadanie: {taskCount} / {TASKS_LIMIT}</Text>
@@ -349,6 +359,14 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
 });
 
 export default WrittenMultiplicationTrainer;

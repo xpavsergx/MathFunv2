@@ -20,18 +20,20 @@ import {
     InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native'; // DODANE DO NAWIGACJI
 
+// --- INTEGRACJA Z FIREBASE ---
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { awardXpAndCoins } from '../../../services/xpService';
 
 const EXERCISE_ID = "moreLessTrainer";
-const TASKS_LIMIT = 50; // Стандартный лимит
+const TASKS_LIMIT = 50;
 
 const { width: screenWidth } = Dimensions.get('window');
 const isSmallDevice = screenWidth < 380;
 
-// --- КОМПОНЕНТ РИСОВАЛКИ (БРУДНОПИС) ---
+// --- KOMPONENT BRUDNOPISU ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
@@ -78,6 +80,8 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const MoreLessTrainerScreen4 = () => {
+    const navigation = useNavigation(); // DO PRZEKIEROWANIA
+
     // --- STATE LOGIC ---
     const [baseNumber, setBaseNumber] = useState<number>(0);
     const [difference, setDifference] = useState<number>(0);
@@ -91,6 +95,10 @@ const MoreLessTrainerScreen4 = () => {
     const [wrongCount, setWrongCount] = useState<number>(0);
     const [taskCount, setTaskCount] = useState<number>(0);
     const [firstAttempt, setFirstAttempt] = useState<boolean>(true);
+
+    // --- NOWE STANY RAPORTU ---
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const [message, setMessage] = useState('');
     const [showScratchpad, setShowScratchpad] = useState(false);
@@ -107,8 +115,13 @@ const MoreLessTrainerScreen4 = () => {
         return () => { k1.remove(); k2.remove(); };
     }, []);
 
-    // --- ГЕНЕРАЦИЯ ЗАДАНИЙ (4 КЛАСС: О ИЛЕ БОЛЬШЕ/МЕНЬШЕ) ---
     const nextTask = () => {
+        // Blokada raportu co 10 zadań
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
+
         if (taskCount >= TASKS_LIMIT) {
             setMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
             setReadyForNext(false);
@@ -120,45 +133,28 @@ const MoreLessTrainerScreen4 = () => {
         let newDiff: number;
 
         if (mode < 0.4) {
-            // РЕЖИМ 1: Двузначные числа (сложение/вычитание в пределах 100)
-            // Пример: 45 + 12
             newBase = Math.floor(Math.random() * 80) + 10;
             newDiff = Math.floor(Math.random() * 30) + 5;
         } else if (mode < 0.7) {
-            // РЕЖИМ 2: Переход через сотню (легкий)
-            // Пример: 95 + 15, 110 - 20
-            newBase = Math.floor(Math.random() * 40) + 80; // 80..120
+            newBase = Math.floor(Math.random() * 40) + 80;
             newDiff = Math.floor(Math.random() * 20) + 10;
         } else {
-            // РЕЖИМ 3: Круглые сотни и полтинники
-            // Пример: 250 + 50, 400 - 100
             const bases = [100, 150, 200, 250, 300, 350, 400, 450];
             newBase = bases[Math.floor(Math.random() * bases.length)];
             const diffs = [50, 100, 150];
             newDiff = diffs[Math.floor(Math.random() * diffs.length)];
         }
 
-        // Определяем тип операции
         let newType: 'większa' | 'mniejsza' = Math.random() > 0.5 ? 'większa' : 'mniejsza';
-
-        // Проверка на неотрицательный результат
-        if (newType === 'mniejsza' && newBase - newDiff < 0) {
-            newType = 'większa';
-        }
-
-        // Проверка на разумный предел для 4 класса (до 1000)
-        if (newType === 'większa' && newBase + newDiff > 1000) {
-            newType = 'mniejsza';
-        }
+        if (newType === 'mniejsza' && newBase - newDiff < 0) newType = 'większa';
+        if (newType === 'większa' && newBase + newDiff > 1000) newType = 'mniejsza';
 
         setBaseNumber(newBase);
         setDifference(newDiff);
         setType(newType);
 
-        // --- ПОДСКАЗКА ---
         const operationSymbol = newType === 'większa' ? '+' : '-';
-        const hint = `Oblicz: ${newBase} ${operationSymbol} ${newDiff}`;
-        setHintText(hint);
+        setHintText(`Oblicz: ${newBase} ${operationSymbol} ${newDiff}`);
 
         setAnswer('');
         setMessage('');
@@ -191,6 +187,7 @@ const MoreLessTrainerScreen4 = () => {
             if (isCorrect) {
                 Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
                 setCorrectCount(prev => prev + 1);
+                setSessionCorrect(prev => prev + 1); // Licznik sesji
                 setMessage('Świetnie! ✅');
                 setReadyForNext(true);
                 setShowHint(false);
@@ -211,7 +208,7 @@ const MoreLessTrainerScreen4 = () => {
 
                 if (firstAttempt) {
                     setMessage('Błąd! Spróbuj ponownie.');
-                    setAnswer(''); // Даем второй шанс
+                    setAnswer('');
                     setFirstAttempt(false);
                 } else {
                     setMessage(`Błąd! Poprawnie: ${correctResult}`);
@@ -276,6 +273,47 @@ const MoreLessTrainerScreen4 = () => {
 
                     <DrawingModal visible={showScratchpad} onClose={toggleScratchpad} problemText={problemString} />
 
+                    {/* MODAL RAPORTU CO 10 ZADAŃ */}
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
+                                        Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
+                                    </Text>
+                                </View>
+                                <Text style={styles.suggestionText}>
+                                    {sessionCorrect >= 8
+                                        ? "Rewelacyjnie! Jesteś mistrzem!"
+                                        : "Trenuj dalej, aby być jeszcze lepszym."}
+                                </Text>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#28a745' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            setSessionCorrect(0);
+                                            nextTask();
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Kontynuuj</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#007AFF' }]}
+                                        onPress={() => {
+                                            setShowMilestone(false);
+                                            navigation.goBack(); // POWRÓT DO PODTEMATÓW
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Inny temat</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
                             <View style={styles.overlayBackground} />
@@ -334,29 +372,24 @@ const styles = StyleSheet.create({
     keyboardContainer: { flex: 1, justifyContent: 'center' },
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 20 },
 
-    // Top Buttons
     topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
     iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
     buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255, 255, 255, 0.8)', textShadowRadius: 3 },
 
-    // Hint Box
     hintBox: {
         position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF'
     },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
     hintText: { fontSize: 16, color: '#333', lineHeight: 22, textAlign: 'center' },
 
-    // Card
     card: { width: '95%', maxWidth: 480, borderRadius: 20, padding: 20, alignItems: 'center', marginTop: 20, alignSelf: 'center' },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
 
-    // Headings
     taskLabel: { fontSize: 18, fontWeight: '700', marginBottom: 15, color: '#007AFF', textAlign: 'center', textTransform: 'uppercase' },
     taskTextMain: { fontSize: isSmallDevice ? 24 : 30, fontWeight: 'bold', marginBottom: 20, color: '#333', textAlign: 'center', lineHeight: 36 },
     subTitle: { fontSize: 16, marginBottom: 20, color: '#555', textAlign: 'center' },
 
-    // Inputs
     input: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#fafafa', marginBottom: 15, color: '#333' },
     correctFinal: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#28a745', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#d4edda', marginBottom: 15, color: '#155724' },
     errorFinal: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#dc3545', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#f8d7da', marginBottom: 15, color: '#721c24' },
@@ -366,15 +399,12 @@ const styles = StyleSheet.create({
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
 
-    // Counter
     counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
 
-    // Bottom Icons
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: iconSize, height: iconSize, resizeMode: 'contain', marginHorizontal: 10 },
     counterTextIcons: { fontSize: Math.max(14, iconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
 
-    // Modal
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
     drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
     drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, backgroundColor: '#f0f0f0', borderBottomWidth: 1, borderBottomColor: '#ccc' },
@@ -385,6 +415,15 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
+
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
 });
 
 export default MoreLessTrainerScreen4;

@@ -5,6 +5,7 @@ import {
     Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager
 } from 'react-native';
 import Svg, { Path, Rect, G, Line } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native'; // DODANE
 import { awardXpAndCoins } from '../../../services/xpService';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -51,7 +52,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
     );
 };
 
-// --- ВИЗУАЛИЗАЦИЯ (ФИГУРЫ) ---
+// --- WIZUALIZACJA (FIGURY) ---
 const MixedShape = ({ whole, num, den }: { whole: number, num: number, den: number }) => {
     if (!den || den === 0 || isNaN(den)) return null;
     const size = 90;
@@ -81,7 +82,7 @@ const MixedShape = ({ whole, num, den }: { whole: number, num: number, den: numb
     );
 };
 
-// --- ВИЗУАЛИЗАЦИЯ (СТАКАНЫ) ---
+// --- WIZUALIZACJA (STAKANY) ---
 const LiquidCup = ({ full, level, den }: { full: number, level: number, den: number }) => {
     if (!den || den === 0) return null;
     const renderCup = (isFull: boolean, fillLevel: number) => {
@@ -107,8 +108,9 @@ const LiquidCup = ({ full, level, den }: { full: number, level: number, den: num
     );
 };
 
-// --- ГЛАВНЫЙ КОМПОНЕНТ ---
+// --- GŁÓWNY KOMPONENT ---
 const MixedNumbersTrainer = () => {
+    const navigation = useNavigation(); // Hook nawigacji
     const [task, setTask] = useState<any>({
         type: 'visual', q: '', h: '',
         ans: { w: 0, n: 0, d: 1 },
@@ -120,8 +122,12 @@ const MixedNumbersTrainer = () => {
     const [correctness, setCorrectness] = useState({ w: null, n: null, d: null });
     const [ready, setReady] = useState(false);
     const [attempts, setAttempts] = useState(0);
-    const [stats, setStats] = useState({ correct: 0, wrong: 0, count: 0 });
     const [msg, setMsg] = useState('');
+
+    // Statystyki i Raport co 10
+    const [stats, setStats] = useState({ correct: 0, wrong: 0, count: 0 });
+    const [showMilestone, setShowMilestone] = useState(false);
+    const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const [showScratchpad, setShowScratchpad] = useState(false);
     const [showHint, setShowHint] = useState(false);
@@ -150,7 +156,6 @@ const MixedNumbersTrainer = () => {
         const type = rnd(0, 4);
         let q = '', h = '', ans = { w: 0, n: 0, d: 0 }, data = {};
 
-        // 1. VISUAL
         if (type === 0) {
             const den = [3, 4, 5, 6, 8][rnd(0, 4)];
             const whole = rnd(1, 3);
@@ -160,7 +165,6 @@ const MixedNumbersTrainer = () => {
             ans = { w: whole, n: num, d: den };
             data = { type: 'visual', whole, num, den };
         }
-        // 2. UNITS
         else if (type === 1) {
             const subType = rnd(0, 3);
             let u1 = '', u2 = '', r = 10;
@@ -168,11 +172,9 @@ const MixedNumbersTrainer = () => {
             else if (subType === 1) { u1 = 'm'; u2 = 'cm'; r = 100; }
             else if (subType === 2) { u1 = 'kg'; u2 = 'dag'; r = 100; }
             else { u1 = 't'; u2 = 'kg'; r = 1000; }
-
             const isMixed = Math.random() > 0.5;
             const wVal = isMixed ? rnd(1, 9) : 0;
             const nVal = rnd(1, r - 1);
-
             if (isMixed) {
                 q = `Wyraź liczbą mieszaną:\n${wVal} ${u1} ${nVal} ${u2} – ile to ${u1}?`;
                 ans = { w: wVal, n: nVal, d: r };
@@ -183,7 +185,6 @@ const MixedNumbersTrainer = () => {
             h = `Pamiętaj: 1 ${u1} = ${r} ${u2}. Mianownik to ${r}.`;
             data = { type: 'text' };
         }
-        // 3. TIME
         else if (type === 2) {
             const subType = rnd(0, 3);
             if (subType === 0) {
@@ -208,7 +209,6 @@ const MixedNumbersTrainer = () => {
             }
             data = { type: 'text' };
         }
-        // 4. LIQUID
         else if (type === 3) {
             const den = [2, 3, 4, 5][rnd(0, 3)];
             const full = rnd(1, 2);
@@ -218,7 +218,6 @@ const MixedNumbersTrainer = () => {
             ans = { w: full, n: level, d: den };
             data = { type: 'liquid', full, level, den };
         }
-        // 5. WORDS
         else {
             const nums = ["jedna", "dwie", "trzy", "cztery", "pięć", "sześć"];
             const dens = ["druga", "trzecia", "czwarta", "piąta", "szósta", "siódma"];
@@ -233,8 +232,6 @@ const MixedNumbersTrainer = () => {
         }
 
         setTask({ q, h, ans, ...data });
-        // --- УДАЛЕНО АВТОМАТИЧЕСКОЕ ПЕРЕКЛЮЧЕНИЕ ФОКУСА ---
-        // Теперь пользователь сам должен нажать на поле, чтобы начать ввод
     };
 
     const handleCheck = () => {
@@ -255,20 +252,14 @@ const MixedNumbersTrainer = () => {
         if (isW && isN && isD) {
             Animated.timing(bgAnim, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setStats(s => ({ ...s, correct: s.correct + 1 }));
+            setSessionCorrect(prev => prev + 1);
             setMsg('Doskonale! ✅');
             setReady(true);
             InteractionManager.runAfterInteractions(() => awardXpAndCoins(10, 2));
             const currentUser = auth().currentUser;
             if (currentUser) {
-                firestore()
-                    .collection('users')
-                    .doc(currentUser.uid)
-                    .collection('exerciseStats')
-                    .doc(EXERCISE_ID)
-                    .set({
-                        totalCorrect: firestore.FieldValue.increment(1)
-                    }, { merge: true })
-                    .catch(error => console.error("Błąd zapisu do bazy:", error));
+                firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                    .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
             }
         } else {
             const nextAtt = attempts + 1;
@@ -290,25 +281,20 @@ const MixedNumbersTrainer = () => {
                 setStats(s => ({ ...s, wrong: s.wrong + 1 }));
                 setReady(true);
                 Animated.timing(bgAnim, { toValue: -1, duration: 500, useNativeDriver: false }).start();
-                InteractionManager.runAfterInteractions(() => {
-                    const currentUser = auth().currentUser;
-                    if (currentUser) {
-                        firestore()
-                            .collection('users')
-                            .doc(currentUser.uid)
-                            .collection('exerciseStats')
-                            .doc(EXERCISE_ID)
-                            .set({
-                                totalWrong: firestore.FieldValue.increment(1)
-                            }, { merge: true })
-                            .catch(error => console.error("Błąd zapisu błędnych:", error));
-                    }
-                });
+                const currentUser = auth().currentUser;
+                if (currentUser) {
+                    firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                        .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+                }
             }
         }
     };
 
     const nextTask = () => {
+        if (stats.count > 0 && stats.count % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
         if (stats.count >= TASKS_LIMIT) { setMsg('Koniec treningu! 🏆'); return; }
         setStats(s => ({ ...s, count: s.count + 1 }));
         generateProblem();
@@ -328,6 +314,24 @@ const MixedNumbersTrainer = () => {
                             <TouchableOpacity onPress={() => setShowHint(!showHint)} style={styles.topBtnItem}><Image source={require('../../../assets/question.png')} style={styles.iconTop} /><Text style={styles.buttonLabel}>Pomoc</Text></TouchableOpacity>
                         </View>
                     )}
+
+                    {/* MODAL MILESTONE */}
+                    <Modal visible={showMilestone} transparent={true} animationType="slide">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
+                                <View style={styles.statsRowMilestone}>
+                                    <Text style={styles.statsTextMilestone}>Poprawne: {sessionCorrect} / 10</Text>
+                                    <Text style={[styles.statsTextMilestone, { color: '#28a745', marginTop: 5 }]}>Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%</Text>
+                                </View>
+                                <Text style={styles.suggestionTextMilestone}>{sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}</Text>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Inny temat</Text></TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
 
                     {showHint && !keyboardVisible && (
                         <View style={styles.hintBox}><Text style={styles.hintTitle}>Wskazówka:</Text><Text style={styles.hintText}>{task.h}</Text></View>
@@ -350,39 +354,19 @@ const MixedNumbersTrainer = () => {
                                 <TextInput
                                     ref={wRef}
                                     style={[styles.wholeInput, correctness.w === false && styles.inputError, correctness.w === true && styles.inputCorrect]}
-                                    keyboardType="numeric"
-                                    placeholder="?"
-                                    value={inputs.w}
-                                    onChangeText={(v) => setInputs({ ...inputs, w: v })}
-                                    returnKeyType="next"
-                                    onSubmitEditing={() => nRef.current?.focus()}
-                                    blurOnSubmit={false}
-                                    editable={!ready}
+                                    keyboardType="numeric" placeholder="?" value={inputs.w} onChangeText={(v) => setInputs({ ...inputs, w: v })} returnKeyType="next" onSubmitEditing={() => nRef.current?.focus()} blurOnSubmit={false} editable={!ready}
                                 />
                                 <View style={styles.fractionGroup}>
                                     <TextInput
                                         ref={nRef}
                                         style={[styles.smallInput, correctness.n === false && styles.inputError, correctness.n === true && styles.inputCorrect]}
-                                        keyboardType="numeric"
-                                        placeholder="?"
-                                        value={inputs.n}
-                                        onChangeText={(v) => setInputs({ ...inputs, n: v })}
-                                        returnKeyType="next"
-                                        onSubmitEditing={() => dRef.current?.focus()}
-                                        blurOnSubmit={false}
-                                        editable={!ready}
+                                        keyboardType="numeric" placeholder="?" value={inputs.n} onChangeText={(v) => setInputs({ ...inputs, n: v })} returnKeyType="next" onSubmitEditing={() => dRef.current?.focus()} blurOnSubmit={false} editable={!ready}
                                     />
                                     <View style={styles.line} />
                                     <TextInput
                                         ref={dRef}
                                         style={[styles.smallInput, correctness.d === false && styles.inputError, correctness.d === true && styles.inputCorrect]}
-                                        keyboardType="numeric"
-                                        placeholder="?"
-                                        value={inputs.d}
-                                        onChangeText={(v) => setInputs({ ...inputs, d: v })}
-                                        returnKeyType="done"
-                                        onSubmitEditing={Keyboard.dismiss}
-                                        editable={!ready}
+                                        keyboardType="numeric" placeholder="?" value={inputs.d} onChangeText={(v) => setInputs({ ...inputs, d: v })} returnKeyType="done" onSubmitEditing={Keyboard.dismiss} editable={!ready}
                                     />
                                 </View>
                             </View>
@@ -391,7 +375,9 @@ const MixedNumbersTrainer = () => {
                                 <Text style={styles.btnText}>{ready ? 'Następne' : 'Sprawdź'}</Text>
                             </TouchableOpacity>
                             <Text style={styles.taskCounter}>Zadanie {stats.count}/{TASKS_LIMIT}</Text>
-                            {msg ? <Text style={[styles.msg, msg.includes('Doskonale') ? styles.correctText : styles.errorText]}>{msg}</Text> : null}
+                            <View style={{height: 30, marginTop: 15, justifyContent: 'center'}}>
+                                {msg ? <Text style={[styles.msg, msg.includes('Doskonale') ? styles.correctText : styles.errorText]}>{msg}</Text> : null}
+                            </View>
                         </View>
                     </ScrollView>
 
@@ -411,7 +397,7 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     keyboardContainer: { flex: 1, justifyContent: 'center' },
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 20 },
-    topButtons: { position: 'absolute', top: 25, right: 20, flexDirection: 'row', zIndex: 10 },
+    topButtons: { position: 'absolute', top: 15, right: 20, flexDirection: 'row', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
     iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
     buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255,255,255,0.8)', textShadowRadius: 3 },
@@ -432,23 +418,33 @@ const styles = StyleSheet.create({
     inputError: { borderColor: '#dc3545', backgroundColor: '#fbe9eb', color: '#dc3545' },
     mainBtn: { marginTop: 20, backgroundColor: '#007AFF', paddingHorizontal: 40, paddingVertical: 14, borderRadius: 15 },
     btnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-    taskCounter: { marginTop: 15, color: '#555', fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', textAlign: 'center' },
+    taskCounter: { marginTop: 15, color: '#555', fontSize: 13, fontWeight: '400', textAlign: 'center' },
     msg: { marginTop: 15, fontSize: 18, fontWeight: '700', textAlign: 'center' },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
     iconsBottom: { position: 'absolute', bottom: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     owl: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    score: { fontSize: Math.max(14, combinedIconSize * 0.28), fontWeight: '500', color: '#333', marginHorizontal: 8 },
+    score: { fontSize: 20, fontWeight: '500', color: '#333', marginHorizontal: 8 },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' },
     drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
     drawingHeader: { height: 55, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, backgroundColor: '#f0f0f0' },
     drawingTitle: { fontSize: 18, fontWeight: 'bold' },
     headerButton: { padding: 10 },
     headerButtonText: { fontSize: 16, color: '#007AFF', fontWeight: '600' },
-    problemPreviewContainer: { backgroundColor: '#eef6fc', padding: 12, alignItems: 'center' },
+    problemPreviewContainer: { backgroundColor: '#f9f9f9', padding: 12, alignItems: 'center' },
     problemPreviewLabel: { fontSize: 13, color: '#666' },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', textAlign: 'center' },
-    canvas: { flex: 1, backgroundColor: '#fff' },
+    canvas: { flex: 1, backgroundColor: '#ffffff' },
+
+    // MILESTONE STYLES
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+    statsRowMilestone: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
+    statsTextMilestone: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+    suggestionTextMilestone: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
 });
 
 export default MixedNumbersTrainer;
