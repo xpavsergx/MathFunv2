@@ -7,7 +7,10 @@ import {
 import Svg, { Path } from 'react-native-svg';
 // Upewnij się, że ścieżka do xpService jest poprawna w Twoim projekcie
 import { awardXpAndCoins } from '../../../services/xpService';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
+const EXERCISE_ID = "FractionsExpansionTrainer_cl4";
 const { width: screenWidth } = Dimensions.get('window');
 const TASKS_LIMIT = 40;
 const combinedIconSize = screenWidth * 0.25;
@@ -196,7 +199,20 @@ const FractionsExpansionTrainer = () => {
         if (isNCorrect && isDCorrect) {
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setCorrectCount(c => c + 1); setMessage('Doskonale! ✅');
-            setReadyForNext(true); InteractionManager.runAfterInteractions(() => awardXpAndCoins(10, 2));
+            setReadyForNext(true);
+            InteractionManager.runAfterInteractions(() => awardXpAndCoins(10, 2));
+            const currentUser = auth().currentUser;
+            if (currentUser) {
+                firestore()
+                    .collection('users')
+                    .doc(currentUser.uid)
+                    .collection('exerciseStats')
+                    .doc(EXERCISE_ID)
+                    .set({
+                        totalCorrect: firestore.FieldValue.increment(1)
+                    }, { merge: true })
+                    .catch(error => console.error("Błąd zapisu do bazy:", error));
+            }
         } else {
             const nextAttempt = attempts + 1;
             setAttempts(nextAttempt);
@@ -209,6 +225,20 @@ const FractionsExpansionTrainer = () => {
                 setMessage(`Wynik: ${taskData.targetNum}/${taskData.targetDen}`);
                 setWrongCount(w => w + 1); setReadyForNext(true);
                 Animated.timing(backgroundColor, { toValue: -1, duration: 500, useNativeDriver: false }).start();
+                InteractionManager.runAfterInteractions(() => {
+                    const currentUser = auth().currentUser;
+                    if (currentUser) {
+                        firestore()
+                            .collection('users')
+                            .doc(currentUser.uid)
+                            .collection('exerciseStats')
+                            .doc(EXERCISE_ID)
+                            .set({
+                                totalWrong: firestore.FieldValue.increment(1)
+                            }, { merge: true })
+                            .catch(error => console.error("Błąd zapisu błędnych:", error));
+                    }
+                });
             }
         }
     };

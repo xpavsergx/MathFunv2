@@ -1,5 +1,3 @@
-// src/screens/ProfileScreen.tsx
-
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, StyleSheet, Image, TouchableOpacity,
@@ -16,12 +14,13 @@ import { ALL_ACHIEVEMENTS, Achievement } from '../config/achievements';
 import AchievementBadge from '../Components/AchievementBadge';
 
 const { width } = Dimensions.get('window');
+// Funkcja skalująca dla zachowania proporcji na każdym telefonie
+const scale = (size: number) => (width / 375) * size;
 
 const ProfileScreen = () => {
     const navigation = useNavigation<any>();
     const user = auth().currentUser;
 
-    // --- ✅ OBSŁUGA TRYBU CIEMNEGO ---
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
 
@@ -30,7 +29,6 @@ const ProfileScreen = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedAchievement, setSelectedAchievement] = useState<any>(null);
 
-    // --- ✅ DYNAMICZNE STYLE TEMATYCZNE ---
     const themeStyles = {
         background: { backgroundColor: isDarkMode ? COLORS.backgroundDark : '#F0F4F8' },
         card: { backgroundColor: isDarkMode ? COLORS.cardDark : '#FFF' },
@@ -38,7 +36,7 @@ const ProfileScreen = () => {
         textSecondary: { color: isDarkMode ? COLORS.greyDarkTheme : '#6B7280' },
         progressBarBg: { backgroundColor: isDarkMode ? '#374151' : '#F3F4F6' },
         iconBoxStats: { backgroundColor: isDarkMode ? 'rgba(76, 175, 80, 0.15)' : '#E8F5E9' },
-        iconBoxTrainers: { backgroundColor: isDarkMode ? 'rgba(33, 150, 243, 0.15)' : '#E3F2FD' }, // Nowy kolor dla trenerów
+        iconBoxTrainers: { backgroundColor: isDarkMode ? 'rgba(33, 150, 243, 0.15)' : '#E3F2FD' },
         iconBoxStore: { backgroundColor: isDarkMode ? 'rgba(255, 193, 7, 0.15)' : '#FFF8E1' },
     };
 
@@ -101,7 +99,7 @@ const ProfileScreen = () => {
                             style={styles.editAvatarBtn}
                             onPress={() => navigation.navigate('UserDetails')}
                         >
-                            <Ionicons name="pencil" size={16} color="white" />
+                            <Ionicons name="pencil" size={scale(16)} color="white" />
                         </TouchableOpacity>
                     </View>
 
@@ -117,10 +115,10 @@ const ProfileScreen = () => {
                 <View style={[styles.levelCard, themeStyles.card]}>
                     <View style={styles.levelRow}>
                         <View style={styles.levelInfo}>
-                            <Ionicons name="star" size={20} color={COLORS.accent} />
+                            <Ionicons name="star" size={scale(20)} color={COLORS.accent} />
                             <Text style={[styles.levelLabel, themeStyles.text]}>Poziom {level}</Text>
                         </View>
-                        <Text style={[styles.xpLabel, themeStyles.textSecondary]}>{xp} XP całkowite</Text>
+                        <Text style={[styles.xpLabel, themeStyles.textSecondary]}>{xp} XP</Text>
                     </View>
                     <View style={[styles.progressBarBg, themeStyles.progressBarBg]}>
                         <View style={[styles.progressBarFill, { width: `${progressPercent}%`, backgroundColor: COLORS.primary }]} />
@@ -137,7 +135,7 @@ const ProfileScreen = () => {
                     data={getAchievementsData()}
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 10 }}
+                    contentContainerStyle={{ paddingHorizontal: scale(20), paddingBottom: scale(10) }}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <TouchableOpacity onPress={() => { setSelectedAchievement(item); setModalVisible(true); }}>
@@ -148,59 +146,55 @@ const ProfileScreen = () => {
 
                 {/* 4. MENU Działania */}
                 <View style={styles.menuContainer}>
-                    {/* Statystyki Ogólne */}
                     <TouchableOpacity style={[styles.menuItem, themeStyles.card]} onPress={() => navigation.navigate('StatsScreen')}>
                         <View style={[styles.iconBox, themeStyles.iconBoxStats]}>
-                            <Ionicons name="stats-chart" size={24} color="#4CAF50" />
+                            <Ionicons name="stats-chart" size={scale(24)} color="#4CAF50" />
                         </View>
                         <View style={styles.menuTextContainer}>
                             <Text style={[styles.menuTitle, themeStyles.text]}>Statystyki</Text>
                             <Text style={[styles.menuSub, themeStyles.textSecondary]}>Twoje postępy w nauce</Text>
                         </View>
-                        <Ionicons name="chevron-forward" size={20} color={isDarkMode ? '#4B5563' : '#CCC'} />
+                        <Ionicons name="chevron-forward" size={scale(20)} color={isDarkMode ? '#4B5563' : '#CCC'} />
                     </TouchableOpacity>
 
-                    {/* ✅ NOWA SEKCJA: POSTĘPY TRENERÓW */}
                     <TouchableOpacity style={[styles.menuItem, themeStyles.card]} onPress={() => navigation.navigate('TrainerStats')}>
                         <View style={[styles.iconBox, themeStyles.iconBoxTrainers]}>
-                            <Ionicons name="medal" size={24} color="#2196F3" />
+                            <Ionicons name="medal" size={scale(24)} color="#2196F3" />
                         </View>
                         <View style={styles.menuTextContainer}>
                             <Text style={[styles.menuTitle, themeStyles.text]}>Postępy Trenerów</Text>
                             <Text style={[styles.menuSub, themeStyles.textSecondary]}>Szczegółowe wyniki ćwiczeń</Text>
                         </View>
-                        <Ionicons name="chevron-forward" size={20} color={isDarkMode ? '#4B5563' : '#CCC'} />
+                        <Ionicons name="chevron-forward" size={scale(20)} color={isDarkMode ? '#4B5563' : '#CCC'} />
                     </TouchableOpacity>
 
-                    {/* Sklep */}
                     <TouchableOpacity style={[styles.menuItem, themeStyles.card]} onPress={() => navigation.navigate('Store')}>
                         <View style={[styles.iconBox, themeStyles.iconBoxStore]}>
-                            <Ionicons name="cart" size={24} color="#FFC107" />
+                            <Ionicons name="cart" size={scale(24)} color="#FFC107" />
                         </View>
                         <View style={styles.menuTextContainer}>
                             <Text style={[styles.menuTitle, themeStyles.text]}>Sklep</Text>
                             <Text style={[styles.menuSub, themeStyles.textSecondary]}>Wykorzystaj zdobyte monety</Text>
                         </View>
-                        <Ionicons name="chevron-forward" size={20} color={isDarkMode ? '#4B5563' : '#CCC'} />
+                        <Ionicons name="chevron-forward" size={scale(20)} color={isDarkMode ? '#4B5563' : '#CCC'} />
                     </TouchableOpacity>
                 </View>
 
                 <TouchableOpacity style={[styles.logoutButton, { backgroundColor: isDarkMode ? 'rgba(239, 68, 68, 0.15)' : '#FEE2E2' }]} onPress={handleLogout}>
-                    <Ionicons name="log-out-outline" size={22} color={COLORS.error} />
+                    <Ionicons name="log-out-outline" size={scale(22)} color={COLORS.error} />
                     <Text style={styles.logoutText}>Wyloguj się</Text>
                 </TouchableOpacity>
 
                 <Text style={[styles.versionText, themeStyles.textSecondary]}>MathFun v1.0.3</Text>
             </ScrollView>
 
-            {/* Modal osiągnięć */}
             <Modal animationType="fade" transparent visible={modalVisible}>
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, themeStyles.card]}>
                         {selectedAchievement && (
                             <>
                                 <View style={styles.modalIconContainer}>
-                                    <Ionicons name={selectedAchievement.isUnlocked ? selectedAchievement.iconName : "lock-closed"} size={50} color={COLORS.primary} />
+                                    <Ionicons name={selectedAchievement.isUnlocked ? selectedAchievement.iconName : "lock-closed"} size={scale(50)} color={COLORS.primary} />
                                 </View>
                                 <Text style={[styles.modalTitle, themeStyles.text]}>{selectedAchievement.title}</Text>
                                 <Text style={[styles.modalDesc, themeStyles.textSecondary]}>{selectedAchievement.description}</Text>
@@ -216,78 +210,77 @@ const ProfileScreen = () => {
     );
 };
 
-// ... Style bez zmian ...
 const styles = StyleSheet.create({
     container: { flex: 1 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    scrollContent: { paddingBottom: 40 },
+    scrollContent: { paddingBottom: scale(40) },
     profileHeader: {
         alignItems: 'center',
-        paddingVertical: 30,
-        marginHorizontal: 15,
-        marginTop: 60,
-        borderRadius: 25,
+        paddingVertical: scale(25),
+        marginHorizontal: scale(15),
+        marginTop: scale(50),
+        borderRadius: scale(25),
         elevation: 5,
         shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10,
     },
-    avatarContainer: { position: 'relative', marginBottom: 15 },
+    avatarContainer: { position: 'relative', marginBottom: scale(15) },
     avatarOuterRing: {
-        width: 130, height: 130, borderRadius: 65, borderWidth: 4,
+        width: scale(120), height: scale(120), borderRadius: scale(60), borderWidth: scale(4),
         justifyContent: 'center', alignItems: 'center'
     },
     avatarInnerCircle: {
-        width: 116, height: 116, borderRadius: 58,
+        width: scale(106), height: scale(106), borderRadius: scale(53),
         overflow: 'hidden', justifyContent: 'center', alignItems: 'center'
     },
-    avatarImage: { width: 95, height: 95, resizeMode: 'contain' },
+    avatarImage: { width: scale(85), height: scale(85), resizeMode: 'contain' },
     editAvatarBtn: {
-        position: 'absolute', bottom: 5, right: 5,
-        backgroundColor: COLORS.primary, padding: 8, borderRadius: 20,
-        borderWidth: 3, borderColor: '#FFF'
+        position: 'absolute', bottom: scale(2), right: scale(2),
+        backgroundColor: COLORS.primary, padding: scale(8), borderRadius: scale(20),
+        borderWidth: scale(3), borderColor: '#FFF'
     },
-    userName: { fontSize: 22, fontWeight: 'bold' },
-    userEmail: { fontSize: 14, marginBottom: 12 },
+    userName: { fontSize: scale(22), fontWeight: 'bold' },
+    userEmail: { fontSize: scale(14), marginBottom: scale(12) },
     classBadge: {
-        paddingHorizontal: 18, paddingVertical: 6, borderRadius: 20,
+        paddingHorizontal: scale(18), paddingVertical: scale(6), borderRadius: scale(20),
         borderWidth: 1,
     },
-    classText: { fontWeight: '700', fontSize: 13 },
+    classText: { fontWeight: '700', fontSize: scale(13) },
     levelCard: {
-        marginHorizontal: 15, padding: 20, borderRadius: 20,
-        marginTop: 20, elevation: 2
+        marginHorizontal: scale(15), padding: scale(20), borderRadius: scale(20),
+        marginTop: scale(20), elevation: 2
     },
-    levelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+    levelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: scale(12) },
     levelInfo: { flexDirection: 'row', alignItems: 'center' },
-    levelLabel: { fontSize: 17, fontWeight: 'bold', marginLeft: 8 },
-    xpLabel: { fontSize: 13, fontWeight: '600' },
-    progressBarBg: { height: 12, borderRadius: 6, overflow: 'hidden' },
-    progressBarFill: { height: '100%', borderRadius: 6 },
-    nextLevelText: { fontSize: 12, marginTop: 10, textAlign: 'center' },
-    sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 25, marginTop: 25, marginBottom: 15 },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold' },
+    levelLabel: { fontSize: scale(17), fontWeight: 'bold', marginLeft: scale(8) },
+    xpLabel: { fontSize: scale(13), fontWeight: '600' },
+    progressBarBg: { height: scale(12), borderRadius: scale(6), overflow: 'hidden' },
+    progressBarFill: { height: '100%', borderRadius: scale(6) },
+    nextLevelText: { fontSize: scale(12), marginTop: scale(10), textAlign: 'center' },
+    sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: scale(25), marginTop: scale(25), marginBottom: scale(15) },
+    sectionTitle: { fontSize: scale(18), fontWeight: 'bold' },
     countText: { fontWeight: '700' },
-    menuContainer: { paddingHorizontal: 15, marginTop: 10 },
+    menuContainer: { paddingHorizontal: scale(15), marginTop: scale(10) },
     menuItem: {
         flexDirection: 'row', alignItems: 'center',
-        padding: 16, borderRadius: 18, marginBottom: 12, elevation: 1
+        padding: scale(16), borderRadius: scale(18), marginBottom: scale(12), elevation: 1
     },
-    iconBox: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+    iconBox: { width: scale(48), height: scale(48), borderRadius: scale(14), justifyContent: 'center', alignItems: 'center', marginRight: scale(16) },
     menuTextContainer: { flex: 1 },
-    menuTitle: { fontSize: 16, fontWeight: '700' },
-    menuSub: { fontSize: 12, marginTop: 2 },
+    menuTitle: { fontSize: scale(16), fontWeight: '700' },
+    menuSub: { fontSize: scale(12), marginTop: scale(2) },
     logoutButton: {
         flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-        marginTop: 20, padding: 16, borderRadius: 15,
-        marginHorizontal: 15
+        marginTop: scale(20), padding: scale(16), borderRadius: scale(15),
+        marginHorizontal: scale(15)
     },
-    logoutText: { color: COLORS.error, fontWeight: 'bold', fontSize: 16, marginLeft: 10 },
-    versionText: { textAlign: 'center', marginTop: 25, fontSize: 12 },
+    logoutText: { color: COLORS.error, fontWeight: 'bold', fontSize: scale(16), marginLeft: scale(10) },
+    versionText: { textAlign: 'center', marginTop: scale(25), fontSize: scale(12) },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' },
-    modalContent: { width: '85%', borderRadius: 25, padding: 30, alignItems: 'center' },
-    modalIconContainer: { marginBottom: 20 },
-    modalTitle: { fontSize: 22, fontWeight: 'bold', textAlign: 'center' },
-    modalDesc: { fontSize: 15, textAlign: 'center', marginVertical: 15 },
-    modalCloseBtn: { backgroundColor: COLORS.primary, paddingVertical: 12, paddingHorizontal: 40, borderRadius: 20, marginTop: 10 },
+    modalContent: { width: '85%', borderRadius: scale(25), padding: scale(30), alignItems: 'center' },
+    modalIconContainer: { marginBottom: scale(20) },
+    modalTitle: { fontSize: scale(22), fontWeight: 'bold', textAlign: 'center' },
+    modalDesc: { fontSize: scale(15), textAlign: 'center', marginVertical: scale(15) },
+    modalCloseBtn: { backgroundColor: COLORS.primary, paddingVertical: scale(12), paddingHorizontal: scale(40), borderRadius: scale(20), marginTop: scale(10) },
     modalCloseText: { color: '#FFF', fontWeight: 'bold' }
 });
 

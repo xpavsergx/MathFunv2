@@ -16,7 +16,8 @@ import {
     Platform,
     KeyboardAvoidingView,
     TouchableWithoutFeedback,
-    ScrollView
+    ScrollView,
+    InteractionManager
 } from 'react-native';
 import Svg, { Path, Line, Text as SvgText, G } from 'react-native-svg';
 
@@ -25,7 +26,7 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { awardXpAndCoins } from '../../../services/xpService';
 
-const EXERCISE_ID = "fractionsNumberLine_PL_FinalFix";
+const EXERCISE_ID = "fractionsNumberLine_cl4";
 const TASKS_LIMIT = 30;
 const screenWidth = Dimensions.get('window').width;
 const combinedIconSize = screenWidth * 0.25;
@@ -251,6 +252,20 @@ const FractionsNumberLineTrainerPL = () => {
             setMessage('Świetnie! ✅');
             awardXpAndCoins(5, 1);
             setReadyForNext(true);
+            InteractionManager.runAfterInteractions(() => {
+                awardXpAndCoins(5, 1);
+                if (currentUser) {
+                    firestore()
+                        .collection('users')
+                        .doc(currentUser.uid)
+                        .collection('exerciseStats')
+                        .doc(EXERCISE_ID)
+                        .set({
+                            totalCorrect: firestore.FieldValue.increment(1)
+                        }, { merge: true })
+                        .catch(error => console.error("Błąd zapisu sukcesu:", error));
+                }
+            });
         } else {
             if (attemptsLeft === 2) {
                 setAttemptsLeft(1);
@@ -279,6 +294,19 @@ const FractionsNumberLineTrainerPL = () => {
                 setMessage(`Błąd. Poprawna odpowiedź: ${correctStr}`);
                 setIsWholeCorrect(false); setIsNumCorrect(false); setIsDenCorrect(false);
                 setReadyForNext(true);
+                InteractionManager.runAfterInteractions(() => {
+                    if (currentUser) {
+                        firestore()
+                            .collection('users')
+                            .doc(currentUser.uid)
+                            .collection('exerciseStats')
+                            .doc(EXERCISE_ID)
+                            .set({
+                                totalWrong: firestore.FieldValue.increment(1)
+                            }, { merge: true })
+                            .catch(error => console.error("Błąd zapisu błędu:", error));
+                    }
+                });
             }
         }
     };

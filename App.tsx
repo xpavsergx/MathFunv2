@@ -292,7 +292,16 @@ function HomeStackNavigator() {
 function GamesStackNavigator() {
     return (
         <GamesStackNav.Navigator>
-            <GamesStackNav.Screen name="GamesMain" component={GamesScreen} options={{ title: 'Gry' }} />
+            <GamesStackNav.Screen name="GamesMain" component={GamesScreen} options={{
+                title: 'Dane użytkownika',
+                headerStyle: {
+                    backgroundColor: '#FFD600', // To dodało ten turkusowy kolor
+                },
+                headerTintColor: '#fff', // To zmieniło kolor tekstu i strzałki na biały
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },
+            }} />
             <GamesStackNav.Screen name="MatchstickGame" component={MatchstickEquationGame} options={{ title: 'Równania z Zapałkami' }} />
             <GamesStackNav.Screen name="SpeedyCountGame" component={SpeedyCountGame} options={{ title: 'Szybkie Liczenie', headerShown: false }} />
             <GamesStackNav.Screen name="MathSprintGame" component={MathSprintScreen} options={{ title: 'Math Sprint', headerShown: false }} />
@@ -310,7 +319,16 @@ function GamesStackNavigator() {
 function FriendsStackNavigator() {
     return (
         <FriendsStackNav.Navigator>
-            <FriendsStackNav.Screen name="Friends" component={FriendsScreen} options={{ title: 'Znajomi' }} />
+            <FriendsStackNav.Screen name="Friends" component={FriendsScreen} options={{
+                title: 'Znajomi',
+                headerStyle: {
+                    backgroundColor: '#00BDD6', // To dodało ten turkusowy kolor
+                },
+                headerTintColor: '#fff', // To zmieniło kolor tekstu i strzałki na biały
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },
+            }} />
             <FriendsStackNav.Screen name="DuelSetup" component={DuelSetupScreen} options={{ title: 'Ustawienia pojedynku' }} />
         </FriendsStackNav.Navigator>
     );
@@ -323,10 +341,48 @@ function ProfileStackNavigator() {
     return (
         <ProfileStack.Navigator>
             <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} options={{ title: 'Profil', headerShown: false }} />
-            <ProfileStack.Screen name="UserDetails" component={UserDetailsScreen} options={{ title: 'Dane użytkownika' }} />
-            <ProfileStack.Screen name="StatsScreen" component={StatsScreen} options={{ title: 'Moje Statystyki' }} />
-            <ProfileStack.Screen name="TrainerStats" component={TrainerStatsScreen} options={{ title: 'Statystyki Trenerów' }}/>
-            <ProfileStack.Screen name="Store" component={StoreScreen} options={{ title: 'Sklep' }} />
+            <ProfileStack.Screen name="UserDetails" component={UserDetailsScreen}
+                options={{
+                    title: 'Dane użytkownika',
+                    headerStyle: {
+                        backgroundColor: '#00BDD6', // To dodało ten turkusowy kolor
+                    },
+                    headerTintColor: '#fff', // To zmieniło kolor tekstu i strzałki na biały
+                    headerTitleStyle: {
+                        fontWeight: 'bold',
+                    },
+                }}
+            />
+            <ProfileStack.Screen
+                name="StatsScreen"
+                component={StatsScreen}
+                options={{
+                    title: 'Moje Statystyki',
+                    headerStyle: { backgroundColor: '#00BDD6' },
+                    headerTintColor: '#fff',
+                    headerTitleStyle: { fontWeight: 'bold' },
+                }}
+            />
+            <ProfileStack.Screen
+                name="TrainerStats"
+                component={TrainerStatsScreen}
+                options={{
+                    title: 'Statystyki Trenerów',
+                    headerStyle: { backgroundColor: '#00BDD6' },
+                    headerTintColor: '#fff',
+                    headerTitleStyle: { fontWeight: 'bold' },
+                }}
+            />
+            <ProfileStack.Screen
+                name="Store"
+                component={StoreScreen}
+                options={{
+                    title: 'Sklep',
+                    headerStyle: { backgroundColor: '#00BDD6' },
+                    headerTintColor: '#fff',
+                    headerTitleStyle: { fontWeight: 'bold' },
+                }}
+            />
         </ProfileStack.Navigator>
     );
 }
@@ -337,7 +393,15 @@ function ProfileStackNavigator() {
 function ActivityStackNavigator() {
     return (
         <ActivityStackNav.Navigator>
-            <ActivityStackNav.Screen name="ActivityMain" component={ActivityScreen} options={{ title: 'Aktywność' }} />
+            <ActivityStackNav.Screen name="ActivityMain" component={ActivityScreen} options={{ title: 'Aktywność',
+                headerStyle: {
+                    backgroundColor: '#00BDD6', // To dodało ten turkusowy kolor
+                },
+                headerTintColor: '#fff', // To zmieniło kolor tekstu i strzałki na biały
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },
+            }} />
         </ActivityStackNav.Navigator>
     );
 }

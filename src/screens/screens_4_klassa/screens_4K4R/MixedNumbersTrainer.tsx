@@ -6,6 +6,10 @@ import {
 } from 'react-native';
 import Svg, { Path, Rect, G, Line } from 'react-native-svg';
 import { awardXpAndCoins } from '../../../services/xpService';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+
+const EXERCISE_ID = "MixedNumbersTrainer_cl4";
 
 const { width: screenWidth } = Dimensions.get('window');
 const TASKS_LIMIT = 40;
@@ -254,6 +258,18 @@ const MixedNumbersTrainer = () => {
             setMsg('Doskonale! ✅');
             setReady(true);
             InteractionManager.runAfterInteractions(() => awardXpAndCoins(10, 2));
+            const currentUser = auth().currentUser;
+            if (currentUser) {
+                firestore()
+                    .collection('users')
+                    .doc(currentUser.uid)
+                    .collection('exerciseStats')
+                    .doc(EXERCISE_ID)
+                    .set({
+                        totalCorrect: firestore.FieldValue.increment(1)
+                    }, { merge: true })
+                    .catch(error => console.error("Błąd zapisu do bazy:", error));
+            }
         } else {
             const nextAtt = attempts + 1;
             setAttempts(nextAtt);
@@ -274,6 +290,20 @@ const MixedNumbersTrainer = () => {
                 setStats(s => ({ ...s, wrong: s.wrong + 1 }));
                 setReady(true);
                 Animated.timing(bgAnim, { toValue: -1, duration: 500, useNativeDriver: false }).start();
+                InteractionManager.runAfterInteractions(() => {
+                    const currentUser = auth().currentUser;
+                    if (currentUser) {
+                        firestore()
+                            .collection('users')
+                            .doc(currentUser.uid)
+                            .collection('exerciseStats')
+                            .doc(EXERCISE_ID)
+                            .set({
+                                totalWrong: firestore.FieldValue.increment(1)
+                            }, { merge: true })
+                            .catch(error => console.error("Błąd zapisu błędnych:", error));
+                    }
+                });
             }
         }
     };

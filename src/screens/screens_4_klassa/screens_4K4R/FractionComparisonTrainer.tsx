@@ -6,6 +6,10 @@ import {
 } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { awardXpAndCoins } from '../../../services/xpService';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+
+const EXERCISE_ID = "fractionComparisonTrainer_cl4";
 
 const { width: screenWidth } = Dimensions.get('window');
 const TASKS_LIMIT = 35;
@@ -208,6 +212,18 @@ const FractionComparisonTrainer = () => {
             setStats(s => ({ ...s, correct: s.correct + 1 }));
             setReady(true); // Кнопка меняется на "Następne"
             InteractionManager.runAfterInteractions(() => awardXpAndCoins(10, 2));
+            const currentUser = auth().currentUser;
+            if (currentUser) {
+                firestore()
+                    .collection('users')
+                    .doc(currentUser.uid)
+                    .collection('exerciseStats')
+                    .doc(EXERCISE_ID)
+                    .set({
+                        totalCorrect: firestore.FieldValue.increment(1)
+                    }, { merge: true })
+                    .catch(error => console.error("Błąd zapisu do bazy:", error));
+            }
         } else {
             // НЕПРАВИЛЬНО
             setBoxStatus('wrong');
@@ -228,6 +244,20 @@ const FractionComparisonTrainer = () => {
                 setReady(true); // Кнопка меняется на "Następne"
                 setStats(s => ({ ...s, wrong: s.wrong + 1 }));
                 Animated.timing(bgAnim, { toValue: -1, duration: 500, useNativeDriver: false }).start();
+                InteractionManager.runAfterInteractions(() => {
+                    const currentUser = auth().currentUser;
+                    if (currentUser) {
+                        firestore()
+                            .collection('users')
+                            .doc(currentUser.uid)
+                            .collection('exerciseStats')
+                            .doc(EXERCISE_ID)
+                            .set({
+                                totalWrong: firestore.FieldValue.increment(1)
+                            }, { merge: true })
+                            .catch(error => console.error("Błąd zapisu błędnych:", error));
+                    }
+                });
             }
         }
     };

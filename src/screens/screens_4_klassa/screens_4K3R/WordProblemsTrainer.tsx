@@ -6,7 +6,10 @@ import {
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { awardXpAndCoins } from '../../../services/xpService';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
+const EXERCISE_ID = "WordProblemsTrainer";
 const { width: screenWidth } = Dimensions.get('window');
 const TASKS_LIMIT = 35;
 const combinedIconSize = screenWidth * 0.25;
@@ -244,6 +247,18 @@ const WordProblemsTrainer = () => {
             setReadyForNext(true);
             setIsCorrect(true);
             InteractionManager.runAfterInteractions(() => awardXpAndCoins(10, 2));
+            const currentUser = auth().currentUser;
+            if (currentUser) {
+                firestore()
+                    .collection('users')
+                    .doc(currentUser.uid)
+                    .collection('exerciseStats')
+                    .doc(EXERCISE_ID)
+                    .set({
+                        totalCorrect: firestore.FieldValue.increment(1)
+                    }, { merge: true })
+                    .catch(error => console.error("Błąd zapisu do bazy:", error));
+            }
         } else {
             // BŁĘDNA ODPOWIEDŹ
             const nextAttempt = attempts + 1;
@@ -272,6 +287,20 @@ const WordProblemsTrainer = () => {
                 setWrongCount(w => w + 1);
                 setReadyForNext(true);
                 setIsCorrect(false);
+                InteractionManager.runAfterInteractions(() => {
+                    const currentUser = auth().currentUser;
+                    if (currentUser) {
+                        firestore()
+                            .collection('users')
+                            .doc(currentUser.uid)
+                            .collection('exerciseStats')
+                            .doc(EXERCISE_ID)
+                            .set({
+                                totalWrong: firestore.FieldValue.increment(1)
+                            }, { merge: true })
+                            .catch(e => console.error("Błąd zapisu błędnych:", e));
+                    }
+                });
             }
         }
     };

@@ -6,7 +6,10 @@ import {
 } from 'react-native';
 import Svg, { Path, Rect, G } from 'react-native-svg';
 import { awardXpAndCoins } from '../../../services/xpService';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
+const EXERCISE_ID = "ImproperFractionsTrainer_cl4";
 const { width: screenWidth } = Dimensions.get('window');
 const TASKS_LIMIT = 35;
 const combinedIconSize = screenWidth * 0.25;
@@ -239,6 +242,19 @@ const ImproperFractionsTrainer = () => {
             setStats(s => ({ ...s, correct: s.correct + 1 }));
             setReady(true);
             InteractionManager.runAfterInteractions(() => awardXpAndCoins(10, 2));
+            const currentUser = auth().currentUser;
+            if (currentUser) {
+                firestore()
+                    .collection('users')
+                    .doc(currentUser.uid)
+                    .collection('exerciseStats')
+                    .doc(EXERCISE_ID)
+                    .set({
+                        totalCorrect: firestore.FieldValue.increment(1)
+                    }, { merge: true })
+                    .catch(error => console.error("Błąd zapisu do bazy:", error));
+            }
+
         } else {
             setStatus('wrong');
             if (attempts === 0) {
@@ -255,6 +271,20 @@ const ImproperFractionsTrainer = () => {
                 setReady(true);
                 setStats(s => ({ ...s, wrong: s.wrong + 1 }));
                 Animated.timing(bgAnim, { toValue: -1, duration: 500, useNativeDriver: false }).start();
+                InteractionManager.runAfterInteractions(() => {
+                    const currentUser = auth().currentUser;
+                    if (currentUser) {
+                        firestore()
+                            .collection('users')
+                            .doc(currentUser.uid)
+                            .collection('exerciseStats')
+                            .doc(EXERCISE_ID)
+                            .set({
+                                totalWrong: firestore.FieldValue.increment(1)
+                            }, { merge: true })
+                            .catch(error => console.error("Błąd zapisu błędnych:", error));
+                    }
+                });
             }
         }
     };

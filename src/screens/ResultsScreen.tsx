@@ -71,7 +71,7 @@ function ResultsScreen({ route, navigation }: ResultsProps) {
                         />
 
                         <Text style={styles.title}>
-                            {mode === 'assess' ? (isPassed ? "Test Zakończony!" : "Spróbuj ponownie") : "Trening Ukończony!"}
+                            {mode === 'assess' ? (isPassed ? "Test Zakończony!" : "Spróbuj ponownie") : "Pojedynek skończony!"}
                         </Text>
 
                         <View style={styles.scoreContainer}>

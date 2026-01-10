@@ -6,6 +6,10 @@ import {
 } from 'react-native';
 import Svg, { Path, Line } from 'react-native-svg';
 import { awardXpAndCoins } from '../../../services/xpService';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+
+const EXERCISE_ID = "WrittenMultiplicationWithZerosTrainer";
 
 const { width: screenWidth } = Dimensions.get('window');
 const TASKS_LIMIT = 50;
@@ -125,8 +129,34 @@ const WrittenMultiplicationWithZerosTrainer = () => {
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setCorrectCount(c => c + 1); setMessage('Świetnie! ✅'); setReadyForNext(true); setIsCorrect(true);
             InteractionManager.runAfterInteractions(() => awardXpAndCoins(5, 1));
+            const currentUser = auth().currentUser;
+            if (currentUser) {
+                firestore()
+                    .collection('users')
+                    .doc(currentUser.uid)
+                    .collection('exerciseStats')
+                    .doc(EXERCISE_ID)
+                    .set({
+                        totalCorrect: firestore.FieldValue.increment(1)
+                    }, { merge: true })
+                    .catch(error => console.error("Błąd zapisu do bazy:", error));
+            }
         } else {
             Animated.timing(backgroundColor, { toValue: -1, duration: 500, useNativeDriver: false }).start();
+            InteractionManager.runAfterInteractions(() => {
+                const currentUser = auth().currentUser;
+                if (currentUser) {
+                    firestore()
+                        .collection('users')
+                        .doc(currentUser.uid)
+                        .collection('exerciseStats')
+                        .doc(EXERCISE_ID)
+                        .set({
+                            totalWrong: firestore.FieldValue.increment(1)
+                        }, { merge: true })
+                        .catch(error => console.error("Błąd zapisu błędnych:", error));
+                }
+            });
             if (firstAttempt) {
                 setMessage('Błąd. Spróbuj jeszcze raz.'); setFirstAttempt(false); setIsCorrect(false);
                 setUserDigits(new Array(userDigits.length).fill(''));
