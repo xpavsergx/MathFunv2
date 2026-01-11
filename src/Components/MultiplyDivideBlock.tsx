@@ -5,8 +5,10 @@ import {
     StyleSheet,
     TouchableOpacity,
     ScrollView,
-    ImageBackground, // 🔥 Dodano import ImageBackground
-    ActivityIndicator, // Dodano import ActivityIndicator dla stanu ładowania
+    ImageBackground,
+    ActivityIndicator,
+    useColorScheme, // 🔥 Dodano
+    StatusBar, // 🔥 Dodano
 } from 'react-native';
 
 import firestore from '@react-native-firebase/firestore';
@@ -18,7 +20,21 @@ export default function MultiplyDivideBlock() {
     const [lessonData, setLessonData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    // MAX_STEPS = 7 oznacza 8 bloków (0 do 7)
+    // 🔥 LOGIKA TRYBU CIEMNEGO
+    const isDarkMode = useColorScheme() === 'dark';
+    const theme = {
+        bgImage: require('../assets/tloTeorii.png'),
+        bgOverlay: isDarkMode ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.2)',
+        cardBg: isDarkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.85)',
+        title: isDarkMode ? '#FBBF24' : '#FF8F00',
+        textMain: isDarkMode ? '#F1F5F9' : '#424242',
+        textStep: isDarkMode ? '#CBD5E1' : '#5D4037',
+        highlight: isDarkMode ? '#60A5FA' : '#1976D2',
+        buttonBg: isDarkMode ? '#F59E0B' : '#FFD54F',
+        buttonText: isDarkMode ? '#1E293B' : '#5D4037',
+        switchInactive: isDarkMode ? '#334155' : '#E0E0E0',
+    };
+
     const handleNextStep = () => {
         setStep((prev) => (prev < 7 ? prev + 1 : prev));
     };
@@ -32,27 +48,19 @@ export default function MultiplyDivideBlock() {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const doc = await firestore()
-                    .collection('lessons')
-                    .doc(mode) // W Firestore powinny być dokumenty 'division' i 'multiplication'
-                    .get();
+                const doc = await firestore().collection('lessons').doc(mode).get();
                 if (doc.exists) {
                     const data = doc.data();
                     if (data) {
-                        // Zapewnienie, że intro i steps to tablice (nawet jeśli są mapami w bazie)
                         setLessonData({
                             ...data,
                             intro: Object.values(data.intro || {}),
                             steps: Object.values(data.steps || {}),
                         });
                     }
-                } else {
-                    console.warn('Nie znaleziono dokumentu.');
-                    setLessonData(null);
                 }
             } catch (error) {
                 console.error('Błąd ładowania danych:', error);
-                setLessonData(null);
             } finally {
                 setLoading(false);
             }
@@ -62,9 +70,7 @@ export default function MultiplyDivideBlock() {
             if (!auth().currentUser) {
                 try {
                     await auth().signInAnonymously();
-                    console.log('Signed in anonymously');
                 } catch (error) {
-                    console.error('Failed to sign in anonymously:', error);
                     setLoading(false);
                     return;
                 }
@@ -79,7 +85,7 @@ export default function MultiplyDivideBlock() {
         const parts = text.split(/(\d+)/g);
         return parts.map((part, index) =>
             /\d+/.test(part) ? (
-                <Text key={index} style={styles.numberHighlight}>
+                <Text key={index} style={[styles.numberHighlight, { color: theme.highlight }]}>
                     {part}
                 </Text>
             ) : (
@@ -90,28 +96,27 @@ export default function MultiplyDivideBlock() {
 
     const getSteps = () => {
         if (!lessonData || !lessonData.intro || !lessonData.steps) return [];
-
         const introLines = lessonData.intro;
         const stepLines = lessonData.steps;
 
         const steps = [
             <View key="intro" style={styles.introBlock}>
                 {introLines.map((line: string, index: number) => (
-                    <Text key={`intro-${index}`} style={styles.intro}>
+                    <Text key={`intro-${index}`} style={[styles.intro, { color: theme.textMain }]}>
                         {highlightNumbers(line)}
                     </Text>
                 ))}
             </View>,
             ...stepLines.map((stepText: string, index: number) => (
-                <Text key={`step-${index}`} style={styles.stepText}>
+                <Text key={`step-${index}`} style={[styles.stepText, { color: theme.textStep }]}>
                     {highlightNumbers(stepText)}
                 </Text>
             )),
-            <View key="final" style={styles.finalBlock}>
-                <Text style={styles.finalResult}>
+            <View key="final" style={[styles.finalBlock, { borderTopColor: isDarkMode ? '#475569' : '#FFD54F' }]}>
+                <Text style={[styles.finalResult, { color: isDarkMode ? '#F87171' : '#D84315' }]}>
                     {highlightNumbers(lessonData.finalResult || '')}
                 </Text>
-                <Text style={styles.tip}>{lessonData.tip || ''}</Text>
+                <Text style={[styles.tip, { color: isDarkMode ? '#34D399' : '#00796B' }]}>{lessonData.tip || ''}</Text>
             </View>,
         ];
 
@@ -120,193 +125,131 @@ export default function MultiplyDivideBlock() {
 
     if (loading) {
         return (
-            // Używamy wrapper dla stanu ładowania/błędu
-            <View style={[styles.wrapper, styles.loadingWrapper]}>
-                <ActivityIndicator size="large" color="#FF8F00" />
-                <Text style={styles.intro}>Ładowanie danych...</Text>
-            </View>
-        );
-    }
-    if (!lessonData) {
-        return (
-            <View style={[styles.wrapper, styles.loadingWrapper]}>
-                <Text style={[styles.intro, {color: '#D84315'}]}>Błąd: Nie znaleziono danych lekcji w Firestore dla trybu: {mode}.</Text>
+            <View style={[styles.wrapper, { backgroundColor: isDarkMode ? '#0F172A' : '#FAFAFA' }]}>
+                <ActivityIndicator size="large" color={theme.title} />
+                <Text style={[styles.intro, { color: theme.textMain, marginTop: 10 }]}>Ładowanie danych...</Text>
             </View>
         );
     }
 
     return (
-        // 🔥 Krok 1: Wstawienie ImageBackground
-        <ImageBackground
-            source={require('../assets/tloTeorii.png')} // Zmień na właściwą ścieżkę do Twojego pliku graficznego
-            style={styles.backgroundImage}
-            resizeMode="cover"
-        >
-            <View style={styles.overlay}>
-                <View style={styles.container}>
-                    <Text style={styles.title}>
-                        {lessonData?.title || 'Mnożenie i dzielenie'}
-                    </Text>
+        <View style={{ flex: 1 }}>
+            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+            <ImageBackground source={theme.bgImage} style={styles.backgroundImage} resizeMode="cover">
+                {/* Przyciemnienie tła */}
+                <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.bgOverlay }]} />
 
-                    <View style={styles.switcher}>
-                        <TouchableOpacity
-                            style={[
-                                styles.switchButton,
-                                mode === 'division' && styles.activeSwitch,
-                            ]}
-                            onPress={() => handleModeChange('division')}
-                        >
-                            <Text style={styles.switchText}>÷ Dzielenie</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[
-                                styles.switchButton,
-                                mode === 'multiplication' && styles.activeSwitch,
-                            ]}
-                            onPress={() => handleModeChange('multiplication')}
-                        >
-                            <Text style={styles.switchText}>× Mnożenie</Text>
-                        </TouchableOpacity>
+                <View style={styles.overlay}>
+                    <View style={[styles.container, { backgroundColor: theme.cardBg }]}>
+                        <Text style={[styles.title, { color: theme.title }]}>
+                            {lessonData?.title || 'Mnożenie i dzielenie'}
+                        </Text>
+
+
+
+                        <View style={styles.switcher}>
+                            <TouchableOpacity
+                                style={[
+                                    styles.switchButton,
+                                    { backgroundColor: mode === 'division' ? theme.buttonBg : theme.switchInactive }
+                                ]}
+                                onPress={() => handleModeChange('division')}
+                            >
+                                <Text style={[styles.switchText, { color: theme.buttonText }]}>÷ Dzielenie</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[
+                                    styles.switchButton,
+                                    { backgroundColor: mode === 'multiplication' ? theme.buttonBg : theme.switchInactive }
+                                ]}
+                                onPress={() => handleModeChange('multiplication')}
+                            >
+                                <Text style={[styles.switchText, { color: theme.buttonText }]}>× Mnożenie</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
+                            {getSteps()}
+                        </ScrollView>
+
+                        {step < 5 && (
+                            <TouchableOpacity
+                                style={[styles.button, { backgroundColor: theme.buttonBg }]}
+                                onPress={handleNextStep}
+                            >
+                                <Text style={[styles.buttonText, { color: theme.buttonText }]}>Dalej ➜</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
-
-                    <ScrollView
-                        style={styles.scrollArea}
-                        contentContainerStyle={styles.scrollContent}
-                    >
-                        {getSteps()}
-                    </ScrollView>
-
-                    {step < 7 && (
-                        <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-                            <Text style={styles.buttonText}>Dalej ➜</Text>
-                        </TouchableOpacity>
-                    )}
                 </View>
-            </View>
-        </ImageBackground>
+            </ImageBackground>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    // 🔥 NOWE STYLE DLA TŁA I WARSTWY
-    backgroundImage: {
-        flex: 1,
-        width: '100%',
-        height: '100%',
-    },
+    backgroundImage: { flex: 1 },
     overlay: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'flex-start',
-        paddingTop: 20,
+        paddingTop: 40,
     },
-
-    wrapper: { // Zachowane dla stanu ładowania/błędu
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#FAFAFA',
-        paddingTop: 20,
-    },
-    loadingWrapper: {
-        height: 300,
-        padding: 20,
-    },
-    // 🔥 ZMIENIONO TŁO NA PÓŁPRZEZROCZYSTE DLA WIDOCZNOŚCI GRAFIKI
+    wrapper: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     container: {
-        backgroundColor: 'rgba(255, 255, 255, 0.85)',
-        borderRadius: 12,
+        borderRadius: 20,
         padding: 20,
         alignItems: 'center',
-        width: '90%',
-        elevation: 3,
+        width: '92%',
         maxWidth: 600,
-        marginBottom: 20, // Dodano margines dolny dla spójności
+        marginBottom: 20,
+        elevation: 8,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
     },
     title: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#FF8F00',
-        marginBottom: 10,
+        marginBottom: 15,
         textAlign: 'center',
     },
     switcher: {
         flexDirection: 'row',
         justifyContent: 'center',
-        marginBottom: 15,
+        marginBottom: 20,
     },
     switchButton: {
-        paddingVertical: 8,
-        paddingHorizontal: 16,
+        paddingVertical: 10,
+        paddingHorizontal: 18,
         marginHorizontal: 5,
         borderRadius: 20,
-        backgroundColor: '#E0E0E0',
-    },
-    activeSwitch: {
-        backgroundColor: '#FFD54F',
     },
     switchText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#5D4037',
     },
-    scrollArea: {
-        maxHeight: 450,
-        width: '100%',
-    },
-    scrollContent: {
-        alignItems: 'center',
-        paddingBottom: 50,
-    },
-    introBlock: {
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    intro: {
-        fontSize: 18,
-        color: '#424242',
-        textAlign: 'center',
-        marginBottom: 6,
-    },
-    stepText: {
-        fontSize: 20,
-        textAlign: 'center',
-        marginVertical: 8,
-        color: '#5D4037',
-    },
-    numberHighlight: {
-        color: '#1976D2',
-        fontWeight: 'bold',
-        fontSize: 22,
-    },
+    scrollArea: { width: '100%', maxHeight: 400 },
+    scrollContent: { alignItems: 'center', paddingBottom: 40 },
+    introBlock: { alignItems: 'center', marginBottom: 10 },
+    intro: { fontSize: 18, textAlign: 'center', marginBottom: 6 },
+    stepText: { fontSize: 20, textAlign: 'center', marginVertical: 8 },
+    numberHighlight: { fontWeight: 'bold', fontSize: 22 },
     finalBlock: {
+        width: '100%',
         alignItems: 'center',
         marginTop: 10,
+        paddingTop: 10,
+        borderTopWidth: 1,
     },
-    finalResult: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#D84315',
-        textAlign: 'center',
-        marginTop: 10,
-    },
-    tip: {
-        fontSize: 16,
-        marginTop: 10,
-        color: '#00796B',
-        fontStyle: 'italic',
-        textAlign: 'center',
-    },
+    finalResult: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginTop: 10 },
+    tip: { fontSize: 16, marginTop: 10, fontStyle: 'italic', textAlign: 'center' },
     button: {
-        backgroundColor: '#FFD54F',
-        paddingHorizontal: 24,
-        paddingVertical: 10,
+        paddingHorizontal: 30,
+        paddingVertical: 12,
         borderRadius: 25,
         marginTop: 20,
     },
-    buttonText: {
-        fontSize: 18,
-        color: '#5D4037',
-        fontWeight: 'bold',
-    },
+    buttonText: { fontSize: 18, fontWeight: 'bold' },
 });

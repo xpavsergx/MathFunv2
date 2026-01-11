@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, ActivityIndicator } from 'react-native';
+import {
+    View, Text, StyleSheet, TouchableOpacity, ImageBackground,
+    ActivityIndicator, useColorScheme, StatusBar // 🔥 Dodano importy
+} from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import Svg, { Circle, Path, G } from 'react-native-svg';
 
@@ -8,6 +11,27 @@ export default function FractionsComparisonBlock() {
     const [lessonData, setLessonData] = useState<any>(null);
     const [stepsArray, setStepsArray] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // 🔥 LOGIKA TRYBU CIEMNEGO
+    const isDarkMode = useColorScheme() === 'dark';
+    const theme = {
+        bgImage: require('../../assets/tloTeorii.png'),
+        bgOverlay: isDarkMode ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.2)',
+        cardBg: isDarkMode ? 'rgba(30, 41, 59, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+        title: isDarkMode ? '#60A5FA' : '#1565C0',
+        textMain: isDarkMode ? '#F1F5F9' : '#5D4037',
+        numerator: isDarkMode ? '#FB923C' : '#E65100',
+        denominator: isDarkMode ? '#60A5FA' : '#1565C0',
+        mathLine: isDarkMode ? '#F1F5F9' : '#333',
+        symbol: isDarkMode ? '#FBBF24' : '#E65100',
+        infoBox: isDarkMode ? '#1E293B' : '#E0F2F1',
+        infoBorder: isDarkMode ? '#334155' : '#B2DFDB',
+        infoText: isDarkMode ? '#4ADE80' : '#00695C',
+        pizzaEmpty: isDarkMode ? '#334155' : '#F5F5F5',
+        pizzaStroke: isDarkMode ? '#F1F5F9' : '#5D4037',
+        buttonBg: isDarkMode ? '#F59E0B' : '#FFD54F',
+        buttonText: isDarkMode ? '#1E293B' : '#5D4037',
+    };
 
     useEffect(() => {
         const unsubscribe = firestore()
@@ -35,16 +59,14 @@ export default function FractionsComparisonBlock() {
         const centerX = 45;
         const centerY = 45;
 
-        // Krok 0: Pełna, czysta pizza (bez kropek)
         if (step === 0) {
             return (
                 <Svg height="90" width="90" viewBox="0 0 90 90">
-                    <Circle cx={centerX} cy={centerY} r={radius} fill="#FF9800" stroke="#5D4037" strokeWidth="2" />
+                    <Circle cx={centerX} cy={centerY} r={radius} fill="#FF9800" stroke={theme.pizzaStroke} strokeWidth="2" />
                 </Svg>
             );
         }
 
-        // Krok 1+: Pizza z podziałami i kolorowaniem
         const slices = [];
         for (let i = 0; i < parts; i++) {
             const startAngle = (i * 360) / parts;
@@ -53,15 +75,14 @@ export default function FractionsComparisonBlock() {
             const y1 = centerY + radius * Math.sin((Math.PI * startAngle) / 180);
             const x2 = centerX + radius * Math.cos((Math.PI * endAngle) / 180);
             const y2 = centerY + radius * Math.sin((Math.PI * endAngle) / 180);
-
             const pathData = `M${centerX},${centerY} L${x1},${y1} A${radius},${radius} 0 0,1 ${x2},${y2} Z`;
 
             slices.push(
                 <Path
                     key={i}
                     d={pathData}
-                    fill={i < highlightCount && step >= 2 ? "#FF9800" : "#F5F5F5"}
-                    stroke="#5D4037"
+                    fill={i < highlightCount && step >= 2 ? "#FF9800" : theme.pizzaEmpty}
+                    stroke={theme.pizzaStroke}
                     strokeWidth="1.5"
                 />
             );
@@ -76,60 +97,61 @@ export default function FractionsComparisonBlock() {
         );
     };
 
-    if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#FFB300" /></View>;
+    if (loading) return <View style={[styles.center, { backgroundColor: isDarkMode ? '#0F172A' : '#FAFAFA' }]}><ActivityIndicator size="large" color={theme.buttonBg} /></View>;
 
     return (
-        <ImageBackground source={require('../../assets/tloTeorii.png')} style={styles.backgroundImage} resizeMode="cover">
-            <View style={styles.container}>
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>{lessonData?.title}</Text>
+        <View style={{ flex: 1 }}>
+            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+            <ImageBackground source={theme.bgImage} style={styles.backgroundImage} resizeMode="cover">
+                <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.bgOverlay }]} />
+                <View style={styles.container}>
+                    <View style={[styles.card, { backgroundColor: theme.cardBg }]}>
+                        <Text style={[styles.cardTitle, { color: theme.title }]}>{lessonData?.title}</Text>
 
-                    <View style={styles.comparisonRow}>
-                        {/* Lewa strona */}
-                        <View style={styles.pizzaBox}>
-                            {renderPizza(1)}
-                            <View style={[styles.fractionBox, { opacity: step >= 2 ? 1 : 0 }]}>
-                                <Text style={styles.num}>1</Text>
-                                <View style={styles.line} />
-                                <Text style={styles.den}>4</Text>
+                        <View style={styles.comparisonRow}>
+                            <View style={styles.pizzaBox}>
+                                {renderPizza(1)}
+                                <View style={[styles.fractionBox, { opacity: step >= 2 ? 1 : 0 }]}>
+                                    <Text style={[styles.num, { color: theme.numerator }]}>1</Text>
+                                    <View style={[styles.line, { backgroundColor: theme.mathLine }]} />
+                                    <Text style={[styles.den, { color: theme.denominator }]}>4</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.symbolBox}>
+                                {step < 4 ? (
+                                    <Text style={[styles.questionMarkText, { color: theme.title }]}>?</Text>
+                                ) : (
+                                    <Text style={[styles.symbolText, { color: theme.symbol }]}>{"<"}</Text>
+                                )}
+                            </View>
+
+                            <View style={styles.pizzaBox}>
+                                {renderPizza(3)}
+                                <View style={[styles.fractionBox, { opacity: step >= 2 ? 1 : 0 }]}>
+                                    <Text style={[styles.num, { color: theme.numerator }]}>3</Text>
+                                    <View style={[styles.line, { backgroundColor: theme.mathLine }]} />
+                                    <Text style={[styles.den, { color: theme.denominator }]}>4</Text>
+                                </View>
                             </View>
                         </View>
 
-                        {/* Środek: Znak zapytania lub symbol porównania */}
-                        <View style={styles.symbolBox}>
-                            {step < 4 ? (
-                                <Text style={styles.questionMarkText}>?</Text>
-                            ) : (
-                                <Text style={styles.symbolText}>{"<"}</Text>
-                            )}
+                        <View style={[styles.infoBox, { backgroundColor: theme.infoBox, borderColor: theme.infoBorder }]}>
+                            <Text style={[styles.explanationText, { color: theme.infoText }]}>{stepsArray[step]?.text}</Text>
                         </View>
 
-                        {/* Prawa strona */}
-                        <View style={styles.pizzaBox}>
-                            {renderPizza(3)}
-                            <View style={[styles.fractionBox, { opacity: step >= 2 ? 1 : 0 }]}>
-                                <Text style={styles.num}>3</Text>
-                                <View style={styles.line} />
-                                <Text style={styles.den}>4</Text>
-                            </View>
-                        </View>
+                        <TouchableOpacity
+                            style={step < stepsArray.length - 1 ? [styles.button, { backgroundColor: theme.buttonBg }] : styles.buttonReset}
+                            onPress={() => step < stepsArray.length - 1 ? setStep(step + 1) : setStep(0)}
+                        >
+                            <Text style={step < stepsArray.length - 1 ? [styles.buttonText, { color: theme.buttonText }] : styles.buttonResetText}>
+                                {step < stepsArray.length - 1 ? "Dalej ➜" : "Od nowa ↺"}
+                            </Text>
+                        </TouchableOpacity>
                     </View>
-
-                    <View style={styles.infoBox}>
-                        <Text style={styles.explanationText}>{stepsArray[step]?.text}</Text>
-                    </View>
-
-                    <TouchableOpacity
-                        style={step < stepsArray.length - 1 ? styles.button : styles.buttonReset}
-                        onPress={() => step < stepsArray.length - 1 ? setStep(step + 1) : setStep(0)}
-                    >
-                        <Text style={step < stepsArray.length - 1 ? styles.buttonText : styles.buttonResetText}>
-                            {step < stepsArray.length - 1 ? "Dalej ➜" : "Od nowa ↺"}
-                        </Text>
-                    </TouchableOpacity>
                 </View>
-            </View>
-        </ImageBackground>
+            </ImageBackground>
+        </View>
     );
 }
 
@@ -138,32 +160,26 @@ const styles = StyleSheet.create({
     container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     card: {
-        backgroundColor: 'rgba(255, 255, 255, 0.98)',
         width: '94%',
         borderRadius: 25,
         padding: 20,
         alignItems: 'center',
         elevation: 10,
     },
-    cardTitle: { fontSize: 22, fontWeight: 'bold', color: '#1565C0', marginBottom: 20, textAlign: 'center' },
+    cardTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
     comparisonRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', width: '100%', marginBottom: 15 },
     pizzaBox: { alignItems: 'center', minHeight: 140 },
     symbolBox: { width: 60, alignItems: 'center', justifyContent: 'center', height: 90 },
-
-    // Styl dużego znaku zapytania
-    questionMarkText: { fontSize: 60, fontWeight: 'bold', color: '#1565C0', opacity: 0.8 },
-
-    // Styl znaku <
-    symbolText: { fontSize: 64, fontWeight: 'bold', color: '#E65100' },
-
+    questionMarkText: { fontSize: 60, fontWeight: 'bold', opacity: 0.8 },
+    symbolText: { fontSize: 64, fontWeight: 'bold' },
     fractionBox: { alignItems: 'center', marginTop: 10 },
-    line: { width: 30, height: 3, backgroundColor: '#333', marginVertical: 2 },
-    num: { fontSize: 26, fontWeight: 'bold', color: '#E65100' },
-    den: { fontSize: 26, fontWeight: 'bold', color: '#1565C0' },
-    infoBox: { backgroundColor: '#E0F2F1', padding: 15, borderRadius: 15, width: '100%', minHeight: 80, justifyContent: 'center', borderWidth: 1.5, borderColor: '#B2DFDB' },
-    explanationText: { fontSize: 18, color: '#00695C', textAlign: 'center', fontWeight: '600' },
-    button: { backgroundColor: '#FFD54F', paddingHorizontal: 45, paddingVertical: 12, borderRadius: 25, marginTop: 15 },
-    buttonText: { fontSize: 18, color: '#5D4037', fontWeight: 'bold' },
+    line: { width: 30, height: 3, marginVertical: 2 },
+    num: { fontSize: 26, fontWeight: 'bold' },
+    den: { fontSize: 26, fontWeight: 'bold' },
+    infoBox: { padding: 15, borderRadius: 15, width: '100%', minHeight: 80, justifyContent: 'center', borderWidth: 1.5 },
+    explanationText: { fontSize: 18, textAlign: 'center', fontWeight: '600' },
+    button: { paddingHorizontal: 45, paddingVertical: 12, borderRadius: 25, marginTop: 15 },
+    buttonText: { fontSize: 18, fontWeight: 'bold' },
     buttonReset: { backgroundColor: '#4CAF50', paddingHorizontal: 45, paddingVertical: 12, borderRadius: 25, marginTop: 15 },
     buttonResetText: { color: '#FFFFFF', fontSize: 18, fontWeight: 'bold' },
 });

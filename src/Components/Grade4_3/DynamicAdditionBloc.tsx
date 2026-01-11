@@ -1,29 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator,
-    ImageBackground,
+    ImageBackground, useColorScheme, StatusBar // 🔥 Dodano importy
 } from 'react-native';
 
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
-// 🚀 ID dokumentu dla "Dynamiczne Dodawanie Pisemne"
 const LESSON_ID = 'dynamicAddition';
-// 🚀 Ustal maksymalną liczbę kroków (0 do 6 = 7 kroków)
-const MAX_STEPS = 6; // Ustawione na 7, aby mieć 6 pełnych akcji po starcie
+const MAX_STEPS = 6;
 
-// --- STAŁE DANE DLA TEORII (zaszyte w kodzie - używamy tylko tytułu) ---
 const STATIC_LESSON_DATA = {
     title: "Dodawanie pisemne",
 };
-
-// --- KOMPONENT ---
 
 export default function DynamicAdditionBlock() {
     const [step, setStep] = useState(0);
     const [num1, setNum1] = useState('');
     const [num2, setNum2] = useState('');
     const [loading, setLoading] = useState(true);
+
+    // 🔥 LOGIKA TRYBU CIEMNEGO
+    const isDarkMode = useColorScheme() === 'dark';
+    const theme = {
+        bgImage: require('../../assets/tloTeorii.png'),
+        bgOverlay: isDarkMode ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.2)',
+        cardBg: isDarkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.85)',
+        title: isDarkMode ? '#FBBF24' : '#1976D2',
+        textMain: isDarkMode ? '#F1F5F9' : '#5D4037',
+        textStep: isDarkMode ? '#CBD5E1' : '#5D4037',
+        highlight: isDarkMode ? '#60A5FA' : '#1976D2',
+        buttonBg: isDarkMode ? '#F59E0B' : '#FFD54F',
+        buttonText: isDarkMode ? '#1E293B' : '#5D4037',
+        borderFinal: isDarkMode ? '#475569' : '#FFD54F',
+        diagramBg: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+        infoBox: isDarkMode ? '#1E293B' : '#E0F7FA',
+        infoText: isDarkMode ? '#34D399' : '#00796B',
+    };
 
     const handleNextStep = () => {
         setStep((prev) => (prev < MAX_STEPS ? prev + 1 : prev));
@@ -33,17 +46,14 @@ export default function DynamicAdditionBlock() {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const doc = await firestore()
-                    .collection('lessons')
-                    .doc(LESSON_ID)
-                    .get();
+                const doc = await firestore().collection('lessons').doc(LESSON_ID).get();
                 if (doc.exists) {
                     const data = doc.data();
                     setNum1(data?.number1 || '27');
                     setNum2(data?.number2 || '45');
                 }
             } catch (error) {
-                console.error('Błąd ładowania danych Firestore:', error);
+                console.error('Błąd Firestore:', error);
             } finally {
                 setLoading(false);
             }
@@ -55,7 +65,6 @@ export default function DynamicAdditionBlock() {
             }
             fetchData();
         };
-
         prepareAndFetch();
     }, []);
 
@@ -63,7 +72,7 @@ export default function DynamicAdditionBlock() {
         const parts = text.split(/(\d+|\([^)]+\))/g);
         return parts.map((part, index) => {
             if (/(\d+|\([^)]+\))/.test(part)) {
-                return <Text key={index} style={styles.numberHighlight}>{part}</Text>;
+                return <Text key={index} style={[styles.numberHighlight, { color: theme.highlight }]}>{part}</Text>;
             } else {
                 return <Text key={index}>{part}</Text>;
             }
@@ -72,33 +81,22 @@ export default function DynamicAdditionBlock() {
 
     if (loading || !num1 || !num2) {
         return (
-            <View style={[styles.wrapper, styles.loadingWrapper]}>
-                <ActivityIndicator size="large" color="#FF8F00" />
-                <Text style={[styles.intro, {marginTop: 10}]}>Ładowanie zadania z bazy...</Text>
+            <View style={[styles.wrapper, { backgroundColor: isDarkMode ? '#0F172A' : '#FAFAFA' }]}>
+                <ActivityIndicator size="large" color={theme.title} />
+                <Text style={[styles.intro, { marginTop: 10, color: theme.textMain }]}>Ładowanie zadania...</Text>
             </View>
         );
     }
 
-    // --- LOGIKA WIZUALIZACJI "PISANIA" ---
-    const getExplanationText = (visStep: number, num1: string, num2: string) => {
+    const getExplanationText = (visStep: number, n1: string, n2: string) => {
         const isHighlight = (current: number) => visStep === current;
-
-        // Zaktualizowano objaśnienia, aby pasowały do nowej sekwencji (4, 5, 6)
-        if (isHighlight(1)) {
-            return `Zapisujemy pierwszą i drugą liczbę, wyrównując kolumny.`;
-        } else if (isHighlight(2)) {
-            return `Rysujemy linię. Zadanie gotowe!`;
-        } else if (isHighlight(3)) {
-            return `Krok 1: Podświetlamy JEDNOŚCI. Dodajemy: ${num1[1]} + ${num2[1]}.`;
-        } else if (isHighlight(4)) {
-            return `Wynik (12): Zapisz 2 pod Jednościami. Teraz przygotuj przeniesienie.`;
-        } else if (isHighlight(5)) {
-            return `PRZENOSIMY (1) na górę kolumny Dziesiątek. Krok 2: Podświetlamy DZIESIĄTKI i dodajemy.`;
-        } else if (isHighlight(6)) {
-            return `Wynik: 1 (przeniesienie) + ${num1[0]} + ${num2[0]} = 7. Zapisujemy 7. Zadanie wykonane!`;
-        } else {
-            return `Kliknij "Dalej", aby rozpocząć pisanie zadania.`;
-        }
+        if (isHighlight(1)) return `Zapisujemy pierwszą i drugą liczbę, wyrównując kolumny.`;
+        if (isHighlight(2)) return `Rysujemy linię. Zadanie gotowe!`;
+        if (isHighlight(3)) return `Krok 1: Podświetlamy JEDNOŚCI. Dodajemy: ${n1[1]} + ${n2[1]}.`;
+        if (isHighlight(4)) return `Wynik (12): Zapisz 2 pod Jednościami. Teraz przygotuj przeniesienie.`;
+        if (isHighlight(5)) return `PRZENOSIMY (1) na górę kolumny Dziesiątek. Krok 2: Podświetlamy DZIESIĄTKI i dodajemy.`;
+        if (isHighlight(6)) return `Wynik: 1 (przeniesienie) + ${n1[0]} + ${n2[0]} = 7. Zapisujemy 7. Zadanie wykonane!`;
+        return `Kliknij "Dalej", aby rozpocząć pisanie zadania.`;
     };
 
     const renderWrittenAdditionDiagram = () => {
@@ -106,50 +104,27 @@ export default function DynamicAdditionBlock() {
         const number2 = '+' + num2;
         const rawResult = (parseInt(num1) + parseInt(num2)).toString();
         const result = ' ' + rawResult;
-
         const VIS_STEP = step;
-
         const isVisible = (start: number) => VIS_STEP >= start;
         const isHighlight = (current: number) => VIS_STEP === current;
 
-        // Przeniesienie (Mała jedynka na górze)
-        const carryElement = (
-            <Text
-                style={styles.additionCarry}
-            >
-                1
-            </Text>
-        );
-
-        // Funkcja renderująca wiersz liczb
-        const renderRow = (text: string, isResult: boolean = false, visibleStartStep: number) => (
+        const renderRow = (text: string, isRes: boolean = false, visibleStartStep: number) => (
             <View style={styles.additionRow}>
                 {text.split('').map((char, index) => {
                     let opacity = 0;
-
-                    if (isResult) {
-                        // Wynik Jedności (index 2)
+                    if (isRes) {
                         if (index === 2) opacity = isVisible(4) ? 1 : 0;
-                        // Wynik Dziesiątek (index 1)
                         else if (index === 1) opacity = isVisible(6) ? 1 : 0;
                     } else {
-                        // LICZBY WEJŚCIOWE: Całe zadanie widoczne od ustalonego kroku.
                         opacity = isVisible(visibleStartStep) ? 1 : 0;
                     }
-
-                    // Podświetlenie: Jedności (index 2) w VIS_STEP 3, Dziesiątki (index 1) w VIS_STEP 5
                     const isColHighlight = (isHighlight(3) && index === 2) || (isHighlight(5) && index === 1);
-
                     return (
-                        <Text
-                            key={index}
-                            style={[
-                                styles.cyfra,
-                                isResult && styles.resultCyfra,
-                                {opacity: opacity},
-                                isColHighlight ? styles.highlightJednosci : styles.normalCyfra,
-                            ]}
-                        >
+                        <Text key={index} style={[
+                            styles.cyfra,
+                            { opacity, color: isRes ? theme.highlight : theme.textMain },
+                            isColHighlight && { backgroundColor: isDarkMode ? '#334155' : '#FFD54F', borderRadius: 4 }
+                        ]}>
                             {char}
                         </Text>
                     );
@@ -159,84 +134,57 @@ export default function DynamicAdditionBlock() {
 
         return (
             <View style={styles.additionCoreContainer}>
-                <Text style={styles.additionTitle}>Zadanie: {num1} + {num2}</Text>
-
-                {/* Wiersz Przeniesienia - WARUNKOWE RENDEROWANIE ELEMENTU */}
+                <Text style={[styles.additionTitle, { color: theme.textMain }]}>Zadanie: {num1} + {num2}</Text>
                 <View style={[styles.additionRow, styles.carryRow]}>
                     <Text style={styles.cyfra}></Text>
-                    {isVisible(5) ? carryElement : <Text style={styles.cyfra}></Text>}
+                    {isVisible(5) ? <Text style={[styles.additionCarry, { color: isDarkMode ? '#F87171' : '#D84315' }]}>1</Text> : <Text style={styles.cyfra}></Text>}
                     <Text style={styles.cyfra}></Text>
                 </View>
-
-                {/* Wiersz 1: 27. Widoczny od VIS_STEP 1 */}
                 {renderRow(number1, false, 1)}
-
-                {/* Wiersz 2: +45. Widoczny od VIS_STEP 1 */}
                 {renderRow(number2, false, 1)}
-
-                {/* Kreska. Widoczna od VIS_STEP 2 */}
-                <View style={[styles.additionLine, { opacity: isVisible(2) ? 1 : 0 }]} />
-
-                {/* Wynik: 72 */}
+                <View style={[styles.additionLine, { opacity: isVisible(2) ? 1 : 0, backgroundColor: isDarkMode ? '#F87171' : '#D84315' }]} />
                 {renderRow(result, true, 4)}
             </View>
         );
     };
-    // --- KONIEC LOGIKI WIZUALIZACJI ---
 
     return (
-        <ImageBackground
-            source={require('../../assets/tloTeorii.png')}
-            style={styles.backgroundImage}
-            resizeMode="cover"
-        >
-            <View style={styles.overlay}>
-                <View style={styles.container}>
-                    <Text style={styles.title}>
-                        {STATIC_LESSON_DATA.title}
-                    </Text>
-
-                    <ScrollView
-                        style={styles.scrollArea}
-                        contentContainerStyle={styles.scrollContent}
-                    >
-                        {/* 1. KONTENER GŁÓWNEJ WIZUALIZACJI (Zielony pasek z boku) */}
-                        {step >= 1 && (
-                            <View style={styles.diagramArea}>
-                                {renderWrittenAdditionDiagram()}
+        <View style={{ flex: 1 }}>
+            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+            <ImageBackground source={theme.bgImage} style={styles.backgroundImage} resizeMode="cover">
+                <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.bgOverlay }]} />
+                <View style={styles.overlay}>
+                    <View style={[styles.container, { backgroundColor: theme.cardBg }]}>
+                        <Text style={[styles.title, { color: theme.title }]}>{STATIC_LESSON_DATA.title}</Text>
+                        <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
+                            {step >= 1 && (
+                                <View style={[styles.diagramArea, { backgroundColor: theme.diagramBg }]}>
+                                    {renderWrittenAdditionDiagram()}
+                                </View>
+                            )}
+                            <View style={styles.additionInfoWrapper}>
+                                <Text style={[styles.additionInfo, { backgroundColor: theme.infoBox, color: theme.infoText }]}>
+                                    {getExplanationText(step, num1, num2)}
+                                </Text>
                             </View>
+                        </ScrollView>
+                        {step < MAX_STEPS && (
+                            <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonBg }]} onPress={handleNextStep}>
+                                <Text style={[styles.buttonText, { color: theme.buttonText }]}>Dalej ➜</Text>
+                            </TouchableOpacity>
                         )}
-
-                        {/* 2. TEKST WYJAŚNIAJĄCY (Pod kwadratem, na pełną szerokość) */}
-                        <View style={styles.additionInfoWrapper}>
-                            <Text style={styles.additionInfo}>
-                                {getExplanationText(step, num1, num2)}
-                            </Text>
-                        </View>
-
-                    </ScrollView>
-
-                    {step < MAX_STEPS && (
-                        <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-                            <Text style={styles.buttonText}>Dalej ➜</Text>
-                        </TouchableOpacity>
-                    )}
+                    </View>
                 </View>
-            </View>
-        </ImageBackground>
+            </ImageBackground>
+        </View>
     );
 }
 
-// --- STYLE ---
-
 const styles = StyleSheet.create({
-    // Standardowe style...
-    backgroundImage: { flex: 1, width: '100%', height: '100%', },
-    overlay: { flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 20, },
-    wrapper: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FAFAFA', paddingTop: 20, },
-    loadingWrapper: { height: 300, padding: 20, },
+    backgroundImage: { flex: 1 },
+    overlay: { flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 20 },
+    wrapper: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     container: {
-        backgroundColor: 'rgba(255, 255, 255, 0.85)',
         borderRadius: 12,
         padding: 20,
         alignItems: 'center',
@@ -245,105 +193,34 @@ const styles = StyleSheet.create({
         maxWidth: 600,
         marginBottom: 100,
     },
-    title: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#1976D2',
-        marginBottom: 10,
-        textAlign: 'center',
-    },
-    scrollArea: { width: '100%', },
-    scrollContent: {
-        alignItems: 'center',
-        paddingBottom: 50,
-    },
-    button: { backgroundColor: '#FFD54F', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 25, marginTop: 20, },
-    buttonText: { fontSize: 18, color: '#5D4037', fontWeight: 'bold', },
-
-    // --- STYLE DLA WIZUALIZACJI "PISANIA" ---
+    title: { fontSize: 22, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },
+    scrollArea: { width: '100%' },
+    scrollContent: { alignItems: 'center', paddingBottom: 50 },
+    button: { paddingHorizontal: 24, paddingVertical: 10, borderRadius: 25, marginTop: 20 },
+    buttonText: { fontSize: 18, fontWeight: 'bold' },
     diagramArea: {
         width: '100%',
         marginTop: 20,
         padding: 15,
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
         borderRadius: 8,
         borderLeftWidth: 5,
         borderLeftColor: '#00796B',
         alignItems: 'center',
-        paddingHorizontal: 15,
     },
-    additionCoreContainer: {
-        marginTop: 10,
-        marginBottom: 10,
-        alignItems: 'flex-end',
-        width: 150,
-    },
-    additionTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#5D4037',
-        marginBottom: 8,
-    },
-    additionRow: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        width: '100%',
-    },
-    carryRow: {
-        height: 20,
-    },
+    additionCoreContainer: { marginTop: 10, marginBottom: 10, alignItems: 'flex-end', width: 150 },
+    additionTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 8 },
+    additionRow: { flexDirection: 'row', justifyContent: 'flex-end', width: '100%' },
+    carryRow: { height: 20 },
     additionCarry: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#D84315',
         position: 'absolute',
         top: 0,
         right: 42,
     },
-    cyfra: {
-        fontSize: 28,
-        fontWeight: 'normal',
-        width: 40,
-        textAlign: 'center',
-        color: '#5D4037',
-    },
-    resultCyfra: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#1976D2',
-    },
-    additionLine: {
-        width: 120,
-        height: 3,
-        backgroundColor: '#D84315',
-        marginBottom: 5,
-        marginTop: 2,
-    },
-    highlightJednosci: {
-        backgroundColor: '#FFD54F',
-        borderRadius: 4,
-    },
-    normalCyfra: {
-        backgroundColor: 'transparent',
-    },
-    additionInfoWrapper: {
-        width: '100%',
-        marginTop: 15,
-        alignItems: 'center',
-    },
-    additionInfo: {
-        fontSize: 16,
-        color: '#00796B',
-        textAlign: 'center',
-        minHeight: 40,
-        backgroundColor: '#E0F7FA',
-        padding: 8,
-        borderRadius: 4,
-        width: '90%',
-    },
-    numberHighlight: {
-        color: '#1976D2',
-        fontWeight: 'bold',
-        fontSize: 20,
-    },
+    cyfra: { fontSize: 28, width: 40, textAlign: 'center' },
+    additionLine: { width: 120, height: 3, marginBottom: 5, marginTop: 2 },
+    additionInfoWrapper: { width: '100%', marginTop: 15, alignItems: 'center' },
+    additionInfo: { fontSize: 16, textAlign: 'center', minHeight: 40, padding: 8, borderRadius: 4, width: '90%' },
+    numberHighlight: { fontWeight: 'bold', fontSize: 20 },
 });

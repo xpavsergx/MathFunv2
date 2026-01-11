@@ -5,15 +5,15 @@ import {
     StyleSheet,
     TouchableOpacity,
     ScrollView,
-    ImageBackground, // 🔥 Dodano import ImageBackground
-    ActivityIndicator, // Dodano import ActivityIndicator
+    ImageBackground,
+    ActivityIndicator,
+    useColorScheme, // 🔥 Dodano
+    StatusBar, // 🔥 Dodano
 } from 'react-native';
 
 import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth'; // Dodano import auth dla spójności i logowania anonimowego
+import auth from '@react-native-firebase/auth';
 
-// Maksymalna liczba kroków do wyświetlenia (jeśli w bazie jest 4 kroki + intro + final, to 6)
-// Zgodnie z Twoją logiką: 4 (MAX_STEPS z warunku) to indeks 0, 1, 2, 3 (czyli 4 bloki).
 const MAX_STEPS = 4;
 
 export default function RachunkiMemoryBlock() {
@@ -22,26 +22,38 @@ export default function RachunkiMemoryBlock() {
     const [lessonData, setLessonData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
+    // 🔥 LOGIKA TRYBU CIEMNEGO
+    const isDarkMode = useColorScheme() === 'dark';
+    const theme = {
+        bgImage: require('../assets/tloTeorii.png'),
+        bgOverlay: isDarkMode ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.2)',
+        cardBg: isDarkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.85)',
+        title: isDarkMode ? '#FBBF24' : '#FF8F00',
+        textMain: isDarkMode ? '#F1F5F9' : '#424242',
+        textStep: isDarkMode ? '#CBD5E1' : '#5D4037',
+        highlight: isDarkMode ? '#60A5FA' : '#1976D2',
+        buttonBg: isDarkMode ? '#F59E0B' : '#FFD54F',
+        buttonText: isDarkMode ? '#1E293B' : '#5D4037',
+        switchInactive: isDarkMode ? '#334155' : '#E0E0E0',
+    };
+
     const handleNextStep = () => {
-        // Kontrolujemy postęp do osiągnięcia MAX_STEPS
         setStep((prev) => (prev < MAX_STEPS ? prev + 1 : prev));
     };
 
     const handleModeChange = (newMode: 'subtract' | 'add') => {
         setMode(newMode);
-        setStep(0); // Resetujemy kroki przy zmianie trybu
+        setStep(0);
     };
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                // Używamy nazwy trybu ('add' lub 'subtract') jako ID dokumentu
                 const doc = await firestore().collection('lessons').doc(mode).get();
                 if (doc.exists) {
                     setLessonData(doc.data());
                 } else {
-                    console.warn(`Nie znaleziono dokumentu dla trybu: ${mode}.`);
                     setLessonData(null);
                 }
             } catch (error) {
@@ -53,12 +65,10 @@ export default function RachunkiMemoryBlock() {
         };
 
         const prepareAndFetch = async () => {
-            // Logowanie anonimowe, jeśli nie zalogowano
             if (!auth().currentUser) {
                 try {
                     await auth().signInAnonymously();
                 } catch (error) {
-                    console.error('Failed to sign in anonymously:', error);
                     setLoading(false);
                     return;
                 }
@@ -69,12 +79,11 @@ export default function RachunkiMemoryBlock() {
         prepareAndFetch();
     }, [mode]);
 
-    // ... (Funkcja highlightNumbers bez zmian)
     const highlightNumbers = (text: string) => {
         const parts = text.split(/(\d+)/g);
         return parts.map((part, index) =>
             /\d+/.test(part) ? (
-                <Text key={index} style={styles.numberHighlight}>
+                <Text key={index} style={[styles.numberHighlight, { color: theme.highlight }]}>
                     {part}
                 </Text>
             ) : (
@@ -83,34 +92,30 @@ export default function RachunkiMemoryBlock() {
         );
     };
 
-
     const getSteps = () => {
         if (!lessonData || !lessonData.intro || !lessonData.steps) return [];
 
-        // Ponieważ Firestore zwraca Mapy, musimy upewnić się, że konwertujemy je na tablice,
-        // jeśli JSON w bazie nie jest tablicą (co jest typowe dla Firebase).
         const introLines = Array.isArray(lessonData.intro) ? lessonData.intro : Object.values(lessonData.intro || {});
         const stepLines = Array.isArray(lessonData.steps) ? lessonData.steps : Object.values(lessonData.steps || {});
-
 
         const steps = [
             <View key="intro" style={styles.introBlock}>
                 {introLines.map((line: string, index: number) => (
-                    <Text key={`intro-${index}`} style={styles.intro}>
+                    <Text key={`intro-${index}`} style={[styles.intro, { color: theme.textMain }]}>
                         {highlightNumbers(line)}
                     </Text>
                 ))}
             </View>,
             ...stepLines.map((stepText: string, index: number) => (
-                <Text key={`step-${index}`} style={styles.stepText}>
+                <Text key={`step-${index}`} style={[styles.stepText, { color: theme.textStep }]}>
                     {highlightNumbers(stepText)}
                 </Text>
             )),
-            <View key="final" style={styles.finalBlock}>
-                <Text style={styles.finalResult}>
+            <View key="final" style={[styles.finalBlock, { borderTopColor: isDarkMode ? '#475569' : '#FFD54F' }]}>
+                <Text style={[styles.finalResult, { color: isDarkMode ? '#F87171' : '#D84315' }]}>
                     {highlightNumbers(lessonData.finalResult || '')}
                 </Text>
-                <Text style={styles.tip}>{lessonData.tip || ''}</Text>
+                <Text style={[styles.tip, { color: isDarkMode ? '#34D399' : '#00796B' }]}>{lessonData.tip || ''}</Text>
             </View>,
         ];
 
@@ -119,115 +124,93 @@ export default function RachunkiMemoryBlock() {
 
     if (loading) {
         return (
-            <View style={[styles.wrapper, styles.loadingWrapper]}>
-                <ActivityIndicator size="large" color="#FF8F00" />
-                <Text style={styles.intro}>Ładowanie danych...</Text>
-            </View>
-        );
-    }
-
-    if (!lessonData) {
-        return (
-            <View style={[styles.wrapper, styles.loadingWrapper]}>
-                <Text style={[styles.intro, {color: '#D84315'}]}>Błąd: Nie znaleziono danych lekcji w Firestore dla trybu: {mode}.</Text>
+            <View style={[styles.wrapper, { backgroundColor: isDarkMode ? '#0F172A' : '#FAFAFA' }]}>
+                <ActivityIndicator size="large" color={theme.title} />
+                <Text style={[styles.intro, { color: theme.textMain, marginTop: 10 }]}>Ładowanie danych...</Text>
             </View>
         );
     }
 
     return (
-        // 🔥 Wstawienie ImageBackground
-        <ImageBackground
-            source={require('../assets/tloTeorii.png')} // Zmień na właściwą ścieżkę do Twojego pliku graficznego
-            style={styles.backgroundImage}
-            resizeMode="cover"
-        >
-            <View style={styles.overlay}>
-                <View style={styles.container}>
-                    <Text style={styles.title}>
-                        {lessonData?.title || 'Rachunki pamięciowe'}
-                    </Text>
+        <View style={{ flex: 1 }}>
+            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+            <ImageBackground source={theme.bgImage} style={styles.backgroundImage} resizeMode="cover">
+                {/* Przyciemnienie tła dla czytelności */}
+                <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.bgOverlay }]} />
 
-                    {/* Mode Switch */}
-                    <View style={styles.switcher}>
-                        <TouchableOpacity
-                            style={[
-                                styles.switchButton,
-                                mode === 'subtract' && styles.activeSwitch,
-                            ]}
-                            onPress={() => handleModeChange('subtract')}
-                        >
-                            <Text style={styles.switchText}>➖ Odejmowanie</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[
-                                styles.switchButton,
-                                mode === 'add' && styles.activeSwitch,
-                            ]}
-                            onPress={() => handleModeChange('add')}
-                        >
-                            <Text style={styles.switchText}>➕ Dodawanie</Text>
-                        </TouchableOpacity>
+                <View style={styles.overlay}>
+                    <View style={[styles.container, { backgroundColor: theme.cardBg }]}>
+                        <Text style={[styles.title, { color: theme.title }]}>
+                            {lessonData?.title || 'Rachunki pamięciowe'}
+                        </Text>
+
+
+
+                        <View style={styles.switcher}>
+                            <TouchableOpacity
+                                style={[
+                                    styles.switchButton,
+                                    { backgroundColor: mode === 'subtract' ? theme.buttonBg : theme.switchInactive }
+                                ]}
+                                onPress={() => handleModeChange('subtract')}
+                            >
+                                <Text style={[styles.switchText, { color: theme.buttonText }]}>➖ Odejmowanie</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[
+                                    styles.switchButton,
+                                    { backgroundColor: mode === 'add' ? theme.buttonBg : theme.switchInactive }
+                                ]}
+                                onPress={() => handleModeChange('add')}
+                            >
+                                <Text style={[styles.switchText, { color: theme.buttonText }]}>➕ Dodawanie</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
+                            {getSteps()}
+                        </ScrollView>
+
+                        {step < MAX_STEPS && (
+                            <TouchableOpacity
+                                style={[styles.button, { backgroundColor: theme.buttonBg }]}
+                                onPress={handleNextStep}
+                            >
+                                <Text style={[styles.buttonText, { color: theme.buttonText }]}>Dalej ➜</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
-
-                    <ScrollView
-                        style={styles.scrollArea}
-                        contentContainerStyle={styles.scrollContent}
-                    >
-                        {getSteps()}
-                    </ScrollView>
-
-                    {step < MAX_STEPS && (
-                        <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-                            <Text style={styles.buttonText}>Dalej ➜</Text>
-                        </TouchableOpacity>
-                    )}
                 </View>
-            </View>
-        </ImageBackground>
+            </ImageBackground>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    // 🔥 NOWE STYLE DLA TŁA I WARSTWY
-    backgroundImage: {
-        flex: 1,
-        width: '100%',
-        height: '100%',
-    },
+    backgroundImage: { flex: 1 },
     overlay: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'flex-start',
-        paddingTop: 20,
+        paddingTop: 30,
     },
-
-    // Zmieniono 'wrapper' na 'overlay' dla widoku głównego, ale zachowano dla ładowania
-    wrapper: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#FAFAFA',
-        paddingTop: 20,
-    },
-    loadingWrapper: {
-        height: 300,
-        padding: 20,
-    },
-    // 🔥 ZMIENIONO TŁO NA PÓŁPRZEZROCZYSTE DLA WIDOCZNOŚCI GRAFIKI
+    wrapper: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     container: {
-        backgroundColor: 'rgba(255, 255, 255, 0.85)',
-        borderRadius: 12,
+        borderRadius: 20,
         padding: 20,
         alignItems: 'center',
-        width: '90%',
-        elevation: 3,
+        width: '92%',
         maxWidth: 600,
         marginBottom: 20,
+        elevation: 10,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
     },
     title: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#FF8F00',
         marginBottom: 10,
         textAlign: 'center',
     },
@@ -237,77 +220,38 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     switchButton: {
-        paddingVertical: 8,
+        paddingVertical: 10,
         paddingHorizontal: 16,
         marginHorizontal: 5,
         borderRadius: 20,
-        backgroundColor: '#E0E0E0',
-    },
-    activeSwitch: {
-        backgroundColor: '#FFD54F',
     },
     switchText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#5D4037',
     },
-    scrollArea: {
-        // Usunięto maxHeight, aby działało elastyczne rozciąganie
-        width: '100%',
-    },
+    scrollArea: { width: '100%' },
     scrollContent: {
         alignItems: 'center',
-        paddingBottom: 50,
+        paddingBottom: 40,
     },
-    introBlock: {
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    intro: {
-        fontSize: 18,
-        color: '#424242',
-        textAlign: 'center',
-        marginBottom: 6,
-    },
-    stepText: {
-        fontSize: 20,
-        textAlign: 'center',
-        marginVertical: 8,
-        color: '#5D4037',
-    },
-    numberHighlight: {
-        color: '#1976D2',
-        fontWeight: 'bold',
-        fontSize: 22,
-    },
+    introBlock: { alignItems: 'center', marginBottom: 10 },
+    intro: { fontSize: 18, textAlign: 'center', marginBottom: 6 },
+    stepText: { fontSize: 20, textAlign: 'center', marginVertical: 8 },
+    numberHighlight: { fontWeight: 'bold', fontSize: 22 },
     finalBlock: {
+        width: '100%',
         alignItems: 'center',
         marginTop: 10,
+        paddingTop: 10,
+        borderTopWidth: 1,
     },
-    finalResult: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#D84315',
-        textAlign: 'center',
-        marginTop: 10,
-    },
-    tip: {
-        fontSize: 16,
-        marginTop: 10,
-        color: '#00796B',
-        fontStyle: 'italic',
-        textAlign: 'center',
-    },
+    finalResult: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginTop: 10 },
+    tip: { fontSize: 16, marginTop: 10, fontStyle: 'italic', textAlign: 'center' },
     button: {
-        backgroundColor: '#FFD54F',
-        paddingHorizontal: 24,
-        paddingVertical: 10,
+        paddingHorizontal: 30,
+        paddingVertical: 12,
         borderRadius: 25,
         marginTop: 20,
     },
-    buttonText: {
-        fontSize: 18,
-        color: '#5D4037',
-        fontWeight: 'bold',
-    },
+    buttonText: { fontSize: 18, fontWeight: 'bold' },
 });

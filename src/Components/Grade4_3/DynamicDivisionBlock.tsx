@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator,
-    ImageBackground, Dimensions
+    ImageBackground, Dimensions, useColorScheme, StatusBar
 } from 'react-native';
 
 import firestore from '@react-native-firebase/firestore';
@@ -22,6 +22,26 @@ export default function DynamicDivisionBlock() {
     const [divisor, setDivisor] = useState('');
     const [loading, setLoading] = useState(true);
 
+    // 🔥 LOGIKA TRYBU CIEMNEGO
+    const isDarkMode = useColorScheme() === 'dark';
+    const theme = {
+        bgImage: require('../../assets/tloTeorii.png'),
+        bgOverlay: isDarkMode ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.2)',
+        cardBg: isDarkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.92)',
+        title: isDarkMode ? '#FBBF24' : '#1565C0',
+        textMain: isDarkMode ? '#F1F5F9' : '#37474F',
+        diagramBg: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+        highlight: isDarkMode ? '#334155' : '#FFF9C4',
+        explanationBg: isDarkMode ? '#1E293B' : '#E0F2F1',
+        explanationBorder: isDarkMode ? '#334155' : '#B2DFDB',
+        explanationText: isDarkMode ? '#4ADE80' : '#00695C',
+        quotient: isDarkMode ? '#FB923C' : '#E65100',
+        buttonBg: isDarkMode ? '#F59E0B' : '#FFD54F',
+        buttonText: isDarkMode ? '#1E293B' : '#5D4037',
+        line: isDarkMode ? '#94A3B8' : '#37474F',
+        subLine: isDarkMode ? '#F87171' : '#C62828',
+    };
+
     const handleNextStep = () => {
         setStep((prev) => (prev < MAX_STEPS ? prev + 1 : prev));
     };
@@ -37,7 +57,7 @@ export default function DynamicDivisionBlock() {
                     setDivisor(data?.divisor || '4');
                 }
             } catch (error) {
-                console.error('Błąd ładowania danych Firestore:', error);
+                console.error('Błąd ładowania danych:', error);
             } finally {
                 setLoading(false);
             }
@@ -54,9 +74,9 @@ export default function DynamicDivisionBlock() {
 
     if (loading || !dividend || !divisor) {
         return (
-            <View style={[styles.wrapper, styles.loadingWrapper]}>
-                <ActivityIndicator size="large" color="#FF8F00" />
-                <Text style={{marginTop: 10}}>Ładowanie zadania...</Text>
+            <View style={[styles.wrapper, { backgroundColor: isDarkMode ? '#0F172A' : '#FAFAFA' }]}>
+                <ActivityIndicator size="large" color={theme.buttonBg} />
+                <Text style={{marginTop: 10, color: theme.textMain}}>Ładowanie zadania...</Text>
             </View>
         );
     }
@@ -97,10 +117,10 @@ export default function DynamicDivisionBlock() {
             { r: 2, c: 0, text: (parseInt(d) * parseInt(Q[0])).toString(), visible: 4, isHighlight: 4 },
             { r: 2, c: -1, text: '-', visible: 4 },
             { r: 3, c: 0, text: '0', visible: 4 },
-            { r: 3, c: 1, text: D[1], visible: 5, isHighlight: 6, style: styles.broughtDown },
+            { r: 3, c: 1, text: D[1], visible: 5, isHighlight: 6, color: isDarkMode ? '#4ADE80' : '#00796B' },
             { r: 4, c: 1, text: (parseInt(d) * parseInt(Q[1])).toString(), visible: 7, isHighlight: 7 },
             { r: 4, c: 0, text: '-', visible: 7 },
-            { r: 5, c: 1, text: '0', visible: 7, style: styles.finalRemainder },
+            { r: 5, c: 1, text: '0', visible: 7, color: isDarkMode ? '#60A5FA' : '#1565C0' },
         ];
 
         const numRows = 6;
@@ -111,7 +131,7 @@ export default function DynamicDivisionBlock() {
             <View style={styles.additionCoreContainer}>
                 {isVisible(1) && (
                     <View style={styles.divisionHeader}>
-                        <View style={styles.divisionLineFull} />
+                        <View style={[styles.divisionLineFull, { backgroundColor: theme.line }]} />
                     </View>
                 )}
 
@@ -128,18 +148,19 @@ export default function DynamicDivisionBlock() {
                                 return (
                                     <View key={c} style={styles.cyfraContainer}>
                                         {c === 0 && minusItem && isVisible(minusItem.visible) && (
-                                            <Text style={styles.minusSign}>{minusItem.text}</Text>
+                                            <Text style={[styles.minusSign, { color: theme.subLine }]}>{minusItem.text}</Text>
                                         )}
                                         <Text style={[
                                             styles.cyfra,
-                                            item && isHighlight(item.isHighlight) && styles.highlight,
-                                            r === 0 && styles.quotientText,
-                                            item?.style,
+                                            { color: theme.textMain },
+                                            item && isHighlight(item.isHighlight) && { backgroundColor: theme.highlight, borderRadius: 5 },
+                                            r === 0 && { color: theme.quotient, fontWeight: 'bold', position: 'absolute', top: -42 },
+                                            item?.color ? { color: item.color, fontWeight: 'bold' } : {},
                                             { opacity }
                                         ]}>
                                             {content}
                                         </Text>
-                                        {showUnderline && (c === 0 || c === 1) && <View style={styles.subtractionLine} />}
+                                        {showUnderline && (c === 0 || c === 1) && <View style={[styles.subtractionLine, { backgroundColor: theme.subLine }]} />}
                                     </View>
                                 );
                             })}
@@ -151,34 +172,42 @@ export default function DynamicDivisionBlock() {
     };
 
     return (
-        <ImageBackground source={require('../../assets/tloTeorii.png')} style={styles.backgroundImage} resizeMode="cover">
-            <View style={styles.overlay}>
-                <View style={styles.container}>
-                    <Text style={styles.title}>{STATIC_LESSON_DATA.title}</Text>
-                    <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
-                        <Text style={styles.taskDisplay}>Zadanie: {dividend} : {divisor}</Text>
+        <View style={{ flex: 1 }}>
+            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+            <ImageBackground source={theme.bgImage} style={styles.backgroundImage} resizeMode="cover">
+                <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.bgOverlay }]} />
+                <View style={styles.overlay}>
+                    <View style={[styles.container, { backgroundColor: theme.cardBg }]}>
+                        <Text style={[styles.title, { color: theme.title }]}>{STATIC_LESSON_DATA.title}</Text>
+                        <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
+                            <Text style={[styles.taskDisplay, { color: theme.textMain }]}>Zadanie: {dividend} : {divisor}</Text>
 
-                        {step >= 1 && (
-                            <View style={styles.diagramArea}>
-                                {renderWrittenDivisionDiagram()}
+                            {step >= 1 && (
+                                <View style={[styles.diagramArea, { backgroundColor: theme.diagramBg, borderLeftColor: isDarkMode ? '#334155' : '#00796B' }]}>
+                                    {renderWrittenDivisionDiagram()}
+                                </View>
+                            )}
+
+                            <View style={styles.additionInfoWrapper}>
+                                <Text style={[styles.explanationText, {
+                                    backgroundColor: theme.explanationBg,
+                                    borderColor: theme.explanationBorder,
+                                    color: theme.explanationText
+                                }]}>
+                                    {getExplanationText(step, dividend, divisor)}
+                                </Text>
                             </View>
+                        </ScrollView>
+
+                        {step < MAX_STEPS && (
+                            <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonBg }]} onPress={handleNextStep}>
+                                <Text style={[styles.buttonText, { color: theme.buttonText }]}>Dalej ➜</Text>
+                            </TouchableOpacity>
                         )}
-
-                        <View style={styles.additionInfoWrapper}>
-                            <Text style={styles.explanationText}>
-                                {getExplanationText(step, dividend, divisor)}
-                            </Text>
-                        </View>
-                    </ScrollView>
-
-                    {step < MAX_STEPS && (
-                        <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-                            <Text style={styles.buttonText}>Dalej ➜</Text>
-                        </TouchableOpacity>
-                    )}
+                    </View>
                 </View>
-            </View>
-        </ImageBackground>
+            </ImageBackground>
+        </View>
     );
 }
 
@@ -188,69 +217,58 @@ const styles = StyleSheet.create({
     wrapper: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     loadingWrapper: { padding: 20 },
     container: {
-        backgroundColor: 'rgba(255, 255, 255, 0.92)',
         borderRadius: 20,
         padding: 20,
         alignItems: 'center',
         width: '95%',
-        maxWidth: 500,
-        minHeight: 500,
         elevation: 5,
         marginBottom: 50,
     },
-    title: { fontSize: 20, fontWeight: 'bold', color: '#1565C0', textAlign: 'center', marginBottom: 15 },
+    // PRZYWRÓCONO ROZMIAR 22
+    title: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 15
+    },
     scrollArea: { width: '100%' },
     scrollContent: { alignItems: 'center', paddingBottom: 30 },
-    taskDisplay: { fontSize: 22, fontWeight: 'bold', color: '#37474F', marginBottom: 20 },
+    taskDisplay: { fontSize: 22, fontWeight: 'bold', marginBottom: 20 },
     diagramArea: {
         width: '100%',
         paddingTop: 40,
         paddingBottom: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
         borderRadius: 8,
         borderLeftWidth: 5,
-        borderLeftColor: '#00796B',
         alignItems: 'center',
     },
     additionCoreContainer: { alignItems: 'flex-start', width: 200, marginTop: 10 },
     divisionHeader: { width: '100%', height: 3, zIndex: 2 },
     divisionLineFull: {
         height: 3,
-        backgroundColor: '#37474F',
         width: 85,
     },
     divisionGrid: {
         width: '100%',
-        marginTop: -10, // Podciągnięcie 84 : 4 bliżej kreski
+        marginTop: -10,
     },
     divisionRow: { flexDirection: 'row' },
     cyfraContainer: {
         width: 40,
-        height: 38, // Ciaśniejsze rzędy
+        height: 38,
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative'
     },
-    cyfra: { fontSize: 28, fontWeight: '600', color: '#37474F' },
-    quotientText: {
-        position: 'absolute',
-        top: -42,
-        color: '#E65100',
-        fontWeight: 'bold'
-    },
-    highlight: { backgroundColor: '#FFF9C4', borderRadius: 5 },
-    subtractionLine: { position: 'absolute', bottom: 0, height: 2, width: '100%', backgroundColor: '#C62828' },
-    minusSign: { position: 'absolute', left: -15, fontSize: 24, color: '#C62828' },
-    broughtDown: { color: '#00796B', fontWeight: 'bold' },
-    finalRemainder: { color: '#1565C0', fontWeight: 'bold' },
+    cyfra: { fontSize: 28, fontWeight: '600' },
+    subtractionLine: { position: 'absolute', bottom: 0, height: 2, width: '100%' },
+    minusSign: { position: 'absolute', left: -15, fontSize: 24 },
     additionInfoWrapper: { marginTop: 20, width: '100%' },
     explanationText: {
-        fontSize: 16, color: '#00695C', textAlign: 'center',
-        backgroundColor: '#E0F2F1', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#B2DFDB'
+        fontSize: 16, textAlign: 'center',
+        padding: 12, borderRadius: 10, borderWidth: 1
     },
-    // POWRÓT DO PIERWOTNEGO STYLU PRZYCISKU
     button: {
-        backgroundColor: '#FFD54F',
         paddingHorizontal: 24,
         paddingVertical: 10,
         borderRadius: 25,
@@ -258,7 +276,6 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         fontSize: 18,
-        color: '#5D4037',
         fontWeight: 'bold',
     },
 });

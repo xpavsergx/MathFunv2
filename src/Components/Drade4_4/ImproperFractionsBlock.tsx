@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, ActivityIndicator } from 'react-native';
+import {
+    View, Text, StyleSheet, TouchableOpacity, ImageBackground,
+    ActivityIndicator, useColorScheme, StatusBar // 🔥 Dodano importy
+} from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import Svg, { Path, G } from 'react-native-svg';
 
@@ -8,6 +11,26 @@ export default function ImproperFractionsBlock() {
     const [lessonData, setLessonData] = useState<any>(null);
     const [stepsArray, setStepsArray] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // 🔥 LOGIKA TRYBU CIEMNEGO
+    const isDarkMode = useColorScheme() === 'dark';
+    const theme = {
+        bgImage: require('../../assets/tloTeorii.png'),
+        bgOverlay: isDarkMode ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.2)',
+        cardBg: isDarkMode ? 'rgba(30, 41, 59, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+        title: isDarkMode ? '#60A5FA' : '#1565C0',
+        textMain: isDarkMode ? '#F1F5F9' : '#333',
+        numerator: isDarkMode ? '#FB923C' : '#E65100',
+        denominator: isDarkMode ? '#60A5FA' : '#1565C0',
+        wholeNumber: isDarkMode ? '#4ADE80' : '#2E7D32',
+        infoBox: isDarkMode ? '#1E293B' : '#E0F2F1',
+        infoBorder: isDarkMode ? '#334155' : '#B2DFDB',
+        infoText: isDarkMode ? '#4ADE80' : '#00695C',
+        pizzaEmpty: isDarkMode ? '#334155' : '#F5F5F5',
+        pizzaStroke: isDarkMode ? '#F1F5F9' : '#5D4037',
+        buttonBg: isDarkMode ? '#F59E0B' : '#FFD54F',
+        buttonText: isDarkMode ? '#1E293B' : '#5D4037',
+    };
 
     useEffect(() => {
         const unsubscribe = firestore()
@@ -34,7 +57,6 @@ export default function ImproperFractionsBlock() {
         const centerX = 45;
         const centerY = 45;
 
-        // Funkcja pomocnicza do rysowania pojedynczej pizzy
         const drawPizza = (highlightedSlices: number[]) => (
             <Svg height="90" width="90" viewBox="0 0 90 90">
                 <G rotation="-90" origin="45, 45">
@@ -51,8 +73,8 @@ export default function ImproperFractionsBlock() {
                             <Path
                                 key={i}
                                 d={pathData}
-                                fill={highlightedSlices.includes(i) ? "#FF9800" : "#F5F5F5"}
-                                stroke="#5D4037"
+                                fill={highlightedSlices.includes(i) ? "#FF9800" : theme.pizzaEmpty}
+                                stroke={theme.pizzaStroke}
                                 strokeWidth="1.5"
                             />
                         );
@@ -63,70 +85,70 @@ export default function ImproperFractionsBlock() {
 
         return (
             <View style={styles.pizzasRow}>
-                {/* Pierwsza pizza - zawsze pełna (4/4) */}
                 <View style={styles.pizzaContainer}>{drawPizza([0, 1, 2, 3])}</View>
-                {/* Druga pizza - tylko 1 kawałek (1/4) */}
                 <View style={styles.pizzaContainer}>{drawPizza([0])}</View>
             </View>
         );
     };
 
-    if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#FFB300" /></View>;
+    if (loading) return <View style={[styles.center, { backgroundColor: isDarkMode ? '#0F172A' : '#FAFAFA' }]}><ActivityIndicator size="large" color={theme.buttonBg} /></View>;
 
     return (
-        <ImageBackground source={require('../../assets/tloTeorii.png')} style={styles.backgroundImage} resizeMode="cover">
-            <View style={styles.container}>
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>{lessonData?.title}</Text>
+        <View style={{ flex: 1 }}>
+            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+            <ImageBackground source={theme.bgImage} style={styles.backgroundImage} resizeMode="cover">
+                <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.bgOverlay }]} />
+                <View style={styles.container}>
+                    <View style={[styles.card, { backgroundColor: theme.cardBg }]}>
+                        <Text style={[styles.cardTitle, { color: theme.title }]}>{lessonData?.title}</Text>
 
-                    {renderPizzas()}
+                        {renderPizzas()}
 
-                    <View style={styles.mathRow}>
-                        {/* KROKI 1-3: Ułamek niewłaściwy 5/4 */}
-                        {step >= 1 && step <= 3 && (
-                            <View style={styles.fractionBox}>
-                                <Text style={styles.num}>5</Text>
-                                <View style={styles.line} />
-                                <Text style={styles.den}>4</Text>
-                            </View>
-                        )}
-
-                        {/* KROK 4: Zamiana na liczbę mieszaną */}
-                        {step === 4 && (
-                            <View style={styles.mixedRow}>
+                        <View style={styles.mathRow}>
+                            {step >= 1 && step <= 3 && (
                                 <View style={styles.fractionBox}>
-                                    <Text style={styles.num}>5</Text>
-                                    <View style={styles.line} />
-                                    <Text style={styles.den}>4</Text>
+                                    <Text style={[styles.num, { color: theme.numerator }]}>5</Text>
+                                    <View style={[styles.line, { backgroundColor: theme.textMain }]} />
+                                    <Text style={[styles.den, { color: theme.denominator }]}>4</Text>
                                 </View>
-                                <Text style={styles.equalSign}>=</Text>
-                                <View style={styles.mixedContainer}>
-                                    <Text style={styles.wholeNumber}>1</Text>
-                                    <View style={styles.fractionBoxSmall}>
-                                        <Text style={styles.numSmall}>1</Text>
-                                        <View style={styles.lineSmall} />
-                                        <Text style={styles.denSmall}>4</Text>
+                            )}
+
+                            {step === 4 && (
+                                <View style={styles.mixedRow}>
+                                    <View style={styles.fractionBox}>
+                                        <Text style={[styles.num, { color: theme.numerator }]}>5</Text>
+                                        <View style={[styles.line, { backgroundColor: theme.textMain }]} />
+                                        <Text style={[styles.den, { color: theme.denominator }]}>4</Text>
+                                    </View>
+                                    <Text style={[styles.equalSign, { color: theme.textMain }]}>=</Text>
+                                    <View style={styles.mixedContainer}>
+                                        <Text style={[styles.wholeNumber, { color: theme.wholeNumber }]}>1</Text>
+                                        <View style={styles.fractionBoxSmall}>
+                                            <Text style={[styles.numSmall, { color: theme.numerator }]}>1</Text>
+                                            <View style={[styles.lineSmall, { backgroundColor: theme.textMain }]} />
+                                            <Text style={[styles.denSmall, { color: theme.denominator }]}>4</Text>
+                                        </View>
                                     </View>
                                 </View>
-                            </View>
-                        )}
-                    </View>
+                            )}
+                        </View>
 
-                    <View style={styles.infoBox}>
-                        <Text style={styles.explanationText}>{stepsArray[step]?.text}</Text>
-                    </View>
+                        <View style={[styles.infoBox, { backgroundColor: theme.infoBox, borderColor: theme.infoBorder }]}>
+                            <Text style={[styles.explanationText, { color: theme.infoText }]}>{stepsArray[step]?.text}</Text>
+                        </View>
 
-                    <TouchableOpacity
-                        style={step < stepsArray.length - 1 ? styles.button : styles.buttonReset}
-                        onPress={() => step < stepsArray.length - 1 ? setStep(step + 1) : setStep(0)}
-                    >
-                        <Text style={step < stepsArray.length - 1 ? styles.buttonText : styles.buttonResetText}>
-                            {step < stepsArray.length - 1 ? "Dalej ➜" : "Od nowa ↺"}
-                        </Text>
-                    </TouchableOpacity>
+                        <TouchableOpacity
+                            style={step < stepsArray.length - 1 ? [styles.button, { backgroundColor: theme.buttonBg }] : styles.buttonReset}
+                            onPress={() => step < stepsArray.length - 1 ? setStep(step + 1) : setStep(0)}
+                        >
+                            <Text style={step < stepsArray.length - 1 ? [styles.buttonText, { color: theme.buttonText }] : styles.buttonResetText}>
+                                {step < stepsArray.length - 1 ? "Dalej ➜" : "Od nowa ↺"}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
-            </View>
-        </ImageBackground>
+            </ImageBackground>
+        </View>
     );
 }
 
@@ -135,36 +157,32 @@ const styles = StyleSheet.create({
     container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     card: {
-        backgroundColor: 'rgba(255, 255, 255, 0.98)',
         width: '94%',
         borderRadius: 25,
         padding: 20,
         alignItems: 'center',
         elevation: 10,
     },
-    cardTitle: { fontSize: 22, fontWeight: 'bold', color: '#1565C0', marginBottom: 20, textAlign: 'center' },
+    cardTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
     pizzasRow: { flexDirection: 'row', justifyContent: 'center', marginBottom: 20 },
     pizzaContainer: { marginHorizontal: 5 },
     mathRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 100, marginBottom: 15 },
     fractionBox: { alignItems: 'center', width: 50 },
-    line: { width: 40, height: 4, backgroundColor: '#333', marginVertical: 2 },
-    num: { fontSize: 36, fontWeight: 'bold', color: '#E65100' },
-    den: { fontSize: 36, fontWeight: 'bold', color: '#1565C0' },
-
-    // Liczba mieszana
+    line: { width: 40, height: 4, marginVertical: 2 },
+    num: { fontSize: 36, fontWeight: 'bold' },
+    den: { fontSize: 36, fontWeight: 'bold' },
     mixedRow: { flexDirection: 'row', alignItems: 'center' },
     equalSign: { fontSize: 32, marginHorizontal: 15, fontWeight: 'bold' },
     mixedContainer: { flexDirection: 'row', alignItems: 'center' },
-    wholeNumber: { fontSize: 52, fontWeight: 'bold', color: '#2E7D32', marginRight: 5 },
+    wholeNumber: { fontSize: 52, fontWeight: 'bold', marginRight: 5 },
     fractionBoxSmall: { alignItems: 'center' },
-    numSmall: { fontSize: 24, fontWeight: 'bold', color: '#E65100' },
-    lineSmall: { width: 25, height: 3, backgroundColor: '#333', marginVertical: 2 },
-    denSmall: { fontSize: 24, fontWeight: 'bold', color: '#1565C0' },
-
-    infoBox: { backgroundColor: '#E0F2F1', padding: 15, borderRadius: 15, width: '100%', minHeight: 80, justifyContent: 'center', borderWidth: 1.5, borderColor: '#B2DFDB' },
-    explanationText: { fontSize: 17, color: '#00695C', textAlign: 'center', fontWeight: '600' },
-    button: { backgroundColor: '#FFD54F', paddingHorizontal: 45, paddingVertical: 12, borderRadius: 25, marginTop: 20 },
-    buttonText: { fontSize: 18, color: '#5D4037', fontWeight: 'bold' },
+    numSmall: { fontSize: 24, fontWeight: 'bold' },
+    lineSmall: { width: 25, height: 3, marginVertical: 2 },
+    denSmall: { fontSize: 24, fontWeight: 'bold' },
+    infoBox: { padding: 15, borderRadius: 15, width: '100%', minHeight: 80, justifyContent: 'center', borderWidth: 1.5 },
+    explanationText: { fontSize: 17, textAlign: 'center', fontWeight: '600' },
+    button: { paddingHorizontal: 45, paddingVertical: 12, borderRadius: 25, marginTop: 20 },
+    buttonText: { fontSize: 18, fontWeight: 'bold' },
     buttonReset: { backgroundColor: '#4CAF50', paddingHorizontal: 45, paddingVertical: 12, borderRadius: 25, marginTop: 20 },
     buttonResetText: { color: '#FFFFFF', fontSize: 18, fontWeight: 'bold' },
 });

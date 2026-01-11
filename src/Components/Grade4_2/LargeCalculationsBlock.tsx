@@ -7,38 +7,50 @@ import {
     ScrollView,
     ImageBackground,
     ActivityIndicator,
+    useColorScheme, // 🔥 Dodano
+    StatusBar, // 🔥 Dodano
 } from 'react-native';
 
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
-// 🚀 Maksymalna liczba kroków do wyświetlenia (MAX_STEPS = 4, czyli 5 bloków: 2 intro + 2 steps + final)
-// W strukturze Large mamy: 3 intro + 3 steps + final. Ustalmy, że 6 kroków do przejścia (indeksy 0-6).
-// MAX_STEPS = 6. (Dostosuj tę wartość, jeśli Twoja finalna struktura Firestore wymaga innej liczby kliknięć 'Dalej').
 const MAX_STEPS = 4;
 
 export default function largeCalculationsBlock() {
     const [step, setStep] = useState(0);
-    // 🔥 ZMIANA: Używamy 'subtractLarge' lub 'addLarge' jako ID dokumentu
     const [mode, setMode] = useState<'subtractLarge' | 'addLarge'>('subtractLarge');
     const [lessonData, setLessonData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+
+    // 🔥 LOGIKA TRYBU CIEMNEGO
+    const isDarkMode = useColorScheme() === 'dark';
+    const theme = {
+        bgImage: require('../../assets/tloTeorii.png'),
+        bgOverlay: isDarkMode ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.2)',
+        cardBg: isDarkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.85)',
+        title: isDarkMode ? '#FBBF24' : '#1976D2',
+        textMain: isDarkMode ? '#F1F5F9' : '#424242',
+        textIntro: isDarkMode ? '#F87171' : '#D84315',
+        textStep: isDarkMode ? '#CBD5E1' : '#5D4037',
+        highlight: isDarkMode ? '#60A5FA' : '#1976D2',
+        buttonBg: isDarkMode ? '#F59E0B' : '#FFD54F',
+        buttonText: isDarkMode ? '#1E293B' : '#5D4037',
+        switchInactive: isDarkMode ? '#334155' : '#E0E0E0',
+    };
 
     const handleNextStep = () => {
         setStep((prev) => (prev < MAX_STEPS ? prev + 1 : prev));
     };
 
-    // 🔥 ZMIANA: Typy przełączania dostosowane do dużych liczb
     const handleModeChange = (newMode: 'subtractLarge' | 'addLarge') => {
         setMode(newMode);
-        setStep(0); // Resetujemy kroki przy zmianie trybu
+        setStep(0);
     };
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                // 🔥 Używamy trybu ('addLarge' lub 'subtractLarge') jako ID dokumentu
                 const doc = await firestore().collection('lessons').doc(mode).get();
                 if (doc.exists) {
                     const data = doc.data();
@@ -49,13 +61,9 @@ export default function largeCalculationsBlock() {
                             steps: Object.values(data.steps || {}),
                         });
                     }
-                } else {
-                    console.warn(`Nie znaleziono dokumentu dla trybu: ${mode}.`);
-                    setLessonData(null);
                 }
             } catch (error) {
                 console.error('Błąd ładowania danych:', error);
-                setLessonData(null);
             } finally {
                 setLoading(false);
             }
@@ -63,27 +71,18 @@ export default function largeCalculationsBlock() {
 
         const prepareAndFetch = async () => {
             if (!auth().currentUser) {
-                try {
-                    await auth().signInAnonymously();
-                } catch (error) {
-                    console.error('Failed to sign in anonymously:', error);
-                    setLoading(false);
-                    return;
-                }
+                try { await auth().signInAnonymously(); } catch (e) {}
             }
             fetchData();
         };
-
         prepareAndFetch();
     }, [mode]);
 
-    // 🔥 ZMIANA: Modyfikacja regex, aby uwzględniał operatory (+,-) jeśli są częścią wyróżnienia
     const highlightElements = (text: string) => {
-        const parts = text.split(/(\d+)/g); // <--- Zmienione: tylko liczby (\d+)
+        const parts = text.split(/(\d+)/g);
         return parts.map((part, index) =>
-            // Wyróżnia TYLKO liczby
-            /(\d+)/.test(part) ? ( // <--- Zmienione: tylko liczby (\d+)
-                <Text key={index} style={styles.numberHighlight}>
+            /(\d+)/.test(part) ? (
+                <Text key={index} style={[styles.numberHighlight, { color: theme.highlight }]}>
                     {part}
                 </Text>
             ) : (
@@ -92,40 +91,38 @@ export default function largeCalculationsBlock() {
         );
     };
 
-
     const getSteps = () => {
         if (!lessonData || !lessonData.intro || !lessonData.steps) return [];
-
         const introLines = lessonData.intro;
         const stepLines = lessonData.steps;
 
-
         const steps = [
             <View key="intro" style={styles.introBlock}>
-                {introLines.map((line: string, index: number) => {
-                    // Wyróżnienie pierwszego wiersza (pytania/zadania)
-                    const isFirstLine = index === 0;
-                    return(
-                        <Text
-                            key={`intro-${index}`}
-                            style={[styles.intro, isFirstLine && styles.introBold]}
-                        >
-                            {highlightElements(line)}
-                        </Text>
-                    );
-                })}
+                {introLines.map((line: string, index: number) => (
+                    <Text
+                        key={`intro-${index}`}
+                        style={[
+                            styles.intro,
+                            { color: theme.textMain },
+                            index === 0 && [styles.introBold, { color: theme.textIntro }]
+                        ]}
+                    >
+                        {highlightElements(line)}
+                    </Text>
+                ))}
             </View>,
-            // Mapujemy wszystkie kroki z bazy
             ...stepLines.map((stepText: string, index: number) => (
-                <Text key={`step-${index}`} style={styles.stepText}>
+                <Text key={`step-${index}`} style={[styles.stepText, { color: theme.textStep }]}>
                     {highlightElements(stepText)}
                 </Text>
             )),
             <View key="final" style={styles.finalBlock}>
-                <Text style={styles.finalResult}>
+                <Text style={[styles.finalResult, { color: theme.textIntro }]}>
                     {highlightElements(lessonData.finalResult || '')}
                 </Text>
-                <Text style={styles.tip}>{lessonData.tip || ''}</Text>
+                <Text style={[styles.tip, { color: isDarkMode ? '#34D399' : '#00796B' }]}>
+                    {lessonData.tip || ''}
+                </Text>
             </View>,
         ];
 
@@ -134,83 +131,73 @@ export default function largeCalculationsBlock() {
 
     if (loading) {
         return (
-            <View style={[styles.wrapper, styles.loadingWrapper]}>
-                <ActivityIndicator size="large" color="#FF8F00" />
-                <Text style={[styles.intro, {marginTop: 10}]}>Ładowanie danych...</Text>
-            </View>
-        );
-    }
-
-    if (!lessonData) {
-        return (
-            <View style={[styles.wrapper, styles.loadingWrapper]}>
-                <Text style={[styles.intro, {color: '#D84315'}]}>Błąd: Nie znaleziono danych lekcji w Firestore dla trybu: {mode}.</Text>
+            <View style={[styles.wrapper, { backgroundColor: isDarkMode ? '#0F172A' : '#FAFAFA' }]}>
+                <ActivityIndicator size="large" color={theme.title} />
+                <Text style={[styles.intro, { color: theme.textMain, marginTop: 10 }]}>Ładowanie danych...</Text>
             </View>
         );
     }
 
     return (
-        <ImageBackground
-            // 🔥 POPRAWIONA ŚCIEŻKA DLA FOLDERU Grade4_2
-            source={require('../../assets/tloTeorii.png')}
-            style={styles.backgroundImage}
-            resizeMode="cover"
-        >
-            <View style={styles.overlay}>
-                <View style={styles.container}>
-                    <Text style={styles.title}>
-                        {lessonData?.title || 'Rachunki pamięciowe na dużych liczbach'}
-                    </Text>
+        <View style={{ flex: 1 }}>
+            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+            <ImageBackground source={theme.bgImage} style={styles.backgroundImage} resizeMode="cover">
+                <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.bgOverlay }]} />
 
-                    {/* Mode Switch */}
-                    <View style={styles.switcher}>
-                        {/* Przełącznik na odejmowanie dużych liczb */}
-                        <TouchableOpacity
-                            style={[
-                                styles.switchButton,
-                                mode === 'subtractLarge' && styles.activeSwitch,
-                            ]}
-                            onPress={() => handleModeChange('subtractLarge')}
-                        >
-                            <Text style={styles.switchText}>➖ Odejmowanie</Text>
-                        </TouchableOpacity>
-                        {/* Przełącznik na dodawanie dużych liczb */}
-                        <TouchableOpacity
-                            style={[
-                                styles.switchButton,
-                                mode === 'addLarge' && styles.activeSwitch,
-                            ]}
-                            onPress={() => handleModeChange('addLarge')}
-                        >
-                            <Text style={styles.switchText}>➕ Dodawanie</Text>
-                        </TouchableOpacity>
+                <View style={styles.overlay}>
+                    <View style={[styles.container, { backgroundColor: theme.cardBg }]}>
+                        <Text style={[styles.title, { color: theme.title }]}>
+                            {lessonData?.title || 'Rachunki pamięciowe na dużych liczbach'}
+                        </Text>
+
+
+
+                        <View style={styles.switcher}>
+                            <TouchableOpacity
+                                style={[
+                                    styles.switchButton,
+                                    { backgroundColor: mode === 'subtractLarge' ? theme.buttonBg : theme.switchInactive }
+                                ]}
+                                onPress={() => handleModeChange('subtractLarge')}
+                            >
+                                <Text style={[styles.switchText, { color: theme.buttonText }]}>➖ Odejmowanie</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[
+                                    styles.switchButton,
+                                    { backgroundColor: mode === 'addLarge' ? theme.buttonBg : theme.switchInactive }
+                                ]}
+                                onPress={() => handleModeChange('addLarge')}
+                            >
+                                <Text style={[styles.switchText, { color: theme.buttonText }]}>➕ Dodawanie</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
+                            {getSteps()}
+                        </ScrollView>
+
+                        {step < MAX_STEPS && (
+                            <TouchableOpacity
+                                style={[styles.button, { backgroundColor: theme.buttonBg }]}
+                                onPress={handleNextStep}
+                            >
+                                <Text style={[styles.buttonText, { color: theme.buttonText }]}>Dalej ➜</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
-
-                    <ScrollView
-                        style={styles.scrollArea}
-                        contentContainerStyle={styles.scrollContent}
-                    >
-                        {getSteps()}
-                    </ScrollView>
-
-                    {step < MAX_STEPS && (
-                        <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-                            <Text style={styles.buttonText}>Dalej ➜</Text>
-                        </TouchableOpacity>
-                    )}
                 </View>
-            </View>
-        </ImageBackground>
+            </ImageBackground>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     backgroundImage: { flex: 1, width: '100%', height: '100%', },
     overlay: { flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 20, },
-    wrapper: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FAFAFA', paddingTop: 20, },
+    wrapper: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     loadingWrapper: { height: 300, padding: 20, },
     container: {
-        backgroundColor: 'rgba(255, 255, 255, 0.85)',
         borderRadius: 12,
         padding: 20,
         alignItems: 'center',
@@ -222,7 +209,6 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#1976D2', // 🔥 NIEBIESKI KOLOR ZGODNY Z LICZBAMI
         marginBottom: 10,
         textAlign: 'center',
     },
@@ -236,52 +222,24 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         marginHorizontal: 5,
         borderRadius: 20,
-        backgroundColor: '#E0E0E0',
-    },
-    activeSwitch: {
-        backgroundColor: '#FFD54F',
     },
     switchText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#5D4037',
     },
     scrollArea: { width: '100%', },
     scrollContent: { alignItems: 'center', paddingBottom: 50, },
     introBlock: { alignItems: 'center', marginBottom: 10, },
-    intro: { fontSize: 18, color: '#424242', textAlign: 'center', marginBottom: 6, },
-    introBold: { fontSize: 20, fontWeight: 'bold', color: '#D84315', marginBottom: 10, },
-    stepText: { fontSize: 20, textAlign: 'center', marginVertical: 8, color: '#5D4037', },
+    intro: { fontSize: 18, textAlign: 'center', marginBottom: 6, },
+    introBold: { fontSize: 20, fontWeight: 'bold', marginBottom: 10, },
+    stepText: { fontSize: 20, textAlign: 'center', marginVertical: 8 },
     numberHighlight: {
-        color: '#1976D2',
         fontWeight: 'bold',
         fontSize: 22,
     },
     finalBlock: { alignItems: 'center', marginTop: 10, },
-    finalResult: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#D84315',
-        textAlign: 'center',
-        marginTop: 10,
-    },
-    tip: {
-        fontSize: 16,
-        marginTop: 10,
-        color: '#00796B',
-        fontStyle: 'italic',
-        textAlign: 'center',
-    },
-    button: {
-        backgroundColor: '#FFD54F',
-        paddingHorizontal: 24,
-        paddingVertical: 10,
-        borderRadius: 25,
-        marginTop: 20,
-    },
-    buttonText: {
-        fontSize: 18,
-        color: '#5D4037',
-        fontWeight: 'bold',
-    },
+    finalResult: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginTop: 10, },
+    tip: { fontSize: 16, marginTop: 10, fontStyle: 'italic', textAlign: 'center', },
+    button: { paddingHorizontal: 24, paddingVertical: 10, borderRadius: 25, marginTop: 20, },
+    buttonText: { fontSize: 18, fontWeight: 'bold', },
 });
