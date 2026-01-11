@@ -372,11 +372,6 @@ const DecimalFractionTrainer = () => {
     );
 };
 
-
-
-[Image of a decimal place value chart showing tenths, hundredths, and thousandths]
-
-
 const styles = StyleSheet.create({
     container: { flex: 1 },
     keyboardContainer: { flex: 1, justifyContent: 'center' },
