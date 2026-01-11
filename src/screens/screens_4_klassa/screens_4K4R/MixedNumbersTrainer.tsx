@@ -5,15 +5,15 @@ import {
     Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager
 } from 'react-native';
 import Svg, { Path, Rect, G, Line } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native'; // DODANE
+import { useNavigation } from '@react-navigation/native';
 import { awardXpAndCoins } from '../../../services/xpService';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
 const EXERCISE_ID = "MixedNumbersTrainer_cl4";
-
 const { width: screenWidth } = Dimensions.get('window');
 const TASKS_LIMIT = 40;
+// TWOJE ORYGINALNE WYMIARY IKON
 const combinedIconSize = screenWidth * 0.25;
 
 // --- MODAL BRUDNOPISU ---
@@ -52,18 +52,16 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
     );
 };
 
-// --- WIZUALIZACJA (FIGURY) ---
+// --- WIZUALIZACJA ---
 const MixedShape = ({ whole, num, den }: { whole: number, num: number, den: number }) => {
     if (!den || den === 0 || isNaN(den)) return null;
     const size = 90;
     const radius = 40; const center = 45;
-
     const renderCircle = (isFull: boolean) => (
         <Svg height={size} width={size} viewBox={`0 0 ${size} ${size}`}>
             {[...Array(den)].map((_, i) => {
                 const startAngle = (i * 360) / den - 90;
                 const endAngle = ((i + 1) * 360) / den - 90;
-                if (isNaN(startAngle)) return null;
                 const x1 = center + radius * Math.cos((Math.PI * startAngle) / 180);
                 const y1 = center + radius * Math.sin((Math.PI * startAngle) / 180);
                 const x2 = center + radius * Math.cos((Math.PI * endAngle) / 180);
@@ -82,7 +80,6 @@ const MixedShape = ({ whole, num, den }: { whole: number, num: number, den: numb
     );
 };
 
-// --- WIZUALIZACJA (STAKANY) ---
 const LiquidCup = ({ full, level, den }: { full: number, level: number, den: number }) => {
     if (!den || den === 0) return null;
     const renderCup = (isFull: boolean, fillLevel: number) => {
@@ -108,25 +105,23 @@ const LiquidCup = ({ full, level, den }: { full: number, level: number, den: num
     );
 };
 
-// --- GŁÓWNY KOMPONENT ---
 const MixedNumbersTrainer = () => {
-    const navigation = useNavigation(); // Hook nawigacji
+    const navigation = useNavigation();
     const [task, setTask] = useState<any>({
-        type: 'visual', q: '', h: '',
-        ans: { w: 0, n: 0, d: 1 },
-        whole: 0, num: 0, den: 1,
-        full: 0, level: 0
+        type: 'visual', q: '', h: '', ans: { w: 0, n: 0, d: 1 },
+        whole: 0, num: 0, den: 1, full: 0, level: 0
     });
 
     const [inputs, setInputs] = useState({ w: '', n: '', d: '' });
     const [correctness, setCorrectness] = useState({ w: null, n: null, d: null });
+    const [status, setStatus] = useState<'neutral' | 'correct' | 'wrong'>('neutral');
     const [ready, setReady] = useState(false);
     const [attempts, setAttempts] = useState(0);
     const [msg, setMsg] = useState('');
 
-    // Statystyki i Raport co 10
     const [stats, setStats] = useState({ correct: 0, wrong: 0, count: 0 });
     const [showMilestone, setShowMilestone] = useState(false);
+    const [isFinished, setIsFinished] = useState(false);
     const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const [showScratchpad, setShowScratchpad] = useState(false);
@@ -134,7 +129,6 @@ const MixedNumbersTrainer = () => {
     const [keyboardVisible, setKeyboardVisible] = useState(false);
 
     const bgAnim = useRef(new Animated.Value(0)).current;
-
     const wRef = useRef<TextInput>(null);
     const nRef = useRef<TextInput>(null);
     const dRef = useRef<TextInput>(null);
@@ -149,11 +143,11 @@ const MixedNumbersTrainer = () => {
     const rnd = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
     const generateProblem = () => {
-        setMsg(''); setCorrectness({ w: null, n: null, d: null });
+        setMsg(''); setCorrectness({ w: null, n: null, d: null }); setStatus('neutral');
         setReady(false); setInputs({ w: '', n: '', d: '' });
         setAttempts(0); bgAnim.setValue(0); setShowHint(false);
 
-        const type = rnd(0, 4);
+        const type = rnd(0, 3);
         let q = '', h = '', ans = { w: 0, n: 0, d: 0 }, data = {};
 
         if (type === 0) {
@@ -161,143 +155,90 @@ const MixedNumbersTrainer = () => {
             const whole = rnd(1, 3);
             const num = rnd(1, den - 1);
             q = "Zapisz liczbę mieszaną przedstawioną na rysunku:";
-            h = "Policz całe koła (duża liczba) i kawałki ostatniego koła (ułamek).";
+            h = "Policz całe figury (duża liczba) i zamalowane części ostatniej figury (ułamek).";
             ans = { w: whole, n: num, d: den };
             data = { type: 'visual', whole, num, den };
-        }
-        else if (type === 1) {
-            const subType = rnd(0, 3);
-            let u1 = '', u2 = '', r = 10;
-            if (subType === 0) { u1 = 'cm'; u2 = 'mm'; r = 10; }
-            else if (subType === 1) { u1 = 'm'; u2 = 'cm'; r = 100; }
-            else if (subType === 2) { u1 = 'kg'; u2 = 'dag'; r = 100; }
-            else { u1 = 't'; u2 = 'kg'; r = 1000; }
-            const isMixed = Math.random() > 0.5;
-            const wVal = isMixed ? rnd(1, 9) : 0;
-            const nVal = rnd(1, r - 1);
-            if (isMixed) {
-                q = `Wyraź liczbą mieszaną:\n${wVal} ${u1} ${nVal} ${u2} – ile to ${u1}?`;
-                ans = { w: wVal, n: nVal, d: r };
-            } else {
-                q = `Wyraź ułamkiem:\n${nVal} ${u2} – jaka to część ${u1}?`;
-                ans = { w: 0, n: nVal, d: r };
-            }
-            h = `Pamiętaj: 1 ${u1} = ${r} ${u2}. Mianownik to ${r}.`;
-            data = { type: 'text' };
-        }
-        else if (type === 2) {
-            const subType = rnd(0, 3);
-            if (subType === 0) {
-                const wVal = Math.random() > 0.5 ? rnd(1, 4) : 0;
-                const nVal = rnd(1, 6);
-                if (wVal > 0) q = `${wVal} tyg. i ${nVal} dni – ile to tygodni?`;
-                else q = `${nVal} dni – jaka to część tygodnia?`;
-                ans = { w: wVal, n: nVal, d: 7 };
-                h = "Tydzień ma 7 dni.";
-            } else if (subType === 1) {
-                const wVal = Math.random() > 0.5 ? rnd(1, 5) : 0;
-                const nVal = rnd(1, 59);
-                if (wVal > 0) q = `${wVal} godz. i ${nVal} min – ile to godzin?`;
-                else q = `${nVal} min – jaka to część godziny?`;
-                ans = { w: wVal, n: nVal, d: 60 };
-                h = "Godzina ma 60 minut.";
-            } else {
-                const nVal = rnd(1, 3);
-                q = `${nVal} kwadranse – jaka to część godziny? (w minutach to ${nVal*15})`;
-                ans = { w: 0, n: nVal, d: 4 };
-                h = "Jeden kwadrans to 1/4 godziny.";
-            }
-            data = { type: 'text' };
-        }
-        else if (type === 3) {
+        } else if (type === 1) {
             const den = [2, 3, 4, 5][rnd(0, 3)];
             const full = rnd(1, 2);
             const level = rnd(1, den - 1);
             q = "Ile łącznie litrów soku jest w naczyniach?";
-            h = "Dodaj do siebie pełne szklanki i ułamek z ostatniej.";
             ans = { w: full, n: level, d: den };
             data = { type: 'liquid', full, level, den };
-        }
-        else {
-            const nums = ["jedna", "dwie", "trzy", "cztery", "pięć", "sześć"];
-            const dens = ["druga", "trzecia", "czwarta", "piąta", "szósta", "siódma"];
-            const wVal = rnd(1, 6);
-            const nVal = rnd(1, 2);
-            const dIdx = rnd(0, 5);
-            const dText = dens[dIdx] + (nVal > 1 ? "e" : "a");
-            q = `Zapisz cyframi:\n${nums[wVal-1]} całe i ${nums[nVal-1]} ${dText}.`;
-            h = "Najpierw wpisz dużą cyfrę, potem ułamek.";
-            ans = { w: wVal, n: nVal, d: dIdx + 2 };
+        } else {
+            const wVal = rnd(1, 5); const nVal = rnd(1, 5); const dVal = rnd(nVal + 1, 10);
+            q = `Zapisz za pomocą cyfr: ${wVal} całe i ${nVal}/${dVal}.`;
+            ans = { w: wVal, n: nVal, d: dVal };
             data = { type: 'text' };
         }
-
         setTask({ q, h, ans, ...data });
     };
 
     const handleCheck = () => {
+        if (!inputs.n || !inputs.d) { setMsg('Uzupełnij ułamek!'); return; }
+
         const uw = inputs.w === '' ? 0 : parseInt(inputs.w);
         const un = parseInt(inputs.n);
         const ud = parseInt(inputs.d);
-
-        if (!inputs.n || !inputs.d) {
-            setMsg('Uzupełnij ułamek!'); return;
-        }
 
         const isW = uw === task.ans.w;
         const isN = un === task.ans.n;
         const isD = ud === task.ans.d;
 
-        setCorrectness({ w: isW, n: isN, d: isD });
-
         if (isW && isN && isD) {
+            setStatus('correct');
+            setCorrectness({ w: true, n: true, d: true });
             Animated.timing(bgAnim, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setStats(s => ({ ...s, correct: s.correct + 1 }));
             setSessionCorrect(prev => prev + 1);
             setMsg('Doskonale! ✅');
             setReady(true);
-            InteractionManager.runAfterInteractions(() => awardXpAndCoins(10, 2));
-            const currentUser = auth().currentUser;
-            if (currentUser) {
-                firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
-                    .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-            }
+            awardXpAndCoins(10, 2);
+            firestore().collection('users').doc(auth().currentUser?.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
         } else {
+            setStatus('wrong');
             const nextAtt = attempts + 1;
             setAttempts(nextAtt);
             if (nextAtt < 2) {
-                setMsg('Spróbuj poprawić błędy! ❌');
+                setMsg('Błąd! Spróbuj poprawić ✍️');
+                // PUNKT 1: CZYSZCZENIE TYLKO BŁĘDNYCH
                 setInputs(prev => ({
                     w: isW ? prev.w : '',
                     n: isN ? prev.n : '',
                     d: isD ? prev.d : ''
                 }));
+                setCorrectness({ w: isW, n: isN, d: isD });
                 Animated.sequence([
-                    Animated.timing(bgAnim, { toValue: -1, duration: 400, useNativeDriver: false }),
-                    Animated.timing(bgAnim, { toValue: 0, duration: 400, useNativeDriver: false })
+                    Animated.timing(bgAnim, { toValue: -1, duration: 200, useNativeDriver: false }),
+                    Animated.timing(bgAnim, { toValue: 0, duration: 200, useNativeDriver: false })
                 ]).start();
+                // PUNKT 5: Reset statusu po chwili
+                setTimeout(() => setStatus('neutral'), 1500);
             } else {
-                const wText = task.ans.w > 0 ? `${task.ans.w}` : '';
-                setMsg(`Poprawnie: ${wText} ${task.ans.n}/${task.ans.d}`);
+                const wText = task.ans.w > 0 ? `${task.ans.w} ` : '';
+                setMsg(`Wynik: ${wText}${task.ans.n}/${task.ans.d}`);
                 setStats(s => ({ ...s, wrong: s.wrong + 1 }));
                 setReady(true);
                 Animated.timing(bgAnim, { toValue: -1, duration: 500, useNativeDriver: false }).start();
-                const currentUser = auth().currentUser;
-                if (currentUser) {
-                    firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
-                        .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-                }
+                firestore().collection('users').doc(auth().currentUser?.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                    .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
             }
         }
     };
 
     const nextTask = () => {
+        if (stats.count >= TASKS_LIMIT) { setIsFinished(true); return; }
         if (stats.count > 0 && stats.count % 10 === 0 && !showMilestone) {
-            setShowMilestone(true);
-            return;
+            setShowMilestone(true); return;
         }
-        if (stats.count >= TASKS_LIMIT) { setMsg('Koniec treningu! 🏆'); return; }
         setStats(s => ({ ...s, count: s.count + 1 }));
         generateProblem();
+    };
+
+    const handleRestart = () => {
+        setIsFinished(false); setStats({ correct: 0, wrong: 0, count: 1 });
+        setSessionCorrect(0); generateProblem();
     };
 
     return (
@@ -315,26 +256,31 @@ const MixedNumbersTrainer = () => {
                         </View>
                     )}
 
-                    {/* MODAL MILESTONE */}
                     <Modal visible={showMilestone} transparent={true} animationType="slide">
                         <View style={styles.modalOverlay}>
                             <View style={styles.milestoneCard}>
                                 <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
-                                <View style={styles.statsRowMilestone}>
-                                    <Text style={styles.statsTextMilestone}>Poprawne: {sessionCorrect} / 10</Text>
-                                    <Text style={[styles.statsTextMilestone, { color: '#28a745', marginTop: 5 }]}>Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%</Text>
-                                </View>
-                                <Text style={styles.suggestionTextMilestone}>{sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}</Text>
+                                <View style={styles.statsRowMilestone}><Text style={styles.statsTextMilestone}>Poprawne: {sessionCorrect} / 10</Text></View>
+                                <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745', width: '80%' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    <Modal visible={isFinished} transparent={true} animationType="fade">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Gratulacje! 🏆</Text>
+                                <View style={styles.statsRowMilestone}><Text style={styles.statsTextMilestone}>Wynik: {stats.correct} / {TASKS_LIMIT}</Text></View>
                                 <View style={styles.milestoneButtons}>
-                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
-                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Inny temat</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={handleRestart}><Text style={styles.mButtonText}>Od nowa</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#dc3545' }]} onPress={() => navigation.goBack()}><Text style={styles.mButtonText}>Wyjdź</Text></TouchableOpacity>
                                 </View>
                             </View>
                         </View>
                     </Modal>
 
                     {showHint && !keyboardVisible && (
-                        <View style={styles.hintBox}><Text style={styles.hintTitle}>Wskazówka:</Text><Text style={styles.hintText}>{task.h}</Text></View>
+                        <View style={styles.hintBox}><Text style={styles.hintTitle}>Podpowiedź:</Text><Text style={styles.hintText}>{task.h}</Text></View>
                     )}
 
                     <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={task.q} />
@@ -343,7 +289,6 @@ const MixedNumbersTrainer = () => {
                         <View style={styles.card}>
                             <View style={styles.overlayBackground} />
                             <Text style={styles.headerTitle}>Liczby mieszane</Text>
-
                             <View style={styles.questionBox}>
                                 {task.type === 'visual' && <MixedShape whole={task.whole} num={task.num} den={task.den} />}
                                 {task.type === 'liquid' && <LiquidCup full={task.full} level={task.level} den={task.den} />}
@@ -354,29 +299,35 @@ const MixedNumbersTrainer = () => {
                                 <TextInput
                                     ref={wRef}
                                     style={[styles.wholeInput, correctness.w === false && styles.inputError, correctness.w === true && styles.inputCorrect]}
-                                    keyboardType="numeric" placeholder="?" value={inputs.w} onChangeText={(v) => setInputs({ ...inputs, w: v })} returnKeyType="next" onSubmitEditing={() => nRef.current?.focus()} blurOnSubmit={false} editable={!ready}
+                                    keyboardType="numeric" placeholder="?" value={inputs.w}
+                                    onChangeText={(v) => { setInputs({ ...inputs, w: v }); setStatus('neutral'); }}
+                                    returnKeyType="next" onSubmitEditing={() => nRef.current?.focus()} blurOnSubmit={false} editable={!ready}
                                 />
                                 <View style={styles.fractionGroup}>
                                     <TextInput
                                         ref={nRef}
                                         style={[styles.smallInput, correctness.n === false && styles.inputError, correctness.n === true && styles.inputCorrect]}
-                                        keyboardType="numeric" placeholder="?" value={inputs.n} onChangeText={(v) => setInputs({ ...inputs, n: v })} returnKeyType="next" onSubmitEditing={() => dRef.current?.focus()} blurOnSubmit={false} editable={!ready}
+                                        keyboardType="numeric" placeholder="?" value={inputs.n}
+                                        onChangeText={(v) => { setInputs({ ...inputs, n: v }); setStatus('neutral'); if(v.length >= 1) dRef.current?.focus(); }}
+                                        returnKeyType="next" onSubmitEditing={() => dRef.current?.focus()} blurOnSubmit={false} editable={!ready}
                                     />
                                     <View style={styles.line} />
                                     <TextInput
                                         ref={dRef}
                                         style={[styles.smallInput, correctness.d === false && styles.inputError, correctness.d === true && styles.inputCorrect]}
-                                        keyboardType="numeric" placeholder="?" value={inputs.d} onChangeText={(v) => setInputs({ ...inputs, d: v })} returnKeyType="done" onSubmitEditing={Keyboard.dismiss} editable={!ready}
+                                        keyboardType="numeric" placeholder="?" value={inputs.d}
+                                        onChangeText={(v) => { setInputs({ ...inputs, d: v }); setStatus('neutral'); }}
+                                        returnKeyType="done" editable={!ready}
                                     />
                                 </View>
                             </View>
 
-                            <TouchableOpacity style={styles.mainBtn} onPress={ready ? nextTask : handleCheck}>
+                            <TouchableOpacity style={[styles.mainBtn, {backgroundColor: ready ? '#28a745' : '#007AFF'}]} onPress={ready ? nextTask : handleCheck}>
                                 <Text style={styles.btnText}>{ready ? 'Następne' : 'Sprawdź'}</Text>
                             </TouchableOpacity>
                             <Text style={styles.taskCounter}>Zadanie {stats.count}/{TASKS_LIMIT}</Text>
-                            <View style={{height: 30, marginTop: 15, justifyContent: 'center'}}>
-                                {msg ? <Text style={[styles.msg, msg.includes('Doskonale') ? styles.correctText : styles.errorText]}>{msg}</Text> : null}
+                            <View style={styles.msgContainer}>
+                                {msg ? <Text style={[styles.msg, status === 'correct' ? styles.correctText : styles.errorText]}>{msg}</Text> : null}
                             </View>
                         </View>
                     </ScrollView>
@@ -397,54 +348,52 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     keyboardContainer: { flex: 1, justifyContent: 'center' },
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 20 },
-    topButtons: { position: 'absolute', top: 15, right: 20, flexDirection: 'row', zIndex: 10 },
+    topButtons: { position: 'absolute', top: 0, right: 20, flexDirection: 'row', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
-    iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
-    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255,255,255,0.8)', textShadowRadius: 3 },
-    hintBox: { position: 'absolute', top: 100, right: 20, padding: 15, backgroundColor: '#fff', borderRadius: 15, width: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
+    iconTop: { width: 70, height: 70, resizeMode: 'contain' },
+    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2 },
+    hintBox: { position: 'absolute', top: 110, right: 20, padding: 15, backgroundColor: '#fff', borderRadius: 15, width: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
     hintTitle: { fontWeight: 'bold', color: '#007AFF', marginBottom: 5 },
     hintText: { fontSize: 14, color: '#333' },
-    card: { width: '92%', maxWidth: 400, borderRadius: 25, padding: 25, alignItems: 'center', alignSelf: 'center', elevation: 4, shadowColor: "#000", shadowOpacity: 0.1, shadowRadius: 10 },
+    card: { width: '92%', maxWidth: 450, borderRadius: 25, padding: 25, alignItems: 'center', alignSelf: 'center', elevation: 4 },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.94)', borderRadius: 25 },
-    headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#333', marginBottom: 15 },
-    questionBox: { width: '100%', backgroundColor: '#f0f8ff', padding: 20, borderRadius: 15, marginBottom: 20, alignItems: 'center' },
-    questionText: { fontSize: 19, color: '#2c3e50', textAlign: 'center', fontWeight: '500', lineHeight: 28 },
+    headerTitle: { fontSize: 20, fontWeight: '800', color: '#007AFF', marginBottom: 15, textTransform: 'uppercase' },
+    questionBox: { width: '100%', backgroundColor: '#f0f8ff', padding: 15, borderRadius: 15, marginBottom: 15, alignItems: 'center' },
+    questionText: { fontSize: 18, color: '#2c3e50', textAlign: 'center', fontWeight: '500', lineHeight: 26 },
     answerSection: { flexDirection: 'row', alignItems: 'center', marginVertical: 10 },
-    wholeInput: { width: 70, height: 80, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, fontSize: 32, textAlign: 'center', marginRight: 15, backgroundColor: '#fff', color: '#007AFF', fontWeight: 'bold' },
+    wholeInput: { width: 70, height: 80, borderWidth: 2, borderColor: '#ccc', borderRadius: 12, fontSize: 32, textAlign: 'center', marginRight: 15, backgroundColor: '#fff', color: '#007AFF', fontWeight: 'bold' },
     fractionGroup: { alignItems: 'center' },
-    smallInput: { width: 70, height: 55, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, fontSize: 26, textAlign: 'center', backgroundColor: '#fff', color: '#007AFF', fontWeight: 'bold' },
+    smallInput: { width: 70, height: 50, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, fontSize: 24, textAlign: 'center', backgroundColor: '#fff', color: '#007AFF', fontWeight: 'bold' },
     line: { width: 85, height: 3, backgroundColor: '#333', marginVertical: 6 },
-    inputCorrect: { borderColor: '#28a745', backgroundColor: '#e8f5e9', color: '#28a745' },
-    inputError: { borderColor: '#dc3545', backgroundColor: '#fbe9eb', color: '#dc3545' },
+    inputCorrect: { borderColor: '#28a745', backgroundColor: '#e8f5e9' },
+    inputError: { borderColor: '#dc3545', backgroundColor: '#fbe9eb' },
     mainBtn: { marginTop: 20, backgroundColor: '#007AFF', paddingHorizontal: 40, paddingVertical: 14, borderRadius: 15 },
     btnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-    taskCounter: { marginTop: 15, color: '#555', fontSize: 13, fontWeight: '400', textAlign: 'center' },
-    msg: { marginTop: 15, fontSize: 18, fontWeight: '700', textAlign: 'center' },
+    taskCounter: { marginTop: 15, color: '#555', fontSize: 13, textAlign: 'center' },
+    msgContainer: { height: 40, marginTop: 10, justifyContent: 'center' },
+    msg: { fontSize: 16, fontWeight: '700', textAlign: 'center' },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
-    iconsBottom: { position: 'absolute', bottom: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
+    iconsBottom: { position: 'absolute', bottom: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     owl: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    score: { fontSize: 20, fontWeight: '500', color: '#333', marginHorizontal: 8 },
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' },
-    drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
-    drawingHeader: { height: 55, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, backgroundColor: '#f0f0f0' },
-    drawingTitle: { fontSize: 18, fontWeight: 'bold' },
-    headerButton: { padding: 10 },
-    headerButtonText: { fontSize: 16, color: '#007AFF', fontWeight: '600' },
-    problemPreviewContainer: { backgroundColor: '#f9f9f9', padding: 12, alignItems: 'center' },
-    problemPreviewLabel: { fontSize: 13, color: '#666' },
-    problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', textAlign: 'center' },
-    canvas: { flex: 1, backgroundColor: '#ffffff' },
-
-    // MILESTONE STYLES
-    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    score: { fontSize: 22, fontWeight: 'bold', color: '#333' },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center' },
     milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
-    statsRowMilestone: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
-    statsTextMilestone: { fontSize: 18, color: '#333', fontWeight: 'bold' },
-    suggestionTextMilestone: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    statsRowMilestone: { marginVertical: 15, alignItems: 'center' },
+    statsTextMilestone: { fontSize: 18, fontWeight: 'bold' },
     milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
-    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
+    mButton: { paddingVertical: 12, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+    drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
+    drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, backgroundColor: '#f0f0f0' },
+    drawingTitle: { fontSize: 18, fontWeight: 'bold' },
+    problemPreviewContainer: { backgroundColor: '#f9f9f9', padding: 10, alignItems: 'center' },
+    problemPreviewLabel: { fontSize: 12, color: '#777' },
+    problemPreviewTextSmall: { fontSize: 16, fontWeight: '600' },
+    canvas: { flex: 1, backgroundColor: '#ffffff' },
+    headerButton: { padding: 10 },
+    headerButtonText: { fontSize: 16, color: '#007AFF', fontWeight: '600' }
 });
 
 export default MixedNumbersTrainer;

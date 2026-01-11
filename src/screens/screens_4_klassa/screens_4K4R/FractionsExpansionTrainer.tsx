@@ -5,7 +5,7 @@ import {
     Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native'; // DODANE
+import { useNavigation } from '@react-navigation/native';
 import { awardXpAndCoins } from '../../../services/xpService';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -53,7 +53,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 
 // --- GŁÓWNY KOMPONENT ---
 const FractionsExpansionTrainer = () => {
-    const navigation = useNavigation(); // Hook nawigacji
+    const navigation = useNavigation();
     const [task, setTask] = useState({
         type: 0, q: '', h: '', leftNum: 1, leftDen: 1,
         rightNumTarget: 0, rightDenTarget: 0,
@@ -68,9 +68,9 @@ const FractionsExpansionTrainer = () => {
     const [attempts, setAttempts] = useState(0);
     const [ready, setReady] = useState(false);
 
-    // Statystyki i Raport co 10
     const [stats, setStats] = useState({ correct: 0, wrong: 0, count: 0 });
     const [showMilestone, setShowMilestone] = useState(false);
+    const [isFinished, setIsFinished] = useState(false); // PUNKT 3
     const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const [showScratchpad, setShowScratchpad] = useState(false);
@@ -109,8 +109,8 @@ const FractionsExpansionTrainer = () => {
             if (type === 0) { // SKRACANIE
                 const multiplier = rnd(2, 5);
                 newTask = {
-                    type: 0, q: `Skróć ułamek do postaci nieskracalnej.`,
-                    h: `Podziel licznik i mianownik przez wspólny dzielnik (np. ${multiplier}).`,
+                    type: 0, q: `Skróć ułamek.`,
+                    h: `Podziel licznik i mianownik przez wspólny dzielnik (np. przez ${multiplier}).`,
                     leftNum: bn * multiplier, leftDen: bd * multiplier,
                     rightNumTarget: bn, rightDenTarget: bd,
                     isRightNumInput: true, isRightDenInput: true
@@ -131,7 +131,7 @@ const FractionsExpansionTrainer = () => {
                 const missingTop = Math.random() > 0.5;
                 newTask = {
                     type: 2, q: 'Wpisz brakującą liczbę.',
-                    h: missingTop ? `Mianownik wzrósł ${multiplier} razy, więc licznik też pomnóż przez ${multiplier}.` : `Licznik wzrósł ${multiplier} razy, więc mianownik też pomnóż przez ${multiplier}.`,
+                    h: missingTop ? `Pomnóż licznik przez ${multiplier}.` : `Pomnóż mianownik przez ${multiplier}.`,
                     leftNum: bn, leftDen: bd,
                     rightNumTarget: bn * multiplier, rightDenTarget: bd * multiplier,
                     isRightNumInput: missingTop, isRightDenInput: !missingTop
@@ -150,15 +150,14 @@ const FractionsExpansionTrainer = () => {
     };
 
     const handleCheck = () => {
-        let isNCorrect = true; let isDCorrect = true;
-        if (task.isRightNumInput) {
-            if (!userNum) { setMsg('Wpisz licznik!'); return; }
-            if (parseInt(userNum) !== task.rightNumTarget) isNCorrect = false;
+        // PUNKT 2: Blokada pustych pól
+        if ((task.isRightNumInput && !userNum) || (task.isRightDenInput && !userDen)) {
+            setMsg('Wypełnij puste pola!');
+            return;
         }
-        if (task.isRightDenInput) {
-            if (!userDen) { setMsg('Wpisz mianownik!'); return; }
-            if (parseInt(userDen) !== task.rightDenTarget) isDCorrect = false;
-        }
+
+        const isNCorrect = !task.isRightNumInput || parseInt(userNum) === task.rightNumTarget;
+        const isDCorrect = !task.isRightDenInput || parseInt(userDen) === task.rightDenTarget;
 
         if (isNCorrect && isDCorrect) {
             setStatus('correct'); setMsg('Doskonale! ✅');
@@ -175,17 +174,22 @@ const FractionsExpansionTrainer = () => {
         } else {
             setStatus('wrong');
             if (attempts === 0) {
-                setMsg('Źle... Spróbuj jeszcze raz! ❌');
+                // PUNKT 1: Pierwsza pomyłka
+                setMsg('Błąd! Spróbuj poprawić ✍️');
                 setAttempts(1);
                 if (task.isRightNumInput && !isNCorrect) setUserNum('');
                 if (task.isRightDenInput && !isDCorrect) setUserDen('');
+
                 Animated.sequence([
                     Animated.timing(bgAnim, { toValue: -1, duration: 200, useNativeDriver: false }),
                     Animated.timing(bgAnim, { toValue: 0, duration: 200, useNativeDriver: false })
                 ]).start();
-                setTimeout(() => setStatus('neutral'), 1000);
+
+                // PUNKT 5: Automatyczne czyszczenie statusu po chwili
+                setTimeout(() => setStatus('neutral'), 1500);
             } else {
-                setMsg(`Wynik: ${task.rightNumTarget}/${task.rightDenTarget}`);
+                // PUNKT 1: Druga pomyłka
+                setMsg(`Niestety źle. Wynik: ${task.rightNumTarget}/${task.rightDenTarget}`);
                 setReady(true);
                 setStats(s => ({ ...s, wrong: s.wrong + 1 }));
                 Animated.timing(bgAnim, { toValue: -1, duration: 500, useNativeDriver: false }).start();
@@ -199,12 +203,24 @@ const FractionsExpansionTrainer = () => {
     };
 
     const nextTask = () => {
+        // PUNKT 3 i 4: Inteligentny ekran końcowy i raport
+        if (stats.count >= TASKS_LIMIT) {
+            setIsFinished(true);
+            return;
+        }
         if (stats.count > 0 && stats.count % 10 === 0 && !showMilestone) {
             setShowMilestone(true);
             return;
         }
-        if (stats.count >= TASKS_LIMIT) { setMsg('Koniec treningu! 🏆'); return; }
         setStats(s => ({ ...s, count: s.count + 1 }));
+        generateProblem();
+    };
+
+    const handleRestart = () => {
+        setIsFinished(false);
+        setStats({ correct: 0, wrong: 0, count: 1 });
+        setSessionCorrect(0);
+        historyRef.current.clear();
         generateProblem();
     };
 
@@ -223,19 +239,33 @@ const FractionsExpansionTrainer = () => {
                         </View>
                     )}
 
-                    {/* MODAL MILESTONE */}
+                    {/* MODAL MILESTONE (CO 10 ZADAŃ) */}
                     <Modal visible={showMilestone} transparent={true} animationType="slide">
                         <View style={styles.modalOverlay}>
                             <View style={styles.milestoneCard}>
                                 <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
                                 <View style={styles.statsRowMilestone}>
                                     <Text style={styles.statsTextMilestone}>Poprawne: {sessionCorrect} / 10</Text>
-                                    <Text style={[styles.statsTextMilestone, { color: '#28a745', marginTop: 5 }]}>Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%</Text>
                                 </View>
-                                <Text style={styles.suggestionTextMilestone}>{sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}</Text>
                                 <View style={styles.milestoneButtons}>
-                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); setStats(s => ({ ...s, count: s.count + 1 })); generateProblem(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
                                     <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Inny temat</Text></TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    {/* MODAL FINALNY (PUNKT 3) */}
+                    <Modal visible={isFinished} transparent={true} animationType="fade">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Gratulacje! 🏆</Text>
+                                <View style={styles.statsRowMilestone}>
+                                    <Text style={styles.statsTextMilestone}>Wynik końcowy: {stats.correct} / {TASKS_LIMIT}</Text>
+                                </View>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={handleRestart}><Text style={styles.mButtonText}>Od nowa</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#dc3545' }]} onPress={() => { setIsFinished(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Wyjdź</Text></TouchableOpacity>
                                 </View>
                             </View>
                         </View>
@@ -250,7 +280,7 @@ const FractionsExpansionTrainer = () => {
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
                             <View style={styles.overlayBackground} />
-                            <Text style={styles.headerTitle}>Rozszerzanie i skracanie</Text>
+                            <Text style={styles.headerTitle}>Ułamki</Text>
                             <Text style={styles.questionText}>{task.q}</Text>
 
                             <View style={styles.taskContent}>
@@ -263,23 +293,41 @@ const FractionsExpansionTrainer = () => {
                                     <Text style={styles.equalSign}>=</Text>
                                     <View style={styles.fractionInputContainer}>
                                         {task.isRightNumInput ? (
-                                            <TextInput ref={numInputRef} style={[styles.fractionInput, status === 'correct' ? styles.inputCorrect : status === 'wrong' ? styles.inputError : {}]} keyboardType="numeric" placeholder="?" value={userNum} onChangeText={(v) => { setUserNum(v); if(v.length >= 1 && task.isRightDenInput) denInputRef.current?.focus(); }} editable={!ready} />
+                                            <TextInput
+                                                ref={numInputRef}
+                                                style={[styles.fractionInput, status === 'correct' ? styles.inputCorrect : status === 'wrong' ? styles.inputError : {}]}
+                                                keyboardType="numeric"
+                                                placeholder="?"
+                                                value={userNum}
+                                                // PUNKT 5: setStatus('neutral')
+                                                onChangeText={(v) => { setUserNum(v); setStatus('neutral'); if(v.length >= 1 && task.isRightDenInput) denInputRef.current?.focus(); }}
+                                                editable={!ready}
+                                            />
                                         ) : <Text style={styles.staticNum}>{task.rightNumTarget}</Text>}
                                         <View style={styles.fractionLineLarge} />
                                         {task.isRightDenInput ? (
-                                            <TextInput ref={denInputRef} style={[styles.fractionInput, status === 'correct' ? styles.inputCorrect : status === 'wrong' ? styles.inputError : {}]} keyboardType="numeric" placeholder="?" value={userDen} onChangeText={setUserDen} editable={!ready} />
+                                            <TextInput
+                                                ref={denInputRef}
+                                                style={[styles.fractionInput, status === 'correct' ? styles.inputCorrect : status === 'wrong' ? styles.inputError : {}]}
+                                                keyboardType="numeric"
+                                                placeholder="?"
+                                                value={userDen}
+                                                // PUNKT 5: setStatus('neutral')
+                                                onChangeText={(v) => { setUserDen(v); setStatus('neutral'); }}
+                                                editable={!ready}
+                                            />
                                         ) : <Text style={styles.staticDen}>{task.rightDenTarget}</Text>}
                                     </View>
                                 </View>
                             </View>
 
-                            <TouchableOpacity style={styles.mainBtn} onPress={ready ? nextTask : handleCheck}>
+                            <TouchableOpacity style={[styles.mainBtn, {backgroundColor: ready ? '#28a745' : '#007AFF'}]} onPress={ready ? nextTask : handleCheck}>
                                 <Text style={styles.mainBtnText}>{ready ? 'Następne' : 'Sprawdź'}</Text>
                             </TouchableOpacity>
 
                             <Text style={styles.counterTextSmall}>Zadanie: {stats.count}/{TASKS_LIMIT}</Text>
                             <View style={{height: 30, marginTop: 15, justifyContent: 'center'}}>
-                                {msg ? <Text style={[styles.msg, msg.includes('Doskonale') ? styles.correctText : styles.errorText]}>{msg}</Text> : null}
+                                {msg ? <Text style={[styles.msg, status === 'correct' ? styles.correctText : styles.errorText]}>{msg}</Text> : null}
                             </View>
                         </View>
                     </ScrollView>
@@ -300,14 +348,14 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     keyboardContainer: { flex: 1, justifyContent: 'center' },
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 20 },
-    topButtons: { position: 'absolute', top: 25, right: 20, flexDirection: 'row', zIndex: 10 },
+    topButtons: { position: 'absolute', top: 20, right: 20, flexDirection: 'row', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
-    iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
-    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255,255,255,0.8)', textShadowRadius: 3 },
+    iconTop: { width: 70, height: 70, resizeMode: 'contain' },
+    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2 },
     hintBox: { position: 'absolute', top: 100, right: 20, padding: 15, backgroundColor: '#fff', borderRadius: 15, width: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
     hintTitle: { fontWeight: 'bold', color: '#007AFF', marginBottom: 5 },
     hintText: { fontSize: 14, color: '#333' },
-    card: { width: '92%', maxWidth: 450, borderRadius: 25, padding: 25, alignItems: 'center', alignSelf: 'center', elevation: 4, shadowColor: "#000", shadowOpacity: 0.1, shadowRadius: 10 },
+    card: { width: '92%', maxWidth: 450, borderRadius: 25, padding: 25, alignItems: 'center', alignSelf: 'center', elevation: 4 },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.94)', borderRadius: 25 },
     headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#333', marginBottom: 15 },
     questionText: { fontSize: 19, color: '#2c3e50', textAlign: 'center', fontWeight: '500', lineHeight: 28, marginBottom: 20 },
@@ -321,15 +369,15 @@ const styles = StyleSheet.create({
     fractionInputContainer: { alignItems: 'center' },
     fractionInput: { width: 75, height: 60, borderWidth: 2, borderColor: '#ccc', borderRadius: 12, backgroundColor: '#fff', fontSize: 28, fontWeight: 'bold', textAlign: 'center', color: '#007AFF' },
     fractionLineLarge: { width: 90, height: 4, backgroundColor: '#333', marginVertical: 8, borderRadius: 2 },
-    inputCorrect: { borderColor: '#28a745', backgroundColor: '#e8f5e9', color: '#28a745' },
-    inputError: { borderColor: '#dc3545', backgroundColor: '#fbe9eb', color: '#dc3545' },
-    mainBtn: { marginTop: 25, backgroundColor: '#007AFF', paddingHorizontal: 40, paddingVertical: 14, borderRadius: 15 },
+    inputCorrect: { borderColor: '#28a745', backgroundColor: '#e8f5e9' },
+    inputError: { borderColor: '#dc3545', backgroundColor: '#fbe9eb' },
+    mainBtn: { marginTop: 25, paddingHorizontal: 40, paddingVertical: 14, borderRadius: 15 },
     mainBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
     counterTextSmall: { fontSize: 13, color: '#555', textAlign: 'center', marginTop: 15 },
     msg: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
-    iconsBottom: { position: 'absolute', bottom: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
+    iconsBottom: { position: 'absolute', bottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
     counterTextIcons: { fontSize: 20, marginHorizontal: 8, color: '#333' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
@@ -342,16 +390,12 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 13, color: '#666' },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
-
-    // MILESTONE STYLES
-    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
-    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
-    statsRowMilestone: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
-    statsTextMilestone: { fontSize: 18, color: '#333', fontWeight: 'bold' },
-    suggestionTextMilestone: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
-    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
-    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center' },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333' },
+    statsRowMilestone: { marginVertical: 15, alignItems: 'center' },
+    statsTextMilestone: { fontSize: 18, fontWeight: 'bold' },
+    mButton: { paddingVertical: 12, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold' }
 });
 
 export default FractionsExpansionTrainer;

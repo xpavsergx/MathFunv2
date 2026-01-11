@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     View, Text, StyleSheet, ImageBackground,
     Animated, StatusBar, Image, Dimensions, TouchableOpacity, Modal,
-    ScrollView, InteractionManager, Platform
+    ScrollView, InteractionManager, Platform, Keyboard
 } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native'; // DODANE
+import { useNavigation } from '@react-navigation/native';
 import { awardXpAndCoins } from '../../../services/xpService';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -14,6 +14,7 @@ const EXERCISE_ID = "fractionComparisonTrainer_cl4";
 
 const { width: screenWidth } = Dimensions.get('window');
 const TASKS_LIMIT = 35;
+// TWOJE ORYGINALNE WYMIARY IKON
 const combinedIconSize = screenWidth * 0.25;
 
 // --- MODAL BRUDNOPISU ---
@@ -52,7 +53,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
     );
 };
 
-// --- ВИЗУАЛИЗАЦИЯ ---
+// --- WIZUALIZACJA ---
 const FractionPie = ({ whole, num, den, color = "#4A90E2" }: { whole: number, num: number, den: number, color?: string }) => {
     const size = 60;
     const radius = 28; const center = 30;
@@ -84,9 +85,9 @@ const FractionPie = ({ whole, num, den, color = "#4A90E2" }: { whole: number, nu
     );
 };
 
-// --- ГЛАВНЫЙ КОМПОНЕНТ ---
+// --- GŁÓWNY KOMPONENT ---
 const FractionComparisonTrainer = () => {
-    const navigation = useNavigation(); // Hook nawigacji
+    const navigation = useNavigation();
     const [task, setTask] = useState({
         type: 'text', q: 'Porównaj ułamki', h: '',
         left: { w: 0, n: 0, d: 1 },
@@ -103,9 +104,9 @@ const FractionComparisonTrainer = () => {
     const [boxStatus, setBoxStatus] = useState<'neutral' | 'correct' | 'wrong'>('neutral');
     const [ready, setReady] = useState(false);
 
-    // Statystyki i Raport co 10
     const [stats, setStats] = useState({ correct: 0, wrong: 0, count: 0 });
     const [showMilestone, setShowMilestone] = useState(false);
+    const [isFinished, setIsFinished] = useState(false);
     const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const historyRef = useRef<Set<string>>(new Set());
@@ -144,13 +145,13 @@ const FractionComparisonTrainer = () => {
                 while (d1 === d2) d2 = rnd(n + 1, 20);
                 left = { w: 0, n: n, d: d1 };
                 right = { w: 0, n: n, d: d2 };
-                h = "Liczniki są takie same.\nWIĘKSZY jest ten ułamek, który ma MNIEJSZY mianownik.";
+                h = "WIĘKSZY jest ten ułamek, który ma MNIEJSZY mianownik.";
             } else if (randType < 0.85) {
                 if (Math.random() > 0.5) {
                     const d = rnd(3, 9);
                     left = { w: 0, n: rnd(1, d-1), d: d };
                     right = { w: 0, n: rnd(d+1, d+4), d: d };
-                    h = "Jeden ułamek jest mniejszy od 1, a drugi większy.";
+                    h = "Ułamek właściwy jest mniejszy od niewłaściwego.";
                 } else {
                     left = { w: 0, n: rnd(1, 8), d: rnd(2, 9) };
                     right = { w: 1, n: 0, d: 1 };
@@ -172,7 +173,7 @@ const FractionComparisonTrainer = () => {
                     while(n2 === left.n) n2 = rnd(1, d-1);
                     right = { w: 0, n: n2, d: d };
                     q = "Gdzie zamalowano więcej?";
-                    h = "Spójrz na rysunki.";
+                    h = "Spójrz na rysunki pomocnicze.";
                 }
             }
             uniqueKey = `${left.w}-${left.n}-${left.d}|${right.w}-${right.n}-${right.d}`;
@@ -220,14 +221,16 @@ const FractionComparisonTrainer = () => {
         } else {
             setBoxStatus('wrong');
             if (attempts === 0) {
-                setMsg('Źle... Spróbuj poprawić! ❌');
+                setMsg('Błąd! Spróbuj jeszcze raz ✍️');
                 setAttempts(1);
+                setCurrentSign('?');
                 Animated.sequence([
                     Animated.timing(bgAnim, { toValue: -1, duration: 200, useNativeDriver: false }),
                     Animated.timing(bgAnim, { toValue: 0, duration: 200, useNativeDriver: false })
                 ]).start();
             } else {
-                setMsg(`Niestety źle. Prawidłowy znak to: ${task.correctSign}`);
+                setMsg(`Niestety błąd. Poprawny znak to: ${task.correctSign}`);
+                setCurrentSign(task.correctSign);
                 setReady(true);
                 setStats(s => ({ ...s, wrong: s.wrong + 1 }));
                 Animated.timing(bgAnim, { toValue: -1, duration: 500, useNativeDriver: false }).start();
@@ -241,12 +244,23 @@ const FractionComparisonTrainer = () => {
     };
 
     const nextTask = () => {
+        if (stats.count >= TASKS_LIMIT) {
+            setIsFinished(true);
+            return;
+        }
         if (stats.count > 0 && stats.count % 10 === 0 && !showMilestone) {
             setShowMilestone(true);
             return;
         }
-        if (stats.count >= TASKS_LIMIT) { setMsg('Koniec treningu! 🏆'); return; }
         setStats(s => ({ ...s, count: s.count + 1 }));
+        generateProblem();
+    };
+
+    const handleRestart = () => {
+        setIsFinished(false);
+        setStats({ correct: 0, wrong: 0, count: 1 });
+        setSessionCorrect(0);
+        historyRef.current.clear();
         generateProblem();
     };
 
@@ -290,20 +304,40 @@ const FractionComparisonTrainer = () => {
                         <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
                         <View style={styles.statsRowMilestone}>
                             <Text style={styles.statsTextMilestone}>Poprawne: {sessionCorrect} / 10</Text>
-                            <Text style={[styles.statsTextMilestone, { color: '#28a745', marginTop: 5 }]}>Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%</Text>
                         </View>
-                        <Text style={styles.suggestionTextMilestone}>{sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}</Text>
                         <View style={styles.milestoneButtons}>
-                            <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
-                            <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Inny temat</Text></TouchableOpacity>
+                            <TouchableOpacity style={styles.mButton} onPress={() => { setShowMilestone(false); setSessionCorrect(0); setStats(s => ({ ...s, count: s.count + 1 })); generateProblem(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
                         </View>
                     </View>
                 </View>
             </Modal>
 
+            {/* MODAL FINALNY */}
+            <Modal visible={isFinished} transparent={true} animationType="fade">
+                <View style={styles.modalOverlay}>
+                    <View style={styles.milestoneCard}>
+                        <Text style={styles.milestoneTitle}>Gratulacje! 🏆</Text>
+                        <View style={styles.statsRowMilestone}>
+                            <Text style={styles.statsTextMilestone}>Wynik: {stats.correct} / {TASKS_LIMIT}</Text>
+                        </View>
+                        <View style={styles.milestoneButtons}>
+                            <TouchableOpacity style={styles.mButton} onPress={handleRestart}><Text style={styles.mButtonText}>Od nowa</Text></TouchableOpacity>
+                            <TouchableOpacity style={[styles.mButton, { backgroundColor: '#dc3545' }]} onPress={() => { setIsFinished(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Wyjdź</Text></TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {showHint && (
+                <View style={styles.hintBox}>
+                    <Text style={styles.hintTitle}>Podpowiedź:</Text>
+                    <Text style={styles.hintText}>{task.h}</Text>
+                </View>
+            )}
+
             <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={task.q} />
 
-            <ScrollView contentContainerStyle={styles.centerContent}>
+            <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                 <View style={styles.card}>
                     <View style={styles.overlayBackground} />
                     <Text style={styles.headerTitle}>Porównywanie ułamków</Text>
@@ -331,13 +365,13 @@ const FractionComparisonTrainer = () => {
                         <TouchableOpacity style={[styles.answerBtn, currentSign === '>' && styles.answerBtnSelected]} onPress={() => handleSelectSign('>')}><Text style={styles.answerBtnText}>&gt;</Text></TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity style={styles.mainBtn} onPress={ready ? nextTask : handleCheck}>
+                    <TouchableOpacity style={[styles.mainBtn, {backgroundColor: ready ? '#28a745' : '#007AFF'}]} onPress={ready ? nextTask : handleCheck}>
                         <Text style={styles.mainBtnText}>{ready ? 'Następne' : 'Sprawdź'}</Text>
                     </TouchableOpacity>
 
                     <Text style={styles.counterTextSmall}>Zadanie: {stats.count}/{TASKS_LIMIT}</Text>
                     <View style={{height: 30, marginTop: 15, justifyContent: 'center'}}>
-                        {msg ? <Text style={[styles.msg, msg.includes('Doskonale') ? styles.correctText : styles.errorText]}>{msg}</Text> : null}
+                        {msg ? <Text style={[styles.msg, boxStatus === 'correct' ? styles.correctText : styles.errorText]}>{msg}</Text> : null}
                     </View>
                 </View>
             </ScrollView>
@@ -355,66 +389,63 @@ const FractionComparisonTrainer = () => {
 const styles = StyleSheet.create({
     container: { flex: 1 },
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 20 },
-    topButtons: { position: 'absolute', top: 25, right: 20, flexDirection: 'row', zIndex: 10 },
+    topButtons: { position: 'absolute', top: 17, right: 20, flexDirection: 'row', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
-    iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
-    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255,255,255,0.8)', textShadowRadius: 3 },
-    hintBox: { position: 'absolute', top: 100, right: 20, padding: 15, backgroundColor: '#fff', borderRadius: 15, width: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
+    iconTop: { width: 70, height: 70, resizeMode: 'contain' },
+    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2 },
+    hintBox: { position: 'absolute', top: 110, right: 20, padding: 15, backgroundColor: '#fff', borderRadius: 15, width: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
     hintTitle: { fontWeight: 'bold', color: '#007AFF', marginBottom: 5 },
     hintText: { fontSize: 14, color: '#333' },
-    card: { width: '92%', maxWidth: 450, borderRadius: 25, padding: 25, alignItems: 'center', alignSelf: 'center', elevation: 4, shadowColor: "#000", shadowOpacity: 0.1, shadowRadius: 10 },
+    card: { width: '92%', maxWidth: 450, borderRadius: 25, padding: 25, alignItems: 'center', alignSelf: 'center', elevation: 4 },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.94)', borderRadius: 25 },
-    headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#333', marginBottom: 15 },
-    questionText: { fontSize: 19, color: '#2c3e50', textAlign: 'center', fontWeight: '500', lineHeight: 28, marginBottom: 20 },
-    comparisonContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 30, paddingHorizontal: 5 },
+    headerTitle: { fontSize: 20, fontWeight: '800', color: '#007AFF', marginBottom: 10, textTransform: 'uppercase' },
+    questionText: { fontSize: 18, color: '#2c3e50', textAlign: 'center', fontWeight: '500', lineHeight: 26, marginBottom: 20 },
+    comparisonContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 30 },
     sideContainer: { alignItems: 'center', flex: 1 },
     numberDisplay: { marginTop: 10, height: 80, justifyContent: 'center', alignItems: 'center' },
     fractionContainer: { flexDirection: 'row', alignItems: 'center' },
-    wholeNumber: { fontSize: 40, fontWeight: 'bold', color: '#2c3e50', marginRight: 8 },
-    wholeNumberBig: { fontSize: 50, fontWeight: 'bold', color: '#2c3e50' },
-    fractionPart: { alignItems: 'center', justifyContent: 'center' },
-    numerator: { fontSize: 28, fontWeight: 'bold', color: '#2c3e50', marginBottom: -2 },
-    fractionLine: { width: 40, height: 3, backgroundColor: '#2c3e50', marginVertical: 4, borderRadius: 2 },
-    denominator: { fontSize: 28, fontWeight: 'bold', color: '#2c3e50', marginTop: -2 },
-    signContainer: { width: 60, alignItems: 'center', justifyContent: 'center' },
+    wholeNumber: { fontSize: 36, fontWeight: 'bold', color: '#2c3e50', marginRight: 5 },
+    wholeNumberBig: { fontSize: 44, fontWeight: 'bold', color: '#2c3e50' },
+    fractionPart: { alignItems: 'center' },
+    numerator: { fontSize: 26, fontWeight: 'bold', color: '#2c3e50' },
+    fractionLine: { width: 35, height: 3, backgroundColor: '#2c3e50', marginVertical: 2 },
+    denominator: { fontSize: 26, fontWeight: 'bold', color: '#2c3e50' },
+    signContainer: { width: 60, alignItems: 'center' },
     signBox: { width: 55, height: 55, borderRadius: 12, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
     signBoxNeutral: { borderColor: '#ccc', backgroundColor: '#f9f9f9' },
     signBoxCorrect: { borderColor: '#28a745', backgroundColor: '#28a745' },
     signBoxWrong: { borderColor: '#dc3545', backgroundColor: '#dc3545' },
     signText: { fontSize: 32, fontWeight: 'bold', color: '#007AFF' },
     answersRow: { flexDirection: 'row', justifyContent: 'space-around', width: '100%', marginTop: 10 },
-    answerBtn: { backgroundColor: '#fff', borderWidth: 2, borderColor: '#007AFF', borderRadius: 15, width: 70, height: 70, justifyContent: 'center', alignItems: 'center', elevation: 3 },
+    answerBtn: { backgroundColor: '#fff', borderWidth: 2, borderColor: '#007AFF', borderRadius: 15, width: 70, height: 70, justifyContent: 'center', alignItems: 'center', elevation: 2 },
     answerBtnSelected: { backgroundColor: '#eef6ff', borderColor: '#005bb5' },
-    answerBtnText: { fontSize: 36, fontWeight: 'bold', color: '#007AFF' },
-    mainBtn: { marginTop: 20, backgroundColor: '#007AFF', paddingHorizontal: 40, paddingVertical: 14, borderRadius: 15 },
+    answerBtnText: { fontSize: 32, fontWeight: 'bold', color: '#007AFF' },
+    mainBtn: { marginTop: 20, paddingHorizontal: 40, paddingVertical: 14, borderRadius: 15, backgroundColor: '#007AFF' },
     mainBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
     counterTextSmall: { fontSize: 13, color: '#555', textAlign: 'center', marginTop: 15 },
-    msg: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
+    msg: { fontSize: 16, fontWeight: '700', textAlign: 'center' },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
-    iconsBottom: { position: 'absolute', bottom: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
+    iconsBottom: { position: 'absolute', bottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    counterTextIcons: { fontSize: 20, marginHorizontal: 8, color: '#333' },
+    counterTextIcons: { fontSize: 18, fontWeight: 'bold', color: '#333' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-    drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
-    drawingHeader: { height: 55, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, backgroundColor: '#f0f0f0' },
-    drawingTitle: { fontSize: 18, fontWeight: 'bold' },
-    headerButton: { padding: 10 },
-    headerButtonText: { fontSize: 16, color: '#007AFF', fontWeight: '600' },
-    problemPreviewContainer: { backgroundColor: '#f9f9f9', padding: 12, alignItems: 'center' },
-    problemPreviewLabel: { fontSize: 13, color: '#666' },
-    problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', textAlign: 'center' },
-    canvas: { flex: 1, backgroundColor: '#ffffff' },
-
-    // MILESTONE STYLES
-    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center' },
     milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
-    statsRowMilestone: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
-    statsTextMilestone: { fontSize: 18, color: '#333', fontWeight: 'bold' },
-    suggestionTextMilestone: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
-    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
-    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
+    statsRowMilestone: { marginVertical: 15, alignItems: 'center' },
+    statsTextMilestone: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+    milestoneButtons: { flexDirection: 'row', justifyContent: 'center', width: '100%', marginTop: 10 },
+    mButton: { paddingVertical: 12, borderRadius: 12, width: '80%', alignItems: 'center', backgroundColor: '#28a745' },
+    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
+    drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
+    drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, backgroundColor: '#f0f0f0' },
+    drawingTitle: { fontSize: 18, fontWeight: 'bold' },
+    headerButton: { padding: 5 },
+    headerButtonText: { fontSize: 16, color: '#007AFF' },
+    problemPreviewContainer: { backgroundColor: '#f9f9f9', padding: 10, alignItems: 'center' },
+    problemPreviewLabel: { fontSize: 12, color: '#777' },
+    problemPreviewTextSmall: { fontSize: 16, fontWeight: '600' },
+    canvas: { flex: 1, backgroundColor: '#ffffff' }
 });
 
 export default FractionComparisonTrainer;
