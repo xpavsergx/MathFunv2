@@ -20,7 +20,7 @@ import {
     InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native'; // Dodane dla nawigacji
+import { useNavigation } from '@react-navigation/native';
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -73,7 +73,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const MentalMathLargeNumbers = () => {
-    const navigation = useNavigation(); // Dodane dla nawigacji
+    const navigation = useNavigation();
     const [questionText, setQuestionText] = useState('');
     const [mainDisplay, setMainDisplay] = useState<React.ReactNode>(null);
     const [options, setOptions] = useState<string[]>([]);
@@ -91,8 +91,8 @@ const MentalMathLargeNumbers = () => {
     const [showHint, setShowHint] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
-    // Nowe stany raportu
     const [showMilestone, setShowMilestone] = useState(false);
+    const [isFinished, setIsFinished] = useState(false); // NOWE
     const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const backgroundColor = useRef(new Animated.Value(0)).current;
@@ -105,17 +105,18 @@ const MentalMathLargeNumbers = () => {
     }, []);
 
     const nextTask = () => {
-        // Blokada raportu co 10 zadań
-        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+        // Logika zakończenia treningu
+        if (taskCount >= TASKS_LIMIT) {
+            setIsFinished(true);
+            return;
+        }
+
+        // Raport co 10 zadań (z wyjątkiem ostatniego)
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone && taskCount < TASKS_LIMIT) {
             setShowMilestone(true);
             return;
         }
 
-        if (taskCount >= TASKS_LIMIT) {
-            setMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
-            setReadyForNext(false);
-            return;
-        }
         generateProblem();
         setUserInput('');
         setIsCorrect(null);
@@ -127,6 +128,15 @@ const MentalMathLargeNumbers = () => {
         backgroundColor.setValue(0);
     };
 
+    const handleRestart = () => {
+        setIsFinished(false);
+        setTaskCount(0);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setSessionCorrect(0);
+        nextTask();
+    };
+
     const generateProblem = () => {
         const typeRand = Math.random();
         let qText = '';
@@ -136,8 +146,8 @@ const MentalMathLargeNumbers = () => {
         let display: React.ReactNode = null;
 
         if (typeRand < 0.20) {
-            const units = ["tys.", "mln", "mld"];
-            const selectedUnit = units[Math.floor(Math.random() * units.length)];
+            const unitsArr = ["tys.", "mln", "mld"];
+            const selectedUnit = unitsArr[Math.floor(Math.random() * unitsArr.length)];
             const baseValue = [1, 10, 100, 150][Math.floor(Math.random() * 4)];
             const isMultiply = Math.random() > 0.5;
             const factor = isMultiply ? 10 : 100;
@@ -202,20 +212,20 @@ const MentalMathLargeNumbers = () => {
         setHintText(hint);
     };
 
-    const handleCheck = () => {
-        Keyboard.dismiss();
-        if (!userInput.trim()) {
-            setMessage('Wybierz lub wpisz odpowiedź!');
+    const handleCheck = (selectedOption?: string) => {
+        const val = (selectedOption || userInput).trim();
+        if (!val) {
+            setMessage('Wpisz odpowiedź!');
             return;
         }
 
-        const isOk = userInput.trim() === correctAnswer.trim();
-        setIsCorrect(isOk);
+        const isOk = val === correctAnswer.trim();
 
         if (isOk) {
+            setIsCorrect(true);
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setCorrectCount(prev => prev + 1);
-            setSessionCorrect(prev => prev + 1); // Licznik serii
+            setSessionCorrect(prev => prev + 1);
             setMessage('Świetnie! ✅');
             setReadyForNext(true);
             InteractionManager.runAfterInteractions(() => {
@@ -227,16 +237,28 @@ const MentalMathLargeNumbers = () => {
                 }
             });
         } else {
-            Animated.timing(backgroundColor, { toValue: -1, duration: 500, useNativeDriver: false }).start();
+            setIsCorrect(false);
+            Animated.sequence([
+                Animated.timing(backgroundColor, { toValue: -1, duration: 500, useNativeDriver: false }),
+                Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
+            ]).start();
+
             if (firstAttempt) {
-                setMessage('Błąd. Spróbuj jeszcze raz.');
-                if (options.length === 0) setUserInput('');
+                setMessage('Błąd! Spróbuj jeszcze raz ✍️');
+                if (options.length === 0) setUserInput(''); // Czyścimy tylko gdy nie ma gotowych opcji
                 setFirstAttempt(false);
             } else {
-                setMessage(`Prawidłowa odpowiedź: ${formatNumber(correctAnswer)}`);
+                setWrongCount(prev => prev + 1);
+                setMessage(`Błąd! Poprawna odpowiedź: ${formatNumber(correctAnswer)}`);
                 setReadyForNext(true);
+                InteractionManager.runAfterInteractions(() => {
+                    const currentUser = auth().currentUser;
+                    if (currentUser) {
+                        firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                            .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+                    }
+                });
             }
-            setWrongCount(prev => prev + 1);
         }
     };
 
@@ -286,11 +308,6 @@ const MentalMathLargeNumbers = () => {
                                         Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
                                     </Text>
                                 </View>
-                                <Text style={styles.suggestionText}>
-                                    {sessionCorrect >= 8
-                                        ? "Rewelacyjnie! Jesteś mistrzem!"
-                                        : "Trenuj dalej, aby być jeszcze lepszym."}
-                                </Text>
                                 <View style={styles.milestoneButtons}>
                                     <TouchableOpacity
                                         style={[styles.mButton, { backgroundColor: '#28a745' }]}
@@ -316,6 +333,27 @@ const MentalMathLargeNumbers = () => {
                         </View>
                     </Modal>
 
+                    {/* MODAL FINALNY */}
+                    <Modal visible={isFinished} transparent={true} animationType="fade">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Gratulacje! 🏆</Text>
+                                <Text style={styles.suggestionText}>Ukończyłeś wszystkie zadania!</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Wynik: {correctCount} / {TASKS_LIMIT}</Text>
+                                </View>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={handleRestart}>
+                                        <Text style={styles.mButtonText}>Od nowa</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#dc3545' }]} onPress={() => { setIsFinished(false); navigation.goBack(); }}>
+                                        <Text style={styles.mButtonText}>Wyjdź</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
                             <View style={styles.overlayBackground} />
@@ -331,12 +369,12 @@ const MentalMathLargeNumbers = () => {
                                         return (
                                             <TouchableOpacity
                                                 key={idx}
-                                                onPress={() => !readyForNext && setUserInput(opt)}
+                                                onPress={() => !readyForNext && (setUserInput(opt), setIsCorrect(null))}
                                                 style={[
                                                     styles.optionButton,
                                                     isSelected && styles.optionButtonSelected,
                                                     readyForNext && opt === correctAnswer && styles.optionButtonCorrect,
-                                                    readyForNext && isSelected && opt !== correctAnswer && styles.optionButtonWrong
+                                                    isSelected && isCorrect === false && styles.optionButtonWrong
                                                 ]}
                                                 disabled={readyForNext}
                                             >
@@ -350,7 +388,7 @@ const MentalMathLargeNumbers = () => {
                                     style={isCorrect === null ? styles.finalInput : (isCorrect ? styles.correctFinal : styles.errorFinal)}
                                     keyboardType="numeric"
                                     value={userInput}
-                                    onChangeText={setUserInput}
+                                    onChangeText={(t) => { setUserInput(t); if(isCorrect === false) setIsCorrect(null); }}
                                     placeholder="Wynik"
                                     placeholderTextColor="#aaa"
                                     editable={!readyForNext}
@@ -358,7 +396,7 @@ const MentalMathLargeNumbers = () => {
                             )}
 
                             <View style={styles.buttonContainer}>
-                                <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
+                                <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : () => handleCheck()} color="#007AFF" />
                             </View>
 
                             <Text style={styles.counterTextSmall}>Zadanie: {taskCount} / {TASKS_LIMIT}</Text>
@@ -380,6 +418,8 @@ const MentalMathLargeNumbers = () => {
     );
 };
 
+
+
 const styles = StyleSheet.create({
     keyboardContainer: { flex: 1, justifyContent: 'center' },
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 20 },
@@ -389,7 +429,7 @@ const styles = StyleSheet.create({
     buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2 },
     hintBox: { position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
-    hintText: { fontSize: 14, color: '#333', textAlign: 'center' },
+    hintText: { fontSize: 14, color: '#333', textAlign: 'center', lineHeight: 20 },
     card: { width: '95%', maxWidth: 480, borderRadius: 20, padding: 20, alignItems: 'center', alignSelf: 'center' },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
     taskLabel: { fontSize: 18, fontWeight: '700', marginBottom: 15, color: '#007AFF', textAlign: 'center', textTransform: 'uppercase' },
@@ -427,8 +467,6 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase' },
     problemPreviewTextSmall: { fontSize: 18, fontWeight: '600', color: '#007AFF' },
     canvas: { flex: 1, backgroundColor: '#fff' },
-
-    // MILESTONE STYLES
     milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
     milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
     statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },

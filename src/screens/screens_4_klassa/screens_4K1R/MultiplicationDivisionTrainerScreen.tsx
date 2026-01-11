@@ -17,17 +17,18 @@ import {
     KeyboardAvoidingView,
     TouchableWithoutFeedback,
     ScrollView,
-    InteractionManager
+    InteractionManager,
+    NativeSyntheticEvent,
+    TextInputKeyPressEventData
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native'; // DODANE
-
+import { useNavigation } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { awardXpAndCoins } from '../../../services/xpService';
 
 const EXERCISE_ID = "combinedDecompositionTrainer";
-const TASKS_LIMIT = 100;
+const TASKS_LIMIT = 50;
 
 const { width: screenWidth } = Dimensions.get('window');
 const isSmallDevice = screenWidth < 380;
@@ -35,6 +36,7 @@ const isSmallDevice = screenWidth < 380;
 const combinedIconSize = screenWidth * 0.25;
 const combinedInputSize = isSmallDevice ? 70 : 90;
 
+// --- BRUDNOPIS ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
@@ -91,7 +93,16 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const CombinedDecompositionTrainer = () => {
-    const navigation = useNavigation(); // DODANE
+    const navigation = useNavigation();
+
+    // --- REFS ---
+    const decomp1Ref = useRef<TextInput>(null);
+    const decomp2Ref = useRef<TextInput>(null);
+    const partial1Ref = useRef<TextInput>(null);
+    const partial2Ref = useRef<TextInput>(null);
+    const finalRef = useRef<TextInput>(null);
+
+    // --- STATE ---
     const [mode, setMode] = useState<'multiplication' | 'division'>('multiplication');
     const [mainNumber, setMainNumber] = useState<number>(0);
     const [operand, setOperand] = useState<number>(0);
@@ -102,6 +113,7 @@ const CombinedDecompositionTrainer = () => {
     const [partial2, setPartial2] = useState<string>('');
     const [final, setFinal] = useState<string>('');
 
+    // --- STATE UI ---
     const [validation, setValidation] = useState({
         decomp1: null as boolean | null,
         decomp2: null as boolean | null,
@@ -114,10 +126,13 @@ const CombinedDecompositionTrainer = () => {
     const [correctCount, setCorrectCount] = useState<number>(0);
     const [wrongCount, setWrongCount] = useState<number>(0);
     const [taskCount, setTaskCount] = useState<number>(0);
-    const [firstAttempt, setFirstAttempt] = useState<boolean>(true);
 
-    // --- NOWE STANY RAPORTU ---
+    // ZAMIAST firstAttempt, MAMY LICZNIK PRÓB (0 = pierwsza, 1 = druga/ostatnia)
+    const [attemptsUsed, setAttemptsUsed] = useState<number>(0);
+
+    // --- RAPORTY ---
     const [showMilestone, setShowMilestone] = useState(false);
+    const [isFinished, setIsFinished] = useState(false);
     const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const [message, setMessage] = useState('');
@@ -131,23 +146,11 @@ const CombinedDecompositionTrainer = () => {
     useEffect(() => {
         const k1 = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
         const k2 = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
-        nextTask();
+        generateNewTask();
         return () => { k1.remove(); k2.remove(); };
     }, []);
 
-    const nextTask = () => {
-        // Blokada raportu co 10 zadań
-        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
-            setShowMilestone(true);
-            return;
-        }
-
-        if (taskCount >= TASKS_LIMIT) {
-            setMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
-            setReadyForNext(false);
-            return;
-        }
-
+    const generateNewTask = () => {
         const newMode = Math.random() > 0.5 ? 'multiplication' : 'division';
         setMode(newMode);
 
@@ -171,6 +174,7 @@ const CombinedDecompositionTrainer = () => {
         setOperand(o);
         setHintText(hint);
 
+        // Reset pól
         setDecomp1(''); setDecomp2('');
         setPartial1(''); setPartial2('');
         setFinal('');
@@ -178,10 +182,38 @@ const CombinedDecompositionTrainer = () => {
         setValidation({ decomp1: null, decomp2: null, partial1: null, partial2: null, final: null });
         setMessage('');
         setReadyForNext(false);
-        setFirstAttempt(true);
+        setAttemptsUsed(0); // Reset prób
         setShowHint(false);
         setTaskCount(prev => prev + 1);
         backgroundColor.setValue(0);
+    };
+
+    const nextTask = () => {
+        if (taskCount >= TASKS_LIMIT) {
+            setIsFinished(true);
+            return;
+        }
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
+        generateNewTask();
+    };
+
+    const handleContinueMilestone = () => {
+        setShowMilestone(false);
+        setSessionCorrect(0);
+        generateNewTask();
+    };
+
+    const handleRestart = () => {
+        setIsFinished(false);
+        setShowMilestone(false);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setSessionCorrect(0);
+        setTaskCount(0);
+        generateNewTask();
     };
 
     const toggleScratchpad = () => setShowScratchpad(prev => !prev);
@@ -190,18 +222,25 @@ const CombinedDecompositionTrainer = () => {
     const handleCheck = () => {
         Keyboard.dismiss();
 
-        requestAnimationFrame(() => {
-            if (!final) {
-                setMessage('Wpisz wynik końcowy!');
-                return;
-            }
+        // 1. BLOKADA PUSTEGO POLA - naprawa błędu
+        // Sprawdzamy, czy wypełniono chociaż wynik końcowy LUB (w trybie dzielenia) pola rozkładu jeśli są używane
+        const isFinalEmpty = final.trim() === '';
 
+        // Możemy być bardziej rygorystyczni: jeśli którekolwiek aktywne pole jest puste
+        // Ale dla uproszczenia sprawdźmy kluczowe:
+        if (isFinalEmpty) {
+            setMessage('Uzupełnij brakujące pola!');
+            return; // PRZERYWAMY - nie liczymy tego jako próby
+        }
+
+        requestAnimationFrame(() => {
             const d1 = Number(decomp1);
             const d2 = Number(decomp2);
             const p1 = Number(partial1);
             const p2 = Number(partial2);
             const fin = Number(final);
 
+            // Obiekt walidacji
             let valState = {
                 decomp1: null as boolean | null,
                 decomp2: null as boolean | null,
@@ -212,24 +251,31 @@ const CombinedDecompositionTrainer = () => {
 
             let isFinalCorrect = false;
 
+            // LOGIKA SPRAWDZANIA
             if (mode === 'multiplication') {
                 const correctTens = Math.floor(mainNumber / 10) * 10;
                 const correctOnes = mainNumber % 10;
                 const correctFinal = mainNumber * operand;
+
                 valState.final = (fin === correctFinal);
                 isFinalCorrect = valState.final;
+
                 if (decomp1.trim() !== '') valState.decomp1 = (d1 === correctTens);
                 if (decomp2.trim() !== '') valState.decomp2 = (d2 === correctOnes);
                 if (partial1.trim() !== '') valState.partial1 = (p1 === correctTens * operand);
                 if (partial2.trim() !== '') valState.partial2 = (p2 === correctOnes * operand);
+
             } else {
+                // Division
                 const correctFinal = mainNumber / operand;
                 valState.final = (fin === correctFinal);
                 isFinalCorrect = valState.final;
+
                 if (decomp1.trim() !== '' && decomp2.trim() !== '') {
                     const isValidDecomp = (d1 + d2 === mainNumber) && (d1 % operand === 0) && (d2 % operand === 0) && d1 > 0 && d2 > 0;
                     valState.decomp1 = isValidDecomp;
                     valState.decomp2 = isValidDecomp;
+
                     if (isValidDecomp) {
                         if (partial1.trim() !== '') valState.partial1 = (p1 === d1 / operand);
                         if (partial2.trim() !== '') valState.partial2 = (p2 === d2 / operand);
@@ -238,23 +284,27 @@ const CombinedDecompositionTrainer = () => {
                         if (partial2.trim() !== '') valState.partial2 = false;
                     }
                 } else if (decomp1.trim() !== '' || decomp2.trim() !== '') {
+                    // Częściowo wypełnione - błąd
                     if (decomp1.trim() !== '') valState.decomp1 = false;
                     if (decomp2.trim() !== '') valState.decomp2 = false;
                 }
             }
 
-            setValidation(valState);
             const hasErrors = Object.values(valState).includes(false);
             const isSuccess = isFinalCorrect && !hasErrors;
 
+            // 2. LOGIKA PRÓB (ATTEMPTS)
             if (isSuccess) {
+                // SUKCES
+                setValidation(valState); // Pokaż zielone
                 Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
                 setCorrectCount(prev => prev + 1);
-                setSessionCorrect(prev => prev + 1); // Licznik sesji
+                setSessionCorrect(prev => prev + 1);
                 setMessage('Świetnie! ✅');
                 setReadyForNext(true);
                 setShowHint(false);
 
+                // Zapis
                 InteractionManager.runAfterInteractions(() => {
                     awardXpAndCoins(5, 1);
                     const currentUser = auth().currentUser;
@@ -263,41 +313,87 @@ const CombinedDecompositionTrainer = () => {
                             .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
                     }
                 });
+
             } else {
-                Animated.sequence([
-                    Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
-                    Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
-                ]).start();
+                // BŁĄD
+                if (attemptsUsed === 0) {
+                    // --- PIERWSZA PRÓBA ---
+                    setAttemptsUsed(1); // Zużywamy pierwszą próbę
+                    setMessage('Błąd! Popraw czerwone pola.');
 
-                if (firstAttempt) {
-                    setMessage(isFinalCorrect && hasErrors ? 'Wynik dobry, ale sprawdź obliczenia pomocnicze.' : 'Błąd! Spróbuj ponownie.');
-                    setFirstAttempt(false);
+                    // Ustawiamy walidację, żeby pokazać co jest źle
+                    setValidation(valState);
+
+                    // CZYŚCIMY BŁĘDNE POLA (zostawiając poprawne)
+                    // Opóźniamy minimalnie wyczyszczenie, żeby logika walidacji (kolory) zadziałała
+                    // Ale w React State update jest asynchroniczny, więc robimy to w jednym cyklu
+
+                    if (valState.decomp1 === false) setDecomp1('');
+                    if (valState.decomp2 === false) setDecomp2('');
+                    if (valState.partial1 === false) setPartial1('');
+                    if (valState.partial2 === false) setPartial2('');
+                    if (valState.final === false) setFinal('');
+
+                    // Animacja błędu
+                    Animated.sequence([
+                        Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
+                        Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
+                    ]).start();
+
                 } else {
-                    const correctAns = mode === 'multiplication' ? mainNumber * operand : mainNumber / operand;
-                    setMessage(`Poprawny wynik końcowy: ${correctAns}`);
-                    setReadyForNext(true);
-                }
+                    // --- DRUGA PRÓBA (OSTATNIA) ---
+                    setValidation(valState); // Pokazujemy co źle
 
-                setWrongCount(prev => prev + 1);
-                InteractionManager.runAfterInteractions(() => {
-                    const currentUser = auth().currentUser;
-                    if (currentUser) {
-                        firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
-                            .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-                    }
-                });
+                    const correctAns = mode === 'multiplication' ? mainNumber * operand : mainNumber / operand;
+                    setMessage(`Koniec prób. Wynik: ${correctAns}`);
+                    setReadyForNext(true); // Pozwalamy iść dalej
+
+                    setWrongCount(prev => prev + 1);
+
+                    // Zapis błędu
+                    InteractionManager.runAfterInteractions(() => {
+                        const currentUser = auth().currentUser;
+                        if (currentUser) {
+                            firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                                .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+                        }
+                    });
+                }
             }
         });
     };
 
+    const handleKeyPress = (e: NativeSyntheticEvent<TextInputKeyPressEventData>, currentField: string) => {
+        const key = e.nativeEvent.key;
+        if (key === 'ArrowRight') {
+            if (currentField === 'decomp1') decomp2Ref.current?.focus();
+            if (currentField === 'partial1') partial2Ref.current?.focus();
+        } else if (key === 'ArrowLeft') {
+            if (currentField === 'decomp2') decomp1Ref.current?.focus();
+            if (currentField === 'partial2') partial1Ref.current?.focus();
+        } else if (key === 'ArrowDown') {
+            if (currentField === 'decomp1') partial1Ref.current?.focus();
+            if (currentField === 'decomp2') partial2Ref.current?.focus();
+            if (currentField === 'partial1' || currentField === 'partial2') finalRef.current?.focus();
+        } else if (key === 'ArrowUp') {
+            if (currentField === 'partial1') decomp1Ref.current?.focus();
+            if (currentField === 'partial2') decomp2Ref.current?.focus();
+            if (currentField === 'final') partial1Ref.current?.focus();
+        }
+    };
+
     const getFieldStyle = (field: keyof typeof validation) => {
-        if (validation[field] === null) return styles.input;
-        return validation[field] ? styles.correctInput : styles.errorInput;
+        // Jeśli pole jest puste, a mamy informację o błędzie, to znaczy że zostało wyczyszczone po błędzie
+        // Chcemy, żeby nadal świeciło na czerwono, żeby użytkownik wiedział, że tu był błąd
+        if (validation[field] === false) return styles.errorInput;
+        if (validation[field] === true) return styles.correctInput;
+        return styles.input;
     };
 
     const getFinalStyle = () => {
-        if (validation.final === null) return styles.finalInput;
-        return validation.final ? styles.correctFinal : styles.errorFinal;
+        if (validation.final === false) return styles.errorFinal;
+        if (validation.final === true) return styles.correctFinal;
+        return styles.finalInput;
     };
 
     const bgInterpolation = backgroundColor.interpolate({
@@ -343,7 +439,6 @@ const CombinedDecompositionTrainer = () => {
 
                     <DrawingModal visible={showScratchpad} onClose={toggleScratchpad} problemText={problemString} />
 
-                    {/* MODAL PODSUMOWANIA CO 10 ZADAŃ */}
                     <Modal visible={showMilestone} transparent={true} animationType="slide">
                         <View style={styles.modalOverlay}>
                             <View style={styles.milestoneCard}>
@@ -354,30 +449,35 @@ const CombinedDecompositionTrainer = () => {
                                         Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
                                     </Text>
                                 </View>
-                                <Text style={styles.suggestionText}>
-                                    {sessionCorrect >= 8
-                                        ? "Rewelacyjnie! Jesteś mistrzem!"
-                                        : "Trenuj dalej, aby być jeszcze lepszym."}
-                                </Text>
                                 <View style={styles.milestoneButtons}>
-                                    <TouchableOpacity
-                                        style={[styles.mButton, { backgroundColor: '#28a745' }]}
-                                        onPress={() => {
-                                            setShowMilestone(false);
-                                            setSessionCorrect(0);
-                                            nextTask();
-                                        }}
-                                    >
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={handleContinueMilestone}>
                                         <Text style={styles.mButtonText}>Kontynuuj</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.mButton, { backgroundColor: '#007AFF' }]}
-                                        onPress={() => {
-                                            setShowMilestone(false);
-                                            navigation.goBack();
-                                        }}
-                                    >
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}>
                                         <Text style={styles.mButtonText}>Inny temat</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    <Modal visible={isFinished} transparent={true} animationType="fade">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Gratulacje! 🏆</Text>
+                                <Text style={styles.suggestionText}>Ukończyłeś wszystkie zadania!</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Wynik końcowy:</Text>
+                                    <Text style={[styles.statsText, { fontSize: 24, color: '#28a745', marginTop: 5 }]}>
+                                        {correctCount} / {TASKS_LIMIT}
+                                    </Text>
+                                </View>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={handleRestart}>
+                                        <Text style={styles.mButtonText}>Zagraj jeszcze raz</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#dc3545' }]} onPress={() => { setIsFinished(false); navigation.goBack(); }}>
+                                        <Text style={styles.mButtonText}>Wyjdź</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -399,26 +499,36 @@ const CombinedDecompositionTrainer = () => {
                                 <View style={styles.col}>
                                     <Text style={styles.stepLabel}>Rozkład</Text>
                                     <TextInput
+                                        ref={decomp1Ref}
                                         style={getFieldStyle('decomp1')}
                                         keyboardType="numeric"
                                         value={decomp1}
                                         onChangeText={setDecomp1}
                                         placeholder="?"
                                         placeholderTextColor="#aaa"
-                                        editable={!readyForNext}
+                                        editable={!readyForNext && (attemptsUsed === 0 || validation.decomp1 !== true)}
+                                        blurOnSubmit={false}
+                                        returnKeyType="next"
+                                        onSubmitEditing={() => decomp2Ref.current?.focus()}
+                                        onKeyPress={(e) => handleKeyPress(e, 'decomp1')}
                                     />
                                 </View>
                                 <Text style={styles.plusSign}>+</Text>
                                 <View style={styles.col}>
                                     <Text style={styles.stepLabel}>Rozkład</Text>
                                     <TextInput
+                                        ref={decomp2Ref}
                                         style={getFieldStyle('decomp2')}
                                         keyboardType="numeric"
                                         value={decomp2}
                                         onChangeText={setDecomp2}
                                         placeholder="?"
                                         placeholderTextColor="#aaa"
-                                        editable={!readyForNext}
+                                        editable={!readyForNext && (attemptsUsed === 0 || validation.decomp2 !== true)}
+                                        blurOnSubmit={false}
+                                        returnKeyType="next"
+                                        onSubmitEditing={() => partial1Ref.current?.focus()}
+                                        onKeyPress={(e) => handleKeyPress(e, 'decomp2')}
                                     />
                                 </View>
                             </View>
@@ -430,23 +540,33 @@ const CombinedDecompositionTrainer = () => {
 
                             <View style={styles.row}>
                                 <TextInput
+                                    ref={partial1Ref}
                                     style={getFieldStyle('partial1')}
                                     keyboardType="numeric"
                                     value={partial1}
                                     onChangeText={setPartial1}
                                     placeholder="wynik"
                                     placeholderTextColor="#aaa"
-                                    editable={!readyForNext}
+                                    editable={!readyForNext && (attemptsUsed === 0 || validation.partial1 !== true)}
+                                    blurOnSubmit={false}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => partial2Ref.current?.focus()}
+                                    onKeyPress={(e) => handleKeyPress(e, 'partial1')}
                                 />
                                 <Text style={styles.plusSign}>+</Text>
                                 <TextInput
+                                    ref={partial2Ref}
                                     style={getFieldStyle('partial2')}
                                     keyboardType="numeric"
                                     value={partial2}
                                     onChangeText={setPartial2}
                                     placeholder="wynik"
                                     placeholderTextColor="#aaa"
-                                    editable={!readyForNext}
+                                    editable={!readyForNext && (attemptsUsed === 0 || validation.partial2 !== true)}
+                                    blurOnSubmit={false}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => finalRef.current?.focus()}
+                                    onKeyPress={(e) => handleKeyPress(e, 'partial2')}
                                 />
                             </View>
 
@@ -456,13 +576,18 @@ const CombinedDecompositionTrainer = () => {
                             </View>
 
                             <TextInput
+                                ref={finalRef}
                                 style={getFinalStyle()}
                                 keyboardType="numeric"
                                 value={final}
                                 onChangeText={setFinal}
                                 placeholder="Wynik końcowy"
                                 placeholderTextColor="#aaa"
-                                editable={!readyForNext}
+                                editable={!readyForNext && (attemptsUsed === 0 || validation.final !== true)}
+                                blurOnSubmit={true}
+                                returnKeyType="done"
+                                onSubmitEditing={handleCheck}
+                                onKeyPress={(e) => handleKeyPress(e, 'final')}
                             />
 
                             <View style={styles.buttonContainer}>

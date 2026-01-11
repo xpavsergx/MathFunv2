@@ -20,15 +20,13 @@ import {
     InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native'; // DODANE
-
-// --- INTEGRACJA Z FIREBASE ---
+import { useNavigation } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { awardXpAndCoins } from '../../../services/xpService';
 
 const EXERCISE_ID = "howManyTimesTrainer";
-const TASKS_LIMIT = 50;
+const TASKS_LIMIT = 30; // Ustawiony limit zadań
 
 const { width: screenWidth } = Dimensions.get('window');
 const isSmallDevice = screenWidth < 380;
@@ -80,7 +78,10 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const HowManyTimesTrainerScreen4 = () => {
-    const navigation = useNavigation(); // DODANE
+    const navigation = useNavigation();
+
+    // Ref do inputa (aby trzymać fokus)
+    const inputRef = useRef<TextInput>(null);
 
     // --- STATE LOGIC ---
     const [baseNumber, setBaseNumber] = useState<number>(0);
@@ -97,9 +98,10 @@ const HowManyTimesTrainerScreen4 = () => {
     const [taskCount, setTaskCount] = useState<number>(0);
     const [firstAttempt, setFirstAttempt] = useState<boolean>(true);
 
-    // --- NOWE STANY DLA RAPORTU ---
+    // --- NOWE STANY DLA RAPORTÓW ---
     const [showMilestone, setShowMilestone] = useState(false);
-    const [sessionCorrect, setSessionCorrect] = useState(0);
+    const [isFinished, setIsFinished] = useState(false); // Stan końca gry
+    const [sessionCorrect, setSessionCorrect] = useState(0); // Poprawne w bieżącej serii 10
 
     const [message, setMessage] = useState('');
     const [showScratchpad, setShowScratchpad] = useState(false);
@@ -112,23 +114,14 @@ const HowManyTimesTrainerScreen4 = () => {
     useEffect(() => {
         const k1 = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
         const k2 = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
-        nextTask();
+
+        generateNewTask(); // Generujemy pierwsze zadanie na starcie
+
         return () => { k1.remove(); k2.remove(); };
     }, []);
 
-    const nextTask = () => {
-        // Blokada raportu co 10 zadań
-        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
-            setShowMilestone(true);
-            return;
-        }
-
-        if (taskCount >= TASKS_LIMIT) {
-            setMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
-            setReadyForNext(false);
-            return;
-        }
-
+    // Funkcja generująca liczby (bez logiki sprawdzania modalów)
+    const generateNewTask = () => {
         const modeRandom = Math.random();
         let newMultiplier: number;
         let newSmallBase: number;
@@ -179,8 +172,44 @@ const HowManyTimesTrainerScreen4 = () => {
         setFirstAttempt(true);
         setCorrectInput(null);
         setShowHint(false);
-        setTaskCount(prev => prev + 1);
+        setTaskCount(prev => prev + 1); // Zwiększamy licznik tutaj
         backgroundColor.setValue(0);
+
+        // Opcjonalnie: ustaw fokus na polu
+        // inputRef.current?.focus();
+    };
+
+    const nextTask = () => {
+        // 1. Sprawdź CZY TO KONIEC GRY (limit)
+        if (taskCount >= TASKS_LIMIT) {
+            setIsFinished(true); // Pokaż Modal Końcowy
+            return;
+        }
+
+        // 2. Sprawdź CZY TO MILESTONE (co 10 zadań: 10, 20...), ale nie na starcie
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true); // Pokaż Modal Pośredni
+            return;
+        }
+
+        // 3. Jeśli nie koniec i nie milestone -> generuj
+        generateNewTask();
+    };
+
+    const handleContinueMilestone = () => {
+        setShowMilestone(false);
+        setSessionCorrect(0); // Reset licznika serii
+        generateNewTask();
+    };
+
+    const handleRestart = () => {
+        setIsFinished(false);
+        setShowMilestone(false);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setSessionCorrect(0);
+        setTaskCount(0);
+        generateNewTask();
     };
 
     const toggleScratchpad = () => setShowScratchpad(prev => !prev);
@@ -311,7 +340,7 @@ const HowManyTimesTrainerScreen4 = () => {
 
                     <DrawingModal visible={showScratchpad} onClose={toggleScratchpad} problemText={problemString} />
 
-                    {/* MODAL RAPORTU CO 10 ZADAŃ */}
+                    {/* MODAL 1: PODSUMOWANIE SERII (co 10 zadań) */}
                     <Modal visible={showMilestone} transparent={true} animationType="slide">
                         <View style={styles.modalOverlay}>
                             <View style={styles.milestoneCard}>
@@ -328,12 +357,7 @@ const HowManyTimesTrainerScreen4 = () => {
                                 <View style={styles.milestoneButtons}>
                                     <TouchableOpacity
                                         style={[styles.mButton, { backgroundColor: '#28a745' }]}
-                                        onPress={() => {
-                                            setShowMilestone(false);
-                                            setSessionCorrect(0);
-                                            // Bezpośredni reset i nowe zadanie
-                                            nextTask();
-                                        }}
+                                        onPress={handleContinueMilestone}
                                     >
                                         <Text style={styles.mButtonText}>Kontynuuj</Text>
                                     </TouchableOpacity>
@@ -341,10 +365,45 @@ const HowManyTimesTrainerScreen4 = () => {
                                         style={[styles.mButton, { backgroundColor: '#007AFF' }]}
                                         onPress={() => {
                                             setShowMilestone(false);
-                                            navigation.goBack(); // POWRÓT DO PODTEMATÓW
+                                            navigation.goBack();
                                         }}
                                     >
                                         <Text style={styles.mButtonText}>Inny temat</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    {/* MODAL 2: KONIEC GRY (FINAŁ) */}
+                    <Modal visible={isFinished} transparent={true} animationType="fade">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Gratulacje! 🏆</Text>
+                                <Text style={styles.suggestionText}>Ukończyłeś wszystkie zadania!</Text>
+
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Wynik końcowy:</Text>
+                                    <Text style={[styles.statsText, { fontSize: 24, color: '#28a745', marginTop: 5 }]}>
+                                        {correctCount} / {TASKS_LIMIT}
+                                    </Text>
+                                </View>
+
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#28a745' }]}
+                                        onPress={handleRestart}
+                                    >
+                                        <Text style={styles.mButtonText}>Zagraj jeszcze raz</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#dc3545' }]}
+                                        onPress={() => {
+                                            setIsFinished(false);
+                                            navigation.goBack();
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Wyjdź</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -360,6 +419,7 @@ const HowManyTimesTrainerScreen4 = () => {
                             <Text style={styles.subTitle}>Wpisz odpowiedź</Text>
 
                             <TextInput
+                                ref={inputRef}
                                 style={getValidationStyle()}
                                 keyboardType="numeric"
                                 value={answer}
@@ -367,6 +427,9 @@ const HowManyTimesTrainerScreen4 = () => {
                                 placeholder="wynik"
                                 placeholderTextColor="#aaa"
                                 editable={!readyForNext}
+                                blurOnSubmit={false}
+                                returnKeyType="done"
+                                onSubmitEditing={handleCheck} // ENTER SPRAWDZA WYNIK
                             />
 
                             <View style={styles.buttonContainer}>

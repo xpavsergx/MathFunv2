@@ -26,7 +26,7 @@ import firestore from '@react-native-firebase/firestore';
 import { awardXpAndCoins } from '../../../services/xpService';
 
 const EXERCISE_ID = "numberLineTrainer";
-const TASKS_LIMIT = 50;
+const TASKS_LIMIT = 30;
 const screenWidth = Dimensions.get('window').width;
 
 // --- FUNKCJE POMOCNICZE ---
@@ -43,7 +43,7 @@ type NumberLineTask = {
 };
 
 // --- GENERATOR ZADAŃ ---
-const generateTask = (): NumberLineTask => {
+const generateTaskLogic = (): NumberLineTask => {
     let step = 1;
     let start = 0;
     const ticksCount = 5;
@@ -147,9 +147,13 @@ const DrawingModal = ({ visible, onClose }: { visible: boolean; onClose: () => v
 // --- GŁÓWNY EKRAN ---
 const NumberLineTrainerScreen4 = () => {
     const navigation = useNavigation();
+
     const [taskData, setTaskData] = useState<NumberLineTask | null>(null);
     const [userAnswer, setUserAnswer] = useState('');
-    const [firstAttempt, setFirstAttempt] = useState(true);
+
+    // Zastępujemy firstAttempt licznikiem prób (0 = pierwsza, 1 = ostatnia)
+    const [attemptsUsed, setAttemptsUsed] = useState(0);
+
     const [correctInput, setCorrectInput] = useState<boolean | null>(null);
     const [readyForNext, setReadyForNext] = useState(false);
     const [counter, setCounter] = useState(0);
@@ -162,6 +166,7 @@ const NumberLineTrainerScreen4 = () => {
 
     // --- NOWE STANY RAPORTU ---
     const [showMilestone, setShowMilestone] = useState(false);
+    const [isFinished, setIsFinished] = useState(false);
     const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const backgroundColor = useRef(new Animated.Value(0)).current;
@@ -169,25 +174,18 @@ const NumberLineTrainerScreen4 = () => {
     useEffect(() => {
         const k1 = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
         const k2 = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+
+        generateNewTask(); // Generujemy pierwsze zadanie
+
         return () => { k1.remove(); k2.remove(); };
     }, []);
 
-    const nextTask = () => {
-        // Blokada raportu co 10 zadań
-        if (counter > 0 && counter % 10 === 0 && !showMilestone) {
-            setShowMilestone(true);
-            return;
-        }
-
-        if (counter >= TASKS_LIMIT) {
-            setMessage(`Gratulacje! 🎉 Ukończono ${TASKS_LIMIT} zadań!`);
-            setReadyForNext(false);
-            return;
-        }
-        const t = generateTask();
+    // Funkcja generująca same dane zadania
+    const generateNewTask = () => {
+        const t = generateTaskLogic();
         setTaskData(t);
         setUserAnswer('');
-        setFirstAttempt(true);
+        setAttemptsUsed(0); // Reset prób
         setCorrectInput(null);
         setReadyForNext(false);
         setMessage('');
@@ -196,50 +194,105 @@ const NumberLineTrainerScreen4 = () => {
         backgroundColor.setValue(0);
     };
 
-    useEffect(() => { nextTask(); }, []);
+    const nextTask = () => {
+        // 1. Sprawdź CZY TO KONIEC GRY
+        if (counter >= TASKS_LIMIT) {
+            setIsFinished(true);
+            return;
+        }
+
+        // 2. Sprawdź CZY TO MILESTONE (co 10 zadań)
+        if (counter > 0 && counter % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
+
+        // 3. Generuj nowe
+        generateNewTask();
+    };
+
+    const handleContinueMilestone = () => {
+        setShowMilestone(false);
+        setSessionCorrect(0);
+        generateNewTask();
+    };
+
+    const handleRestart = () => {
+        setIsFinished(false);
+        setShowMilestone(false);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setSessionCorrect(0);
+        setCounter(0);
+        generateNewTask();
+    };
+
     const toggleHint = () => setShowHint(prev => !prev);
     const toggleScratchpad = () => setShowScratchpad(prev => !prev);
 
     const handleCheck = () => {
         Keyboard.dismiss();
         if (!taskData) return;
+
+        // --- POPRAWKA: Blokada pustego pola ---
+        if (!userAnswer || userAnswer.trim() === '') {
+            setMessage('Wpisz odpowiedź!');
+            return; // Przerywamy funkcję, nie liczymy próby, nie zmieniamy kolorów
+        }
+
         requestAnimationFrame(() => {
-            if (!userAnswer) { setMessage('Wpisz odpowiedź!'); return; }
-            const numAnswer = Number(userAnswer);
+            const numAnswer = Number(userAnswer.replace(',', '.'));
             const isCorrect = Math.abs(numAnswer - taskData.answer) < 0.01;
             const currentUser = auth().currentUser;
             const statsDocRef = currentUser ? firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID) : null;
 
             if (isCorrect) {
-                setCorrectInput(true);
+                // DOBRA ODPOWIEDŹ
+                setCorrectInput(true); // Na zielono
                 setCorrectCount(prev => prev + 1);
-                setSessionCorrect(prev => prev + 1); // Licznik sesji
+                setSessionCorrect(prev => prev + 1);
+
                 statsDocRef?.set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+
                 Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
                 setMessage('Świetnie! ✅');
                 awardXpAndCoins(5, 1);
                 setReadyForNext(true);
             } else {
-                setWrongCount(prev => prev + 1);
-                statsDocRef?.set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+                // BŁĘDNA ODPOWIEDŹ
                 Animated.sequence([
                     Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
                     Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
                 ]).start();
-                if (firstAttempt) {
+
+                if (attemptsUsed === 0) {
+                    // PIERWSZA PRÓBA (błędna)
+                    setAttemptsUsed(1);
                     setMessage('Błąd! Spróbuj jeszcze raz.');
+                    setCorrectInput(false); // Na czerwono
+
+                    // Czyścimy błędną odpowiedź, żeby wpisać nową
                     setUserAnswer('');
-                    setFirstAttempt(false);
                 } else {
+                    // DRUGA PRÓBA (błędna - koniec)
+                    setWrongCount(prev => prev + 1);
+                    statsDocRef?.set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+
                     setMessage(`Błąd! Poprawna odpowiedź: ${taskData.answer}`);
+                    setCorrectInput(false);
                     setReadyForNext(true);
                 }
-                setCorrectInput(false);
             }
         });
     };
 
-    const getValidationStyle = () => correctInput === null ? styles.input : correctInput ? styles.correctFinal : styles.errorFinal;
+    // Style warunkowe
+    const getValidationStyle = () => {
+        if (correctInput === true) return styles.correctFinal;
+        if (correctInput === false) return styles.errorFinal;
+        return styles.input;
+    };
+
     const bgInterpolation = backgroundColor.interpolate({ inputRange: [-1, 0, 1], outputRange: ['rgba(255, 0, 0, 0.2)', 'rgba(255, 255, 255, 0)', 'rgba(0, 255, 0, 0.2)'] });
 
     return (
@@ -272,7 +325,7 @@ const NumberLineTrainerScreen4 = () => {
                     )}
                     <DrawingModal visible={showScratchpad} onClose={toggleScratchpad} />
 
-                    {/* MODAL RAPORTU CO 10 ZADAŃ */}
+                    {/* MODAL 1: MILESTONE (co 10 zadań) */}
                     <Modal visible={showMilestone} transparent={true} animationType="slide">
                         <View style={styles.modalOverlay}>
                             <View style={styles.milestoneCard}>
@@ -291,11 +344,7 @@ const NumberLineTrainerScreen4 = () => {
                                 <View style={styles.milestoneButtons}>
                                     <TouchableOpacity
                                         style={[styles.mButton, { backgroundColor: '#28a745' }]}
-                                        onPress={() => {
-                                            setShowMilestone(false);
-                                            setSessionCorrect(0);
-                                            nextTask();
-                                        }}
+                                        onPress={handleContinueMilestone}
                                     >
                                         <Text style={styles.mButtonText}>Kontynuuj</Text>
                                     </TouchableOpacity>
@@ -313,15 +362,38 @@ const NumberLineTrainerScreen4 = () => {
                         </View>
                     </Modal>
 
+                    {/* MODAL 2: KONIEC GRY (FINAL) */}
+                    <Modal visible={isFinished} transparent={true} animationType="fade">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Gratulacje! 🏆</Text>
+                                <Text style={styles.suggestionText}>Ukończyłeś wszystkie zadania!</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Wynik końcowy:</Text>
+                                    <Text style={[styles.statsText, { fontSize: 24, color: '#28a745', marginTop: 5 }]}>
+                                        {correctCount} / {TASKS_LIMIT}
+                                    </Text>
+                                </View>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={handleRestart}>
+                                        <Text style={styles.mButtonText}>Zagraj jeszcze raz</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#dc3545' }]} onPress={() => { setIsFinished(false); navigation.goBack(); }}>
+                                        <Text style={styles.mButtonText}>Wyjdź</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
                     <View style={styles.centerContent}>
                         <Animated.View style={[styles.card, { backgroundColor: 'transparent' }]}>
                             <View style={styles.overlayBackground} />
                             <Text style={styles.title}>Oś Liczbowa</Text>
                             <Text style={styles.taskLabel}>Jaką liczbę ukryto pod znakiem zapytania?</Text>
 
-
-
                             {taskData && <NumberLineRenderer task={taskData} />}
+
                             <TextInput
                                 style={[getValidationStyle(), styles.finalInput]}
                                 keyboardType="numeric"
@@ -330,12 +402,15 @@ const NumberLineTrainerScreen4 = () => {
                                 placeholder="?"
                                 placeholderTextColor="#aaa"
                                 editable={!readyForNext}
+                                returnKeyType="done"
+                                onSubmitEditing={readyForNext ? nextTask : handleCheck} // ENTER DZIAŁA
                             />
+
                             <View style={styles.buttonContainer}>
                                 <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
                             </View>
                             <Text style={styles.counterTextSmall}>Zadanie: {counter > TASKS_LIMIT ? TASKS_LIMIT : counter} / {TASKS_LIMIT}</Text>
-                            {message ? <Text style={[styles.result, correctInput ? styles.correctText : styles.errorText]}>{message}</Text> : null}
+                            {message ? <Text style={[styles.result, message.includes('Świetnie') ? styles.correctText : styles.errorText]}>{message}</Text> : null}
                         </Animated.View>
                     </View>
 

@@ -98,6 +98,13 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         'Ułamek jako wynik dzielenia':'FractionDivisionTrainer',
         'Dodawanie ułamków zwykłych': 'FractionsAdditionTrainer',
         'Odejmowanie ułamków zwykłych':'FractionSubtractionTrainer',
+        'Ułamki o mianownikach 10, 100, 1000, ...':'DecimalFractionTrainer',
+        'Zapisywanie wyrażeń dwumianowanych, cz. 1': 'TwoUnitExpressionsTrainer',
+        'Zapisywanie wyrażeń dwumianowanych, cz. 2':'UnitExpressionTrainer',
+        'Różne zapisy tego samego ułamka dziesiętnego':'DecimalConversionTrainer',
+        'Porównywanie ułamków dziesiętnych' :'DecimalComparisonTrainer',
+        'Dodawanie ułamków dziesiętnych': 'DecimalAdditionTrainer',
+        'Odejmowanie ułamków dziesiętnych':'DecimalSubtractionTrainer',
     } as const;
 
     const getTrainerScreen = (key: string) => trainerScreenMap[key as keyof typeof trainerScreenMap];

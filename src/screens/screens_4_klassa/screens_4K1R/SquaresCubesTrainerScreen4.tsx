@@ -20,7 +20,7 @@ import {
     InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native'; // DODANE
+import { useNavigation } from '@react-navigation/native';
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -32,22 +32,17 @@ const TASKS_LIMIT = 50;
 const { width: screenWidth } = Dimensions.get('window');
 const isSmallDevice = screenWidth < 380;
 
-// --- KOMPONENT BRUDNOPISU ---
+// --- KOMPONENT BRUDNOPISU (Bez zmian) ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
-
     const handleClear = () => { setPaths([]); setCurrentPath(''); };
-
     const onTouchMove = (evt: any) => {
         const { locationX, locationY } = evt.nativeEvent;
         if (!currentPath) setCurrentPath(`M${locationX},${locationY}`);
         else setCurrentPath(`${currentPath} L${locationX},${locationY}`);
     };
-
-    const onTouchEnd = () => {
-        if (currentPath) { setPaths([...paths, currentPath]); setCurrentPath(''); }
-    };
+    const onTouchEnd = () => { if (currentPath) { setPaths([...paths, currentPath]); setCurrentPath(''); } };
 
     return (
         <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
@@ -79,7 +74,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const SquaresCubesTrainerScreen4 = () => {
-    const navigation = useNavigation(); // DODANE
+    const navigation = useNavigation();
 
     // --- STATE LOGIC ---
     const [baseNumber, setBaseNumber] = useState<number>(0);
@@ -89,12 +84,13 @@ const SquaresCubesTrainerScreen4 = () => {
     // --- STATE UI & VALIDATION ---
     const [correctInput, setCorrectInput] = useState<boolean | null>(null);
     const [readyForNext, setReadyForNext] = useState<boolean>(false);
+    const [firstAttempt, setFirstAttempt] = useState<boolean>(true);
+    const [isFinished, setIsFinished] = useState(false);
+
     const [correctCount, setCorrectCount] = useState<number>(0);
     const [wrongCount, setWrongCount] = useState<number>(0);
     const [taskCount, setTaskCount] = useState<number>(0);
-    const [firstAttempt, setFirstAttempt] = useState<boolean>(true);
 
-    // --- NOWE STANY DLA RAPORTU ---
     const [showMilestone, setShowMilestone] = useState(false);
     const [sessionCorrect, setSessionCorrect] = useState(0);
 
@@ -114,15 +110,13 @@ const SquaresCubesTrainerScreen4 = () => {
     }, []);
 
     const nextTask = () => {
-        // Blokada raportu co 10 zadań
-        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
-            setShowMilestone(true);
+        if (taskCount >= TASKS_LIMIT) {
+            setIsFinished(true);
             return;
         }
 
-        if (taskCount >= TASKS_LIMIT) {
-            setMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
-            setReadyForNext(false);
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
             return;
         }
 
@@ -149,28 +143,36 @@ const SquaresCubesTrainerScreen4 = () => {
         backgroundColor.setValue(0);
     };
 
+    const handleRestart = () => {
+        setIsFinished(false);
+        setTaskCount(0);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setSessionCorrect(0);
+        nextTask();
+    };
+
     const toggleScratchpad = () => setShowScratchpad(prev => !prev);
     const toggleHint = () => setShowHint(prev => !prev);
 
     const handleCheck = () => {
+        if (!answer.trim()) {
+            setMessage('Wpisz wynik!');
+            return;
+        }
+
         Keyboard.dismiss();
 
         requestAnimationFrame(() => {
-            if (!answer) {
-                setMessage('Wpisz odpowiedź!');
-                return;
-            }
-
             const numAnswer = Number(answer.replace(',', '.'));
             const correctResult = Math.pow(baseNumber, power);
             const isCorrect = Math.abs(numAnswer - correctResult) < 1e-9;
 
-            setCorrectInput(isCorrect);
-
             if (isCorrect) {
+                setCorrectInput(true);
                 Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
                 setCorrectCount(prev => prev + 1);
-                setSessionCorrect(prev => prev + 1); // LICZNIK SERII
+                setSessionCorrect(prev => prev + 1);
                 setMessage('Świetnie! ✅');
                 setReadyForNext(true);
                 setShowHint(false);
@@ -184,28 +186,30 @@ const SquaresCubesTrainerScreen4 = () => {
                     }
                 });
             } else {
+                setCorrectInput(false);
                 Animated.sequence([
                     Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
                     Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
                 ]).start();
 
                 if (firstAttempt) {
-                    setMessage('Błąd! Spróbuj ponownie.');
+                    setMessage('Błąd! Spróbuj ponownie ✍️');
                     setAnswer('');
                     setFirstAttempt(false);
                 } else {
                     setMessage(`Błąd! Poprawnie: ${correctResult}`);
+                    setAnswer(correctResult.toString());
                     setReadyForNext(true);
-                }
 
-                setWrongCount(prev => prev + 1);
-                InteractionManager.runAfterInteractions(() => {
-                    const currentUser = auth().currentUser;
-                    if (currentUser) {
-                        firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
-                            .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-                    }
-                });
+                    setWrongCount(prev => prev + 1);
+                    InteractionManager.runAfterInteractions(() => {
+                        const currentUser = auth().currentUser;
+                        if (currentUser) {
+                            firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                                .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+                        }
+                    });
+                }
             }
         });
     };
@@ -256,39 +260,41 @@ const SquaresCubesTrainerScreen4 = () => {
 
                     <DrawingModal visible={showScratchpad} onClose={toggleScratchpad} problemText={problemString} />
 
-                    {/* MODAL RAPORTU CO 10 ZADAŃ */}
+                    {/* MODAL MILESTONE */}
                     <Modal visible={showMilestone} transparent={true} animationType="slide">
                         <View style={styles.modalOverlay}>
                             <View style={styles.milestoneCard}>
                                 <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
                                 <View style={styles.statsRow}>
                                     <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
-                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
-                                        Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
-                                    </Text>
                                 </View>
-                                <Text style={styles.suggestionText}>
-                                    {sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}
-                                </Text>
                                 <View style={styles.milestoneButtons}>
-                                    <TouchableOpacity
-                                        style={[styles.mButton, { backgroundColor: '#28a745' }]}
-                                        onPress={() => {
-                                            setShowMilestone(false);
-                                            setSessionCorrect(0);
-                                            nextTask();
-                                        }}
-                                    >
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}>
                                         <Text style={styles.mButtonText}>Kontynuuj</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.mButton, { backgroundColor: '#007AFF' }]}
-                                        onPress={() => {
-                                            setShowMilestone(false);
-                                            navigation.goBack();
-                                        }}
-                                    >
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}>
                                         <Text style={styles.mButtonText}>Inny temat</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    {/* MODAL FINALNY */}
+                    <Modal visible={isFinished} transparent={true} animationType="fade">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Trening ukończony! 🏆</Text>
+                                <Text style={styles.suggestionText}>Świetnie! Rozwiązałeś wszystkie {TASKS_LIMIT} zadań.</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Wynik: {correctCount} / {TASKS_LIMIT}</Text>
+                                </View>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={handleRestart}>
+                                        <Text style={styles.mButtonText}>Od nowa</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#dc3545' }]} onPress={() => { setIsFinished(false); navigation.goBack(); }}>
+                                        <Text style={styles.mButtonText}>Wyjdź</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -312,14 +318,14 @@ const SquaresCubesTrainerScreen4 = () => {
                                 style={getValidationStyle()}
                                 keyboardType="numeric"
                                 value={answer}
-                                onChangeText={setAnswer}
+                                onChangeText={(t) => {setAnswer(t); if (correctInput === false) setCorrectInput(null);}}
                                 placeholder="wynik"
                                 placeholderTextColor="#aaa"
                                 editable={!readyForNext}
                             />
 
                             <View style={styles.buttonContainer}>
-                                <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
+                                <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color={readyForNext ? "#28a745" : "#007AFF"} />
                             </View>
 
                             <Text style={styles.counterTextSmall}>
@@ -345,7 +351,8 @@ const SquaresCubesTrainerScreen4 = () => {
     );
 };
 
-// Styles
+
+
 const iconSize = screenWidth * 0.25;
 const inputWidth = isSmallDevice ? screenWidth * 0.5 : 220;
 const inputFontSize = 22;
@@ -353,52 +360,33 @@ const inputFontSize = 22;
 const styles = StyleSheet.create({
     keyboardContainer: { flex: 1, justifyContent: 'center' },
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 20 },
-
-    // Top Buttons
     topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
     iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
     buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255, 255, 255, 0.8)', textShadowRadius: 3 },
-
-    // Hint Box
     hintBox: {
         position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF'
     },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
     hintText: { fontSize: 16, color: '#333', lineHeight: 22, textAlign: 'center' },
-
-    // Card
     card: { width: '95%', maxWidth: 480, borderRadius: 20, padding: 20, alignItems: 'center', marginTop: 20, alignSelf: 'center' },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
-
-    // Headings & Math Display
     taskLabel: { fontSize: 18, fontWeight: '700', marginBottom: 15, color: '#007AFF', textAlign: 'center', textTransform: 'uppercase' },
-
     mathDisplay: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', marginBottom: 15 },
     baseText: { fontSize: 50, fontWeight: 'bold', color: '#333' },
     powerText: { fontSize: 26, fontWeight: 'bold', color: '#333', marginTop: 6 },
-
     subTitle: { fontSize: 16, marginBottom: 20, color: '#555', textAlign: 'center' },
-
-    // Inputs
     input: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#fafafa', marginBottom: 15, color: '#333' },
     correctFinal: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#28a745', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#d4edda', marginBottom: 15, color: '#155724' },
     errorFinal: { width: inputWidth, height: 56, borderWidth: 2, borderColor: '#dc3545', borderRadius: 10, textAlign: 'center', fontSize: inputFontSize, backgroundColor: '#f8d7da', marginBottom: 15, color: '#721c24' },
-
     buttonContainer: { marginTop: 10, width: '80%', borderRadius: 10, overflow: 'hidden' },
     result: { fontSize: 18, fontWeight: '700', marginTop: 20, textAlign: 'center' },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
-
-    // Counter
     counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
-
-    // Bottom Icons
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: iconSize, height: iconSize, resizeMode: 'contain', marginHorizontal: 10 },
     counterTextIcons: { fontSize: Math.max(14, iconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
-
-    // Modal
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
     drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
     drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, backgroundColor: '#f0f0f0', borderBottomWidth: 1, borderBottomColor: '#ccc' },
@@ -409,8 +397,6 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
-
-    // MILESTONE STYLES
     milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
     milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
     statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },

@@ -5,7 +5,7 @@ import {
     Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native'; // Dodane dla nawigacji
+import { useNavigation } from '@react-navigation/native';
 import { awardXpAndCoins } from '../../../services/xpService';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -23,6 +23,7 @@ const monthsInfo = [
     { n: 'październik', d: 31 }, { n: 'listopad', d: 30 }, { n: 'grudzień', d: 31 }
 ];
 
+// --- KOMPONENT BRUDNOPISU ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
@@ -56,7 +57,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const CalendarTrainer = () => {
-    const navigation = useNavigation(); // Dodane
+    const navigation = useNavigation();
     const [questionText, setQuestionText] = useState('');
     const [subQuestionText, setSubQuestionText] = useState('');
     const [correctAnswer, setCorrectAnswer] = useState('');
@@ -76,8 +77,8 @@ const CalendarTrainer = () => {
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
     const [isInputWrong, setIsInputWrong] = useState<boolean | null>(null);
 
-    // Nowe stany raportu
     const [showMilestone, setShowMilestone] = useState(false);
+    const [isFinished, setIsFinished] = useState(false); // Flaga końca
     const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const backgroundColor = useRef(new Animated.Value(0)).current;
@@ -150,68 +151,84 @@ const CalendarTrainer = () => {
     const handleCheck = (selectedVal?: string) => {
         const val = (selectedVal || userInput).trim().toLowerCase();
         if (selectedVal) setSelectedOption(selectedVal);
+
+        // Blokada pustego pola
         if (!val) { setMessage('Wpisz odpowiedź!'); return; }
 
         const isOk = val === correctAnswer.toLowerCase();
-        setIsInputWrong(!isOk);
 
         if (isOk) {
+            setIsInputWrong(false);
+            setIsCorrect(true);
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setCorrectCount(prev => prev + 1);
-            setSessionCorrect(prev => prev + 1); // Licznik serii
-            setMessage('Świetnie! ✅'); setReadyForNext(true);
-            setIsCorrect(true);
-            InteractionManager.runAfterInteractions(() => { awardXpAndCoins(5, 1);
+            setSessionCorrect(prev => prev + 1);
+            setMessage('Świetnie! ✅');
+            setReadyForNext(true);
+            InteractionManager.runAfterInteractions(() => {
+                awardXpAndCoins(5, 1);
                 const currentUser = auth().currentUser;
                 if (currentUser) {
-                    firestore()
-                        .collection('users')
-                        .doc(currentUser.uid)
-                        .collection('exerciseStats')
-                        .doc(EXERCISE_ID)
-                        .set({
-                            totalCorrect: firestore.FieldValue.increment(1)
-                        }, { merge: true })
-                        .catch(error => console.error("Błąd zapisu do bazy:", error));
+                    firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                        .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
                 }
             });
         } else {
-            Animated.timing(backgroundColor, { toValue: -1, duration: 500, useNativeDriver: false }).start();
-            InteractionManager.runAfterInteractions(() => {
-                const currentUser = auth().currentUser;
-                if (currentUser) {
-                    firestore()
-                        .collection('users')
-                        .doc(currentUser.uid)
-                        .collection('exerciseStats')
-                        .doc(EXERCISE_ID)
-                        .set({
-                            totalWrong: firestore.FieldValue.increment(1)
-                        }, { merge: true })
-                        .catch(error => console.error("Błąd zapisu błędnych:", error));
-                }
-            });
+            setIsInputWrong(true);
             setIsCorrect(false);
-            if (!selectedVal) setUserInput('');
-            if (firstAttempt) { setMessage('Błąd. Spróbuj jeszcze raz.'); setFirstAttempt(false); }
-            else { setMessage(`Poprawny wynik: ${correctAnswer}`); setReadyForNext(true); }
-            setWrongCount(prev => prev + 1);
+            Animated.sequence([
+                Animated.timing(backgroundColor, { toValue: -1, duration: 400, useNativeDriver: false }),
+                Animated.timing(backgroundColor, { toValue: 0, duration: 400, useNativeDriver: false }),
+            ]).start();
+
+            if (firstAttempt) {
+                setMessage('Błąd! Spróbuj jeszcze raz ✍️');
+                setFirstAttempt(false);
+                if (!selectedVal) setUserInput(''); // Czyścimy tylko tekstowe
+            } else {
+                setWrongCount(prev => prev + 1);
+                setMessage(`Błąd! Poprawna odpowiedź: ${correctAnswer}`);
+                if (!selectedVal) setUserInput(correctAnswer);
+                setReadyForNext(true);
+                InteractionManager.runAfterInteractions(() => {
+                    const currentUser = auth().currentUser;
+                    if (currentUser) {
+                        firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                            .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+                    }
+                });
+            }
         }
     };
 
     const nextTask = () => {
-        // Blokada raportu co 10 zadań
-        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+        if (taskCount >= TASKS_LIMIT) {
+            setIsFinished(true);
+            return;
+        }
+
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone && taskCount < TASKS_LIMIT) {
             setShowMilestone(true);
             return;
         }
 
-        if (taskCount >= TASKS_LIMIT) { setMessage('Koniec! 🏆'); return; }
         generateProblem();
-        setReadyForNext(false); setFirstAttempt(true); setShowHint(false); setTaskCount(prev => prev + 1);
+        setReadyForNext(false);
+        setFirstAttempt(true);
+        setShowHint(false);
+        setTaskCount(prev => prev + 1);
         backgroundColor.setValue(0);
         setIsCorrect(null);
         setSelectedOption(null);
+    };
+
+    const handleRestart = () => {
+        setIsFinished(false);
+        setTaskCount(0);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setSessionCorrect(0);
+        nextTask();
     };
 
     const bgInterpolation = backgroundColor.interpolate({ inputRange: [-1, 0, 1], outputRange: ['rgba(255,0,0,0.2)', 'rgba(255,255,255,0)', 'rgba(0,255,0,0.2)'] });
@@ -234,36 +251,35 @@ const CalendarTrainer = () => {
                     )}
                     <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={subQuestionText} />
 
-                    {/* MODAL MILESTONE */}
+                    {/* MODAL MILESTONE (CO 10) */}
                     <Modal visible={showMilestone} transparent={true} animationType="slide">
                         <View style={styles.modalOverlay}>
                             <View style={styles.milestoneCard}>
                                 <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
                                 <View style={styles.statsRow}>
                                     <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
-                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
-                                        Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
-                                    </Text>
+                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%</Text>
                                 </View>
-                                <Text style={styles.suggestionText}>
-                                    {sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}
-                                </Text>
                                 <View style={styles.milestoneButtons}>
-                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]}
-                                                      onPress={() => {
-                                                          setShowMilestone(false);
-                                                          setSessionCorrect(0);
-                                                          nextTask();
-                                                      }}>
-                                        <Text style={styles.mButtonText}>Kontynuuj</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]}
-                                                      onPress={() => {
-                                                          setShowMilestone(false);
-                                                          navigation.goBack();
-                                                      }}>
-                                        <Text style={styles.mButtonText}>Inny temat</Text>
-                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Inny temat</Text></TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    {/* MODAL FINALNY */}
+                    <Modal visible={isFinished} transparent={true} animationType="fade">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Gratulacje! 🏆</Text>
+                                <Text style={styles.suggestionText}>Ukończyłeś wszystkie zadania!</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Wynik: {correctCount} / {TASKS_LIMIT}</Text>
+                                </View>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={handleRestart}><Text style={styles.mButtonText}>Od nowa</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#dc3545' }]} onPress={() => { setIsFinished(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Wyjdź</Text></TouchableOpacity>
                                 </View>
                             </View>
                         </View>
@@ -293,13 +309,17 @@ const CalendarTrainer = () => {
                                 <View style={{ width: '100%', alignItems: 'center' }}>
                                     <TextInput
                                         style={[styles.finalInput, isCorrect === true && styles.correctFinal, isInputWrong && styles.errorFinal]}
-                                        keyboardType="numeric" value={userInput} onChangeText={setUserInput} editable={!readyForNext} placeholder="?"
+                                        keyboardType="numeric"
+                                        value={userInput}
+                                        onChangeText={(t) => { setUserInput(t); if(isInputWrong) setIsInputWrong(null); }}
+                                        editable={!readyForNext}
+                                        placeholder="?"
                                     />
                                 </View>
                             )}
 
                             {(options.length === 0 || readyForNext) && (
-                                <View style={styles.buttonContainer}><Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : () => handleCheck()} color="#007AFF" /></View>
+                                <View style={styles.buttonContainer}><Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : () => handleCheck()} color={readyForNext ? "#28a745" : "#007AFF"} /></View>
                             )}
 
                             <Text style={styles.counterTextSmall}>Zadanie: {taskCount} / {TASKS_LIMIT}</Text>
@@ -318,12 +338,14 @@ const CalendarTrainer = () => {
     );
 };
 
+
+
 const styles = StyleSheet.create({
     keyboardContainer: { flex: 1, justifyContent: 'center' },
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 20 },
     topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
-    iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
+    iconTop: { width: 70, height: 70, resizeMode: 'contain' },
     buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2 },
     hintBox: { position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
@@ -344,10 +366,10 @@ const styles = StyleSheet.create({
     result: { fontSize: 18, fontWeight: '700', marginTop: 15, textAlign: 'center' },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
-    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
+    counterTextSmall: { fontSize: 14, color: '#555', textAlign: 'center', marginTop: 10 },
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    counterTextIcons: { fontSize: Math.max(14, combinedIconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
+    counterTextIcons: { fontSize: 18, marginHorizontal: 8, color: '#333', fontWeight: 'bold' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
     drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
     drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, backgroundColor: '#f0f0f0', borderBottomWidth: 1, borderBottomColor: '#ccc' },
@@ -359,7 +381,6 @@ const styles = StyleSheet.create({
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
 
-    // MILESTONE STYLES
     milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
     milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
     statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },

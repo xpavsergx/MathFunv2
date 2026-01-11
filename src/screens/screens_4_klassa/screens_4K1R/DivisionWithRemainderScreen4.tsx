@@ -17,23 +17,23 @@ import {
     KeyboardAvoidingView,
     TouchableWithoutFeedback,
     ScrollView,
-    InteractionManager
+    InteractionManager,
+    NativeSyntheticEvent,
+    TextInputKeyPressEventData
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native'; // DODANE
-
-// --- INTEGRACJA Z FIREBASE ---
+import { useNavigation } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { awardXpAndCoins } from '../../../services/xpService';
 
 const EXERCISE_ID = "divisionWithRemainder";
-const TASKS_LIMIT = 50;
+const TASKS_LIMIT = 30; // Limit zadań
 
 const { width: screenWidth } = Dimensions.get('window');
 const isSmallDevice = screenWidth < 380;
 
-// --- KOMПОНЕНТ РИСОВАЛКИ (БРУДНОПИС) ---
+// --- BRUDNOPIS ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
@@ -80,7 +80,12 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const DivisionWithRemainderScreen = () => {
-    const navigation = useNavigation(); // DODANE
+    const navigation = useNavigation();
+
+    // --- REFS DLA INPUTÓW (DO PRZEŁĄCZANIA) ---
+    const quotientInputRef = useRef<TextInput>(null);
+    const remainderInputRef = useRef<TextInput>(null);
+
     // --- STATE ---
     const [dividend, setDividend] = useState<number>(0);
     const [divisor, setDivisor] = useState<number>(0);
@@ -97,8 +102,8 @@ const DivisionWithRemainderScreen = () => {
     const [taskCount, setTaskCount] = useState<number>(0);
     const [firstAttempt, setFirstAttempt] = useState<boolean>(true);
 
-    // --- NOWE STANY DLA RAPORTU ---
     const [showMilestone, setShowMilestone] = useState(false);
+    const [isFinished, setIsFinished] = useState(false);
     const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const [message, setMessage] = useState('');
@@ -111,23 +116,13 @@ const DivisionWithRemainderScreen = () => {
     useEffect(() => {
         const k1 = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
         const k2 = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
-        nextTask();
+
+        generateNewTask();
+
         return () => { k1.remove(); k2.remove(); };
     }, []);
 
-    const nextTask = () => {
-        // Blokada raportu co 10 zadań
-        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
-            setShowMilestone(true);
-            return;
-        }
-
-        if (taskCount >= TASKS_LIMIT) {
-            setMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
-            setReadyForNext(false);
-            return;
-        }
-
+    const generateNewTask = () => {
         const newDivisor = Math.floor(Math.random() * 9) + 2;
         const newDividend = Math.floor(Math.random() * 91) + 10;
 
@@ -143,6 +138,37 @@ const DivisionWithRemainderScreen = () => {
         setShowHint(false);
         setTaskCount(prev => prev + 1);
         backgroundColor.setValue(0);
+
+        // Opcjonalnie: ustaw fokus na pierwsze pole przy nowym zadaniu
+        // quotientInputRef.current?.focus();
+    };
+
+    const nextTask = () => {
+        if (taskCount >= TASKS_LIMIT) {
+            setIsFinished(true);
+            return;
+        }
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
+            return;
+        }
+        generateNewTask();
+    };
+
+    const handleContinueMilestone = () => {
+        setShowMilestone(false);
+        setSessionCorrect(0);
+        generateNewTask();
+    };
+
+    const handleRestart = () => {
+        setIsFinished(false);
+        setShowMilestone(false);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setSessionCorrect(0);
+        setTaskCount(0);
+        generateNewTask();
     };
 
     const toggleScratchpad = () => setShowScratchpad(prev => !prev);
@@ -173,7 +199,7 @@ const DivisionWithRemainderScreen = () => {
             if (isCorrect) {
                 Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
                 setCorrectCount(prev => prev + 1);
-                setSessionCorrect(prev => prev + 1); // Zwiększamy licznik serii
+                setSessionCorrect(prev => prev + 1);
                 setMessage('Świetnie! ✅');
                 setReadyForNext(true);
                 setShowHint(false);
@@ -212,6 +238,16 @@ const DivisionWithRemainderScreen = () => {
                 });
             }
         });
+    };
+
+    // --- OBSŁUGA KLAWISZY STRZAŁEK ---
+    const handleKeyPress = (e: NativeSyntheticEvent<TextInputKeyPressEventData>, currentField: 'quotient' | 'remainder') => {
+        if (e.nativeEvent.key === 'ArrowRight' && currentField === 'quotient') {
+            remainderInputRef.current?.focus();
+        }
+        if (e.nativeEvent.key === 'ArrowLeft' && currentField === 'remainder') {
+            quotientInputRef.current?.focus();
+        }
     };
 
     const getValidationStyle = (field: 'quotient' | 'remainder') => {
@@ -261,7 +297,6 @@ const DivisionWithRemainderScreen = () => {
 
                     <DrawingModal visible={showScratchpad} onClose={toggleScratchpad} problemText={problemString} />
 
-                    {/* MODAL PODSUMOWANIA CO 10 ZADAŃ */}
                     <Modal visible={showMilestone} transparent={true} animationType="slide">
                         <View style={styles.modalOverlay}>
                             <View style={styles.milestoneCard}>
@@ -278,24 +313,7 @@ const DivisionWithRemainderScreen = () => {
                                 <View style={styles.milestoneButtons}>
                                     <TouchableOpacity
                                         style={[styles.mButton, { backgroundColor: '#28a745' }]}
-                                        onPress={() => {
-                                            setShowMilestone(false);
-                                            setSessionCorrect(0);
-                                            // Bezpośrednie wywołanie nowej gry (zadanie 11, 21 itd)
-                                            const newDivisor = Math.floor(Math.random() * 9) + 2;
-                                            const newDividend = Math.floor(Math.random() * 91) + 10;
-                                            setDividend(newDividend);
-                                            setDivisor(newDivisor);
-                                            setQuotient('');
-                                            setRemainder('');
-                                            setMessage('');
-                                            setReadyForNext(false);
-                                            setFirstAttempt(true);
-                                            setCorrectQuotientInput(null);
-                                            setCorrectRemainderInput(null);
-                                            setTaskCount(prev => prev + 1);
-                                            backgroundColor.setValue(0);
-                                        }}
+                                        onPress={handleContinueMilestone}
                                     >
                                         <Text style={styles.mButtonText}>Kontynuuj</Text>
                                     </TouchableOpacity>
@@ -303,10 +321,44 @@ const DivisionWithRemainderScreen = () => {
                                         style={[styles.mButton, { backgroundColor: '#007AFF' }]}
                                         onPress={() => {
                                             setShowMilestone(false);
-                                            navigation.goBack(); // POWRÓT DO PODTEMATÓW
+                                            navigation.goBack();
                                         }}
                                     >
                                         <Text style={styles.mButtonText}>Inny temat</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    <Modal visible={isFinished} transparent={true} animationType="fade">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Gratulacje! 🏆</Text>
+                                <Text style={styles.suggestionText}>Ukończyłeś wszystkie zadania!</Text>
+
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Wynik końcowy:</Text>
+                                    <Text style={[styles.statsText, { fontSize: 24, color: '#28a745', marginTop: 5 }]}>
+                                        {correctCount} / {TASKS_LIMIT}
+                                    </Text>
+                                </View>
+
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#28a745' }]}
+                                        onPress={handleRestart}
+                                    >
+                                        <Text style={styles.mButtonText}>Zagraj jeszcze raz</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.mButton, { backgroundColor: '#dc3545' }]}
+                                        onPress={() => {
+                                            setIsFinished(false);
+                                            navigation.goBack();
+                                        }}
+                                    >
+                                        <Text style={styles.mButtonText}>Wyjdź</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -325,6 +377,7 @@ const DivisionWithRemainderScreen = () => {
                             <View style={styles.mathContainer}>
                                 <View style={styles.inputGroup}>
                                     <TextInput
+                                        ref={quotientInputRef} // Dodano Ref
                                         style={getValidationStyle('quotient')}
                                         keyboardType="numeric"
                                         value={quotient}
@@ -332,6 +385,10 @@ const DivisionWithRemainderScreen = () => {
                                         placeholder="wynik"
                                         placeholderTextColor="#aaa"
                                         editable={!readyForNext}
+                                        blurOnSubmit={false} // Nie ukrywaj klawiatury
+                                        returnKeyType="next" // Przycisk "Dalej" na klawiaturze
+                                        onSubmitEditing={() => remainderInputRef.current?.focus()} // Skok do następnego
+                                        onKeyPress={(e) => handleKeyPress(e, 'quotient')} // Obsługa strzałek
                                     />
                                     <Text style={styles.labelBottom}>wynik</Text>
                                 </View>
@@ -340,6 +397,7 @@ const DivisionWithRemainderScreen = () => {
 
                                 <View style={styles.inputGroup}>
                                     <TextInput
+                                        ref={remainderInputRef} // Dodano Ref
                                         style={getValidationStyle('remainder')}
                                         keyboardType="numeric"
                                         value={remainder}
@@ -347,6 +405,10 @@ const DivisionWithRemainderScreen = () => {
                                         placeholder="reszta"
                                         placeholderTextColor="#aaa"
                                         editable={!readyForNext}
+                                        blurOnSubmit={true}
+                                        returnKeyType="done" // Przycisk "Gotowe" na klawiaturze
+                                        onSubmitEditing={handleCheck} // Sprawdź wynik
+                                        onKeyPress={(e) => handleKeyPress(e, 'remainder')} // Obsługa strzałek
                                     />
                                     <Text style={styles.labelBottom}>reszta</Text>
                                 </View>
