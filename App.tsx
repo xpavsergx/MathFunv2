@@ -108,6 +108,14 @@ import FractionDivisionTrainer from "./src/screens/screens_4_klassa/screens_4K4R
 import FractionsAdditionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsAdditionTrainer"
 import FractionSubtractionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionSubtractionTrainer"
 
+// 🔥 TRENERZY Z ROZDZIAŁU 5 (UŁAMKI DZIESIĘTNE)
+import DecimalAdditionTrainer from './src/screens/screens_4_klassa/screens_4K5R/DecimalAdditionTrainer';
+import DecimalComparisonTrainer from './src/screens/screens_4_klassa/screens_4K5R/DecimalComparisonTrainer';
+import DecimalConversionTrainer from './src/screens/screens_4_klassa/screens_4K5R/DecimalConversionTrainer';
+import DecimalFractionTrainer from './src/screens/screens_4_klassa/screens_4K5R/DecimalFractionTrainer';
+import DecimalSubtractionTrainer from './src/screens/screens_4_klassa/screens_4K5R/DecimalSubtractionTrainer';
+import TwoUnitExpressionsTrainer from './src/screens/screens_4_klassa/screens_4K5R/TwoUnitExpressionsTrainer';
+import UnitExpressionTrainer from './src/screens/screens_4_klassa/screens_4K5R/UnitExpressionTrainer';
 // --- Nawigacja ---
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainAppStackParamList>();

@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     View, Text, StyleSheet, TextInput, Button, Keyboard, ImageBackground,
     Animated, StatusBar, Image, Dimensions, TouchableOpacity, Modal,
-    Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager
+    Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager,
+    useColorScheme
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native'; // Dodane dla nawigacji
+import { useNavigation } from '@react-navigation/native';
 import { awardXpAndCoins } from '../../../services/xpService';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -19,6 +20,18 @@ const combinedIconSize = screenWidth * 0.25;
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
+    const isDarkMode = useColorScheme() === 'dark';
+
+    const theme = {
+        bg: isDarkMode ? '#1E293B' : '#fff',
+        text: isDarkMode ? '#FFF' : '#333',
+        canvas: isDarkMode ? '#0F172A' : '#ffffff',
+        stroke: isDarkMode ? '#FFF' : '#000',
+        headerBg: isDarkMode ? '#334155' : '#f0f0f0',
+        border: isDarkMode ? '#475569' : '#ddd',
+        previewBg: isDarkMode ? '#1E293B' : '#eef6fc',
+    };
+
     const handleClear = () => { setPaths([]); setCurrentPath(''); };
     const onTouchMove = (evt: any) => {
         const { locationX, locationY } = evt.nativeEvent;
@@ -26,23 +39,24 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
         else setCurrentPath(`${currentPath} L${locationX},${locationY}`);
     };
     const onTouchEnd = () => { if (currentPath) { setPaths([...paths, currentPath]); setCurrentPath(''); } };
+
     return (
         <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
             <View style={styles.modalOverlay}>
-                <View style={styles.drawingContainer}>
-                    <View style={styles.drawingHeader}>
+                <View style={[styles.drawingContainer, { backgroundColor: theme.bg }]}>
+                    <View style={[styles.drawingHeader, { backgroundColor: theme.headerBg, borderBottomColor: theme.border }]}>
                         <TouchableOpacity onPress={handleClear} style={styles.headerButton}><Text style={styles.headerButtonText}>🗑️ Wyczyść</Text></TouchableOpacity>
-                        <Text style={styles.drawingTitle}>Brudnopis</Text>
+                        <Text style={[styles.drawingTitle, { color: theme.text }]}>Brudnopis</Text>
                         <TouchableOpacity onPress={onClose} style={styles.headerButton}><Text style={styles.headerButtonText}>❌ Zamknij</Text></TouchableOpacity>
                     </View>
-                    <View style={styles.problemPreviewContainer}>
-                        <Text style={styles.problemPreviewLabel}>Twoje obliczenia do zadania:</Text>
-                        <Text numberOfLines={2} style={styles.problemPreviewTextSmall}>{problemText}</Text>
+                    <View style={[styles.problemPreviewContainer, { backgroundColor: theme.previewBg, borderBottomColor: theme.border }]}>
+                        <Text style={[styles.problemPreviewLabel, { color: isDarkMode ? '#94A3B8' : '#666' }]}>Twoje obliczenia do zadania:</Text>
+                        <Text numberOfLines={2} style={[styles.problemPreviewTextSmall, { color: theme.text }]}>{problemText}</Text>
                     </View>
-                    <View style={styles.canvas} onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderGrant={(evt) => { const { locationX, locationY } = evt.nativeEvent; setCurrentPath(`M${locationX},${locationY}`); }} onResponderMove={onTouchMove} onResponderRelease={onTouchEnd}>
+                    <View style={[styles.canvas, { backgroundColor: theme.canvas }]} onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderGrant={(evt) => { const { locationX, locationY } = evt.nativeEvent; setCurrentPath(`M${locationX},${locationY}`); }} onResponderMove={onTouchMove} onResponderRelease={onTouchEnd}>
                         <Svg height="100%" width="100%">
-                            {paths.map((d, index) => (<Path key={index} d={d} stroke="#000" strokeWidth={3} fill="none" />))}
-                            <Path d={currentPath} stroke="#000" strokeWidth={3} fill="none" />
+                            {paths.map((d, index) => (<Path key={index} d={d} stroke={theme.stroke} strokeWidth={3} fill="none" />))}
+                            <Path d={currentPath} stroke={theme.stroke} strokeWidth={3} fill="none" />
                         </Svg>
                     </View>
                 </View>
@@ -53,30 +67,43 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 
 // --- GŁÓWNY KOMPONENT ---
 const WordProblemsTrainer = () => {
-    const navigation = useNavigation(); // Hook nawigacji
+    const navigation = useNavigation();
+    const isDarkMode = useColorScheme() === 'dark';
+
+    const theme = {
+        bgImage: require('../../../assets/background.jpg'),
+        bgOverlay: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'transparent',
+        cardOverlay: isDarkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255,255,255,0.92)',
+        textMain: isDarkMode ? '#FFFFFF' : '#333',
+        textSub: isDarkMode ? '#CBD5E1' : '#555',
+        questionBoxBg: isDarkMode ? '#0F172A' : '#f0f8ff',
+        questionBoxBorder: isDarkMode ? '#334155' : '#d0e8ff',
+        questionText: isDarkMode ? '#E2E8F0' : '#2c3e50',
+        inputBg: isDarkMode ? '#334155' : '#fff',
+        inputBorder: isDarkMode ? '#475569' : '#ccc',
+        inputText: isDarkMode ? '#FFFFFF' : '#007AFF',
+        topBtnText: isDarkMode ? '#FFFFFF' : '#007AFF',
+        modalContent: isDarkMode ? '#1E293B' : '#fff',
+        statsRow: isDarkMode ? '#0F172A' : '#f8f9fa',
+    };
+
     const [questionText, setQuestionText] = useState('');
     const [correctAnswer, setCorrectAnswer] = useState<number>(0);
     const [unit, setUnit] = useState('');
     const [currentHint, setCurrentHint] = useState('');
-
     const [userAnswer, setUserAnswer] = useState('');
     const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
     const [readyForNext, setReadyForNext] = useState<boolean>(false);
     const [attempts, setAttempts] = useState(0);
-
     const [correctCount, setCorrectCount] = useState(0);
     const [wrongCount, setWrongCount] = useState(0);
     const [taskCount, setTaskCount] = useState(0);
     const [message, setMessage] = useState('');
-
-    // Nowe stany raportu (Milestone)
     const [showMilestone, setShowMilestone] = useState(false);
     const [sessionCorrect, setSessionCorrect] = useState(0);
-
     const [showScratchpad, setShowScratchpad] = useState(false);
     const [showHint, setShowHint] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-
     const backgroundColor = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -87,14 +114,7 @@ const WordProblemsTrainer = () => {
     }, []);
 
     const generateProblem = () => {
-        setMessage('');
-        setIsCorrect(null);
-        setReadyForNext(false);
-        setUserAnswer('');
-        setShowHint(false);
-        setAttempts(0);
-        backgroundColor.setValue(0);
-
+        setMessage(''); setIsCorrect(null); setReadyForNext(false); setUserAnswer(''); setShowHint(false); setAttempts(0); backgroundColor.setValue(0);
         const type = Math.floor(Math.random() * 13);
         let q = ""; let ans = 0; let u = ""; let h = "";
         const rnd = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
@@ -185,7 +205,6 @@ const WordProblemsTrainer = () => {
                 ans = 10; q = "Ile to 5 + 5?"; u = ""; h = "Dodaj.";
                 break;
         }
-
         setQuestionText(q); setCorrectAnswer(ans); setUnit(u); setCurrentHint(h);
     };
 
@@ -198,11 +217,7 @@ const WordProblemsTrainer = () => {
 
         if (userVal === correctAnswer) {
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
-            setCorrectCount(c => c + 1);
-            setSessionCorrect(s => s + 1);
-            setMessage('Doskonale! ✅');
-            setReadyForNext(true);
-            setIsCorrect(true);
+            setCorrectCount(c => c + 1); setSessionCorrect(s => s + 1); setMessage('Doskonale! ✅'); setReadyForNext(true); setIsCorrect(true);
             InteractionManager.runAfterInteractions(() => awardXpAndCoins(10, 2));
             const currentUser = auth().currentUser;
             if (currentUser) {
@@ -213,8 +228,7 @@ const WordProblemsTrainer = () => {
             const nextAttempt = attempts + 1;
             setAttempts(nextAttempt);
             if (nextAttempt < 2) {
-                setIsCorrect(false);
-                setMessage('Błędny wynik. Spróbuj jeszcze raz! ❌');
+                setIsCorrect(false); setMessage('Błędny wynik. Spróbuj jeszcze raz! ❌');
                 Animated.sequence([
                     Animated.timing(backgroundColor, { toValue: -1, duration: 500, useNativeDriver: false }),
                     Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false })
@@ -223,9 +237,7 @@ const WordProblemsTrainer = () => {
             } else {
                 Animated.timing(backgroundColor, { toValue: -1, duration: 500, useNativeDriver: false }).start();
                 setMessage(`Niestety źle. Poprawny wynik to: ${correctAnswer} ${unit}`);
-                setWrongCount(w => w + 1);
-                setReadyForNext(true);
-                setIsCorrect(false);
+                setWrongCount(w => w + 1); setReadyForNext(true); setIsCorrect(false);
                 const currentUser = auth().currentUser;
                 if (currentUser) {
                     firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
@@ -236,13 +248,9 @@ const WordProblemsTrainer = () => {
     };
 
     const nextTask = () => {
-        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
-            setShowMilestone(true);
-            return;
-        }
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) { setShowMilestone(true); return; }
         if (taskCount >= TASKS_LIMIT) { setMessage('Koniec treningu! 🏆'); return; }
-        setTaskCount(t => t + 1);
-        generateProblem();
+        setTaskCount(t => t + 1); generateProblem();
     };
 
     const bgInterpolation = backgroundColor.interpolate({
@@ -253,8 +261,10 @@ const WordProblemsTrainer = () => {
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles.container}>
-                <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-                <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                <StatusBar translucent backgroundColor="transparent" barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+                <ImageBackground source={theme.bgImage} style={StyleSheet.absoluteFillObject} resizeMode="cover">
+                    <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.bgOverlay }]} pointerEvents="none" />
+                </ImageBackground>
                 <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: bgInterpolation }]} pointerEvents="none" />
 
                 <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardContainer}>
@@ -262,36 +272,35 @@ const WordProblemsTrainer = () => {
                         <View style={styles.topButtons}>
                             <TouchableOpacity onPress={() => setShowScratchpad(true)} style={styles.topBtnItem}>
                                 <Image source={require('../../../assets/pencil.png')} style={styles.iconTop} />
-                                <Text style={styles.buttonLabel}>Brudnopis</Text>
+                                <Text style={[styles.buttonLabel, { color: theme.topBtnText }]}>Brudnopis</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => setShowHint(!showHint)} style={styles.topBtnItem}>
                                 <Image source={require('../../../assets/question.png')} style={styles.iconTop} />
-                                <Text style={styles.buttonLabel}>Pomoc</Text>
+                                <Text style={[styles.buttonLabel, { color: theme.topBtnText }]}>Pomoc</Text>
                             </TouchableOpacity>
                         </View>
                     )}
 
                     {showHint && !isKeyboardVisible && (
-                        <View style={styles.hintBox}>
+                        <View style={[styles.hintBox, { backgroundColor: theme.modalContent }]}>
                             <Text style={styles.hintTitle}>Jak to policzyć?</Text>
-                            <Text style={styles.hintText}>{currentHint}</Text>
+                            <Text style={[styles.hintText, { color: theme.textMain }]}>{currentHint}</Text>
                         </View>
                     )}
 
                     <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={questionText} />
 
-                    {/* MODAL RAPORTU CO 10 ZADAŃ */}
                     <Modal visible={showMilestone} transparent={true} animationType="slide">
                         <View style={styles.modalOverlay}>
-                            <View style={styles.milestoneCard}>
-                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
-                                <View style={styles.statsRow}>
-                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                            <View style={[styles.milestoneCard, { backgroundColor: theme.modalContent }]}>
+                                <Text style={[styles.milestoneTitle, { color: theme.textMain }]}>Podsumowanie serii 📊</Text>
+                                <View style={[styles.statsRow, { backgroundColor: theme.statsRow }]}>
+                                    <Text style={[styles.statsText, { color: theme.textMain }]}>Poprawne: {sessionCorrect} / 10</Text>
                                     <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
                                         Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
                                     </Text>
                                 </View>
-                                <Text style={styles.suggestionText}>
+                                <Text style={[styles.suggestionText, { color: theme.textSub }]}>
                                     {sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}
                                 </Text>
                                 <View style={styles.milestoneButtons}>
@@ -310,24 +319,31 @@ const WordProblemsTrainer = () => {
 
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
-                            <View style={styles.overlayBackground} />
-                            <Text style={styles.headerTitle}>Zadanie z treścią</Text>
-                            <View style={styles.questionBox}><Text style={styles.questionText}>{questionText}</Text></View>
+                            <View style={[styles.overlayBackground, { backgroundColor: theme.cardOverlay }]} />
+                            <Text style={[styles.headerTitle, { color: theme.textMain }]}>Zadanie z treścią</Text>
+                            <View style={[styles.questionBox, { backgroundColor: theme.questionBoxBg, borderColor: theme.questionBoxBorder }]}>
+                                <Text style={[styles.questionText, { color: theme.questionText }]}>{questionText}</Text>
+                            </View>
                             <View style={styles.answerSection}>
-                                <Text style={styles.answerLabel}>Odpowiedź:</Text>
+                                <Text style={[styles.answerLabel, { color: theme.textSub }]}>Odpowiedź:</Text>
                                 <View style={styles.inputWrapper}>
                                     <TextInput
-                                        style={[styles.mainInput, isCorrect === true && styles.inputCorrect, isCorrect === false && styles.inputError]}
+                                        style={[
+                                            styles.mainInput,
+                                            { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.inputText },
+                                            isCorrect === true && styles.inputCorrect,
+                                            isCorrect === false && styles.inputError
+                                        ]}
                                         keyboardType="numeric" placeholder="?" placeholderTextColor="#ccc"
                                         value={userAnswer} onChangeText={setUserAnswer} editable={!readyForNext}
                                     />
-                                    <Text style={styles.unitText}>{unit}</Text>
+                                    <Text style={[styles.unitText, { color: theme.textSub }]}>{unit}</Text>
                                 </View>
                             </View>
                             <View style={styles.buttonContainer}>
                                 <Button title={readyForNext ? 'Następne zadanie' : 'Sprawdź wynik'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
                             </View>
-                            <Text style={styles.counterTextSmall}>Zadanie: {taskCount} / {TASKS_LIMIT}</Text>
+                            <Text style={[styles.counterTextSmall, { color: theme.textSub }]}>Zadanie: {taskCount} / {TASKS_LIMIT}</Text>
                             {message ? <Text style={[styles.result, message.includes('Doskonale') ? styles.correctText : styles.errorText]}>{message}</Text> : null}
                         </View>
                     </ScrollView>
@@ -335,9 +351,9 @@ const WordProblemsTrainer = () => {
                     {!isKeyboardVisible && (
                         <View style={styles.iconsBottom}>
                             <Image source={require('../../../assets/happy.png')} style={styles.iconSame} />
-                            <Text style={styles.counterTextIcons}>{correctCount}</Text>
+                            <Text style={[styles.counterTextIcons, { color: theme.textMain }]}>{correctCount}</Text>
                             <Image source={require('../../../assets/sad.png')} style={styles.iconSame} />
-                            <Text style={styles.counterTextIcons}>{wrongCount}</Text>
+                            <Text style={[styles.counterTextIcons, { color: theme.textMain }]}>{wrongCount}</Text>
                         </View>
                     )}
                 </KeyboardAvoidingView>
@@ -352,48 +368,46 @@ const styles = StyleSheet.create({
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 20 },
     topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
-    iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
-    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255,255,255,0.8)', textShadowRadius: 3 },
-    hintBox: { position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, width: 280, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
+    iconTop: { width: 70, height: 70, resizeMode: 'contain' },
+    buttonLabel: { fontSize: 14, fontWeight: 'bold', marginTop: 2 },
+    hintBox: { position: 'absolute', top: 120, right: 20, padding: 15, borderRadius: 15, width: 280, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5 },
-    hintText: { fontSize: 14, color: '#333', lineHeight: 20 },
-    card: { width: '90%', maxWidth: 500, borderRadius: 25, padding: 25, marginTop: 0, alignItems: 'center', alignSelf: 'center', shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 },
-    overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 25 },
-    headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#333', marginBottom: 20, textAlign: 'center' },
-    questionBox: { width: '100%', backgroundColor: '#f0f8ff', padding: 20, borderRadius: 15, borderWidth: 1, borderColor: '#d0e8ff', marginBottom: 25 },
-    questionText: { fontSize: 22, fontWeight: '500', color: '#2c3e50', lineHeight: 32, textAlign: 'center' },
+    hintText: { fontSize: 14, lineHeight: 20 },
+    card: { width: '90%', maxWidth: 500, borderRadius: 25, padding: 25, alignItems: 'center', alignSelf: 'center', elevation: 4 },
+    overlayBackground: { ...StyleSheet.absoluteFillObject, borderRadius: 25 },
+    headerTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
+    questionBox: { width: '100%', padding: 20, borderRadius: 15, borderWidth: 1, marginBottom: 25 },
+    questionText: { fontSize: 20, fontWeight: '500', lineHeight: 30, textAlign: 'center' },
     answerSection: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 15 },
-    answerLabel: { fontSize: 20, fontWeight: '600', color: '#555', marginRight: 15 },
+    answerLabel: { fontSize: 20, fontWeight: '600', marginRight: 15 },
     inputWrapper: { flexDirection: 'row', alignItems: 'center' },
-    mainInput: { width: 110, height: 55, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, backgroundColor: '#fff', fontSize: 28, fontWeight: 'bold', textAlign: 'center', color: '#007AFF', marginRight: 10 },
+    mainInput: { width: 110, height: 55, borderWidth: 2, borderRadius: 10, fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginRight: 10 },
     inputCorrect: { borderColor: '#28a745', backgroundColor: '#e8f5e9', color: '#28a745' },
     inputError: { borderColor: '#dc3545', backgroundColor: '#fbe9eb', color: '#dc3545' },
-    unitText: { fontSize: 22, fontWeight: 'bold', color: '#777' },
+    unitText: { fontSize: 22, fontWeight: 'bold' },
     buttonContainer: { marginTop: 25, width: '90%', borderRadius: 12, overflow: 'hidden' },
     result: { fontSize: 18, fontWeight: '700', marginTop: 15, textAlign: 'center' },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
-    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 15 },
+    counterTextSmall: { fontSize: 14, fontWeight: '400', textAlign: 'center', marginTop: 15 },
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    counterTextIcons: { fontSize: Math.max(14, combinedIconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
+    counterTextIcons: { fontSize: 22, marginHorizontal: 8, fontWeight: 'bold' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' },
-    drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
-    drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, backgroundColor: '#f0f0f0', borderBottomWidth: 1, borderBottomColor: '#ddd' },
-    drawingTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+    drawingContainer: { width: '95%', height: '85%', borderRadius: 20, overflow: 'hidden' },
+    drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, borderBottomWidth: 1 },
+    drawingTitle: { fontSize: 18, fontWeight: 'bold' },
     headerButton: { padding: 10 },
     headerButtonText: { fontSize: 16, color: '#007AFF', fontWeight: '600' },
-    problemPreviewContainer: { backgroundColor: '#eef6fc', padding: 10, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#ddd' },
-    problemPreviewLabel: { fontSize: 12, color: '#666', marginBottom: 2 },
-    problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#222', textAlign: 'center' },
-    canvas: { flex: 1, backgroundColor: '#fff' },
-
-    // MILESTONE STYLES
-    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
-    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
-    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
-    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
-    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    problemPreviewContainer: { padding: 10, alignItems: 'center', borderBottomWidth: 1 },
+    problemPreviewLabel: { fontSize: 12, marginBottom: 2 },
+    problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', textAlign: 'center' },
+    canvas: { flex: 1 },
+    milestoneCard: { width: '90%', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, textAlign: 'center', marginVertical: 20, lineHeight: 22 },
     milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
     mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
     mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
