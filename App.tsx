@@ -312,7 +312,7 @@ function GamesStackNavigator() {
     return (
         <GamesStackNav.Navigator>
             <GamesStackNav.Screen name="GamesMain" component={GamesScreen} options={{
-                title: 'Dane użytkownika',
+                title: 'Gry',
                 headerStyle: {
                     backgroundColor: '#FFD600', // To dodało ten turkusowy kolor
                 },

@@ -135,9 +135,12 @@ function TestScreen({ route, navigation }: TestScreenProps) {
                             for (let k in obj) if (typeof obj[k] === 'object' && k !== 'questions') find(obj[k]);
                         };
                         find(data);
-                        loaded = allQ.sort(() => 0.5 - Math.random()).slice(0, subTopic === 'Sprawdzian końcowy' ? 30 : 10);
+                        // TU ZMIANA: Usunęliśmy 30, daliśmy sztywne 10
+                        loaded = allQ.sort(() => 0.5 - Math.random()).slice(0, 10);
                     } else {
-                        loaded = data?.[subTopic]?.questions || [];
+                        // TU ZMIANA: Dodaliśmy mieszanie i ograniczenie do 10 dla zwykłych tematów
+                        const rawQuestions = data?.[subTopic]?.questions || [];
+                        loaded = rawQuestions.sort(() => 0.5 - Math.random()).slice(0, 10);
                     }
                 }
                 setQuestions(loaded);

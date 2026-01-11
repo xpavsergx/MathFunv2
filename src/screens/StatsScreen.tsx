@@ -52,6 +52,8 @@ const StatsScreen = () => {
             .onSnapshot(doc => {
                 if (doc && doc.exists) {
                     const d = doc.data() || {};
+                    const activityValues = Object.values(d.dailyActivity || {}) as number[];
+                    const totalFromActivity = activityValues.reduce((a, b) => a + b, 0);
                     const days = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb'];
                     const today = new Date();
                     const history = [];
@@ -82,7 +84,7 @@ const StatsScreen = () => {
                         // Synchronizacja pól z obiektem 'stats' w bazie
                         totalQuestions: d.stats?.totalQuestionsSolved || 0,
                         correctAnswers: d.stats?.correctAnswersTotal || 0,
-                        testsCompleted: d.stats?.testsCompleted || 0,
+                        testsCompleted: totalFromActivity,
                         duelsPlayed: d.stats?.duelsPlayed || 0,
                         duelsWon: d.stats?.duelsWon || 0,
                         duelsLost: d.stats?.duelsLost || 0,
@@ -125,6 +127,10 @@ const StatsScreen = () => {
                         <Text style={styles.coinHeaderText}>{stats.coins} monet</Text>
                     </View>
                 </View>
+                <Image
+                    source={require('../assets/fox_mascot.png')} // Sprawdź czy ścieżka jest poprawna!
+                    style={styles.mascotHeader}
+                />
             </View>
 
             <View style={styles.gridContainer}>
@@ -135,7 +141,7 @@ const StatsScreen = () => {
 
             <View style={styles.chartsRow}>
                 <View style={[styles.chartCard, themeStyles.card]}>
-                    <Text style={[styles.cardTitle, themeStyles.text]}>Skuteczność</Text>
+                    <Text style={[styles.cardTitle, themeStyles.text]}>Skuteczność (Testy)</Text>
                     <PieChart
                         data={[{ value: accuracy, color: primaryTurquoise }, { value: 100 - accuracy, color: isDarkMode ? '#3A3A3C' : '#EEEEEE' }]}
                         donut radius={scale(40)} innerRadius={scale(32)}
@@ -208,7 +214,14 @@ const styles = StyleSheet.create({
     welcomeText: { fontSize: scale(18), fontWeight: 'bold' },
     coinHeaderBox: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: scale(8), paddingVertical: scale(4), borderRadius: scale(8), marginTop: scale(5) },
     coinHeaderText: { fontSize: scale(12), fontWeight: 'bold', color: '#FF9800', marginLeft: scale(4) },
-    mascotHeader: { width: scale(50), height: scale(50), resizeMode: 'contain' },
+    mascotHeader: {
+        width: scale(85),   // Zwiększono z 50 na 85
+        height: scale(85),  // Zwiększono z 50 na 85
+        resizeMode: 'contain',
+        position: 'absolute', // Dodaj to, żeby zwierzak mógł lekko "wystawać" i nie przesuwać tekstu
+        right: scale(10),     // Odstęp od prawej krawędzi karty
+        bottom: scale(5),     // Ustawienie na dole karty
+    },
     gridContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: scale(15) },
     miniCard: { width: '31%', alignItems: 'center', padding: scale(10), borderRadius: scale(15), elevation: 2 },
     iconBox: { width: scale(32), height: scale(32), borderRadius: scale(16), justifyContent: 'center', alignItems: 'center', marginBottom: scale(5) },
