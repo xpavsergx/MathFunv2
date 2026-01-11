@@ -35,7 +35,6 @@ const rnd = (min: number, max: number) => Math.floor(Math.random() * (max - min 
 // --- GENERACJA ZADAŃ ---
 const generateTask = () => {
     const type = rnd(1, 8);
-
     switch (type) {
         case 1: {
             const total = rnd(120, 250);
@@ -101,7 +100,7 @@ const generateTask = () => {
             return {
                 text: `Jeden bus zabiera na wycieczkę ${capacity} osób. Ile busów trzeba zamówić, aby przewieźć ${people} uczniów?`,
                 answer: buses,
-                hint: `Podziel liczbę uczniów przez miejsca w busie. Jeśli zostanie reszta, potrzebny jest jeszcze jeden bus (zaokrąglij w górę).`
+                hint: `Podziel liczbę uczniów przez miejsca w busie. Jeśli zostanie reszta, potrzebny jest jeszcze jeden bus.`
             };
         }
         case 8: {
@@ -118,6 +117,7 @@ const generateTask = () => {
     }
 };
 
+// --- KOMPONENT BRUDNOPISU ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
@@ -163,11 +163,15 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 
 const WordProblemsLevel1Screen4 = () => {
     const navigation = useNavigation();
+    const inputRef = useRef<TextInput>(null);
+
     const [taskData, setTaskData] = useState<{text: string, answer: number, hint: string}>({ text: '', answer: 0, hint: '' });
     const [userAnswer, setUserAnswer] = useState('');
     const [firstAttempt, setFirstAttempt] = useState(true);
     const [correctInput, setCorrectInput] = useState<boolean | null>(null);
     const [readyForNext, setReadyForNext] = useState(false);
+    const [isFinished, setIsFinished] = useState(false);
+
     const [counter, setCounter] = useState(0);
     const [correctCount, setCorrectCount] = useState(0);
     const [wrongCount, setWrongCount] = useState(0);
@@ -176,7 +180,6 @@ const WordProblemsLevel1Screen4 = () => {
     const [showScratchpad, setShowScratchpad] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
-    // --- NOWE STANY DLA RAPORTU ---
     const [showMilestone, setShowMilestone] = useState(false);
     const [sessionCorrect, setSessionCorrect] = useState(0);
 
@@ -190,17 +193,16 @@ const WordProblemsLevel1Screen4 = () => {
     }, []);
 
     const nextTask = () => {
-        // Blokada co 10 zadań
-        if (counter > 0 && counter % 10 === 0 && !showMilestone) {
+        if (counter >= TASKS_LIMIT) {
+            setIsFinished(true);
+            return;
+        }
+
+        if (counter > 0 && counter % 10 === 0 && !showMilestone && counter < TASKS_LIMIT) {
             setShowMilestone(true);
             return;
         }
 
-        if (counter >= TASKS_LIMIT) {
-            setMessage(`Gratulacje! 🎉 Rozwiązano ${TASKS_LIMIT} zadań!`);
-            setReadyForNext(false);
-            return;
-        }
         const t = generateTask();
         setTaskData(t);
         setUserAnswer('');
@@ -211,16 +213,27 @@ const WordProblemsLevel1Screen4 = () => {
         setShowHint(false);
         setCounter(prev => prev + 1);
         backgroundColor.setValue(0);
+        setTimeout(() => inputRef.current?.focus(), 100);
     };
 
-    const toggleHint = () => setShowHint(prev => !prev);
-    const toggleScratchpad = () => setShowScratchpad(prev => !prev);
+    const handleRestart = () => {
+        setIsFinished(false);
+        setCounter(0);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setSessionCorrect(0);
+        nextTask();
+    };
 
     const handleCheck = () => {
+        if (!userAnswer.trim()) {
+            setMessage('Wpisz odpowiedź!');
+            return;
+        }
         Keyboard.dismiss();
+
         requestAnimationFrame(() => {
-            if (!userAnswer) { setMessage('Wpisz odpowiedź!'); return; }
-            const numAnswer = Number(userAnswer);
+            const numAnswer = Number(userAnswer.replace(',', '.'));
             const isCorrect = Math.abs(numAnswer - taskData.answer) < 0.01;
 
             const currentUser = auth().currentUser;
@@ -237,25 +250,30 @@ const WordProblemsLevel1Screen4 = () => {
                 awardXpAndCoins(5, 1);
                 setReadyForNext(true);
             } else {
-                setWrongCount(prev => prev + 1);
-                statsDocRef?.set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-
+                setCorrectInput(false);
                 Animated.sequence([
                     Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
                     Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
                 ]).start();
 
                 if (firstAttempt) {
-                    setMessage('Błąd! Spróbuj jeszcze raz.');
+                    setMessage('Błąd! Spróbuj jeszcze raz ✍️');
                     setUserAnswer('');
                     setFirstAttempt(false);
                 } else {
+                    setWrongCount(prev => prev + 1);
+                    statsDocRef?.set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
                     setMessage(`Błąd! Poprawna odpowiedź: ${taskData.answer}`);
+                    setUserAnswer(taskData.answer.toString());
                     setReadyForNext(true);
                 }
-                setCorrectInput(false);
             }
         });
+    };
+
+    const handleTextChange = (text: string) => {
+        setUserAnswer(text);
+        if (correctInput === false) setCorrectInput(null);
     };
 
     const getValidationStyle = () => correctInput === null ? styles.input : correctInput ? styles.correctFinal : styles.errorFinal;
@@ -271,12 +289,12 @@ const WordProblemsLevel1Screen4 = () => {
                 <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardContainer}>
                     {!isKeyboardVisible && (
                         <View style={styles.topButtons}>
-                            <TouchableOpacity onPress={toggleScratchpad} style={{ marginRight: 20, alignItems: 'center' }}>
+                            <TouchableOpacity onPress={() => setShowScratchpad(true)} style={{ marginRight: 20, alignItems: 'center' }}>
                                 <Image source={require('../../../assets/pencil.png')} style={styles.iconTop} />
                                 <Text style={styles.buttonLabel}>Brudnopis</Text>
                             </TouchableOpacity>
                             <View style={{ alignItems: 'center' }}>
-                                <TouchableOpacity onPress={toggleHint}>
+                                <TouchableOpacity onPress={() => setShowHint(prev => !prev)}>
                                     <Image source={require('../../../assets/question.png')} style={styles.iconTop} />
                                 </TouchableOpacity>
                                 <Text style={styles.buttonLabel}>Pomoc</Text>
@@ -291,21 +309,16 @@ const WordProblemsLevel1Screen4 = () => {
                         </View>
                     )}
 
-                    <DrawingModal visible={showScratchpad} onClose={toggleScratchpad} problemText={taskData.text} />
+                    <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={taskData.text} />
 
+                    {/* MODAL SERII */}
                     <Modal visible={showMilestone} transparent={true} animationType="slide">
                         <View style={styles.modalOverlay}>
                             <View style={styles.milestoneCard}>
                                 <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
                                 <View style={styles.statsRow}>
                                     <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
-                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
-                                        Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
-                                    </Text>
                                 </View>
-                                <Text style={styles.suggestionText}>
-                                    {sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}
-                                </Text>
                                 <View style={styles.milestoneButtons}>
                                     <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]}
                                                       onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}>
@@ -313,7 +326,28 @@ const WordProblemsLevel1Screen4 = () => {
                                     </TouchableOpacity>
                                     <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]}
                                                       onPress={() => { setShowMilestone(false); navigation.goBack(); }}>
-                                        <Text style={styles.mButtonText}>Inny temat</Text>
+                                        <Text style={styles.mButtonText}>Wyjdź</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    {/* MODAL KOŃCOWY */}
+                    <Modal visible={isFinished} transparent={true} animationType="fade">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Trening ukończony! 🏆</Text>
+                                <Text style={styles.suggestionText}>Rozwiązałeś wszystkie zadania.</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Wynik: {correctCount} / {TASKS_LIMIT}</Text>
+                                </View>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={handleRestart}>
+                                        <Text style={styles.mButtonText}>Od nowa</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#dc3545' }]} onPress={() => { setIsFinished(false); navigation.goBack(); }}>
+                                        <Text style={styles.mButtonText}>Wyjdź</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -321,17 +355,32 @@ const WordProblemsLevel1Screen4 = () => {
                     </Modal>
 
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
-                        <Animated.View style={[styles.card, { backgroundColor: 'transparent' }]}>
+                        <View style={styles.card}>
                             <View style={styles.overlayBackground} />
                             <Text style={styles.taskLabel}>Treść zadania:</Text>
                             <Text style={styles.taskText}>{taskData.text}</Text>
-                            <TextInput style={[getValidationStyle(), styles.finalInput]} keyboardType="numeric" value={userAnswer} onChangeText={setUserAnswer} placeholder="Twój wynik" placeholderTextColor="#aaa" editable={!readyForNext} />
+                            <TextInput
+                                ref={inputRef}
+                                style={[getValidationStyle(), styles.finalInput]}
+                                keyboardType="numeric"
+                                value={userAnswer}
+                                onChangeText={handleTextChange}
+                                placeholder="Twój wynik"
+                                placeholderTextColor="#aaa"
+                                editable={!readyForNext}
+                                onSubmitEditing={readyForNext ? nextTask : handleCheck}
+                            />
                             <View style={styles.buttonContainer}>
-                                <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
+                                <TouchableOpacity
+                                    style={[styles.customBtn, { backgroundColor: readyForNext ? '#28a745' : '#007AFF' }]}
+                                    onPress={readyForNext ? nextTask : handleCheck}
+                                >
+                                    <Text style={styles.customBtnText}>{readyForNext ? 'Dalej' : 'Sprawdź'}</Text>
+                                </TouchableOpacity>
                             </View>
-                            <Text style={styles.counterTextSmall}>Zadanie: {counter > TASKS_LIMIT ? TASKS_LIMIT : counter} / {TASKS_LIMIT}</Text>
+                            <Text style={styles.counterTextSmall}>Zadanie: {counter} / {TASKS_LIMIT}</Text>
                             {message ? <Text style={[styles.result, correctInput ? styles.correctText : styles.errorText]}>{message}</Text> : null}
-                        </Animated.View>
+                        </View>
                     </ScrollView>
 
                     {!isKeyboardVisible && (
@@ -354,25 +403,27 @@ const styles = StyleSheet.create({
     keyboardContainer: { flex: 1, justifyContent: 'center' },
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 40 },
     topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
-    iconTop: { width: 80, height: 80, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
-    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255, 255, 255, 0.8)', textShadowRadius: 3 },
-    hintBox: { position: 'absolute', top: 130, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 15, maxWidth: 280, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
+    iconTop: { width: 80, height: 80, resizeMode: 'contain' },
+    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2 },
+    hintBox: { position: 'absolute', top: 130, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 280, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
     hintText: { fontSize: 16, color: '#333', lineHeight: 22 },
     card: { width: '100%', maxWidth: 450, borderRadius: 20, padding: 30, alignItems: 'center' },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
-    taskLabel: { fontSize: 18, fontWeight: '700', marginBottom: 5, color: '#007AFF', textAlign: 'center', textTransform: 'uppercase' },
-    taskText: { fontSize: 22, fontWeight: '600', marginBottom: 25, color: '#333', textAlign: 'center', lineHeight: 30 },
+    taskLabel: { fontSize: 16, fontWeight: '700', marginBottom: 10, color: '#007AFF', textTransform: 'uppercase' },
+    taskText: { fontSize: 20, fontWeight: '600', marginBottom: 25, color: '#333', textAlign: 'center', lineHeight: 28 },
     input: { width: 220, height: 56, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#fafafa', marginBottom: 15, color: '#333' },
     finalInput: { width: 220 },
-    buttonContainer: { marginTop: 10, width: '80%', borderRadius: 10, overflow: 'hidden' },
+    buttonContainer: { marginTop: 10, width: '80%' },
+    customBtn: { paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+    customBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
     result: { fontSize: 18, fontWeight: '700', marginTop: 20, textAlign: 'center' },
-    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
+    counterTextSmall: { fontSize: 14, color: '#555', marginTop: 15 },
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: iconSize, height: iconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    counterTextIcons: { fontSize: Math.max(14, iconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
-    correctFinal: { width: 220, height: 56, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#d4edda', borderColor: '#28a745', color: '#155724', marginBottom: 15 },
-    errorFinal: { width: 220, height: 56, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#f8d7da', borderColor: '#dc3545', color: '#721c24', marginBottom: 15 },
+    counterTextIcons: { fontSize: 22, marginHorizontal: 8, color: '#333', fontWeight: 'bold' },
+    correctFinal: { width: 220, height: 56, borderWidth: 3, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#d4edda', borderColor: '#28a745', color: '#155724', marginBottom: 15 },
+    errorFinal: { width: 220, height: 56, borderWidth: 3, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#f8d7da', borderColor: '#dc3545', color: '#721c24', marginBottom: 15 },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
@@ -385,16 +436,14 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
-
-    // Milestone Styles
-    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center' },
     milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
     statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
     statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
-    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20 },
     milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
-    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
+    mButton: { paddingVertical: 12, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold' }
 });
 
 export default WordProblemsLevel1Screen4;

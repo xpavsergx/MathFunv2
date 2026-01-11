@@ -4,7 +4,6 @@ import {
     Text,
     StyleSheet,
     TextInput,
-    Button,
     Keyboard,
     ImageBackground,
     Animated,
@@ -16,8 +15,7 @@ import {
     Platform,
     KeyboardAvoidingView,
     TouchableWithoutFeedback,
-    ScrollView,
-    InteractionManager
+    ScrollView
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -35,7 +33,6 @@ const rnd = (min: number, max: number) => Math.floor(Math.random() * (max - min 
 // --- GENERACJA ZADAŃ ---
 const generateTask = () => {
     const type = rnd(1, 8);
-
     switch (type) {
         case 1: {
             const marek = rnd(15, 35);
@@ -45,7 +42,7 @@ const generateTask = () => {
             return {
                 text: `Marek zebrał w parku ${marek} kasztanów, a Ania znalazła o ${diff} więcej niż on. Ile kasztanów zebrali łącznie?`,
                 answer: total,
-                hint: `Najpierw oblicz, ile kasztanów ma Ania (${marek} + ${diff}), a potem dodaj zbiory Marka.`
+                hint: `Najpierw oblicz, ile kasztanów ma Ania (${marek} + ${diff}), a potem dodaj oba wyniki.`
             };
         }
         case 2: {
@@ -57,7 +54,7 @@ const generateTask = () => {
             return {
                 text: `W małym kinie są dwa rodzaje rzędów: ${r1} rzędów po ${s1} miejsc oraz ${r2} rzędów po ${s2} miejsc. Ilu widzów zmieści się w tym kinie?`,
                 answer: capacity,
-                hint: `Pomnóż liczbę rzędów przez liczbę miejsc dla obu rodzajów, a potem dodaj wyniki do siebie.`
+                hint: `Pomnóż rzędy przez miejsca dla obu grup (I: ${r1}·${s1}, II: ${r2}·${s2}), a potem dodaj wyniki.`
             };
         }
         case 3: {
@@ -68,7 +65,7 @@ const generateTask = () => {
             return {
                 text: `Kasia zbiera naklejki. Ma ${blue} niebieskich, żółtych ma 2 razy mniej niż niebieskich, a złotych — aż 3 razy więcej niż niebieskich. Ile naklejek ma łącznie?`,
                 answer: total,
-                hint: `Oblicz żółte (${blue} : 2) i złote (${blue} · 3), a następnie dodaj wszystkie do siebie.`
+                hint: `Oblicz żółte (${blue}:2) i złote (${blue}·3), a potem dodaj wszystkie trzy liczby.`
             };
         }
         case 4: {
@@ -80,9 +77,9 @@ const generateTask = () => {
             const left = rnd(10, 30);
             const total = used + left;
             return {
-                text: `W magazynie piekarni było ${total} kg mąki. Piekarz zużył ${bag1_count} worków po ${bag1_weight} kg oraz ${bag2_count} worków po ${bag2_weight} kg. Ile mąki zostało w magazynie?`,
+                text: `W magazynie piekarni było ${total} kg mąki. Piekarz zużył ${bag1_count} worków po ${bag1_weight} kg oraz ${bag2_count} worków po ${bag2_weight} kg. Ile mąki zostało?`,
                 answer: left,
-                hint: `Oblicz, ile kg mąki zużyto łącznie i odejmij to od całości (${total}).`
+                hint: `Oblicz ile mąki zużyto łącznie i odejmij to od początkowej ilości (${total}).`
             };
         }
         case 5: {
@@ -91,9 +88,9 @@ const generateTask = () => {
             const longPart = baseLen + diff;
             const total = (3 * baseLen) + longPart;
             return {
-                text: `Pan Adam układał listwy podłogowe. Użył trzech kawałków po ${baseLen} cm, a czwarty kawałek musiał być o ${diff} cm dłuższy od pozostałych. Jaką łączną długość miały te cztery listwy?`,
+                text: `Pan Adam układał listwy podłogowe. Użył trzech kawałków po ${baseLen} cm, a czwarty kawałek był o ${diff} cm dłuższy od pozostałych. Jaka była łączna długość listew?`,
                 answer: total,
-                hint: `Oblicz długość czwartej listwy (${baseLen} + ${diff}), a potem dodaj długość trzech pozostałych (3 · ${baseLen}).`
+                hint: `Oblicz długość czwartej listwy (${baseLen}+${diff}) i dodaj do niej długość trzech listew (${baseLen}·3).`
             };
         }
         case 6: {
@@ -104,7 +101,7 @@ const generateTask = () => {
             return {
                 text: `Babcia Zosia ma ${grandMa} lata i jest ${multiplier} razy starsza od swojej wnuczki Ewy. O ile lat babcia jest starsza od Ewy?`,
                 answer: diff,
-                hint: `Najpierw oblicz wiek Ewy (${grandMa} : ${multiplier}), a potem odejmij jej wiek od wieku babci.`
+                hint: `Najpierw oblicz wiek Ewy (${grandMa}:${multiplier}), a potem odejmij go od wieku babci.`
             };
         }
         case 7: {
@@ -112,9 +109,9 @@ const generateTask = () => {
             const stage2 = stage1 * 2;
             const total = stage1 + stage2;
             return {
-                text: `Pierwszy etap rajdu rowerowego wynosił ${stage1} km. Drugi etap był dokładnie dwa razy dłuższy. Ile kilometrów łącznie muszą przejechać rowerzyści?`,
+                text: `Pierwszy etap rajdu rowerowego wynosił ${stage1} km. Drugi etap był dwa razy dłuższy. Ile kilometrów łącznie musieli przejechać rowerzyści?`,
                 answer: total,
-                hint: `Skoro drugi etap jest 2 razy dłuższy, pomnóż ${stage1} · 2. Potem dodaj oba dystanse.`
+                hint: `Oblicz długość drugiego etapu (${stage1}·2) i dodaj ją do długości pierwszego etapu.`
             };
         }
         case 8: {
@@ -124,9 +121,9 @@ const generateTask = () => {
             const mult = rnd(2, 3);
             const p3 = p2 * mult;
             return {
-                text: `W grze komputerowej Bartek zdobył ${p1} punktów. Jego kolega Kuba zdobył o ${diff} punktów mniej. Mistrz gry zdobył ${mult} razy więcej punktów niż Kuba. Ile punktów ma Mistrz?`,
+                text: `W grze komputerowej Bartek zdobył ${p1} punktów. Kuba zdobył o ${diff} punktów mniej. Mistrz gry zdobył ${mult} razy więcej punktów niż Kuba. Ile punktów ma Mistrz?`,
                 answer: p3,
-                hint: `Najpierw punkty Kuby (${p1} - ${diff}), potem punkty Mistrza (punkty Kuby · ${mult}).`
+                hint: `Najpierw oblicz punkty Kuby (${p1}-${diff}), a potem pomnóż je przez ${mult}.`
             };
         }
         default: return { text: 'Ile to 2+2?', answer: 4, hint: 'Dodaj.' };
@@ -174,11 +171,15 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 
 const WordProblemsLevel2Screen4 = () => {
     const navigation = useNavigation();
+    const inputRef = useRef<TextInput>(null);
+
     const [taskData, setTaskData] = useState<{text: string, answer: number, hint: string}>({ text: '', answer: 0, hint: '' });
     const [userAnswer, setUserAnswer] = useState('');
     const [firstAttempt, setFirstAttempt] = useState(true);
     const [correctInput, setCorrectInput] = useState<boolean | null>(null);
     const [readyForNext, setReadyForNext] = useState(false);
+    const [isFinished, setIsFinished] = useState(false);
+
     const [counter, setCounter] = useState(0);
     const [correctCount, setCorrectCount] = useState(0);
     const [wrongCount, setWrongCount] = useState(0);
@@ -187,33 +188,33 @@ const WordProblemsLevel2Screen4 = () => {
     const [showScratchpad, setShowScratchpad] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
-    // --- NOWE STANY ---
     const [showMilestone, setShowMilestone] = useState(false);
     const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const backgroundColor = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
-        const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+        const k1 = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+        const k2 = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
         nextTask();
-        return () => {
-            keyboardDidHideListener.remove();
-            keyboardDidShowListener.remove();
-        };
+        return () => { k1.remove(); k2.remove(); };
     }, []);
 
+    // POPRAWKA: Dodanie brakujących funkcji toggle
+    const toggleHint = () => setShowHint(prev => !prev);
+    const toggleScratchpad = () => setShowScratchpad(prev => !prev);
+
     const nextTask = () => {
-        if (counter > 0 && counter % 10 === 0 && !showMilestone) {
+        if (counter >= TASKS_LIMIT) {
+            setIsFinished(true);
+            return;
+        }
+
+        if (counter > 0 && counter % 10 === 0 && !showMilestone && counter < TASKS_LIMIT) {
             setShowMilestone(true);
             return;
         }
 
-        if (counter >= TASKS_LIMIT) {
-            setMessage(`Gratulacje! 🎉 Rozwiązano ${TASKS_LIMIT} zadań!`);
-            setReadyForNext(false);
-            return;
-        }
         const t = generateTask();
         setTaskData(t);
         setUserAnswer('');
@@ -224,48 +225,64 @@ const WordProblemsLevel2Screen4 = () => {
         setShowHint(false);
         setCounter(prev => prev + 1);
         backgroundColor.setValue(0);
+        setTimeout(() => inputRef.current?.focus(), 100);
     };
 
-    const toggleHint = () => setShowHint(prev => !prev);
-    const toggleScratchpad = () => setShowScratchpad(prev => !prev);
+    const handleRestart = () => {
+        setIsFinished(false);
+        setCounter(0);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setSessionCorrect(0);
+        nextTask();
+    };
 
     const handleCheck = () => {
+        if (!userAnswer.trim()) {
+            setMessage('Wpisz odpowiedź!');
+            return;
+        }
         Keyboard.dismiss();
-        requestAnimationFrame(() => {
-            if (!userAnswer) { setMessage('Wpisz odpowiedź!'); return; }
-            const numAnswer = Number(userAnswer);
-            const isCorrect = Math.abs(numAnswer - taskData.answer) < 0.01;
 
-            const currentUser = auth().currentUser;
-            const statsDocRef = currentUser ? firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID) : null;
+        const numAnswer = Number(userAnswer.replace(',', '.'));
+        const isCorrect = Math.abs(numAnswer - taskData.answer) < 0.01;
 
-            if (isCorrect) {
-                setCorrectInput(true);
-                setCorrectCount(prev => prev + 1);
-                setSessionCorrect(prev => prev + 1);
-                statsDocRef?.set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-                Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
-                setMessage('Świetnie! ✅');
-                awardXpAndCoins(5, 1);
-                setReadyForNext(true);
+        const currentUser = auth().currentUser;
+        const statsDocRef = currentUser ? firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID) : null;
+
+        if (isCorrect) {
+            setCorrectInput(true);
+            setCorrectCount(prev => prev + 1);
+            setSessionCorrect(prev => prev + 1);
+            statsDocRef?.set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+            Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
+            setMessage('Świetnie! ✅');
+            awardXpAndCoins(5, 1);
+            setReadyForNext(true);
+        } else {
+            setCorrectInput(false);
+            Animated.sequence([
+                Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
+                Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
+            ]).start();
+
+            if (firstAttempt) {
+                setMessage('Błąd! Spróbuj jeszcze raz ✍️');
+                setUserAnswer('');
+                setFirstAttempt(false);
             } else {
                 setWrongCount(prev => prev + 1);
                 statsDocRef?.set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-                Animated.sequence([
-                    Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
-                    Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
-                ]).start();
-                if (firstAttempt) {
-                    setMessage('Błąd! Spróbuj jeszcze raz.');
-                    setUserAnswer('');
-                    setFirstAttempt(false);
-                } else {
-                    setMessage(`Błąd! Poprawna odpowiedź: ${taskData.answer}`);
-                    setReadyForNext(true);
-                }
-                setCorrectInput(false);
+                setMessage(`Błąd! Poprawna odpowiedź: ${taskData.answer}`);
+                setUserAnswer(taskData.answer.toString());
+                setReadyForNext(true);
             }
-        });
+        }
+    };
+
+    const handleTextChange = (text: string) => {
+        setUserAnswer(text);
+        if (correctInput === false) setCorrectInput(null);
     };
 
     const getValidationStyle = () => correctInput === null ? styles.input : correctInput ? styles.correctFinal : styles.errorFinal;
@@ -309,15 +326,33 @@ const WordProblemsLevel2Screen4 = () => {
                                 <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
                                 <View style={styles.statsRow}>
                                     <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
-                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%</Text>
                                 </View>
-                                <Text style={styles.suggestionText}>{sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}</Text>
                                 <View style={styles.milestoneButtons}>
                                     <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}>
                                         <Text style={styles.mButtonText}>Kontynuuj</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}>
-                                        <Text style={styles.mButtonText}>Inny temat</Text>
+                                        <Text style={styles.mButtonText}>Wyjdź</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    <Modal visible={isFinished} transparent={true} animationType="fade">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Trening ukończony! 🏆</Text>
+                                <Text style={styles.suggestionText}>Rozwiązałeś wszystkie zadania.</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Wynik: {correctCount} / {TASKS_LIMIT}</Text>
+                                </View>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={handleRestart}>
+                                        <Text style={styles.mButtonText}>Od nowa</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#dc3545' }]} onPress={() => { setIsFinished(false); navigation.goBack(); }}>
+                                        <Text style={styles.mButtonText}>Wyjdź</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -325,17 +360,32 @@ const WordProblemsLevel2Screen4 = () => {
                     </Modal>
 
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
-                        <Animated.View style={[styles.card, { backgroundColor: 'transparent' }]}>
+                        <View style={styles.card}>
                             <View style={styles.overlayBackground} />
                             <Text style={styles.taskLabel}>Zadanie tekstowe:</Text>
                             <Text style={styles.taskText}>{taskData.text}</Text>
-                            <TextInput style={[getValidationStyle(), styles.finalInput]} keyboardType="numeric" value={userAnswer} onChangeText={setUserAnswer} placeholder="Twój wynik" placeholderTextColor="#aaa" editable={!readyForNext} />
+                            <TextInput
+                                ref={inputRef}
+                                style={[getValidationStyle(), styles.finalInput]}
+                                keyboardType="numeric"
+                                value={userAnswer}
+                                onChangeText={handleTextChange}
+                                placeholder="Wynik"
+                                placeholderTextColor="#aaa"
+                                editable={!readyForNext}
+                                onSubmitEditing={readyForNext ? nextTask : handleCheck}
+                            />
                             <View style={styles.buttonContainer}>
-                                <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
+                                <TouchableOpacity
+                                    style={[styles.customBtn, { backgroundColor: readyForNext ? '#28a745' : '#007AFF' }]}
+                                    onPress={readyForNext ? nextTask : handleCheck}
+                                >
+                                    <Text style={styles.customBtnText}>{readyForNext ? 'Dalej' : 'Sprawdź'}</Text>
+                                </TouchableOpacity>
                             </View>
-                            <Text style={styles.counterTextSmall}>Zadanie: {counter > TASKS_LIMIT ? TASKS_LIMIT : counter} / {TASKS_LIMIT}</Text>
+                            <Text style={styles.counterTextSmall}>Zadanie: {counter} / {TASKS_LIMIT}</Text>
                             {message ? <Text style={[styles.result, correctInput ? styles.correctText : styles.errorText]}>{message}</Text> : null}
-                        </Animated.View>
+                        </View>
                     </ScrollView>
 
                     {!isKeyboardVisible && (
@@ -358,25 +408,27 @@ const styles = StyleSheet.create({
     keyboardContainer: { flex: 1, justifyContent: 'center' },
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 40 },
     topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
-    iconTop: { width: 80, height: 80, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
-    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255, 255, 255, 0.8)', textShadowRadius: 3 },
-    hintBox: { position: 'absolute', top: 130, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 15, maxWidth: 280, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
+    iconTop: { width: 80, height: 80, resizeMode: 'contain' },
+    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2 },
+    hintBox: { position: 'absolute', top: 130, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 280, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
     hintText: { fontSize: 16, color: '#333', lineHeight: 22 },
     card: { width: '100%', maxWidth: 450, borderRadius: 20, padding: 30, alignItems: 'center' },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
-    taskLabel: { fontSize: 18, fontWeight: '700', marginBottom: 5, color: '#007AFF', textAlign: 'center', textTransform: 'uppercase' },
+    taskLabel: { fontSize: 16, fontWeight: '700', marginBottom: 10, color: '#007AFF', textTransform: 'uppercase' },
     taskText: { fontSize: 20, fontWeight: '600', marginBottom: 25, color: '#333', textAlign: 'center', lineHeight: 28 },
     input: { width: 220, height: 56, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#fafafa', marginBottom: 15, color: '#333' },
     finalInput: { width: 220 },
-    buttonContainer: { marginTop: 10, width: '80%', borderRadius: 10, overflow: 'hidden' },
+    buttonContainer: { marginTop: 10, width: '80%' },
+    customBtn: { paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+    customBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
     result: { fontSize: 18, fontWeight: '700', marginTop: 20, textAlign: 'center' },
-    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
+    counterTextSmall: { fontSize: 14, color: '#555', marginTop: 15 },
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: iconSize, height: iconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    counterTextIcons: { fontSize: Math.max(14, iconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
-    correctFinal: { width: 220, height: 56, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#d4edda', borderColor: '#28a745', color: '#155724', marginBottom: 15 },
-    errorFinal: { width: 220, height: 56, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#f8d7da', borderColor: '#dc3545', color: '#721c24', marginBottom: 15 },
+    counterTextIcons: { fontSize: 22, marginHorizontal: 8, color: '#333', fontWeight: 'bold' },
+    correctFinal: { width: 220, height: 56, borderWidth: 3, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#d4edda', borderColor: '#28a745', color: '#155724', marginBottom: 15 },
+    errorFinal: { width: 220, height: 56, borderWidth: 3, borderRadius: 10, textAlign: 'center', fontSize: 22, backgroundColor: '#f8d7da', borderColor: '#dc3545', color: '#721c24', marginBottom: 15 },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
@@ -389,15 +441,14 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
-
-    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center' },
     milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
     statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
     statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
-    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20 },
     milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
-    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
+    mButton: { paddingVertical: 12, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold' }
 });
 
 export default WordProblemsLevel2Screen4;

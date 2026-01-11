@@ -20,7 +20,7 @@ import {
     InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native'; // Dodane dla przycisku "Inny temat"
+import { useNavigation } from '@react-navigation/native';
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -32,22 +32,17 @@ const TASKS_LIMIT = 50;
 const { width: screenWidth } = Dimensions.get('window');
 const isSmallDevice = screenWidth < 380;
 
-// --- KOMPONENT BRUDNOPISU ---
+// --- KOMPONENT BRUDNOPISU (Bez zmian) ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
-
     const handleClear = () => { setPaths([]); setCurrentPath(''); };
-
     const onTouchMove = (evt: any) => {
         const { locationX, locationY } = evt.nativeEvent;
         if (!currentPath) setCurrentPath(`M${locationX},${locationY}`);
         else setCurrentPath(`${currentPath} L${locationX},${locationY}`);
     };
-
-    const onTouchEnd = () => {
-        if (currentPath) { setPaths([...paths, currentPath]); setCurrentPath(''); }
-    };
+    const onTouchEnd = () => { if (currentPath) { setPaths([...paths, currentPath]); setCurrentPath(''); } };
 
     return (
         <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
@@ -92,14 +87,16 @@ const AdditionSubtractionTrainerScreen = () => {
     const [finalResult, setFinalResult] = useState<string>('');
 
     const [showValidation, setShowValidation] = useState<boolean>(false);
-    const [validationState, setValidationState] = useState({ tensInput: false, partialResult: false, onesInput: false, finalResult: false });
+    const [validationState, setValidationState] = useState({ tensInput: true, partialResult: true, onesInput: true, finalResult: true });
 
     const [readyForNext, setReadyForNext] = useState<boolean>(false);
+    const [firstAttempt, setFirstAttempt] = useState<boolean>(true); // Nowa flaga
+    const [isFinished, setIsFinished] = useState(false); // Flaga końca treningu
+
     const [correctCount, setCorrectCount] = useState<number>(0);
     const [wrongCount, setWrongCount] = useState<number>(0);
     const [taskCount, setTaskCount] = useState<number>(0);
 
-    // Nowe stany raportu
     const [showMilestone, setShowMilestone] = useState(false);
     const [sessionCorrect, setSessionCorrect] = useState(0);
 
@@ -119,15 +116,13 @@ const AdditionSubtractionTrainerScreen = () => {
     }, []);
 
     const nextTask = () => {
-        // Blokada co 10 zadań
-        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
-            setShowMilestone(true);
+        if (taskCount >= TASKS_LIMIT) {
+            setIsFinished(true);
             return;
         }
 
-        if (taskCount >= TASKS_LIMIT) {
-            setMessage(`Gratulacje! 🎉 Rozwiązano ${TASKS_LIMIT} zadań!`);
-            setReadyForNext(false);
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+            setShowMilestone(true);
             return;
         }
 
@@ -150,7 +145,8 @@ const AdditionSubtractionTrainerScreen = () => {
         setOnesInput('');
         setFinalResult('');
         setShowValidation(false);
-        setValidationState({ tensInput: false, partialResult: false, onesInput: false, finalResult: false });
+        setFirstAttempt(true);
+        setValidationState({ tensInput: true, partialResult: true, onesInput: true, finalResult: true });
         setMessage('');
         setReadyForNext(false);
         setShowHint(false);
@@ -158,7 +154,21 @@ const AdditionSubtractionTrainerScreen = () => {
         backgroundColor.setValue(0);
     };
 
+    const handleRestart = () => {
+        setIsFinished(false);
+        setTaskCount(0);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setSessionCorrect(0);
+        nextTask();
+    };
+
     const handleCheck = () => {
+        if (!finalResult.trim()) {
+            setMessage('Wpisz wynik końcowy!');
+            return;
+        }
+
         Keyboard.dismiss();
         requestAnimationFrame(() => {
             const correctTens = Math.floor(numberB / 10) * 10;
@@ -167,28 +177,22 @@ const AdditionSubtractionTrainerScreen = () => {
             const correctFinal = isAddition ? numberA + numberB : numberA - numberB;
 
             const vState = {
-                tensInput: tensInput ? Number(tensInput) === correctTens : false,
-                partialResult: partialResult ? Number(partialResult) === correctPartial : false,
-                onesInput: onesInput ? Number(onesInput) === correctOnes : false,
-                finalResult: finalResult ? Number(finalResult) === correctFinal : false,
+                tensInput: Number(tensInput) === correctTens,
+                partialResult: Number(partialResult) === correctPartial,
+                onesInput: Number(onesInput) === correctOnes,
+                finalResult: Number(finalResult) === correctFinal,
             };
 
-            const isFinalCorrect = vState.finalResult;
-            const isTensOk = tensInput === '' || vState.tensInput;
-            const isPartialOk = partialResult === '' || vState.partialResult;
-            const isOnesOk = onesInput === '' || vState.onesInput;
-            const isSuccess = isFinalCorrect && isTensOk && isPartialOk && isOnesOk;
+            const isEverythingCorrect = vState.tensInput && vState.partialResult && vState.onesInput && vState.finalResult;
 
-            setValidationState(vState);
-            setShowValidation(true);
-
-            if (isSuccess) {
+            if (isEverythingCorrect) {
+                setValidationState(vState);
+                setShowValidation(true);
                 Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
                 setCorrectCount(prev => prev + 1);
                 setSessionCorrect(prev => prev + 1);
                 setMessage('Świetnie! ✅');
                 setReadyForNext(true);
-                setShowHint(false);
 
                 InteractionManager.runAfterInteractions(() => {
                     awardXpAndCoins(5, 1);
@@ -199,23 +203,45 @@ const AdditionSubtractionTrainerScreen = () => {
                     }
                 });
             } else {
-                Animated.sequence([
-                    Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
-                    Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
-                ]).start();
+                if (firstAttempt) {
+                    // PIERWSZA PRÓBA
+                    setValidationState(vState);
+                    setShowValidation(true);
+                    setFirstAttempt(false);
+                    setMessage('Błąd! Spróbuj poprawić puste pola ✍️');
 
-                if (!finalResult) setMessage('Wpisz wynik końcowy!');
-                else if (!isFinalCorrect) setMessage('Błędny wynik końcowy!');
-                else setMessage('Popraw błędy w obliczeniach.');
+                    // Czyścimy tylko błędne
+                    if (!vState.tensInput) setTensInput('');
+                    if (!vState.partialResult) setPartialResult('');
+                    if (!vState.onesInput) setOnesInput('');
+                    if (!vState.finalResult) setFinalResult('');
 
-                setWrongCount(prev => prev + 1);
-                InteractionManager.runAfterInteractions(() => {
-                    const currentUser = auth().currentUser;
-                    if (currentUser) {
-                        firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
-                            .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-                    }
-                });
+                    Animated.sequence([
+                        Animated.timing(backgroundColor, { toValue: -1, duration: 400, useNativeDriver: false }),
+                        Animated.timing(backgroundColor, { toValue: 0, duration: 400, useNativeDriver: false }),
+                    ]).start();
+                } else {
+                    // DRUGA PRÓBA
+                    setValidationState(vState);
+                    setShowValidation(true);
+                    setWrongCount(prev => prev + 1);
+                    setMessage(`Błąd! Poprawne wyniki zostały wpisane.`);
+
+                    // Wpisujemy poprawne
+                    setTensInput(correctTens.toString());
+                    setPartialResult(correctPartial.toString());
+                    setOnesInput(correctOnes.toString());
+                    setFinalResult(correctFinal.toString());
+                    setReadyForNext(true);
+
+                    InteractionManager.runAfterInteractions(() => {
+                        const currentUser = auth().currentUser;
+                        if (currentUser) {
+                            firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                                .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+                        }
+                    });
+                }
             }
         });
     };
@@ -225,11 +251,9 @@ const AdditionSubtractionTrainerScreen = () => {
 
     const getStyle = (field: keyof typeof validationState) => {
         if (!showValidation) return styles.input;
-        const val = field === 'tensInput' ? tensInput : field === 'partialResult' ? partialResult : field === 'onesInput' ? onesInput : finalResult;
-        if (!val) return styles.input;
-        return field === 'finalResult'
-            ? validationState[field] ? styles.correctFinal : styles.errorFinal
-            : validationState[field] ? styles.correct : styles.error;
+        const isOk = validationState[field];
+        if (field === 'finalResult') return isOk ? styles.correctFinal : styles.errorFinal;
+        return isOk ? styles.correct : styles.error;
     };
 
     const bgInterpolation = backgroundColor.interpolate({
@@ -272,35 +296,41 @@ const AdditionSubtractionTrainerScreen = () => {
 
                     <DrawingModal visible={showScratchpad} onClose={toggleScratchpad} problemText={problemString} />
 
-                    {/* MODAL MILSTONE */}
+                    {/* MODAL MILESTONE (CO 10 ZADAŃ) */}
                     <Modal visible={showMilestone} transparent={true} animationType="slide">
                         <View style={styles.modalOverlay}>
                             <View style={styles.milestoneCard}>
                                 <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
                                 <View style={styles.statsRow}>
                                     <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
-                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
-                                        Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
-                                    </Text>
                                 </View>
-                                <Text style={styles.suggestionText}>
-                                    {sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}
-                                </Text>
                                 <View style={styles.milestoneButtons}>
-                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]}
-                                                      onPress={() => {
-                                                          setShowMilestone(false);
-                                                          setSessionCorrect(0);
-                                                          nextTask();
-                                                      }}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}>
                                         <Text style={styles.mButtonText}>Kontynuuj</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]}
-                                                      onPress={() => {
-                                                          setShowMilestone(false);
-                                                          navigation.goBack();
-                                                      }}>
-                                        <Text style={styles.mButtonText}>Inny temat</Text>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}>
+                                        <Text style={styles.mButtonText}>Wyjdź</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    {/* MODAL FINALNY (PO 50 ZADANIACH) */}
+                    <Modal visible={isFinished} transparent={true} animationType="fade">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Trening ukończony! 🏆</Text>
+                                <Text style={styles.suggestionText}>Świetna robota! Rozwiązałeś wszystkie {TASKS_LIMIT} zadań.</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Wynik: {correctCount} / {TASKS_LIMIT}</Text>
+                                </View>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={handleRestart}>
+                                        <Text style={styles.mButtonText}>Jeszcze raz</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#dc3545' }]} onPress={() => { setIsFinished(false); navigation.goBack(); }}>
+                                        <Text style={styles.mButtonText}>Wyjdź</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -312,26 +342,26 @@ const AdditionSubtractionTrainerScreen = () => {
                             <View style={styles.overlayBackground} />
                             <Text style={styles.taskLabel}>Trener {isAddition ? "Dodawania" : "Odejmowania"}</Text>
                             <Text style={styles.taskTextMain}>{problemString}</Text>
-                            <Text style={styles.subTitle}>Rozłóż liczbę <Text style={styles.highlight}>{numberB}</Text> na dziesiątki i jedności</Text>
+                            <Text style={styles.subTitle}>Rozłóż liczbę <Text style={styles.highlight}>{numberB}</Text></Text>
 
                             <View style={styles.mathContainer}>
                                 <View style={styles.row}>
                                     <Text style={styles.number}>{numberA}</Text>
                                     <Text style={styles.operator}> {operationSymbol} </Text>
-                                    <TextInput style={getStyle('tensInput')} keyboardType="numeric" value={tensInput} onChangeText={setTensInput} placeholder="dziesiątki" placeholderTextColor="#aaa" editable={!readyForNext} />
+                                    <TextInput style={getStyle('tensInput')} keyboardType="numeric" value={tensInput} onChangeText={(t) => {setTensInput(t); setShowValidation(false);}} placeholder="dziesiątki" placeholderTextColor="#aaa" editable={!readyForNext} />
                                     <Text style={styles.operator}> = </Text>
-                                    <TextInput style={getStyle('partialResult')} keyboardType="numeric" value={partialResult} onChangeText={setPartialResult} placeholder="wynik" placeholderTextColor="#aaa" editable={!readyForNext} />
+                                    <TextInput style={getStyle('partialResult')} keyboardType="numeric" value={partialResult} onChangeText={(t) => {setPartialResult(t); setShowValidation(false);}} placeholder="wynik" placeholderTextColor="#aaa" editable={!readyForNext} />
                                 </View>
                                 <View style={styles.row}>
                                     <Text style={styles.operator}>{isAddition ? '+' : '−'}</Text>
-                                    <TextInput style={getStyle('onesInput')} keyboardType="numeric" value={onesInput} onChangeText={setOnesInput} placeholder="jedności" placeholderTextColor="#aaa" editable={!readyForNext} />
+                                    <TextInput style={getStyle('onesInput')} keyboardType="numeric" value={onesInput} onChangeText={(t) => {setOnesInput(t); setShowValidation(false);}} placeholder="jedności" placeholderTextColor="#aaa" editable={!readyForNext} />
                                     <Text style={styles.operator}> = </Text>
-                                    <TextInput style={[getStyle('finalResult'), { width: isSmallDevice ? screenWidth * 0.35 : 140 }]} keyboardType="numeric" value={finalResult} onChangeText={setFinalResult} placeholder="koniec" placeholderTextColor="#aaa" editable={!readyForNext} />
+                                    <TextInput style={[getStyle('finalResult'), { width: isSmallDevice ? screenWidth * 0.35 : 140 }]} keyboardType="numeric" value={finalResult} onChangeText={(t) => {setFinalResult(t); setShowValidation(false);}} placeholder="koniec" placeholderTextColor="#aaa" editable={!readyForNext} />
                                 </View>
                             </View>
 
                             <View style={styles.buttonContainer}>
-                                <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
+                                <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color={readyForNext ? "#28a745" : "#007AFF"} />
                             </View>
                             <Text style={styles.counterTextSmall}>Zadanie: {taskCount > TASKS_LIMIT ? TASKS_LIMIT : taskCount} / {TASKS_LIMIT}</Text>
                             {message ? <Text style={[styles.result, message.includes('Świetnie') ? styles.correctText : styles.errorText]}>{message}</Text> : null}
@@ -400,7 +430,6 @@ const styles = StyleSheet.create({
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
 
-    // Milestone Styles
     milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
     milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
     statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
