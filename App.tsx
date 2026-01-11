@@ -104,6 +104,10 @@ import FractionsNumberLineTrainer from "./src/screens/screens_4_klassa/screens_4
 import FractionComparisonTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionComparisonTrainer";
 import FractionsExpansionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsExpansionTrainer"
 import ImproperFractionsTrainer from "./src/screens/screens_4_klassa/screens_4K4R/ImproperFractionsTrainer"
+import FractionDivisionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionDivisionTrainer"
+import FractionsAdditionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsAdditionTrainer"
+import FractionSubtractionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionSubtractionTrainer"
+
 // --- Nawigacja ---
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainAppStackParamList>();
@@ -264,6 +268,21 @@ function HomeStackNavigator() {
                 name="ImproperFractionsTrainer"
                 component={ImproperFractionsTrainer}
                 options={({ route }) => ({ title: route.params?.subTopic || 'Ułamki niewłaściwe' })}
+            />
+            <MainStack.Screen
+                name="FractionDivisionTrainer"
+                component={FractionDivisionTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Ułamek jako wynik dzielenia' })}
+            />
+            <MainStack.Screen
+                name="FractionsAdditionTrainer"
+                component={FractionsAdditionTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Dodawanie ułamków zwykłych' })}
+            />
+            <MainStack.Screen
+                name="FractionSubtractionTrainer"
+                component={FractionSubtractionTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Odejmowanie ułamków zwykłych' })}
             />
 
             {/* EKRANY ZADAŃ TEKSTOWYCH */}

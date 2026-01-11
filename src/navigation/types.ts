@@ -10,6 +10,7 @@ import WrittenMultiDigitMultiplicationTrainer
     from "../screens/screens_4_klassa/screens_4K3R/WrittenMultiDigitMultiplicationTrainer";
 import WrittenDivisionTrainer from "../screens/screens_4_klassa/screens_4K3R/WrittenDivisionTrainer";
 import WordProblemsTrainer from "../screens/screens_4_klassa/screens_4K3R/WordProblemsTrainer";
+import FractionDivisionTrainer from "../screens/screens_4_klassa/screens_4K4R/FractionDivisionTrainer";
 
 export type AuthStackParamList = {
     Login: undefined;
@@ -95,6 +96,9 @@ export type MainAppStackParamList = {
     FractionComparisonTrainer:{ grade: number; topic: string; subTopic: string };
     FractionsExpansionTrainer:{ grade: number; topic: string; subTopic: string };
     ImproperFractionsTrainer:{ grade: number; topic: string; subTopic: string };
+    FractionDivisionTrainer:{ grade: number; topic: string; subTopic: string };
+    FractionsAdditionTrainer:{ grade: number; topic: string; subTopic: string };
+    FractionSubtractionTrainer:{ grade: number; topic: string; subTopic: string };
     // Новые тренажёры
     DecimalSystemTrainer: { grade: number; topic: string; subTopic?: string };
     ComparingNumbersTrainer: { grade: number; topic: string; subTopic?: string };

@@ -3389,9 +3389,24 @@
         "showInPractice": true,
         "questions": []
       },
-      "Ułamek jako wynik dzielenia": { "theoryTitle": "Dzielenie a ułamki", "questions": [] },
-      "Dodawanie ułamków zwykłych": { "theoryTitle": "Dodajemy ułamki", "questions": [] },
-      "Odejmowanie ułamków zwykłych": { "theoryTitle": "Odejmujemy ułamki", "questions": [] },
+      "Ułamek jako wynik dzielenia": { "theoryTitle": "Dzielenie a ułamki",
+        "isTrainer": true,
+        "practiceKeys": ["Ułamek jako wynik dzielenia"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Dodawanie ułamków zwykłych": { "theoryTitle": "Dodajemy ułamki",
+        "isTrainer": true,
+        "practiceKeys": ["Dodawanie ułamków zwykłych"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Odejmowanie ułamków zwykłych": { "theoryTitle": "Odejmujemy ułamki",
+        "isTrainer": true,
+        "practiceKeys": ["Odejmowanie ułamków zwykłych"],
+        "showInPractice": true,
+        "questions": []
+      },
       "Pojedynki - zestaw 4": {
         "theoryTitle": "Ułamki zwykłe - Balans 9-3-3",
         "isTrainer": false,
@@ -3536,13 +3551,48 @@
       }
     },
     "UŁAMKI DZIESIĘTNE": {
-      "Ułamki o mianownikach 10, 100, 1000, ...": { "theoryTitle": "Ułamki z przecinkiem", "questions": [] },
-      "Zapisywanie wyrażeń dwumianowanych, cz. 1": { "theoryTitle": "Zapisujemy miary z przecinkiem (metry, złote)", "questions": [] },
-      "Zapisywanie wyrażeń dwumianowanych, cz. 2": { "theoryTitle": "Zapisujemy miary z przecinkiem (kilogramy, litry)", "questions": [] },
-      "Różne zapisy tego samego ułamka dziesiętnego": { "theoryTitle": "Te same ułamki, różne zapisy", "questions": [] },
-      "Porównywanie ułamków dziesiętnych": { "theoryTitle": "Który ułamek dziesiętний większy?", "questions": [] },
-      "Dodawanie ułamków dziesiętnych": { "theoryTitle": "Dodajemy ułamki dziesiętne", "questions": [] },
-      "Odejmowanie ułamków dziesiętnych": { "theoryTitle": "Odejmujemy ułamki dziesiętne", "questions": [] },
+      "Ułamki o mianownikach 10, 100, 1000, ...": { "theoryTitle": "Ułamki z przecinkiem",
+        "isTrainer": true,
+        "practiceKeys": ["Ułamki o mianownikach 10, 100, 1000, ..."],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Zapisywanie wyrażeń dwumianowanych, cz. 1": { "theoryTitle": "Zapisujemy miary z przecinkiem (metry, złote)",
+        "isTrainer": true,
+        "practiceKeys": ["Zapisywanie wyrażeń dwumianowanych, cz. 1"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Zapisywanie wyrażeń dwumianowanych, cz. 2": { "theoryTitle": "Zapisujemy miary z przecinkiem (kilogramy, litry)",
+        "isTrainer": true,
+        "practiceKeys": ["Zapisywanie wyrażeń dwumianowanych, cz. 2"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Różne zapisy tego samego ułamka dziesiętnego": { "theoryTitle": "Te same ułamki, różne zapisy",
+        "isTrainer": true,
+        "practiceKeys": ["Różne zapisy tego samego ułamka dziesiętnego"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Porównywanie ułamków dziesiętnych": { "theoryTitle": "Który ułamek dziesiętний większy?",
+        "isTrainer": true,
+        "practiceKeys": ["Porównywanie ułamków dziesiętnych"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Dodawanie ułamków dziesiętnych": { "theoryTitle": "Dodajemy ułamki dziesiętne",
+        "isTrainer": true,
+        "practiceKeys": ["Dodawanie ułamków dziesiętnych"],
+        "showInPractice": true,
+        "questions": []
+      },
+      "Odejmowanie ułamków dziesiętnych": { "theoryTitle": "Odejmujemy ułamki dziesiętne",
+        "isTrainer": true,
+        "practiceKeys": ["Odejmowanie ułamków dziesiętnych"],
+        "showInPractice": true,
+        "questions": []
+      },
       "Pojedynki - zestaw 5": {
         "theoryTitle": "Ułamki dziesiętne - Balans 9-3-3",
         "isTrainer": false,

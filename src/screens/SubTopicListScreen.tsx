@@ -97,6 +97,9 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
         'Porównywanie ułamków':'FractionComparisonTrainer',
         'Rozszerzanie i skracanie ułamków':'FractionsExpansionTrainer',
         'Ułamki niewłaściwe':'ImproperFractionsTrainer',
+        'Ułamek jako wynik dzielenia':'FractionDivisionTrainer',
+        'Dodawanie ułamków zwykłych': 'FractionsAdditionTrainer',
+        'Odejmowanie ułamków zwykłych':'FractionSubtractionTrainer',
     } as const;
 
     const getTrainerScreen = (key: string) => trainerScreenMap[key as keyof typeof trainerScreenMap];
