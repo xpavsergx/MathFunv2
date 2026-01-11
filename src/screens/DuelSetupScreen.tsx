@@ -1,236 +1,170 @@
 // src/screens/DuelSetupScreen.tsx
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Alert,
-    ActivityIndicator,
-    useColorScheme,
-    SafeAreaView,
-    ScrollView
+    View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
+    useColorScheme, SafeAreaView, ScrollView, Animated, Alert
 } from 'react-native';
-import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import firestore from '@react-native-firebase/firestore';
 import questionsDatabase from '../data/questionsDb.json';
-import firestore from '@react-native-firebase/firestore'; // Dodany import firestore
-
-import { AppTabParamList, FriendsStackParamList } from '../navigation/types';
 import { sendDuelRequest } from '../services/friendService';
-import { COLORS, FONT_SIZES, PADDING, MARGIN } from '../styles/theme';
+import { COLORS } from '../styles/theme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
-type DuelSetupRouteProp = RouteProp<FriendsStackParamList, 'DuelSetup'>;
-type DuelNavigationProp = BottomTabNavigationProp<AppTabParamList>;
-
-type QuestionsDB = {
-    [grade: string]: {
-        [topic: string]: any;
-    };
-};
-const db: QuestionsDB = questionsDatabase;
-
-function DuelSetupScreen() {
-    const route = useRoute<DuelSetupRouteProp>();
-    const navigation = useNavigation<DuelNavigationProp>();
-
+export default function DuelSetupScreen() {
+    const route = useRoute<any>();
+    const navigation = useNavigation<any>();
     const { friendId, friendEmail } = route.params;
+    const isDark = useColorScheme() === 'dark';
 
-    const availableGrades = useMemo(() => Object.keys(db).map(Number), []);
-    const [selectedGrade, setSelectedGrade] = useState<number>(availableGrades[0]);
-    const [availableTopics, setAvailableTopics] = useState<string[]>([]);
-    const [selectedTopic, setSelectedTopic] = useState<string>('');
+    const [selectedGrade, setSelectedGrade] = useState(4);
+    const [selectedTopic, setSelectedTopic] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const colorScheme = useColorScheme();
-    const isDarkMode = colorScheme === 'dark';
+    const pulseAnim = useRef(new Animated.Value(1)).current;
 
-    const themeStyles = {
-        container: { backgroundColor: isDarkMode ? COLORS.backgroundDark : COLORS.backgroundLight },
-        card: { backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.white },
-        text: { color: isDarkMode ? COLORS.textDark : COLORS.textLight },
-        button: { backgroundColor: COLORS.primary },
-        buttonText: { color: COLORS.white },
-        chip: { backgroundColor: isDarkMode ? '#2C2C2E' : '#f0f0f0', },
-        chipText: { color: isDarkMode ? COLORS.textDark : '#555', },
-        chipActive: {
-            backgroundColor: COLORS.primary,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 3.84,
-            elevation: 5,
-        },
-        chipTextActive: { color: COLORS.white, },
-    };
+    const db = (questionsDatabase as any).default || questionsDatabase;
+    const availableTopics = db[String(selectedGrade)] ? Object.keys(db[String(selectedGrade)]) : [];
+
+    // ✅ LISTA ZABLOKOWANYCH KLAS
+    const lockedGrades = [5, 6, 7];
 
     useEffect(() => {
-        const topicsForGrade = db[selectedGrade];
-        let newTopics: string[] = [];
-        if (topicsForGrade) {
-            newTopics = Object.keys(topicsForGrade);
-        }
-        setAvailableTopics(newTopics);
-        if (!newTopics.includes(selectedTopic) || !selectedTopic) {
-            setSelectedTopic(newTopics[0] || '');
-        }
+        if (availableTopics.length > 0) setSelectedTopic(availableTopics[0]);
     }, [selectedGrade]);
 
-    // --- ✅ POPRAWIONA FUNKCJA (Czekanie na akceptację bez osobnego Lobby) ---
-    const handleStartDuel = async () => {
-        if (!selectedTopic) {
-            Alert.alert("Błąd", "Nie wybrano tematu.");
+    useEffect(() => {
+        if (isLoading) {
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(pulseAnim, { toValue: 1.05, duration: 800, useNativeDriver: true }),
+                    Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+                ])
+            ).start();
+        }
+    }, [isLoading]);
+
+    const handleGradePress = (g: number) => {
+        if (lockedGrades.includes(g)) {
+            Alert.alert("Już wkrótce!", `Testy dla klasy ${g} są w przygotowaniu. Wybierz klasę 4, aby walczyć teraz!`);
             return;
         }
-        if (selectedGrade === 5 || selectedGrade === 6) {
-            Alert.alert(
-                "Wkrótce dostępne",
-                `Pojedynki dla klasy ${selectedGrade} będą dostępne wkrótce. Wybierz klasę 4, aby zagrać teraz!`,
-                [{ text: "OK" }]
-            );
-            return;
-        }
-        setIsLoading(true); // Rozpoczęcie kręcenia się przycisku
-        try {
-            const newDuelId = await sendDuelRequest(friendId, selectedGrade, selectedTopic);
+        setSelectedGrade(g);
+    };
 
-            if (newDuelId) {
-                // Słuchamy zmian w dokumencie pojedynku w czasie rzeczywistym
-                const unsubscribe = firestore()
-                    .collection('duels')
-                    .doc(newDuelId)
-                    .onSnapshot(doc => {
-                        if (!doc.exists) return;
+    const handleStart = async () => {
+        if (!selectedTopic) return;
+        setIsLoading(true);
+        const newDuelId = await sendDuelRequest(friendId, selectedGrade, selectedTopic);
 
-                        const data = doc.data();
-
-                        // Czekamy, aż przeciwnik zmieni status na 'active' w ActivityScreen
-                        if (data?.status === 'active') {
-                            unsubscribe(); // Przestajemy słuchać, bo zaczynamy grę
-                            setIsLoading(false);
-
-                            navigation.navigate('HomeStack', {
-                                screen: 'Test',
-                                params: {
-                                    grade: selectedGrade,
-                                    topic: selectedTopic,
-                                    mode: 'duel',
-                                    testType: 'duel',
-                                    duelId: newDuelId,
-                                }
-                            });
-                        }
-                    }, (error) => {
-                        console.error("Błąd nasłuchiwania pojedynku:", error);
-                        setIsLoading(false);
+        if (newDuelId) {
+            const unsubscribe = firestore().collection('duels').doc(newDuelId).onSnapshot(doc => {
+                if (doc && doc.exists && doc.data()?.status === 'active') {
+                    unsubscribe();
+                    setIsLoading(false);
+                    navigation.navigate('HomeStack', {
+                        screen: 'Test',
+                        params: { duelId: newDuelId, mode: 'assess', testType: 'duel', grade: selectedGrade, topic: selectedTopic }
                     });
-            } else {
+                }
+            }, (error) => {
+                console.log("Duel Listener Error: ", error);
                 setIsLoading(false);
-            }
-        } catch (error) {
-            console.error("Błąd podczas tworzenia pojedynku:", error);
-            Alert.alert("Błąd", "Nie udało się wysłać wyzwania.");
+            });
+        } else {
             setIsLoading(false);
         }
     };
 
     return (
-        <SafeAreaView style={[styles.container, themeStyles.container]}>
-            <ScrollView
-                contentContainerStyle={styles.scrollContainer}
-                keyboardShouldPersistTaps="handled"
-            >
-                <View style={[styles.card, themeStyles.card]}>
-                    <Ionicons name="flash-outline" size={50} color={COLORS.accent} />
-                    <Text style={[styles.title, themeStyles.text]}>Wyzwanie na Pojedynek!</Text>
-                    <Text style={[styles.subtitle, themeStyles.text]}>
-                        Rzucasz wyzwanie: <Text style={styles.friendName}>{friendEmail}</Text>
-                    </Text>
+        <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? COLORS.backgroundDark : '#F8FAFC' }}>
+            <ScrollView contentContainerStyle={{ padding: 20 }}>
+                <View style={[styles.card, { backgroundColor: isDark ? COLORS.cardDark : '#FFF' }]}>
+                    <View style={styles.iconCircle}><Ionicons name="flash" size={40} color="#FFF" /></View>
+                    <Text style={[styles.title, { color: isDark ? '#FFF' : '#1E293B' }]}>Wyzwanie dla {friendEmail}</Text>
 
-                    <Text style={[styles.label, themeStyles.text]}>Wybierz klasę:</Text>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.chipScrollContainer}
-                    >
-                        {availableGrades.map(grade => {
-                            // ✅ 1. Sprawdzamy, czy klasa powinna być zablokowana
-                            const isLocked = grade === 5 || grade === 6;
+                    <Text style={[styles.label, { color: isDark ? COLORS.grey : '#64748B' }]}>WYBIERZ KLASĘ</Text>
+                    <View style={styles.row}>
+                        {[4, 5, 6, 7].map(g => {
+                            const isLocked = lockedGrades.includes(g);
+                            const isActive = selectedGrade === g;
 
                             return (
                                 <TouchableOpacity
-                                    key={grade}
-                                    // ✅ 2. Wyłączamy klikalność dla klasy 5 i 6
-                                    disabled={isLocked}
+                                    key={g}
+                                    activeOpacity={0.7}
                                     style={[
-                                        styles.chip,
-                                        themeStyles.chip,
-                                        selectedGrade === grade && [styles.chipActive, themeStyles.chipActive],
-                                        // ✅ 3. Dodajemy styl dla zablokowanego przycisku (szary i półprzezroczysty)
-                                        isLocked && { opacity: 0.5, backgroundColor: isDarkMode ? '#1C1C1E' : '#D1D1D6' }
+                                        styles.gradeBlock,
+                                        isActive && styles.gradeBlockActive,
+                                        isLocked && styles.gradeBlockLocked,
+                                        { borderColor: isActive ? COLORS.primary : (isDark ? '#334155' : '#E2E8F0') }
                                     ]}
-                                    onPress={() => setSelectedGrade(grade)}
+                                    onPress={() => handleGradePress(g)}
                                 >
                                     <Text style={[
-                                        styles.chipText,
-                                        themeStyles.chipText,
-                                        selectedGrade === grade && [styles.chipTextActive, themeStyles.chipTextActive],
-                                        // ✅ 4. Zmieniamy kolor tekstu dla zablokowanych na ciemniejszy szary
-                                        isLocked && { color: '#8E8E93' }
-                                    ]}>
-                                        Klasa {grade}
-                                        {isLocked ? ' 🔒' : ''}
-                                    </Text>
+                                        styles.gradeText,
+                                        { color: isActive ? '#FFF' : (isLocked ? '#94A3B8' : (isDark ? '#FFF' : '#334155')) }
+                                    ]}>{g}</Text>
+                                    <Text style={[
+                                        styles.gradeSubText,
+                                        { color: isActive ? 'rgba(255,255,255,0.8)' : '#94A3B8' }
+                                    ]}>Klasa</Text>
+                                    {isLocked && (
+                                        <View style={styles.lockBadge}>
+                                            <Ionicons name="lock-closed" size={10} color="#FFF" />
+                                        </View>
+                                    )}
                                 </TouchableOpacity>
                             );
                         })}
-                    </ScrollView>
-
-                    <Text style={[styles.label, themeStyles.text]}>Wybierz temat:</Text>
-                    <View style={styles.topicContainer}>
-                        {availableTopics.length > 0 ? (
-                            availableTopics.map(topic => (
-                                <TouchableOpacity
-                                    key={topic}
-                                    style={[
-                                        styles.chip,
-                                        styles.topicChip,
-                                        themeStyles.chip,
-                                        selectedTopic === topic && [styles.chipActive, themeStyles.chipActive]
-                                    ]}
-                                    onPress={() => setSelectedTopic(topic)}
-                                >
-                                    <Text style={[
-                                        styles.chipText,
-                                        themeStyles.chipText,
-                                        selectedTopic === topic && [styles.chipTextActive, themeStyles.chipTextActive]
-                                    ]}>
-                                        {topic}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))
-                        ) : (
-                            <Text style={[styles.chipText, themeStyles.chipText, {textAlign: 'center'}]}>
-                                Brak tematów dla tej klasy.
-                            </Text>
-                        )}
                     </View>
 
-                    <TouchableOpacity
-                        style={[styles.button, themeStyles.button, isLoading && styles.disabledButton]}
-                        onPress={handleStartDuel}
-                        disabled={isLoading}
-                    >
+                    <Text style={[styles.label, { color: isDark ? COLORS.grey : '#64748B' }]}>TEMAT WALKI</Text>
+                    {availableTopics.length > 0 ? (
+                        availableTopics.map(t => (
+                            <TouchableOpacity
+                                key={t}
+                                activeOpacity={0.8}
+                                style={[
+                                    styles.topic,
+                                    { backgroundColor: selectedTopic === t ? COLORS.primary : (isDark ? '#2C2C2E' : '#F1F5F9') }
+                                ]}
+                                onPress={() => setSelectedTopic(t)}
+                            >
+                                <Text style={[
+                                    styles.topicText,
+                                    { color: selectedTopic === t ? '#FFF' : (isDark ? '#E2E8F0' : '#475569') }
+                                ]}>{t}</Text>
+                                <Ionicons
+                                    name={selectedTopic === t ? "radio-button-on" : "radio-button-off"}
+                                    size={20}
+                                    color={selectedTopic === t ? "#FFF" : "#94A3B8"}
+                                />
+                            </TouchableOpacity>
+                        ))
+                    ) : (
+                        <View style={styles.emptyBox}>
+                            <Text style={styles.emptyText}>Wybierz dostępną klasę</Text>
+                        </View>
+                    )}
+
+                    <View style={{ width: '100%', marginTop: 30 }}>
                         {isLoading ? (
-                            <View style={styles.loadingWrapper}>
-                                <ActivityIndicator size="small" color={COLORS.white} />
-                                <Text style={styles.loadingText}>Czekam na akceptację...</Text>
-                            </View>
+                            <Animated.View style={{ alignItems: 'center', transform: [{ scale: pulseAnim }] }}>
+                                <ActivityIndicator size="large" color={COLORS.primary} />
+                                <Text style={{ marginTop: 10, color: COLORS.primary, fontWeight: 'bold' }}>Czekam na akceptację...</Text>
+                            </Animated.View>
                         ) : (
-                            <Text style={[styles.buttonText, themeStyles.buttonText]}>Rozpocznij Pojedynek</Text>
+                            <TouchableOpacity
+                                style={[styles.btn, (!selectedTopic || isLoading) && { opacity: 0.5 }]}
+                                onPress={handleStart}
+                                disabled={!selectedTopic || isLoading}
+                            >
+                                <Text style={styles.btnT}>WYŚLIJ WYZWANIE</Text>
+                                <Ionicons name="paper-plane" size={20} color="#FFF" style={{ marginLeft: 10 }} />
+                            </TouchableOpacity>
                         )}
-                    </TouchableOpacity>
+                    </View>
                 </View>
             </ScrollView>
         </SafeAreaView>
@@ -238,42 +172,25 @@ function DuelSetupScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
-    scrollContainer: { flexGrow: 1, justifyContent: 'center', padding: PADDING.medium },
-    card: {
-        borderRadius: 20,
-        padding: PADDING.large,
-        alignItems: 'center',
-        elevation: 5,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
-        gap: MARGIN.medium,
-    },
-    title: { fontSize: FONT_SIZES.xlarge, fontWeight: 'bold' },
-    subtitle: { fontSize: FONT_SIZES.medium },
-    friendName: { fontWeight: 'bold', color: COLORS.primary },
-    label: { fontSize: FONT_SIZES.medium, fontWeight: '500', alignSelf: 'flex-start' },
-    chipScrollContainer: { width: '100%', maxHeight: 60 },
-    topicContainer: { width: '100%', gap: MARGIN.small },
-    chip: {
-        paddingVertical: PADDING.small + 2,
-        paddingHorizontal: PADDING.medium,
-        borderRadius: 20,
-        marginRight: MARGIN.small,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    topicChip: { marginRight: 0, paddingVertical: PADDING.medium - 2 },
-    chipText: { fontSize: FONT_SIZES.medium, fontWeight: '500' },
-    chipActive: {},
-    chipTextActive: { fontWeight: 'bold' },
-    button: { width: '100%', paddingVertical: PADDING.medium, borderRadius: 25, alignItems: 'center', marginTop: MARGIN.small },
-    buttonText: { fontSize: FONT_SIZES.medium, fontWeight: 'bold' },
-    disabledButton: { backgroundColor: COLORS.grey },
-    loadingWrapper: { flexDirection: 'row', alignItems: 'center' },
-    loadingText: { color: COLORS.white, marginLeft: 10, fontWeight: 'bold' }
-});
+    card: { padding: 25, borderRadius: 32, alignItems: 'center', elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12 },
+    iconCircle: { width: 70, height: 70, borderRadius: 35, backgroundColor: COLORS.accent, justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
+    title: { fontSize: 20, fontWeight: '800', textAlign: 'center', marginBottom: 20, lineHeight: 28 },
+    label: { alignSelf: 'flex-start', fontSize: 11, fontWeight: '900', letterSpacing: 1, marginTop: 25, marginBottom: 12 },
+    row: { flexDirection: 'row', width: '100%', justifyContent: 'space-between' },
 
-export default DuelSetupScreen;
+    // Nowe style dla bloków klas
+    gradeBlock: { width: '22%', height: 75, borderRadius: 20, borderWidth: 2, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', position: 'relative' },
+    gradeBlockActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+    gradeBlockLocked: { backgroundColor: 'rgba(148, 163, 184, 0.1)', borderColor: '#E2E8F0', borderStyle: 'dashed' },
+    gradeText: { fontSize: 22, fontWeight: '900' },
+    gradeSubText: { fontSize: 10, fontWeight: '600', marginTop: -2 },
+    lockBadge: { position: 'absolute', top: -5, right: -5, backgroundColor: '#94A3B8', width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#FFF' },
+
+    topic: { width: '100%', padding: 18, borderRadius: 18, marginTop: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    topicText: { fontSize: 15, fontWeight: '700', flex: 1, marginRight: 10 },
+    emptyBox: { padding: 20, alignItems: 'center', width: '100%' },
+    emptyText: { color: '#94A3B8', fontStyle: 'italic' },
+
+    btn: { backgroundColor: COLORS.primary, padding: 20, borderRadius: 22, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', width: '100%', elevation: 4 },
+    btnT: { color: '#FFF', fontWeight: '900', fontSize: 17, letterSpacing: 0.5 }
+});

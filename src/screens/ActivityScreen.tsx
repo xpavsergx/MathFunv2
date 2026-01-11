@@ -5,40 +5,44 @@ import {
     View, Text, StyleSheet, TouchableOpacity,
     Alert, ActivityIndicator, SafeAreaView, Image, ScrollView, useColorScheme
 } from 'react-native';
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
+import {
+    getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc
+} from '@react-native-firebase/firestore';
+import { getAuth } from '@react-native-firebase/auth';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, PADDING, MARGIN } from '../styles/theme';
 
 import { deleteNotification, clearAllNotifications, AppNotification } from '../services/notificationService';
-import { acceptFriendRequest } from '../services/friendService';
+import { acceptFriendRequest, acceptDuelRequest } from '../services/friendService';
 
-// Імпортуємо базу питань для пошуку розділів
+// Import bazy pytań dla Trenera
 import questionsDatabase from '../data/questionsDb.json';
 
 const ActivityScreen = () => {
     const navigation = useNavigation<any>();
-    const user = auth().currentUser;
-    const [loading, setLoading] = useState(true);
+    const auth = getAuth();
+    const db = getFirestore();
+    const user = auth.currentUser;
 
-    // TRYB CIEMNY
+    const [loading, setLoading] = useState(true);
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
 
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
-
-    // Стан завдання від Тренера
     const [trainerTask, setTrainerTask] = useState<{
         active: boolean;
-        topic: string; // Це SubTopic (підтема)
+        topic: string;
         reason: string;
     } | null>(null);
 
-    // --- ПОШУК БАТЬКІВСЬКОГО РОЗДІЛУ ---
+    // --- POSZUKIWANIE DZIAŁU DLA TRENERA ---
     const findParentTopic = (subTopicName: string): string => {
         const grade4Data = (questionsDatabase as any)["4"];
         if (!grade4Data) return 'LICZBY I DZIAŁANIA';
+
+        // Jeśli sama nazwa jest działem głównym (np. "LICZBY I DZIAŁANIA")
+        if (grade4Data[subTopicName]) return subTopicName;
 
         for (const mainTopicKey in grade4Data) {
             if (grade4Data[mainTopicKey][subTopicName]) {
@@ -51,58 +55,53 @@ const ActivityScreen = () => {
     useEffect(() => {
         if (!user) return;
 
-        // 1. Слухаємо сповіщення
-        const unsubNotifs = firestore()
-            .collection('users')
-            .doc(user.uid)
-            .collection('notifications')
-            .orderBy('createdAt', 'desc')
-            .onSnapshot(snapshot => {
+        // 1. Słuchanie powiadomień (Modular API)
+        const q = query(
+            collection(db, 'users', user.uid, 'notifications'),
+            orderBy('createdAt', 'desc')
+        );
+        const unsubNotifs = onSnapshot(q, snapshot => {
+            if (snapshot) {
                 const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as AppNotification[];
                 setNotifications(loaded);
-            });
+            }
+        });
 
-        // 2. Слухаємо статистику для Тренера
-        const unsubStats = firestore()
-            .collection('users')
-            .doc(user.uid)
-            .onSnapshot(doc => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    const weakestTopic = data?.stats?.weakestTopic;
+        // 2. Statystyki dla Trenera (Lis)
+        const unsubStats = onSnapshot(doc(db, 'users', user.uid), userDoc => {
+            if (userDoc.exists()) {
+                const data = userDoc.data();
+                const weakestTopic = data?.stats?.weakestTopic;
 
-                    if (weakestTopic) {
-                        setTrainerTask({
-                            active: true,
-                            topic: weakestTopic,
-                            reason: "W tym dziale robisz najwięcej błędów."
-                        });
-                    } else {
-                        setTrainerTask({
-                            active: true,
-                            topic: "Szybkie Liczenie",
-                            reason: "Rozgrzej mózg szybką grą!"
-                        });
-                    }
+                if (weakestTopic) {
+                    setTrainerTask({
+                        active: true,
+                        topic: weakestTopic,
+                        reason: "W tym dziale robisz najwięcej błędów. Lis radzi poćwiczyć!"
+                    });
+                } else {
+                    setTrainerTask({
+                        active: true,
+                        topic: "LICZBY I DZIAŁANIA",
+                        reason: "Rozgrzej mózg solidną dawką zadań!"
+                    });
                 }
-                setLoading(false);
-            });
+            }
+            setLoading(false);
+        });
 
         return () => { unsubNotifs(); unsubStats(); };
     }, [user]);
 
-    // DYNAMICZNE STYLE
     const themeStyles = {
         container: { backgroundColor: isDarkMode ? COLORS.backgroundDark : '#F8F9FA' },
         card: { backgroundColor: isDarkMode ? COLORS.cardDark : '#FFF' },
         text: { color: isDarkMode ? COLORS.textDark : COLORS.text },
         textSecondary: { color: isDarkMode ? COLORS.greyDarkTheme : COLORS.grey },
-        headerText: { color: isDarkMode ? COLORS.textDark : COLORS.grey },
-        border: { borderColor: isDarkMode ? '#2C2C2E' : '#FAFAFA' },
-        badge: { backgroundColor: isDarkMode ? '#1C1C1E' : '#E3F2FD' }
+        border: { borderColor: isDarkMode ? '#2C2C2E' : '#F0F0F0' },
+        badge: { backgroundColor: isDarkMode ? 'rgba(0,188,212,0.1)' : '#E3F2FD' }
     };
 
-    // --- ДІЇ ---
     const handleDelete = (id: string) => deleteNotification(id);
 
     const handleClearAll = () => {
@@ -117,17 +116,21 @@ const ActivityScreen = () => {
         if (!trainerTask) return;
 
         if (trainerTask.topic === "Szybkie Liczenie") {
-            navigation.navigate('GamesStack', {
-                screen: 'SpeedyCountGame'
-            });
+            navigation.navigate('GamesStack', { screen: 'SpeedyCountGame' });
         } else {
             const parentTopic = findParentTopic(trainerTask.topic);
+            const isMainTopic = parentTopic === trainerTask.topic;
+
+            // ZMIANA: Kierujemy do TestScreen zamiast Practice,
+            // aby użyć rekurencyjnego szukania pytań.
             navigation.navigate('HomeStack', {
-                screen: 'Practice',
+                screen: 'Test',
                 params: {
                     grade: 4,
                     topic: parentTopic,
-                    subTopic: trainerTask.topic
+                    subTopic: trainerTask.topic,
+                    testType: isMainTopic ? 'mainTopic' : 'subTopic',
+                    mode: 'learn' // Tryb treningowy z wyjaśnieniami
                 }
             });
         }
@@ -140,67 +143,64 @@ const ActivityScreen = () => {
                 { text: "Tak", onPress: async () => {
                         const duelId = item.data?.duelId;
                         if (!duelId) return;
-
                         try {
-                            const duelDoc = await firestore().collection('duels').doc(duelId).get();
+                            await acceptDuelRequest(duelId);
+                            const duelDoc = await getDoc(doc(db, 'duels', duelId));
+                            const duelData = duelDoc.data();
 
-                            if (duelDoc.exists) {
-                                const duelData = duelDoc.data();
-
-                                await firestore().collection('duels').doc(duelId).update({
-                                    status: 'active'
-                                });
-
-                                navigation.navigate('HomeStack', {
-                                    screen: 'Test',
-                                    params: {
-                                        mode: 'assess',
-                                        testType: 'duel',
-                                        duelId: duelId,
-                                        grade: String(duelData?.grade || "4"),
-                                        topic: duelData?.topic || 'LICZBY I DZIAŁANIA'
-                                    }
-                                });
-                                handleDelete(item.id);
-                            } else {
-                                Alert.alert("Błąd", "Pojedynek już nie istnieje.");
-                                handleDelete(item.id);
-                            }
+                            navigation.navigate('HomeStack', {
+                                screen: 'Test',
+                                params: {
+                                    mode: 'assess',
+                                    testType: 'duel',
+                                    duelId: duelId,
+                                    grade: duelData?.grade || 4,
+                                    topic: duelData?.topic || 'LICZBY I DZIAŁANIA'
+                                }
+                            });
+                            handleDelete(item.id);
                         } catch (error) {
-                            console.error("Błąd akceptacji pojedynku:", error);
-                            Alert.alert("Błąd", "Problem z dołączeniem do gry.");
+                            Alert.alert("Błąd", "Nie udało się dołączyć do pojedynku.");
                         }
                     }}
             ]);
+        } else if (item.type === 'duel_accepted' || item.type === 'duel_update') {
+            navigation.navigate('HomeStack', {
+                screen: 'Test',
+                params: { duelId: item.data?.duelId, mode: 'assess', testType: 'duel' }
+            });
+            handleDelete(item.id);
         } else if (item.type === 'friend_request') {
             Alert.alert("👥 Znajomi", "Dodać do znajomych?", [
                 { text: "Nie", onPress: () => handleDelete(item.id) },
                 { text: "Tak", onPress: async () => {
-                        await acceptFriendRequest(user!.uid, item.data?.fromUserId, item.data?.fromUserEmail);
+                        if (user) await acceptFriendRequest(user.uid, item.data?.fromUserId);
                         handleDelete(item.id);
                     }}
             ]);
-        } else {
-            handleDelete(item.id);
         }
     };
 
-    if (loading) return <View style={[styles.center, themeStyles.container]}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
+    if (loading) return (
+        <View style={[styles.center, themeStyles.container]}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+    );
 
     return (
         <SafeAreaView style={[styles.container, themeStyles.container]}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
+                {/* ZADANIE SPECJALNE (LIS) */}
                 {trainerTask && (
-                    <View style={[styles.heroContainer, themeStyles.card, { borderColor: isDarkMode ? '#2C2C2E' : '#F0F0F0' }]}>
+                    <View style={[styles.heroContainer, themeStyles.card, themeStyles.border]}>
                         <View style={styles.heroHeaderRow}>
                             <Ionicons name="sparkles" size={18} color="#FFD700" />
                             <Text style={styles.heroLabel}>ZADANIE SPECJALNE</Text>
                         </View>
-
                         <View style={styles.heroContent}>
                             <View style={styles.heroTextContainer}>
-                                <Text style={[styles.heroTitle, themeStyles.text]}>Czas na trening!</Text>
+                                <Text style={[styles.heroTitle, themeStyles.text]}>Lis radzi!</Text>
                                 <Text style={[styles.heroSubtitle, themeStyles.textSecondary]}>{trainerTask.reason}</Text>
                                 <View style={[styles.topicBadge, themeStyles.badge]}>
                                     <Text style={styles.topicText}>{trainerTask.topic}</Text>
@@ -208,16 +208,18 @@ const ActivityScreen = () => {
                             </View>
                             <Image source={require('../assets/fox_mascot.png')} style={styles.heroImage} />
                         </View>
-
-                        <TouchableOpacity style={[styles.heroButton, { backgroundColor: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary }]} onPress={handleTrainerAction}>
-                            <Text style={styles.heroButtonText}>Rozpocznij teraz</Text>
+                        <TouchableOpacity
+                            style={[styles.heroButton, { backgroundColor: COLORS.primary }]}
+                            onPress={handleTrainerAction}
+                        >
+                            <Text style={styles.heroButtonText}>Trenuj teraz</Text>
                             <Ionicons name="arrow-forward-circle" size={24} color="#FFF" />
                         </TouchableOpacity>
                     </View>
                 )}
 
                 <View style={styles.listHeaderRow}>
-                    <Text style={[styles.sectionHeader, themeStyles.headerText]}>Powiadomienia ({notifications.length})</Text>
+                    <Text style={[styles.sectionHeader, themeStyles.text]}>Powiadomienia ({notifications.length})</Text>
                     {notifications.length > 0 && (
                         <TouchableOpacity onPress={handleClearAll} style={styles.clearBtn}>
                             <Text style={styles.clearText}>Wyczyść</Text>
@@ -229,40 +231,33 @@ const ActivityScreen = () => {
                 {notifications.length === 0 ? (
                     <View style={styles.emptyContainer}>
                         <Ionicons name="notifications-off-outline" size={60} color={isDarkMode ? '#3A3A3C' : '#E0E0E0'} />
-                        <Text style={[styles.emptyText, themeStyles.textSecondary]}>Brak nowych powiadomień</Text>
+                        <Text style={[styles.emptyText, themeStyles.textSecondary]}>Wszystko nadrobione!</Text>
                     </View>
                 ) : (
-                    <View>
-                        {notifications.map(item => {
-                            let icon: any = 'notifications';
-                            let color = COLORS.primary;
-                            if(item.type === 'duel_request') { icon = 'flash'; color = '#FFC107'; }
-                            if(item.type === 'friend_request') { icon = 'person-add'; color = '#4CAF50'; }
-                            if(item.type === 'achievement') { icon = 'trophy'; color = '#9C27B0'; }
+                    notifications.map(item => {
+                        let icon: any = 'notifications';
+                        let color = COLORS.primary;
+                        if(item.type.includes('duel')) { icon = 'flash'; color = '#FFC107'; }
+                        if(item.type === 'friend_request') { icon = 'person-add'; color = '#4CAF50'; }
 
-                            return (
-                                <View key={item.id} style={[styles.card, themeStyles.card, themeStyles.border]}>
-                                    <TouchableOpacity style={styles.contentRow} onPress={() => handleNotifAction(item)}>
-                                        <View style={[styles.iconBox, { backgroundColor: color + '20' }]}>
-                                            <Ionicons name={icon} size={24} color={color} />
-                                        </View>
-                                        <View style={styles.textContainer}>
-                                            <Text style={[styles.title, themeStyles.text]}>{item.title}</Text>
-                                            <Text style={[styles.body, themeStyles.textSecondary]}>{item.body}</Text>
-                                        </View>
-                                        {(item.type === 'duel_request' || item.type === 'friend_request') && (
-                                            <View style={[styles.actionBadge, { backgroundColor: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary }]}>
-                                                <Text style={styles.actionText}>Akcja</Text>
-                                            </View>
-                                        )}
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)}>
-                                        <Ionicons name="close" size={18} color={isDarkMode ? '#555' : '#AAA'} />
-                                    </TouchableOpacity>
-                                </View>
-                            );
-                        })}
-                    </View>
+                        return (
+                            <View key={item.id} style={[styles.card, themeStyles.card, themeStyles.border]}>
+                                <TouchableOpacity style={styles.contentRow} onPress={() => handleNotifAction(item)}>
+                                    <View style={[styles.iconBox, { backgroundColor: color + '20' }]}>
+                                        <Ionicons name={icon} size={24} color={color} />
+                                    </View>
+                                    <View style={styles.notifTextContainer}>
+                                        <Text style={[styles.notifTitle, themeStyles.text]}>{item.title}</Text>
+                                        <Text style={[styles.notifBody, themeStyles.textSecondary]} numberOfLines={2}>{item.body}</Text>
+                                    </View>
+                                    <Ionicons name="chevron-forward" size={20} color={isDarkMode ? '#555' : '#CCC'} />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)}>
+                                    <Ionicons name="close-circle" size={20} color={COLORS.error + '80'} />
+                                </TouchableOpacity>
+                            </View>
+                        );
+                    })
                 )}
             </ScrollView>
         </SafeAreaView>
@@ -274,39 +269,40 @@ const styles = StyleSheet.create({
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     scrollContent: { padding: PADDING.medium },
     heroContainer: {
-        borderRadius: 20, padding: 20, marginBottom: 25,
-        elevation: 4, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10,
+        borderRadius: 25, padding: 20, marginBottom: 25,
+        elevation: 6, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10,
         shadowOffset: { width: 0, height: 4 }, borderWidth: 1
     },
     heroHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-    heroLabel: { fontSize: 12, fontWeight: 'bold', color: '#FFD700', marginLeft: 5, letterSpacing: 1 },
+    heroLabel: { fontSize: 11, fontWeight: '900', color: '#FFD700', marginLeft: 6, letterSpacing: 1 },
     heroContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     heroTextContainer: { flex: 1, paddingRight: 10 },
-    heroTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 5 },
-    heroSubtitle: { fontSize: 14, marginBottom: 10 },
-    topicBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-    topicText: { color: COLORS.primary, fontWeight: 'bold', fontSize: 12 },
-    heroImage: { width: 80, height: 80, resizeMode: 'contain' },
+    heroTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
+    heroSubtitle: { fontSize: 14, marginBottom: 12, lineHeight: 18 },
+    topicBadge: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
+    topicText: { color: COLORS.primary, fontWeight: 'bold', fontSize: 13 },
+    heroImage: { width: 85, height: 85, resizeMode: 'contain' },
     heroButton: {
-        flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-        paddingVertical: 12, borderRadius: 12, marginTop: 15, elevation: 2
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+        paddingVertical: 14, borderRadius: 15, marginTop: 15, gap: 10
     },
-    heroButtonText: { color: '#FFF', fontWeight: 'bold', fontSize: 16, marginRight: 8 },
-    listHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingHorizontal: 5 },
-    sectionHeader: { fontSize: 16, fontWeight: 'bold' },
-    clearBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    clearText: { fontSize: 12, color: COLORS.error, fontWeight: '600' },
-    card: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, marginBottom: 10, padding: 10, elevation: 1, borderWidth: 1 },
-    contentRow: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-    iconBox: { width: 42, height: 42, borderRadius: 21, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-    textContainer: { flex: 1 },
-    title: { fontWeight: 'bold', fontSize: 14 },
-    body: { fontSize: 13, marginTop: 2 },
-    actionBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginRight: 5 },
-    actionText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
-    deleteBtn: { padding: 10 },
-    emptyContainer: { alignItems: 'center', marginTop: 40, opacity: 0.7 },
-    emptyText: { fontSize: 16, fontWeight: '600', marginTop: 15 }
+    heroButtonText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
+    listHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15, paddingHorizontal: 4 },
+    sectionHeader: { fontSize: 18, fontWeight: 'bold' },
+    clearBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    clearText: { color: COLORS.error, fontSize: 13, fontWeight: '600' },
+    card: {
+        borderRadius: 20, marginBottom: 12, padding: 15,
+        borderWidth: 1, position: 'relative'
+    },
+    contentRow: { flexDirection: 'row', alignItems: 'center' },
+    iconBox: { width: 45, height: 45, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+    notifTextContainer: { flex: 1, marginLeft: 15, marginRight: 10 },
+    notifTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 2 },
+    notifBody: { fontSize: 13, lineHeight: 18 },
+    deleteBtn: { position: 'absolute', top: -10, right: -5, padding: 10 },
+    emptyContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 60, opacity: 0.5 },
+    emptyText: { marginTop: 15, fontSize: 16, fontWeight: '500' }
 });
 
 export default ActivityScreen;

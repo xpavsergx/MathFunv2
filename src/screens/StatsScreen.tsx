@@ -6,7 +6,7 @@ import {
 import { BarChart, PieChart } from 'react-native-gifted-charts';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import { COLORS, PADDING } from '../styles/theme';
+import { COLORS } from '../styles/theme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const { width } = Dimensions.get('window');
@@ -37,8 +37,8 @@ const StatsScreen = () => {
     const themeStyles = {
         container: { backgroundColor: isDarkMode ? COLORS.backgroundDark : '#F5F7FA' },
         card: { backgroundColor: isDarkMode ? COLORS.cardDark : '#FFF' },
-        text: { color: isDarkMode ? COLORS.textDark : '#333' },
-        textSecondary: { color: isDarkMode ? COLORS.greyDarkTheme : '#666' },
+        text: { color: isDarkMode ? '#FFFFFF' : '#333' },
+        textSecondary: { color: isDarkMode ? '#CBD5E1' : '#666' },
         coinBox: { backgroundColor: isDarkMode ? 'rgba(255,193,7,0.15)' : '#FFF8E1' }
     };
 
@@ -50,27 +50,21 @@ const StatsScreen = () => {
             .collection('users')
             .doc(user.uid)
             .onSnapshot(doc => {
-                if (doc.exists) {
+                if (doc && doc.exists) {
                     const d = doc.data() || {};
                     const days = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb'];
                     const today = new Date();
-                    const mockValues: Record<string, number> = {
-                        'Pn': 3, 'Wt': 5, 'Śr': 2, 'Cz': 4, 'Pt': 1, 'Sb': 3, 'Nd': 2
-                    };
                     const history = [];
 
+                    // POBIERANIE REALNEJ AKTYWNOŚCI Z OSTATNICH 7 DNI
                     for (let i = 6; i >= 0; i--) {
                         const dDate = new Date();
                         dDate.setDate(today.getDate() - i);
                         const dayName = i === 0 ? 'Dziś' : days[dDate.getDay()];
                         const dateKey = dDate.toISOString().split('T')[0];
 
-                        let dayValue = 0;
-                        if (i === 0) {
-                            dayValue = d.dailyActivity?.[dateKey] || 0;
-                        } else {
-                            dayValue = mockValues[days[dDate.getDay()]] || 0;
-                        }
+                        // Pobieramy wartość z dailyActivity lub 0 jeśli brak wpisu
+                        const dayValue = d.dailyActivity?.[dateKey] || 0;
 
                         history.push({
                             value: dayValue,
@@ -85,16 +79,20 @@ const StatsScreen = () => {
                     setStats({
                         xp: d.xp || 0,
                         coins: d.coins || 0,
+                        // Synchronizacja pól z obiektem 'stats' w bazie
                         totalQuestions: d.stats?.totalQuestionsSolved || 0,
-                        correctAnswers: d.stats?.correctAnswers || 0,
+                        correctAnswers: d.stats?.correctAnswersTotal || 0,
                         testsCompleted: d.stats?.testsCompleted || 0,
-                        duelsPlayed: d.duelsPlayed || 0,
-                        duelsWon: d.duelsWon || 0,
-                        duelsLost: d.duelsLost || 0,
-                        duelsDraw: d.duelsDraw || 0,
+                        duelsPlayed: d.stats?.duelsPlayed || 0,
+                        duelsWon: d.stats?.duelsWon || 0,
+                        duelsLost: d.stats?.duelsLost || 0,
+                        duelsDraw: d.stats?.duelsDraw || 0,
                         testsHistory: history
                     });
                 }
+                setLoading(false);
+                setRefreshing(false);
+            }, () => {
                 setLoading(false);
                 setRefreshing(false);
             });
@@ -122,17 +120,13 @@ const StatsScreen = () => {
                 </View>
                 <View style={styles.headerTexts}>
                     <Text style={[styles.welcomeText, themeStyles.text]}>Statystyki Mistrza!</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <View style={[styles.coinHeaderBox, themeStyles.coinBox]}>
-                            <Icon name="wallet" size={scale(14)} color="#FF9800" />
-                            <Text style={styles.coinHeaderText}>{stats.coins} monet</Text>
-                        </View>
+                    <View style={[styles.coinHeaderBox, themeStyles.coinBox]}>
+                        <Icon name="wallet" size={scale(14)} color="#FF9800" />
+                        <Text style={styles.coinHeaderText}>{stats.coins} monet</Text>
                     </View>
                 </View>
-                <Image source={require('../assets/fox_mascot.png')} style={styles.mascotHeader} />
             </View>
 
-            {/* Zmieniony Grid - Teraz 3 karty zamiast 4 dla lepszej czytelności */}
             <View style={styles.gridContainer}>
                 <StatCard icon="school" color="#2196F3" bg={isDarkMode ? 'rgba(33,150,243,0.2)' : '#E3F2FD'} value={stats.testsCompleted} label="Testy" themeStyles={themeStyles} />
                 <StatCard icon="check-circle" color="#4CAF50" bg={isDarkMode ? 'rgba(76,175,80,0.2)' : '#E8F5E9'} value={stats.correctAnswers} label="Poprawne" themeStyles={themeStyles} />
@@ -148,21 +142,24 @@ const StatsScreen = () => {
                         innerCircleColor={isDarkMode ? COLORS.cardDark : '#FFF'}
                         centerLabelComponent={() => <Text style={{fontSize: scale(14), fontWeight: '900', color: themeStyles.text.color}}>{accuracy}%</Text>}
                     />
-                    <Text style={[styles.cardSub, themeStyles.textSecondary, {marginTop: scale(15)}]}>{stats.totalQuestions} odpowiedzi</Text>
+                    <Text style={[styles.cardSub, themeStyles.textSecondary]}>{stats.totalQuestions} pytań</Text>
                 </View>
 
                 <View style={[styles.chartCard, themeStyles.card]}>
                     <Text style={[styles.cardTitle, themeStyles.text]}>Pojedynki</Text>
                     <PieChart
-                        data={stats.duelsPlayed > 0 ? [{ value: stats.duelsWon, color: '#4CAF50' }, { value: stats.duelsLost, color: '#F44336' }, { value: stats.duelsDraw, color: '#FFC107' }] : [{ value: 1, color: isDarkMode ? '#3A3A3C' : '#E0E0E0' }]}
-                        donut radius={scale(40)} innerRadius={32}
+                        data={stats.duelsPlayed > 0 ? [
+                            { value: stats.duelsWon, color: '#4CAF50' },
+                            { value: stats.duelsLost, color: '#F44336' },
+                            { value: stats.duelsDraw, color: '#FFC107' }
+                        ] : [{ value: 1, color: isDarkMode ? '#3A3A3C' : '#E0E0E0' }]}
+                        donut radius={scale(40)} innerRadius={scale(32)}
                         innerCircleColor={isDarkMode ? COLORS.cardDark : '#FFF'}
                         centerLabelComponent={() => <Icon name="sword-cross" size={scale(20)} color={isDarkMode ? '#AAA' : '#666'} />}
                     />
                     <View style={styles.duelStatsUnder}>
-                        <View style={styles.duelRow}><View style={[styles.dot, {backgroundColor: '#4CAF50'}]} /><Text style={[styles.duelText, themeStyles.textSecondary]}>Wygrane: <Text style={[styles.bold, {color: themeStyles.text.color}]}>{stats.duelsWon}</Text></Text></View>
-                        <View style={styles.duelRow}><View style={[styles.dot, {backgroundColor: '#F44336'}]} /><Text style={[styles.duelText, themeStyles.textSecondary]}>Porażki: <Text style={[styles.bold, {color: themeStyles.text.color}]}>{stats.duelsLost}</Text></Text></View>
-                        <View style={styles.duelRow}><View style={[styles.dot, {backgroundColor: '#FFC107'}]} /><Text style={[styles.duelText, themeStyles.textSecondary]}>Remisy: <Text style={[styles.bold, {color: themeStyles.text.color}]}>{stats.duelsDraw}</Text></Text></View>
+                        <Text style={[styles.duelText, themeStyles.textSecondary]}>Gier: <Text style={styles.bold}>{stats.duelsPlayed}</Text></Text>
+                        <Text style={[styles.duelText, {color: '#4CAF50'}]}>Wygrane: {stats.duelsWon}</Text>
                     </View>
                 </View>
             </View>
@@ -213,7 +210,7 @@ const styles = StyleSheet.create({
     coinHeaderText: { fontSize: scale(12), fontWeight: 'bold', color: '#FF9800', marginLeft: scale(4) },
     mascotHeader: { width: scale(50), height: scale(50), resizeMode: 'contain' },
     gridContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: scale(15) },
-    miniCard: { width: '31%', alignItems: 'center', padding: scale(10), borderRadius: scale(15), elevation: 2 }, // Zmienione na 31% szerokości
+    miniCard: { width: '31%', alignItems: 'center', padding: scale(10), borderRadius: scale(15), elevation: 2 },
     iconBox: { width: scale(32), height: scale(32), borderRadius: scale(16), justifyContent: 'center', alignItems: 'center', marginBottom: scale(5) },
     miniVal: { fontSize: scale(16), fontWeight: 'bold' },
     miniLabel: { fontSize: scale(10), textAlign: 'center' },
@@ -221,13 +218,11 @@ const styles = StyleSheet.create({
     chartCard: { width: '48%', borderRadius: scale(15), padding: scale(12), elevation: 2, alignItems: 'center' },
     cardTitle: { fontSize: scale(14), fontWeight: 'bold', marginBottom: scale(10) },
     cardSub: { fontSize: scale(11), marginTop: scale(5) },
-    duelStatsUnder: { marginTop: scale(12), width: '100%', paddingHorizontal: scale(5) },
-    duelRow: { flexDirection: 'row', alignItems: 'center', marginBottom: scale(6) },
-    dot: { width: scale(6), height: scale(6), borderRadius: scale(3), marginRight: scale(8) },
-    duelText: { fontSize: scale(13) },
-    bold: { fontWeight: '900', fontSize: scale(14) },
-    bigChartCard: { borderRadius: scale(20), padding: scale(20), elevation: 3, overflow: 'hidden' },
-    barChartWrapper: { alignItems: 'center', marginLeft: scale(-25) }
+    duelStatsUnder: { marginTop: scale(10), alignItems: 'center' },
+    duelText: { fontSize: scale(11) },
+    bold: { fontWeight: 'bold' },
+    bigChartCard: { borderRadius: scale(20), padding: scale(20), elevation: 3 },
+    barChartWrapper: { alignItems: 'center', marginLeft: scale(-20) }
 });
 
 export default StatsScreen;

@@ -9,12 +9,12 @@ import {
     Dimensions,
     ImageBackground,
     ScrollView,
-    useColorScheme, // Dodano
+    useColorScheme,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainAppStackParamList } from '../navigation/types';
 import questionsDatabase from '../data/questionsDb.json';
-import { COLORS } from '../styles/theme'; // Dodano
+import { COLORS } from '../styles/theme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
@@ -43,11 +43,9 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     const { grade, topic, mode } = route.params;
     const db: QuestionsDatabaseType = questionsDatabase as QuestionsDatabaseType;
 
-    // ✅ OBSŁUGA TRYBU CIEMNEGO
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
 
-    // ✅ DYNAMICZNE STYLE TEMATYCZNE
     const themeStyles = {
         overlay: {
             backgroundColor: isDarkMode ? 'rgba(18, 18, 18, 0.92)' : 'rgba(255, 255, 255, 0.88)',
@@ -133,10 +131,15 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     }, [db, grade, topic, mode]);
 
     const handleSubTopicPress = (item: SubTopicButton) => {
-        if (mode === 'test') {
+        // --- POPRAWKA: Wymuszenie trybu TestScreen dla Sprawdzianu końcowego ---
+        const isFinalExam = item.subTopicKey === 'Sprawdzian końcowy';
+
+        if (mode === 'test' || isFinalExam) {
             navigation.navigate('Test', {
-                grade, topic, subTopic: item.subTopicKey,
-                testType: 'subTopic',
+                grade,
+                topic,
+                subTopic: item.subTopicKey,
+                testType: isFinalExam ? 'mainTopic' : 'subTopic',
                 mode: 'assess',
             });
             return;
@@ -152,8 +155,8 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
     };
 
     const renderTopicCard = (item: SubTopicButton, index: number) => {
-        let themeColor = mode === 'test' ? '#2196F3' : '#4CAF50';
-        let iconName = mode === 'test' ? "clipboard-outline" : "fitness-outline";
+        let themeColor = (mode === 'test' || item.subTopicKey === 'Sprawdzian końcowy') ? '#2196F3' : '#4CAF50';
+        let iconName = (mode === 'test' || item.subTopicKey === 'Sprawdzian końcowy') ? "clipboard-outline" : "fitness-outline";
 
         return (
             <AnimatedTouchableOpacity
@@ -161,7 +164,7 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
                 entering={FadeInUp.delay(index * 50).duration(500)}
                 style={[
                     styles.topicCard,
-                    themeStyles.card, // ✅ Dynamiczne tło
+                    themeStyles.card,
                     { width: UNIVERSAL_CARD_WIDTH, borderColor: themeColor }
                 ]}
                 onPress={() => handleSubTopicPress(item)}
@@ -192,7 +195,6 @@ function SubTopicListScreen({ route, navigation }: SubTopicListProps) {
                 );
                 currentIndex++;
             }
-
             if (currentIndex < total) {
                 if (currentIndex + 1 < total) {
                     layoutGroups.push(

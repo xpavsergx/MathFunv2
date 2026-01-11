@@ -2,7 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { ActivityIndicator, View, StyleSheet, useColorScheme, Platform } from 'react-native';
+import {
+    ActivityIndicator,
+    View,
+    StyleSheet,
+    useColorScheme,
+    Platform,
+    StatusBar
+} from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Toast from 'react-native-toast-message';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
@@ -29,31 +36,20 @@ import SubTopicListScreen from './src/screens/SubTopicListScreen';
 import TestScreen from './src/screens/TestScreen';
 import PracticeScreen from './src/screens/PracticeScreen';
 import TrainerStatsScreen from './src/screens/TrainerStatsScreen';
+
 // --- Ekrany: Trenerzy ---
-
-// ❗ Upewnij się, że pliki istnieją w podanych ścieżkach
-
 import CombinedDecompositionTrainer from './src/screens/screens_4_klassa/screens_4K1R/MultiplicationDivisionTrainerScreen';
 import MultiplicationTrainerScreen from './src/screens/screens_4_klassa/screens_4K1R/MultiplicationDivisionTrainerScreen';
 import PlusMinusTrainerScreen from './src/screens/screens_4_klassa/screens_4K1R/PlusMinusTrainerScreen';
-
 import MoreLessTrainerScreen4 from './src/screens/screens_4_klassa/screens_4K1R/MoreLessTrainerScreen4';
 import HowManyTimesTrainerScreen4 from './src/screens/screens_4_klassa/screens_4K1R/HowManyTimesTrainerScreen4';
 import DivisionWithRemainderScreen4 from './src/screens/screens_4_klassa/screens_4K1R/DivisionWithRemainderScreen4';
 import SquaresCubesTrainerScreen4 from './src/screens/screens_4_klassa/screens_4K1R/SquaresCubesTrainerScreen4';
 import OrderOperationsTrainerScreen4 from './src/screens/screens_4_klassa/screens_4K1R/OrderOperationsTrainerScreen4';
-
-// 🔥 SYSTEM DZIESIĄTKOWY
 import DecimalSystemTrainer from './src/screens/screens_4_klassa/screens_4K2R/DecimalSystemTrainer';
-
-// 🔥 PORÓWNYWANIE LICZB (NOWY - ścieżka 4K2R zgodnie z twoim info)
 import ComparingNumbersTrainer from './src/screens/screens_4_klassa/screens_4K2R/ComparingNumbersTrainer';
-
-// 🔥 ZADANIA TEKSTOWE
 import WordProblemsLevel1Screen4 from './src/screens/screens_4_klassa/screens_4K1R/WordProblemsLevel1Screen4';
 import WordProblemsLevel2Screen4 from './src/screens/screens_4_klassa/screens_4K1R/WordProblemsLevel2Screen4';
-
-// 🔥 OŚ LICZBOWA
 import NumberLineTrainerScreen4 from './src/screens/screens_4_klassa/screens_4K1R/NumberLineTrainerScreen4';
 import MentalMathLargeNumbers from './src/screens/screens_4_klassa/screens_4K2R/MentalMathLargeNumbers';
 import LengthUnitsTrainer from './src/screens/screens_4_klassa/screens_4K2R/LengthUnitsTrainer';
@@ -64,6 +60,21 @@ import CalendarTrainer from './src/screens/screens_4_klassa/screens_4K2R/Calenda
 import ClockTrainer from './src/screens/screens_4_klassa/screens_4K2R/ClockTrainer';
 import WrittenAdditionTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WrittenAdditionTrainer";
 import WrittenSubtractionTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WrittenSubtractionTrainer";
+import WrittenMultiplicationTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WrittenMultiplicationTrainer";
+import WrittenMultiplicationWithZerosTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WrittenMultiplicationWithZerosTrainer";
+import WrittenMultiDigitMultiplicationTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WrittenMultiDigitMultiplicationTrainer";
+import WrittenDivisionTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WrittenDivisionTrainer";
+import WordProblemsTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WordProblemsTrainer";
+import FractionsTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsTrainer";
+import MixedNumbersTrainer from "./src/screens/screens_4_klassa/screens_4K4R/MixedNumbersTrainer";
+import FractionsNumberLineTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsNumberLineTrainer";
+import FractionComparisonTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionComparisonTrainer";
+import FractionsExpansionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsExpansionTrainer"
+import ImproperFractionsTrainer from "./src/screens/screens_4_klassa/screens_4K4R/ImproperFractionsTrainer"
+import FractionDivisionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionDivisionTrainer"
+import FractionsAdditionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsAdditionTrainer"
+import FractionSubtractionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionSubtractionTrainer"
+
 // --- Ekrany: Pozostałe ---
 import ResultsScreen from './src/screens/ResultsScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -91,22 +102,6 @@ import DuelResultScreen from './src/screens/DuelResultScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import ActivityScreen from './src/screens/ActivityScreen';
 import StoreScreen from './src/screens/StoreScreen';
-import WrittenMultiplicationTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WrittenMultiplicationTrainer";
-import WrittenMultiplicationWithZerosTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WrittenMultiplicationWithZerosTrainer";
-import WrittenMultiDigitMultiplicationTrainer
-    from "./src/screens/screens_4_klassa/screens_4K3R/WrittenMultiDigitMultiplicationTrainer";
-import WrittenDivisionTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WrittenDivisionTrainer";
-import WordProblemsTrainer from "./src/screens/screens_4_klassa/screens_4K3R/WordProblemsTrainer";
-
-import FractionsTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsTrainer";
-import MixedNumbersTrainer from "./src/screens/screens_4_klassa/screens_4K4R/MixedNumbersTrainer";
-import FractionsNumberLineTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsNumberLineTrainer";
-import FractionComparisonTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionComparisonTrainer";
-import FractionsExpansionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsExpansionTrainer"
-import ImproperFractionsTrainer from "./src/screens/screens_4_klassa/screens_4K4R/ImproperFractionsTrainer"
-import FractionDivisionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionDivisionTrainer"
-import FractionsAdditionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsAdditionTrainer"
-import FractionSubtractionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionSubtractionTrainer"
 
 // --- Nawigacja ---
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -121,183 +116,72 @@ const Tab = createBottomTabNavigator<AppTabParamList>();
 //     HOME STACK
 // ======================
 function HomeStackNavigator() {
-    return (
-        <MainStack.Navigator initialRouteName="Main">
-            <MainStack.Screen name="Main" component={MainScreen} options={{ headerShown: false }} />
+    const isDarkMode = useColorScheme() === 'dark';
 
-            {/* Praktyka */}
+    return (
+
+
+        <MainStack.Navigator
+            initialRouteName="Main"
+            // ✅ ЦІ НАЛАШТУВАННЯ ВИПРАВЛЯЮТЬ БІЛИЙ HEADER
+            screenOptions={{
+                headerStyle: {
+                    backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.white,
+                },
+                headerTintColor: isDarkMode ? COLORS.textDark : COLORS.textLight,
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },
+            }}
+        >
+            <MainStack.Screen name="Main" component={MainScreen} options={{ headerShown: false }} />
             <MainStack.Screen name="GradeSelection" component={GradeSelectionScreen} options={{ title: 'Praktyka - Wybierz klasę' }} />
             <MainStack.Screen name="TopicList" component={TopicListScreen} options={({ route }) => ({ title: `Klasa ${route.params.grade} - Działy` })} />
             <MainStack.Screen name="SubTopicList" component={SubTopicListScreen} options={({ route }) => ({ title: route.params.topic })} />
             <MainStack.Screen name="Test" component={TestScreen} options={({ route }) => ({ title: route.params.subTopic })} />
-
-            {/* Nowy ekran praktyki */}
             <MainStack.Screen name="Practice" component={PracticeScreen} options={{ title: 'Trening' }} />
 
-            {/* --- TRENERZY --- */}
-
-            <MainStack.Screen
-                name="CombinedDecompositionTrainer"
-                component={CombinedDecompositionTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Trener' })}
-            />
-
-            <MainStack.Screen
-                name="MultiplicationTrainer"
-                component={MultiplicationTrainerScreen}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie i Dzielenie' })}
-            />
-
-
+            <MainStack.Screen name="CombinedDecompositionTrainer" component={CombinedDecompositionTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Trener' })} />
+            <MainStack.Screen name="MultiplicationTrainer" component={MultiplicationTrainerScreen} options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie i Dzielenie' })} />
             <MainStack.Screen name="PlusMinusTrainer" component={PlusMinusTrainerScreen} options={({ route }) => ({ title: route.params?.subTopic })} />
             <MainStack.Screen name="MoreLessTrainer4" component={MoreLessTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic })} />
             <MainStack.Screen name="HowManyTimesTrainerScreen4" component={HowManyTimesTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic })} />
             <MainStack.Screen name="DivisionWithRemainderScreen4" component={DivisionWithRemainderScreen4} options={({ route }) => ({ title: route.params?.subTopic })} />
             <MainStack.Screen name="SquaresCubesTrainerScreen4" component={SquaresCubesTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic })} />
             <MainStack.Screen name="OrderOperationsTrainerScreen4" component={OrderOperationsTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic || 'Kolejność działań' })} />
-
-            {/* 🔥 SYSTEM DZIESIĄTKOWY */}
-            <MainStack.Screen
-                name="DecimalSystemTrainer"
-                component={DecimalSystemTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'System dziesiątkowy' })}
-            />
-
-            {/* 🔥 PORÓWNYWANIE LICZB (DODANE TUTAJ) */}
-            <MainStack.Screen
-                name="ComparingNumbersTrainer"
-                component={ComparingNumbersTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Porównywanie liczb' })}
-            />
-            <MainStack.Screen
-                name="MentalMathLargeNumbers"
-                component={MentalMathLargeNumbers}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Rachunki pamięciowe na dużych liczbach' })}
-            />
-            <MainStack.Screen
-                name="MonetaryUnitsTrainer"
-                component={MonetaryUnitsTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Jednostki monetarne - złote i grosze' })}
-            />
-            <MainStack.Screen
-                name="LengthUnitsTrainer"
-                component={LengthUnitsTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Jednostki długości' })}
-            />
-            <MainStack.Screen
-                name="MassUnitsTrainer"
-                component={MassUnitsTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Jednostki masy' })}
-            />
-            <MainStack.Screen
-                name="RomanNumeralsTrainer"
-                component={RomanNumeralsTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'System rzymski' })}
-            />
-            <MainStack.Screen
-                name="CalendarTrainer"
-                component={CalendarTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Z kalendarzem za pan brat' })}
-            />
-            <MainStack.Screen
-                name="ClockTrainer"
-                component={ ClockTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Godziny na zegarach' })}
-            />
-            <MainStack.Screen
-                name="WrittenAdditionTrainer"
-                component={WrittenAdditionTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Dodawanie pisemne' })}
-            />
-            <MainStack.Screen
-                name="WrittenSubtractionTrainer"
-                component={ WrittenSubtractionTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Odejmowanie pisemne' })}
-            />
-            <MainStack.Screen
-                name="WrittenMultiplicationTrainer"
-                component={WrittenMultiplicationTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie pisemne przez liczby jednocyfrowe' })}
-            />
-            <MainStack.Screen
-                name="WrittenMultiplicationWithZerosTrainer"
-                component={WrittenMultiplicationWithZerosTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie pisemne przez liczby jednocyfrowe' })}
-            />
-            <MainStack.Screen
-                name="WrittenMultiDigitMultiplicationTrainer"
-                component={WrittenMultiDigitMultiplicationTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie pisemne przez liczby wielocyfrowe' })}
-            />
-            <MainStack.Screen
-                name="WrittenDivisionTrainer"
-                component={WrittenDivisionTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Dzielenie pisemne przez liczby jednocyfrowe' })}
-            />
-            <MainStack.Screen
-                name="WordProblemsTrainer"
-                component={WordProblemsTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Działania pisemne. Zadania tekstowe' })}
-            />
-            <MainStack.Screen
-                name="MixedNumbersTrainer"
-                component={MixedNumbersTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Ułamek jako część całości' })}
-            />
-            <MainStack.Screen
-                name="FractionsNumberLineTrainer"
-                component={FractionsNumberLineTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Ułamki i liczby mieszane na osi liczbowej' })}
-            />
-            <MainStack.Screen
-                name="FractionsTrainer"
-                component={FractionsTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Liczby mieszane' })}
-            />
-            <MainStack.Screen
-                name="FractionComparisonTrainer"
-                component={FractionComparisonTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Porównywanie ułamków' })}
-            />
-            <MainStack.Screen
-                name="FractionsExpansionTrainer"
-                component={FractionsExpansionTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Rozszerzanie i skracanie ułamków' })}
-            />
-            <MainStack.Screen
-                name="ImproperFractionsTrainer"
-                component={ImproperFractionsTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Ułamki niewłaściwe' })}
-            />
-            <MainStack.Screen
-                name="FractionDivisionTrainer"
-                component={FractionDivisionTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Ułamek jako wynik dzielenia' })}
-            />
-            <MainStack.Screen
-                name="FractionsAdditionTrainer"
-                component={FractionsAdditionTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Dodawanie ułamków zwykłych' })}
-            />
-            <MainStack.Screen
-                name="FractionSubtractionTrainer"
-                component={FractionSubtractionTrainer}
-                options={({ route }) => ({ title: route.params?.subTopic || 'Odejmowanie ułamków zwykłych' })}
-            />
-
-            {/* EKRANY ZADAŃ TEKSTOWYCH */}
+            <MainStack.Screen name="DecimalSystemTrainer" component={DecimalSystemTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'System dziesiątkowy' })} />
+            <MainStack.Screen name="ComparingNumbersTrainer" component={ComparingNumbersTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Porównywanie liczb' })} />
+            <MainStack.Screen name="MentalMathLargeNumbers" component={MentalMathLargeNumbers} options={({ route }) => ({ title: route.params?.subTopic || 'Rachunki' })} />
+            <MainStack.Screen name="MonetaryUnitsTrainer" component={MonetaryUnitsTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Monety' })} />
+            <MainStack.Screen name="LengthUnitsTrainer" component={LengthUnitsTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Długość' })} />
+            <MainStack.Screen name="MassUnitsTrainer" component={MassUnitsTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Masa' })} />
+            <MainStack.Screen name="RomanNumeralsTrainer" component={RomanNumeralsTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Rzymskie' })} />
+            <MainStack.Screen name="CalendarTrainer" component={CalendarTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Kalendarz' })} />
+            <MainStack.Screen name="ClockTrainer" component={ ClockTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Zegary' })} />
+            <MainStack.Screen name="WrittenAdditionTrainer" component={WrittenAdditionTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Dodawanie pisemne' })} />
+            <MainStack.Screen name="WrittenSubtractionTrainer" component={ WrittenSubtractionTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Odejmowanie pisemne' })} />
+            <MainStack.Screen name="WrittenMultiplicationTrainer" component={WrittenMultiplicationTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie pisemne' })} />
+            <MainStack.Screen name="WrittenMultiplicationWithZerosTrainer" component={WrittenMultiplicationWithZerosTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie z zerami' })} />
+            <MainStack.Screen name="WrittenMultiDigitMultiplicationTrainer" component={WrittenMultiDigitMultiplicationTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Mnożenie wielocyfrowe' })} />
+            <MainStack.Screen name="WrittenDivisionTrainer" component={WrittenDivisionTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Dzielenie pisemne' })} />
+            <MainStack.Screen name="WordProblemsTrainer" component={WordProblemsTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Zadania tekstowe' })} />
+            <MainStack.Screen name="MixedNumbersTrainer" component={MixedNumbersTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Część całości' })} />
+            <MainStack.Screen name="FractionsNumberLineTrainer" component={FractionsNumberLineTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Ułamki на osi' })} />
+            <MainStack.Screen name="FractionsTrainer" component={FractionsTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Liczby mieszane' })} />
+            <MainStack.Screen name="FractionComparisonTrainer" component={FractionComparisonTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Porównywanie ułamków' })} />
+            <MainStack.Screen name="FractionsExpansionTrainer" component={FractionsExpansionTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Rozszerzanie' })} />
+            <MainStack.Screen name="ImproperFractionsTrainer" component={ImproperFractionsTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Niewłaściве' })} />
+            <MainStack.Screen name="FractionDivisionTrainer" component={FractionDivisionTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Результат ділення' })} />
+            <MainStack.Screen name="FractionsAdditionTrainer" component={FractionsAdditionTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Dodawanie ułamków' })} />
+            <MainStack.Screen name="FractionSubtractionTrainer" component={FractionSubtractionTrainer} options={({ route }) => ({ title: route.params?.subTopic || 'Odejmowanie ułamków' })} />
             <MainStack.Screen name="WordProblemsLevel1Screen4" component={WordProblemsLevel1Screen4} options={({ route }) => ({ title: route.params?.subTopic || 'Zadania tekstowe' })} />
-            <MainStack.Screen name="WordProblemsLevel2Screen4" component={WordProblemsLevel2Screen4} options={({ route }) => ({ title: route.params?.subTopic || 'Zadania tekstowe (Poz. 2)' })} />
-
-            {/* EKRAN OSI LICZBOWEJ */}
+            <MainStack.Screen name="WordProblemsLevel2Screen4" component={WordProblemsLevel2Screen4} options={({ route }) => ({ title: route.params?.subTopic || 'Zadania tekstowe 2' })} />
             <MainStack.Screen name="NumberLineTrainerScreen4" component={NumberLineTrainerScreen4} options={({ route }) => ({ title: route.params?.subTopic || 'Oś liczbowa' })} />
 
-            {/* Wyniki */}
-            <MainStack.Screen name="Results" component={ResultsScreen} options={{ title: 'Wyniki Testu' }} />
+            <MainStack.Screen name="Results" component={ResultsScreen} options={{ title: 'Wyniki' }} />
             <MainStack.Screen name="DuelResult" component={DuelResultScreen} options={{ title: 'Wynik Pojedynku', headerShown: false }} />
 
-            {/* Teoria */}
-            <MainStack.Screen name="TheoryGradeSelection" component={TheoryGradeSelectionScreen} options={{ title: 'Teoria - Wybierz Klasę' }} />
+            <MainStack.Screen name="TheoryGradeSelection" component={TheoryGradeSelectionScreen} options={{ title: 'Teoria' }} />
             <MainStack.Screen name="TheoryTopicList" component={TheoryScreen} options={({ route }) => ({ title: `Działy (Klasa ${route.params.grade})` })} />
             <MainStack.Screen name="TheorySubTopicList" component={TheorySubTopicListScreen} options={({ route }) => ({ title: route.params.topic })} />
             <MainStack.Screen name="TheoryDetail" component={TheoryDetailScreen} options={({ route }) => ({ title: route.params.subTopic })} />
@@ -309,125 +193,85 @@ function HomeStackNavigator() {
 //     GAMES STACK
 // ======================
 function GamesStackNavigator() {
-    return (
-        <GamesStackNav.Navigator>
-            <GamesStackNav.Screen name="GamesMain" component={GamesScreen} options={{
-                title: 'Dane użytkownika',
-                headerStyle: {
-                    backgroundColor: '#FFD600', // To dodało ten turkusowy kolor
-                },
-                headerTintColor: '#fff', // To zmieniło kolor tekstu i strzałki na biały
-                headerTitleStyle: {
-                    fontWeight: 'bold',
-                },
-            }} />
-            <GamesStackNav.Screen name="MatchstickGame" component={MatchstickEquationGame} options={{ title: 'Równania z Zapałkami' }} />
-            <GamesStackNav.Screen name="SpeedyCountGame" component={SpeedyCountGame} options={{ title: 'Szybkie Liczenie', headerShown: false }} />
-            <GamesStackNav.Screen name="MathSprintGame" component={MathSprintScreen} options={{ title: 'Math Sprint', headerShown: false }} />
+    const isDarkMode = useColorScheme() === 'dark';
 
-            <GamesStackNav.Screen name="SequenceGame" component={SequenceGame} options={{ title: 'Sekwencje', headerShown: false }} />
-            <GamesStackNav.Screen name="NumberMemoryGame" component={NumberMemoryGame} options={{ title: 'Pamięć Liczbowa', headerShown: false }} />
-            <GamesStackNav.Screen name="GreaterLesserGame" component={GreaterLesserGame} options={{ title: 'Większe czy Mniejsze', headerShown: false }} />
+    return (
+        <GamesStackNav.Navigator
+            screenOptions={{
+                headerStyle: { backgroundColor: isDarkMode ? COLORS.cardDark : '#FFD600' },
+                headerTintColor: '#fff',
+                headerTitleStyle: { fontWeight: 'bold' },
+            }}
+        >
+            <GamesStackNav.Screen name="GamesMain" component={GamesScreen} options={{ title: 'Gry' }} />
+            <GamesStackNav.Screen name="MatchstickGame" component={MatchstickEquationGame} options={{ title: 'Zapałki' }} />
+            <GamesStackNav.Screen name="SpeedyCountGame" component={SpeedyCountGame} options={{ headerShown: false }} />
+            <GamesStackNav.Screen name="MathSprintGame" component={MathSprintScreen} options={{ headerShown: false }} />
+            <GamesStackNav.Screen name="SequenceGame" component={SequenceGame} options={{ headerShown: false }} />
+            <GamesStackNav.Screen name="NumberMemoryGame" component={NumberMemoryGame} options={{ headerShown: false }} />
+            <GamesStackNav.Screen name="GreaterLesserGame" component={GreaterLesserGame} options={{ headerShown: false }} />
         </GamesStackNav.Navigator>
     );
 }
 
 // ======================
-//     FRIENDS
+//     FRIENDS STACK
 // ======================
 function FriendsStackNavigator() {
+    const isDarkMode = useColorScheme() === 'dark';
+
     return (
-        <FriendsStackNav.Navigator>
-            <FriendsStackNav.Screen name="Friends" component={FriendsScreen} options={{
-                title: 'Znajomi',
-                headerStyle: {
-                    backgroundColor: '#00BDD6', // To dodało ten turkusowy kolor
-                },
-                headerTintColor: '#fff', // To zmieniło kolor tekstu i strzałki na biały
-                headerTitleStyle: {
-                    fontWeight: 'bold',
-                },
-            }} />
-            <FriendsStackNav.Screen name="DuelSetup" component={DuelSetupScreen} options={{ title: 'Ustawienia pojedynku',
-                headerStyle: {
-                    backgroundColor: '#00BDD6', // To dodało ten turkusowy kolor
-                },
-                headerTintColor: '#fff', // To zmieniło kolor tekstu i strzałki na biały
-                headerTitleStyle: {
-                    fontWeight: 'bold',
-                },}} />
+        <FriendsStackNav.Navigator
+            screenOptions={{
+                headerStyle: { backgroundColor: isDarkMode ? COLORS.cardDark : '#00BDD6' },
+                headerTintColor: '#fff',
+                headerTitleStyle: { fontWeight: 'bold' },
+            }}
+        >
+            <FriendsStackNav.Screen name="Friends" component={FriendsScreen} options={{ title: 'Znajomi' }} />
+            <FriendsStackNav.Screen name="DuelSetup" component={DuelSetupScreen} options={{ title: 'Pojedynek' }} />
         </FriendsStackNav.Navigator>
     );
 }
 
 // ======================
-//     PROFILE
+//     PROFILE STACK
 // ======================
 function ProfileStackNavigator() {
+    const isDarkMode = useColorScheme() === 'dark';
+
     return (
-        <ProfileStack.Navigator>
-            <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} options={{ title: 'Profil', headerShown: false }} />
-            <ProfileStack.Screen name="UserDetails" component={UserDetailsScreen}
-                options={{
-                    title: 'Dane użytkownika',
-                    headerStyle: {
-                        backgroundColor: '#00BDD6', // To dodało ten turkusowy kolor
-                    },
-                    headerTintColor: '#fff', // To zmieniło kolor tekstu i strzałki na biały
-                    headerTitleStyle: {
-                        fontWeight: 'bold',
-                    },
-                }}
-            />
-            <ProfileStack.Screen
-                name="StatsScreen"
-                component={StatsScreen}
-                options={{
-                    title: 'Moje Statystyki',
-                    headerStyle: { backgroundColor: '#00BDD6' },
-                    headerTintColor: '#fff',
-                    headerTitleStyle: { fontWeight: 'bold' },
-                }}
-            />
-            <ProfileStack.Screen
-                name="TrainerStats"
-                component={TrainerStatsScreen}
-                options={{
-                    title: 'Statystyki Trenerów',
-                    headerStyle: { backgroundColor: '#00BDD6' },
-                    headerTintColor: '#fff',
-                    headerTitleStyle: { fontWeight: 'bold' },
-                }}
-            />
-            <ProfileStack.Screen
-                name="Store"
-                component={StoreScreen}
-                options={{
-                    title: 'Sklep',
-                    headerStyle: { backgroundColor: '#00BDD6' },
-                    headerTintColor: '#fff',
-                    headerTitleStyle: { fontWeight: 'bold' },
-                }}
-            />
+        <ProfileStack.Navigator
+            screenOptions={{
+                headerStyle: { backgroundColor: isDarkMode ? COLORS.cardDark : '#00BDD6' },
+                headerTintColor: '#fff',
+                headerTitleStyle: { fontWeight: 'bold' },
+            }}
+        >
+            <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} options={{ headerShown: false }} />
+            <ProfileStack.Screen name="UserDetails" component={UserDetailsScreen} options={{ title: 'Dane' }} />
+            <ProfileStack.Screen name="StatsScreen" component={StatsScreen} options={{ title: 'Statystyki' }} />
+            <ProfileStack.Screen name="TrainerStats" component={TrainerStatsScreen} options={{ title: 'Trenerzy' }} />
+            <ProfileStack.Screen name="Store" component={StoreScreen} options={{ title: 'Sklep' }} />
         </ProfileStack.Navigator>
     );
 }
 
 // ======================
-//     ACTIVITY
+//     ACTIVITY STACK
 // ======================
 function ActivityStackNavigator() {
+    const isDarkMode = useColorScheme() === 'dark';
+
     return (
-        <ActivityStackNav.Navigator>
-            <ActivityStackNav.Screen name="ActivityMain" component={ActivityScreen} options={{ title: 'Aktywność',
-                headerStyle: {
-                    backgroundColor: '#00BDD6', // To dodało ten turkusowy kolor
-                },
-                headerTintColor: '#fff', // To zmieniło kolor tekstu i strzałki na biały
-                headerTitleStyle: {
-                    fontWeight: 'bold',
-                },
-            }} />
+        <ActivityStackNav.Navigator
+            screenOptions={{
+                headerStyle: { backgroundColor: isDarkMode ? COLORS.cardDark : '#00BDD6' },
+                headerTintColor: '#fff',
+                headerTitleStyle: { fontWeight: 'bold' },
+            }}
+        >
+            <ActivityStackNav.Screen name="ActivityMain" component={ActivityScreen} options={{ title: 'Aktywność' }} />
         </ActivityStackNav.Navigator>
     );
 }
@@ -439,39 +283,30 @@ function MainAppTabNavigator() {
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
 
-    const tabBarBackground = isDarkMode ? COLORS.cardDark : COLORS.white;
-    const activeColor = isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary;
-    const inactiveColor = isDarkMode ? COLORS.greyDarkTheme : COLORS.grey;
-
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
                 tabBarIcon: ({ focused, color, size }) => {
                     let iconName: keyof typeof Ionicons.glyphMap = 'help-circle';
-
                     if (route.name === 'HomeStack') iconName = focused ? 'home' : 'home-outline';
                     else if (route.name === 'GamesStack') iconName = focused ? 'game-controller' : 'game-controller-outline';
                     else if (route.name === 'FriendsStack') iconName = focused ? 'people' : 'people-outline';
                     else if (route.name === 'ActivityStack') iconName = focused ? 'notifications' : 'notifications-outline';
                     else if (route.name === 'Profil') iconName = focused ? 'person-circle' : 'person-circle-outline';
-
                     return <Ionicons name={iconName} size={size} color={color} />;
                 },
-                tabBarActiveTintColor: activeColor,
-                tabBarInactiveTintColor: inactiveColor,
+                tabBarActiveTintColor: isDarkMode ? COLORS.primaryDarkTheme : COLORS.primary,
+                tabBarInactiveTintColor: isDarkMode ? COLORS.greyDarkTheme : COLORS.grey,
                 headerShown: false,
                 tabBarStyle: {
-                    backgroundColor: tabBarBackground,
+                    backgroundColor: isDarkMode ? COLORS.cardDark : COLORS.white,
                     borderTopColor: isDarkMode ? COLORS.greyDarkTheme : '#E0E0E0',
                     borderTopWidth: StyleSheet.hairlineWidth,
                     elevation: 10,
                     height: Platform.OS === 'ios' ? 90 : 65,
                     paddingBottom: Platform.OS === 'ios' ? 30 : 5,
                 },
-                tabBarLabelStyle: {
-                    fontWeight: '500',
-                    fontSize: 11,
-                },
+                tabBarLabelStyle: { fontWeight: '500', fontSize: 11 },
             })}
         >
             <Tab.Screen name="HomeStack" component={HomeStackNavigator} options={{ title: 'Główna' }} />
@@ -484,7 +319,7 @@ function MainAppTabNavigator() {
 }
 
 // ======================
-//       AUTH
+//        AUTH
 // ======================
 function AuthNavigator() {
     return (
@@ -502,6 +337,9 @@ function App(): React.JSX.Element {
     const [initializing, setInitializing] = useState(true);
     const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
 
+    const colorScheme = useColorScheme();
+    const isDarkMode = colorScheme === 'dark';
+
     function onAuthStateChanged(userAuth: FirebaseAuthTypes.User | null) {
         setUser(userAuth);
         if (initializing) setInitializing(false);
@@ -514,7 +352,7 @@ function App(): React.JSX.Element {
 
     if (initializing) {
         return (
-            <View style={styles.loadingContainer}>
+            <View style={[styles.loadingContainer, { backgroundColor: isDarkMode ? COLORS.backgroundDark : '#fff' }]}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
             </View>
         );
@@ -522,6 +360,13 @@ function App(): React.JSX.Element {
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
+            {/* Глобальне виправлення білого паска */}
+            <StatusBar
+                barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+                backgroundColor="transparent"
+                translucent={true}
+            />
+
             <NavigationContainer>
                 {user ? <MainAppTabNavigator /> : <AuthNavigator />}
             </NavigationContainer>
@@ -531,15 +376,11 @@ function App(): React.JSX.Element {
     );
 }
 
-// ======================
-//      STYLES
-// ======================
 const styles = StyleSheet.create({
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#fff',
     },
 });
 
