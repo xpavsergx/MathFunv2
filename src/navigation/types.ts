@@ -99,6 +99,13 @@ export type MainAppStackParamList = {
     FractionDivisionTrainer:{ grade: number; topic: string; subTopic: string };
     FractionsAdditionTrainer:{ grade: number; topic: string; subTopic: string };
     FractionSubtractionTrainer:{ grade: number; topic: string; subTopic: string };
+    DecimalFractionTrainer:{ grade: number; topic: string; subTopic: string };
+    TwoUnitExpressionsTrainer:{ grade: number; topic: string; subTopic: string };
+    UnitExpressionTrainer:{ grade: number; topic: string; subTopic: string };
+    DecimalConversionTrainer:{ grade: number; topic: string; subTopic: string };
+    DecimalComparisonTrainer:{ grade: number; topic: string; subTopic: string };
+    DecimalAdditionTrainer:{ grade: number; topic: string; subTopic: string };
+    DecimalSubtractionTrainer:{ grade: number; topic: string; subTopic: string };
     // Новые тренажёры
     DecimalSystemTrainer: { grade: number; topic: string; subTopic?: string };
     ComparingNumbersTrainer: { grade: number; topic: string; subTopic?: string };

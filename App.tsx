@@ -106,8 +106,17 @@ import FractionsExpansionTrainer from "./src/screens/screens_4_klassa/screens_4K
 import ImproperFractionsTrainer from "./src/screens/screens_4_klassa/screens_4K4R/ImproperFractionsTrainer"
 import FractionDivisionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionDivisionTrainer"
 import FractionsAdditionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionsAdditionTrainer"
+
+
 import FractionSubtractionTrainer from "./src/screens/screens_4_klassa/screens_4K4R/FractionSubtractionTrainer"
 
+import DecimalFractionTrainer from "./src/screens/screens_4_klassa/screens_4K5R/DecimalFractionTrainer"
+import TwoUnitExpressionsTrainer from "./src/screens/screens_4_klassa/screens_4K5R/TwoUnitExpressionsTrainer"
+import UnitExpressionTrainer from "./src/screens/screens_4_klassa/screens_4K5R/UnitExpressionTrainer"
+import DecimalConversionTrainer from "./src/screens/screens_4_klassa/screens_4K5R/DecimalConversionTrainer"
+import DecimalComparisonTrainer from "./src/screens/screens_4_klassa/screens_4K5R/DecimalComparisonTrainer"
+import DecimalAdditionTrainer from "./src/screens/screens_4_klassa/screens_4K5R/DecimalAdditionTrainer"
+import DecimalSubtractionTrainer from "./src/screens/screens_4_klassa/screens_4K5R/DecimalSubtractionTrainer"
 // --- Nawigacja ---
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainAppStackParamList>();
@@ -283,6 +292,41 @@ function HomeStackNavigator() {
                 name="FractionSubtractionTrainer"
                 component={FractionSubtractionTrainer}
                 options={({ route }) => ({ title: route.params?.subTopic || 'Odejmowanie ułamków zwykłych' })}
+            />
+            <MainStack.Screen
+                name="DecimalFractionTrainer"
+                component={DecimalFractionTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Ułamki o mianownikach 10, 100, 1000, ...' })}
+            />
+            <MainStack.Screen
+                name="UnitExpressionTrainer"
+                component={UnitExpressionTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Zapisywanie wyrażeń dwumianowanych, cz. 1' })}
+            />
+            <MainStack.Screen
+                name="TwoUnitExpressionsTrainer"
+                component={TwoUnitExpressionsTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Zapisywanie wyrażeń dwumianowanych, cz. 2' })}
+            />
+            <MainStack.Screen
+                name="DecimalConversionTrainer"
+                component={DecimalConversionTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Różne zapisy tego samego ułamka dziesiętnego' })}
+            />
+            <MainStack.Screen
+                name="DecimalAdditionTrainer"
+                component={DecimalAdditionTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Porównywanie ułamków dziesiętnych' })}
+            />
+            <MainStack.Screen
+                name="DecimalComparisonTrainer"
+                component={DecimalComparisonTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Dodawanie ułamków dziesiętnych' })}
+            />
+            <MainStack.Screen
+                name="DecimalSubtractionTrainer"
+                component={DecimalSubtractionTrainer}
+                options={({ route }) => ({ title: route.params?.subTopic || 'Odejmowanie ułamków dziesiętnych' })}
             />
 
             {/* EKRANY ZADAŃ TEKSTOWYCH */}
