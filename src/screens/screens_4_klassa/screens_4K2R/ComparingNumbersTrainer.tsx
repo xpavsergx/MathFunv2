@@ -20,7 +20,7 @@ import {
     InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native'; // Dodane dla nawigacji
+import { useNavigation } from '@react-navigation/native';
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -37,6 +37,7 @@ const formatNumber = (num: number | string) => {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 };
 
+// --- KOMPONENT BRUDNOPISU ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
@@ -70,7 +71,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const ComparingNumbersTrainer = () => {
-    const navigation = useNavigation(); // Dodane dla nawigacji
+    const navigation = useNavigation();
     const [taskType, setTaskType] = useState<'symbols' | 'findExtremum' | 'rangeInput'>('symbols');
     const [questionText, setQuestionText] = useState('');
     const [mainDisplay, setMainDisplay] = useState<React.ReactNode>(null);
@@ -90,8 +91,8 @@ const ComparingNumbersTrainer = () => {
     const [showHint, setShowHint] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
-    // Nowe stany raportu
     const [showMilestone, setShowMilestone] = useState(false);
+    const [isFinished, setIsFinished] = useState(false); // Flaga końca
     const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const backgroundColor = useRef(new Animated.Value(0)).current;
@@ -111,15 +112,13 @@ const ComparingNumbersTrainer = () => {
     };
 
     const nextTask = () => {
-        // Blokada raportu co 10 zadań
-        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
-            setShowMilestone(true);
+        if (taskCount >= TASKS_LIMIT) {
+            setIsFinished(true);
             return;
         }
 
-        if (taskCount >= TASKS_LIMIT) {
-            setMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
-            setReadyForNext(false);
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone && taskCount < TASKS_LIMIT) {
+            setShowMilestone(true);
             return;
         }
 
@@ -140,6 +139,15 @@ const ComparingNumbersTrainer = () => {
         setIsProcessing(false);
         setTaskCount(prev => prev + 1);
         backgroundColor.setValue(0);
+    };
+
+    const handleRestart = () => {
+        setIsFinished(false);
+        setTaskCount(0);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setSessionCorrect(0);
+        nextTask();
     };
 
     const generateProblem = (type: string) => {
@@ -168,7 +176,7 @@ const ComparingNumbersTrainer = () => {
             else if (num1 < num2) setCorrectAnswer('<');
             else setCorrectAnswer('=');
             setOptions(['<', '=', '>']);
-            setHintText("Sprawdź dokładnie cyfry od prawej strony.");
+            setHintText("Sprawdź dokładnie cyfry od największego rzędu (lewej strony).");
         } else if (type === 'findExtremum') {
             const isFindMax = Math.random() > 0.5;
             const count = 3; let nums = [];
@@ -191,7 +199,7 @@ const ComparingNumbersTrainer = () => {
             const shuffledNums = nums.sort(() => 0.5 - Math.random());
             setOptions(shuffledNums.map(n => n.toString()));
             setCorrectAnswer(correctVal.toString());
-            setHintText("Wszystkie liczby mają tyle samo cyfr. Porównuj je rząd po rzędzie.");
+            setHintText("Wszystkie liczby mają tyle samo cyfr. Porównuj je od lewej strony.");
         } else {
             const start = getRandomNumber(difficulty);
             const gap = Math.floor(Math.random() * 2) + 2;
@@ -213,23 +221,27 @@ const ComparingNumbersTrainer = () => {
     };
 
     const handleCheck = () => {
-        Keyboard.dismiss();
         if (isProcessing) return;
         if (!userInput.trim()) { setMessage('Wybierz lub wpisz odpowiedź!'); return; }
+
+        Keyboard.dismiss();
         let isOk = false;
         const correctStr = correctAnswer.toString();
+
         if (correctStr.startsWith('RANGE:')) {
             const parts = correctStr.split(':');
             const min = parseInt(parts[1]); const max = parseInt(parts[2]);
             const userNum = parseInt(userInput.replace(/\s/g, ''));
             if (!isNaN(userNum) && userNum >= min && userNum <= max) isOk = true;
-        } else { isOk = userInput.trim() === correctStr; }
+        } else {
+            isOk = userInput.trim() === correctStr;
+        }
 
         setIsCorrect(isOk);
         if (isOk) {
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setCorrectCount(prev => prev + 1);
-            setSessionCorrect(prev => prev + 1); // Licznik serii
+            setSessionCorrect(prev => prev + 1);
             setMessage('Świetnie! ✅'); setReadyForNext(true); setShowHint(false);
             InteractionManager.runAfterInteractions(() => {
                 awardXpAndCoins(5, 1);
@@ -240,29 +252,37 @@ const ComparingNumbersTrainer = () => {
                 }
             });
         } else {
-            Animated.timing(backgroundColor, { toValue: -1, duration: 500, useNativeDriver: false }).start();
+            Animated.sequence([
+                Animated.timing(backgroundColor, { toValue: -1, duration: 400, useNativeDriver: false }),
+                Animated.timing(backgroundColor, { toValue: 0, duration: 400, useNativeDriver: false }),
+            ]).start();
+
             if (firstAttempt) {
-                setMessage('Błąd. Spróbuj jeszcze raz.');
-                setIsProcessing(true);
-                setTimeout(() => { setUserInput(''); setIsCorrect(null); setIsProcessing(false); }, 1000);
+                setMessage('Błąd! Spróbuj jeszcze raz ✍️');
                 setFirstAttempt(false);
+                setIsProcessing(true);
+                setTimeout(() => {
+                    if (taskType !== 'symbols' && taskType !== 'findExtremum') setUserInput('');
+                    setIsCorrect(null);
+                    setIsProcessing(false);
+                }, 1000);
             } else {
+                setWrongCount(prev => prev + 1);
                 if (correctStr.startsWith('RANGE:')) {
                     const parts = correctStr.split(':'); setMessage(`Przykładowa poprawna: ${formatNumber(parts[1])}`);
                 } else {
                     const displayAns = ['<','>','='].includes(correctStr) ? correctStr : formatNumber(correctStr);
-                    setMessage(`Prawidłowa odpowiedź: ${displayAns}`);
+                    setMessage(`Błąd! Poprawna odpowiedź: ${displayAns}`);
                 }
                 setReadyForNext(true);
+                InteractionManager.runAfterInteractions(() => {
+                    const currentUser = auth().currentUser;
+                    if (currentUser) {
+                        firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                            .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+                    }
+                });
             }
-            setWrongCount(prev => prev + 1);
-            InteractionManager.runAfterInteractions(() => {
-                const currentUser = auth().currentUser;
-                if (currentUser) {
-                    firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
-                        .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-                }
-            });
         }
     };
 
@@ -281,7 +301,7 @@ const ComparingNumbersTrainer = () => {
                     {!isKeyboardVisible && (
                         <View style={styles.topButtons}>
                             <TouchableOpacity onPress={toggleScratchpad} style={styles.topBtnItem}><Image source={require('../../../assets/pencil.png')} style={styles.iconTop} /><Text style={styles.buttonLabel}>Brudnopis</Text></TouchableOpacity>
-                            <View style={styles.topBtnItem}><TouchableOpacity onPress={toggleHint}><Image source={require('../../../assets/question.png')} style={styles.iconTop} /></TouchableOpacity><Text style={styles.buttonLabel}>Pomoc</Text></View>
+                            <TouchableOpacity onPress={toggleHint} style={styles.topBtnItem}><Image source={require('../../../assets/question.png')} style={styles.iconTop} /><Text style={styles.buttonLabel}>Pomoc</Text></TouchableOpacity>
                         </View>
                     )}
                     {showHint && !isKeyboardVisible && (
@@ -297,10 +317,25 @@ const ComparingNumbersTrainer = () => {
                                     <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
                                     <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%</Text>
                                 </View>
-                                <Text style={styles.suggestionText}>{sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}</Text>
                                 <View style={styles.milestoneButtons}>
                                     <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
                                     <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Inny temat</Text></TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    <Modal visible={isFinished} transparent={true} animationType="fade">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Gratulacje! 🏆</Text>
+                                <Text style={styles.suggestionText}>Ukończyłeś wszystkie zadania!</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Wynik: {correctCount} / {TASKS_LIMIT}</Text>
+                                </View>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={handleRestart}><Text style={styles.mButtonText}>Od nowa</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#dc3545' }]} onPress={() => { setIsFinished(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Wyjdź</Text></TouchableOpacity>
                                 </View>
                             </View>
                         </View>
@@ -312,27 +347,46 @@ const ComparingNumbersTrainer = () => {
                             <Text style={styles.taskLabel}>PORÓWNYWANIE LICZB</Text>
                             <Text style={styles.questionMain}>{questionText}</Text>
                             <View style={styles.mainDisplayContainer}>{mainDisplay}</View>
+
                             {options.length > 0 ? (
-                                <View key={`opts-${taskCount}`} style={styles.optionsContainer}>
+                                <View style={styles.optionsContainer}>
                                     {options.map((opt, idx) => {
                                         const isSelected = userInput === opt;
                                         const displayOpt = ['<','>','='].includes(opt) ? opt : formatNumber(opt);
                                         const isSymbol = ['<','>','='].includes(opt);
                                         return (
-                                            <TouchableOpacity key={idx} onPress={() => !readyForNext && !isProcessing && setUserInput(opt)} style={[styles.optionButton, isSymbol ? styles.symbolButton : styles.numberButton, isSelected && styles.optionButtonSelected, (readyForNext || (isSelected && isCorrect === true)) && opt === correctAnswer.toString() && styles.optionButtonCorrect, isSelected && isCorrect === false && styles.optionButtonWrong]} disabled={readyForNext || isProcessing}>
+                                            <TouchableOpacity
+                                                key={idx}
+                                                onPress={() => !readyForNext && !isProcessing && (setUserInput(opt), setIsCorrect(null))}
+                                                style={[styles.optionButton, isSymbol ? styles.symbolButton : styles.numberButton, isSelected && styles.optionButtonSelected, (readyForNext && opt === correctAnswer.toString()) && styles.optionButtonCorrect, isSelected && isCorrect === false && styles.optionButtonWrong]}
+                                                disabled={readyForNext || isProcessing}
+                                            >
                                                 <Text style={[isSymbol ? styles.symbolText : styles.numberOptionText, isSelected && { color: '#fff' }]}>{displayOpt}</Text>
                                             </TouchableOpacity>
                                         );
                                     })}
                                 </View>
                             ) : (
-                                <TextInput key={`input-${taskCount}`} style={getFieldStyle()} keyboardType="numeric" value={userInput} onChangeText={setUserInput} placeholder="Wpisz liczbę" placeholderTextColor="#aaa" editable={!readyForNext && !isProcessing} />
+                                <TextInput
+                                    style={getFieldStyle()}
+                                    keyboardType="numeric"
+                                    value={userInput}
+                                    onChangeText={(t) => { setUserInput(t); if(isCorrect === false) setIsCorrect(null); }}
+                                    placeholder="Wpisz liczbę"
+                                    placeholderTextColor="#aaa"
+                                    editable={!readyForNext && !isProcessing}
+                                />
                             )}
-                            <View style={styles.buttonContainer}><Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" /></View>
-                            <Text style={styles.counterTextSmall}>Zadanie: {taskCount > TASKS_LIMIT ? TASKS_LIMIT : taskCount} / {TASKS_LIMIT}</Text>
-                            {message ? <Text style={[styles.result, message.includes('Świetnie') ? styles.correctText : styles.errorText]}>{message}</Text> : null}
+
+                            <View style={styles.buttonContainer}>
+                                <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color={readyForNext ? "#28a745" : "#007AFF"} />
+                            </View>
+
+                            <Text style={styles.counterTextSmall}>Zadanie: {taskCount} / {TASKS_LIMIT}</Text>
+                            {message ? <Text style={[styles.result, isCorrect ? styles.correctText : styles.errorText]}>{message}</Text> : null}
                         </View>
                     </ScrollView>
+
                     {!isKeyboardVisible && (
                         <View style={styles.iconsBottom}>
                             <Image source={require('../../../assets/happy.png')} style={styles.iconSame} /><Text style={styles.counterTextIcons}>{correctCount}</Text>
@@ -345,46 +399,48 @@ const ComparingNumbersTrainer = () => {
     );
 };
 
+
+
 const styles = StyleSheet.create({
     keyboardContainer: { flex: 1, justifyContent: 'center' },
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 20 },
     topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
-    iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
-    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255, 255, 255, 0.8)', textShadowRadius: 3 },
+    iconTop: { width: 70, height: 70, resizeMode: 'contain' },
+    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2 },
     hintBox: { position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
     hintText: { fontSize: 14, color: '#333', textAlign: 'center', lineHeight: 20 },
     card: { width: '95%', maxWidth: 480, borderRadius: 20, padding: 20, alignItems: 'center', marginTop: 20, alignSelf: 'center' },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
-    taskLabel: { fontSize: 18, fontWeight: '700', marginBottom: 15, color: '#007AFF', textAlign: 'center', textTransform: 'uppercase' },
-    questionMain: { fontSize: 22, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 15 },
+    taskLabel: { fontSize: 16, fontWeight: '700', marginBottom: 15, color: '#007AFF', textAlign: 'center', textTransform: 'uppercase' },
+    questionMain: { fontSize: 20, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 15 },
     mainDisplayContainer: { marginBottom: 20, alignItems: 'center' },
     comparisonRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' },
-    bigNumber: { fontSize: isSmallDevice ? 26 : 34, fontWeight: 'bold', color: '#333', marginHorizontal: 5 },
-    placeholderBox: { width: 50, height: 50, borderWidth: 2, borderColor: '#007AFF', borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginHorizontal: 10, backgroundColor: '#fff' },
+    bigNumber: { fontSize: isSmallDevice ? 24 : 30, fontWeight: 'bold', color: '#333', marginHorizontal: 5 },
+    placeholderBox: { width: 45, height: 45, borderWidth: 2, borderColor: '#007AFF', borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginHorizontal: 10, backgroundColor: '#fff' },
     placeholderText: { fontSize: 24, fontWeight: 'bold', color: '#007AFF' },
-    rangeText: { fontSize: 28, fontWeight: 'bold', color: '#0056b3', textAlign: 'center', letterSpacing: 1 },
-    finalInput: { width: 200, height: 60, borderWidth: 2, borderColor: '#ccc', borderRadius: 15, textAlign: 'center', fontSize: 28, backgroundColor: '#fafafa', marginTop: 10, color: '#333' },
-    correctFinal: { width: 200, height: 60, borderWidth: 2, borderColor: '#28a745', borderRadius: 15, textAlign: 'center', fontSize: 28, backgroundColor: '#d4edda', marginTop: 10, color: '#155724' },
-    errorFinal: { width: 200, height: 60, borderWidth: 2, borderColor: '#dc3545', borderRadius: 15, textAlign: 'center', fontSize: 28, backgroundColor: '#f8d7da', marginTop: 10, color: '#721c24' },
+    rangeText: { fontSize: 26, fontWeight: 'bold', color: '#0056b3', textAlign: 'center', letterSpacing: 1 },
+    finalInput: { width: 200, height: 60, borderWidth: 2, borderColor: '#ccc', borderRadius: 15, textAlign: 'center', fontSize: 28, backgroundColor: '#fafafa', color: '#333' },
+    correctFinal: { width: 200, height: 60, borderWidth: 3, borderColor: '#28a745', borderRadius: 15, textAlign: 'center', fontSize: 28, backgroundColor: '#d4edda', color: '#155724' },
+    errorFinal: { width: 200, height: 60, borderWidth: 3, borderColor: '#dc3545', borderRadius: 15, textAlign: 'center', fontSize: 28, backgroundColor: '#f8d7da', color: '#721c24' },
     optionsContainer: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginVertical: 10 },
-    optionButton: { paddingVertical: 12, paddingHorizontal: 15, margin: 8, backgroundColor: '#fff', borderWidth: 2, borderColor: '#007AFF', borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-    symbolButton: { width: 70, height: 70 },
-    numberButton: { minWidth: '40%' },
+    optionButton: { paddingVertical: 12, paddingHorizontal: 15, margin: 6, backgroundColor: '#fff', borderWidth: 2, borderColor: '#007AFF', borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+    symbolButton: { width: 65, height: 65 },
+    numberButton: { minWidth: '42%' },
     optionButtonSelected: { backgroundColor: '#007AFF' },
     optionButtonCorrect: { backgroundColor: '#28a745', borderColor: '#28a745' },
     optionButtonWrong: { backgroundColor: '#dc3545', borderColor: '#dc3545' },
-    symbolText: { fontSize: 32, fontWeight: 'bold', color: '#333' },
-    numberOptionText: { fontSize: 20, fontWeight: 'bold', color: '#333' },
-    buttonContainer: { marginTop: 25, width: '80%', borderRadius: 10, overflow: 'hidden' },
+    symbolText: { fontSize: 30, fontWeight: 'bold', color: '#333' },
+    numberOptionText: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+    buttonContainer: { marginTop: 20, width: '80%', borderRadius: 10, overflow: 'hidden' },
     result: { fontSize: 18, fontWeight: '700', marginTop: 15, textAlign: 'center' },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
-    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
+    counterTextSmall: { fontSize: 14, color: '#555', textAlign: 'center', marginTop: 10 },
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    counterTextIcons: { fontSize: Math.max(14, combinedIconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
+    counterTextIcons: { fontSize: 22, marginHorizontal: 8, color: '#333', fontWeight: 'bold' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
     drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
     drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, backgroundColor: '#f0f0f0', borderBottomWidth: 1, borderBottomColor: '#ccc' },
@@ -396,7 +452,6 @@ const styles = StyleSheet.create({
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
 
-    // Milestone Styles
     milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
     milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
     statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },

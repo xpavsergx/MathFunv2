@@ -20,7 +20,7 @@ import {
     InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native'; // Dodane dla nawigacji
+import { useNavigation } from '@react-navigation/native';
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -33,7 +33,7 @@ const { width: screenWidth } = Dimensions.get('window');
 const isSmallDevice = screenWidth < 380;
 const combinedIconSize = screenWidth * 0.25;
 
-// --- BRUDNOPIS ---
+// --- KOMPONENT BRUDNOPISU ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
@@ -67,7 +67,7 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const MonetaryUnitsTrainer = () => {
-    const navigation = useNavigation(); // Dodane dla nawigacji
+    const navigation = useNavigation();
     const [questionText, setQuestionText] = useState('');
     const [subQuestionText, setSubQuestionText] = useState('');
     const [correctAnswer, setCorrectAnswer] = useState('');
@@ -85,8 +85,8 @@ const MonetaryUnitsTrainer = () => {
     const [showHint, setShowHint] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
-    // Nowe stany raportu
     const [showMilestone, setShowMilestone] = useState(false);
+    const [isFinished, setIsFinished] = useState(false); // Flaga końca treningu
     const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const backgroundColor = useRef(new Animated.Value(0)).current;
@@ -99,17 +99,16 @@ const MonetaryUnitsTrainer = () => {
     }, []);
 
     const nextTask = () => {
-        // Blokada raportu co 10 zadań
-        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+        if (taskCount >= TASKS_LIMIT) {
+            setIsFinished(true);
+            return;
+        }
+
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone && taskCount < TASKS_LIMIT) {
             setShowMilestone(true);
             return;
         }
 
-        if (taskCount >= TASKS_LIMIT) {
-            setMessage(`Gratulacje! 🎉 Ukończyłeś ${TASKS_LIMIT} zadań.`);
-            setReadyForNext(false);
-            return;
-        }
         generateProblem();
         setUserInput('');
         setIsCorrect(null);
@@ -120,6 +119,15 @@ const MonetaryUnitsTrainer = () => {
         setIsProcessing(false);
         setTaskCount(prev => prev + 1);
         backgroundColor.setValue(0);
+    };
+
+    const handleRestart = () => {
+        setIsFinished(false);
+        setTaskCount(0);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setSessionCorrect(0);
+        nextTask();
     };
 
     const generateProblem = () => {
@@ -162,64 +170,58 @@ const MonetaryUnitsTrainer = () => {
     };
 
     const handleCheck = () => {
-        Keyboard.dismiss();
         if (isProcessing) return;
-        if (!userInput.trim()) return;
+        if (!userInput.trim()) {
+            setMessage('Wpisz wynik!');
+            return;
+        }
 
+        Keyboard.dismiss();
         const isOk = userInput.trim() === correctAnswer.trim();
         setIsCorrect(isOk);
 
         if (isOk) {
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setCorrectCount(prev => prev + 1);
-            setSessionCorrect(prev => prev + 1); // Licznik serii
+            setSessionCorrect(prev => prev + 1);
             setMessage('Świetnie! ✅');
             setReadyForNext(true);
             InteractionManager.runAfterInteractions(() => {
                 awardXpAndCoins(5, 1);
                 const currentUser = auth().currentUser;
                 if (currentUser) {
-                    firestore()
-                        .collection('users')
-                        .doc(currentUser.uid)
-                        .collection('exerciseStats')
-                        .doc(EXERCISE_ID)
-                        .set({
-                            totalCorrect: firestore.FieldValue.increment(1)
-                        }, { merge: true })
-                        .catch(error => console.error("Błąd zapisu do bazy:", error));
+                    firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                        .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
                 }
             });
         } else {
-            Animated.timing(backgroundColor, { toValue: -1, duration: 500, useNativeDriver: false }).start();
-            InteractionManager.runAfterInteractions(() => {
-                const currentUser = auth().currentUser;
-                if (currentUser) {
-                    firestore()
-                        .collection('users')
-                        .doc(currentUser.uid)
-                        .collection('exerciseStats')
-                        .doc(EXERCISE_ID)
-                        .set({
-                            totalWrong: firestore.FieldValue.increment(1)
-                        }, { merge: true })
-                        .catch(error => console.error("Błąd zapisu błędnych:", error));
-                }
-            });
+            Animated.sequence([
+                Animated.timing(backgroundColor, { toValue: -1, duration: 400, useNativeDriver: false }),
+                Animated.timing(backgroundColor, { toValue: 0, duration: 400, useNativeDriver: false }),
+            ]).start();
+
             if (firstAttempt) {
-                setMessage('Błąd. Spróbuj jeszcze raz.');
+                setMessage('Błąd! Spróbuj jeszcze raz ✍️');
+                setFirstAttempt(false);
                 setIsProcessing(true);
                 setTimeout(() => {
                     setUserInput('');
                     setIsCorrect(null);
                     setIsProcessing(false);
                 }, 1000);
-                setFirstAttempt(false);
             } else {
-                setMessage(`Prawidłowa odpowiedź: ${correctAnswer}`);
+                setWrongCount(prev => prev + 1);
+                setMessage(`Błąd! Poprawny wynik: ${correctAnswer}`);
+                setUserInput(correctAnswer);
                 setReadyForNext(true);
+                InteractionManager.runAfterInteractions(() => {
+                    const currentUser = auth().currentUser;
+                    if (currentUser) {
+                        firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                            .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+                    }
+                });
             }
-            setWrongCount(prev => prev + 1);
         }
     };
 
@@ -258,7 +260,7 @@ const MonetaryUnitsTrainer = () => {
 
                     <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={questionText} />
 
-                    {/* MODAL MILESTONE */}
+                    {/* MODAL MILESTONE (CO 10) */}
                     <Modal visible={showMilestone} transparent={true} animationType="slide">
                         <View style={styles.modalOverlay}>
                             <View style={styles.milestoneCard}>
@@ -269,31 +271,26 @@ const MonetaryUnitsTrainer = () => {
                                         Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
                                     </Text>
                                 </View>
-                                <Text style={styles.suggestionText}>
-                                    {sessionCorrect >= 8
-                                        ? "Rewelacyjnie! Jesteś mistrzem!"
-                                        : "Trenuj dalej, aby być jeszcze lepszym."}
-                                </Text>
                                 <View style={styles.milestoneButtons}>
-                                    <TouchableOpacity
-                                        style={[styles.mButton, { backgroundColor: '#28a745' }]}
-                                        onPress={() => {
-                                            setShowMilestone(false);
-                                            setSessionCorrect(0);
-                                            nextTask();
-                                        }}
-                                    >
-                                        <Text style={styles.mButtonText}>Kontynuuj</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.mButton, { backgroundColor: '#007AFF' }]}
-                                        onPress={() => {
-                                            setShowMilestone(false);
-                                            navigation.goBack();
-                                        }}
-                                    >
-                                        <Text style={styles.mButtonText}>Inny temat</Text>
-                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Wyjdź</Text></TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    {/* MODAL FINALNY */}
+                    <Modal visible={isFinished} transparent={true} animationType="fade">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Gratulacje! 🏆</Text>
+                                <Text style={styles.suggestionText}>Ukończyłeś wszystkie zadania!</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Wynik: {correctCount} / {TASKS_LIMIT}</Text>
+                                </View>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={handleRestart}><Text style={styles.mButtonText}>Od nowa</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#dc3545' }]} onPress={() => { setIsFinished(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Wyjdź</Text></TouchableOpacity>
                                 </View>
                             </View>
                         </View>
@@ -309,24 +306,27 @@ const MonetaryUnitsTrainer = () => {
                                 <Text style={styles.rangeText}>{subQuestionText}</Text>
                             </View>
 
-
-
                             <TextInput
                                 style={isCorrect === true ? styles.correctFinal : (isCorrect === false ? styles.errorFinal : styles.finalInput)}
                                 keyboardType="numeric"
                                 value={userInput}
-                                onChangeText={setUserInput}
+                                onChangeText={(t) => { setUserInput(t); if(isCorrect === false) setIsCorrect(null); }}
                                 placeholder="Wynik"
                                 placeholderTextColor="#aaa"
                                 editable={!readyForNext && !isProcessing}
                             />
 
                             <View style={styles.buttonContainer}>
-                                <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
+                                <TouchableOpacity
+                                    style={[styles.customBtn, {backgroundColor: readyForNext ? '#28a745' : '#007AFF'}]}
+                                    onPress={readyForNext ? nextTask : handleCheck}
+                                >
+                                    <Text style={styles.customBtnText}>{readyForNext ? 'Dalej' : 'Sprawdź'}</Text>
+                                </TouchableOpacity>
                             </View>
 
                             <Text style={styles.counterTextSmall}>Zadanie: {taskCount} / {TASKS_LIMIT}</Text>
-                            {message ? <Text style={[styles.result, message.includes('Świetnie') ? styles.correctText : styles.errorText]}>{message}</Text> : null}
+                            {message ? <Text style={[styles.result, isCorrect ? styles.correctText : styles.errorText]}>{message}</Text> : null}
                         </View>
                     </ScrollView>
 
@@ -349,45 +349,45 @@ const styles = StyleSheet.create({
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 20 },
     topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
-    iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
-    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255, 255, 255, 0.8)', textShadowRadius: 3 },
+    iconTop: { width: 70, height: 70, resizeMode: 'contain' },
+    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2 },
     hintBox: { position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
     hintText: { fontSize: 14, color: '#333', textAlign: 'center' },
     card: { width: '95%', maxWidth: 480, borderRadius: 20, padding: 20, alignItems: 'center', marginTop: 20, alignSelf: 'center' },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
-    taskLabel: { fontSize: 18, fontWeight: '700', marginBottom: 15, color: '#007AFF', textAlign: 'center', textTransform: 'uppercase' },
+    taskLabel: { fontSize: 16, fontWeight: '700', marginBottom: 15, color: '#007AFF', textAlign: 'center', textTransform: 'uppercase' },
     questionMain: { fontSize: 22, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 15 },
     mainDisplayContainer: { marginBottom: 20, alignItems: 'center' },
     rangeText: { fontSize: 32, fontWeight: 'bold', color: '#0056b3', textAlign: 'center' },
     finalInput: { width: 200, height: 60, borderWidth: 2, borderColor: '#ccc', borderRadius: 15, textAlign: 'center', fontSize: 28, backgroundColor: '#fafafa', color: '#333' },
-    correctFinal: { width: 200, height: 60, borderWidth: 2, borderColor: '#28a745', borderRadius: 15, textAlign: 'center', fontSize: 28, backgroundColor: '#d4edda', color: '#155724' },
-    errorFinal: { width: 200, height: 60, borderWidth: 2, borderColor: '#dc3545', borderRadius: 15, textAlign: 'center', fontSize: 28, backgroundColor: '#f8d7da', color: '#721c24' },
-    buttonContainer: { marginTop: 25, width: '80%', borderRadius: 10, overflow: 'hidden' },
+    correctFinal: { width: 200, height: 60, borderWidth: 3, borderColor: '#28a745', borderRadius: 15, textAlign: 'center', fontSize: 28, backgroundColor: '#d4edda', color: '#155724' },
+    errorFinal: { width: 200, height: 60, borderWidth: 3, borderColor: '#dc3545', borderRadius: 15, textAlign: 'center', fontSize: 28, backgroundColor: '#f8d7da', color: '#721c24' },
+    buttonContainer: { marginTop: 25, width: '80%' },
+    customBtn: { paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+    customBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
     result: { fontSize: 18, fontWeight: '700', marginTop: 15, textAlign: 'center' },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
-    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
+    counterTextSmall: { fontSize: 14, color: '#555', textAlign: 'center', marginTop: 10 },
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    counterTextIcons: { fontSize: Math.max(14, combinedIconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
+    counterTextIcons: { fontSize: 22, marginHorizontal: 8, color: '#333', fontWeight: 'bold' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
     drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
     drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, backgroundColor: '#f0f0f0' },
-    drawingTitle: { fontSize: 18, fontWeight: 'bold' },
+    drawingTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
     headerButton: { padding: 5 },
     headerButtonText: { fontSize: 16, color: '#007AFF' },
     problemPreviewContainer: { backgroundColor: '#f9f9f9', padding: 10, alignItems: 'center', width: '100%' },
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase' },
     problemPreviewTextSmall: { fontSize: 18, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
-
-    // MILESTONE STYLES
     milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
     milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
     statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
     statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
-    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20 },
     milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
     mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
     mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }

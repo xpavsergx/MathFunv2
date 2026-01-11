@@ -5,7 +5,7 @@ import {
     Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native'; // Dodane dla nawigacji
+import { useNavigation } from '@react-navigation/native';
 import { awardXpAndCoins } from '../../../services/xpService';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -15,6 +15,7 @@ const TASKS_LIMIT = 30;
 const { width: screenWidth } = Dimensions.get('window');
 const combinedIconSize = screenWidth * 0.25;
 
+// --- KOMPONENT BRUDNOPISU ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
@@ -48,13 +49,11 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const ClockTrainer = () => {
-    const navigation = useNavigation(); // Dodane dla nawigacji
+    const navigation = useNavigation();
     const [questionText, setQuestionText] = useState('');
     const [subQuestionText, setSubQuestionText] = useState('');
     const [correctAnswer, setCorrectAnswer] = useState('');
     const [correctAnswer2, setCorrectAnswer2] = useState('');
-    const [options, setOptions] = useState<string[]>([]);
-    const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [userInput, setUserInput] = useState('');
     const [userInput2, setUserInput2] = useState('');
     const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
@@ -72,8 +71,8 @@ const ClockTrainer = () => {
     const [isInput1Correct, setIsInput1Correct] = useState<boolean | null>(null);
     const [isInput2Correct, setIsInput2Correct] = useState<boolean | null>(null);
 
-    // Nowe stany raportu
     const [showMilestone, setShowMilestone] = useState(false);
+    const [isFinished, setIsFinished] = useState(false); // Flaga końca treningu
     const [sessionCorrect, setSessionCorrect] = useState(0);
 
     const backgroundColor = useRef(new Animated.Value(0)).current;
@@ -88,9 +87,9 @@ const ClockTrainer = () => {
     const generateProblem = () => {
         setMessage('');
         const typeRoll = Math.random();
-        let q = ''; let sub = ''; let ans1 = ''; let ans2 = ''; let hint = ''; let opts: string[] = [];
+        let q = ''; let sub = ''; let ans1 = ''; let ans2 = ''; let hint = '';
 
-        if (typeRoll < 0.35) { // 1. OBLICZENIA (ZA/TEMU)
+        if (typeRoll < 0.35) { // 1. OBLICZENIA
             const h = Math.floor(Math.random() * 12) + 1;
             const m = [0, 10, 15, 30, 45, 48][Math.floor(Math.random() * 6)];
             const isFuture = Math.random() > 0.5;
@@ -109,33 +108,36 @@ const ClockTrainer = () => {
                 ans1 = Math.floor(totalMin / 60).toString();
                 ans2 = (totalMin % 60).toString();
             }
-            hint = "Pamiętaj: kwadrans to 15 minut. Godzina ma 60 minut.";
+            hint = "Kwadrans to 15 minut. Godzina ma 60 minut.";
         }
-        else if (typeRoll < 0.65) { // 2. PRZELICZANIE JEDNOSTEK
+        else if (typeRoll < 0.65) { // 2. PRZELICZANIE
             const mode = Math.floor(Math.random() * 3);
             if (mode === 0) {
                 const min = Math.floor(Math.random() * 5) + 2;
                 ans1 = (min * 60).toString();
+                ans2 = '';
                 q = "Oblicz sekundy:";
                 sub = `${min} minut = ... sekund`;
                 hint = "1 minuta = 60 sekund.";
             } else if (mode === 1) {
                 const days = Math.floor(Math.random() * 2) + 1;
                 ans1 = (days * 24 + 12).toString();
+                ans2 = '';
                 q = "Oblicz godziny:";
                 sub = `${days === 1 ? 'Jedna doba' : days + ' doby'} i pół = ... godzin`;
                 hint = "Doba to 24h, połowa doby to 12h.";
             } else {
                 const h = Math.floor(Math.random() * 3) + 1;
                 ans1 = (h * 60 + 15).toString();
+                ans2 = '';
                 q = "Oblicz minuty:";
                 sub = `${h} ${h === 1 ? 'godzina' : 'godziny'} i kwadrans = ... minut`;
                 hint = "Godzina to 60 min, kwadrans to 15 min.";
             }
         }
-        else { // 3. ZAPIS CYFROWY (ТЕКСТ -> ЦИФРЫ)
+        else { // 3. ZAPIS CYFROWY
             const hoursWords = ['pierwsza', 'druga', 'trzecia', 'czwarta', 'piąta', 'szósta', 'siódma', 'ósma', 'dziewiąta', 'dziesiąta', 'jedenasta', 'dwunasta'];
-            const targetHour = Math.floor(Math.random() * 11) + 1; // 1-11
+            const targetHour = Math.floor(Math.random() * 11) + 1;
             const isLate = Math.random() > 0.5;
             const period = isLate ? (targetHour >= 6 ? 'wieczorem' : 'po południu') : 'rano';
             const offset = isLate ? 12 : 0;
@@ -143,43 +145,48 @@ const ClockTrainer = () => {
             q = "Zapisz godzinę cyframi:";
             const mode = Math.floor(Math.random() * 4);
 
-            if (mode === 0) { // wpół do
+            if (mode === 0) {
                 sub = `wpół do ${hoursWords[targetHour]} ${period}`;
                 ans1 = (targetHour - 1 + offset).toString();
                 ans2 = "30";
-                hint = `Wpół do ${hoursWords[targetHour]} oznacza godzinę wcześniejszą i 30 minut.`;
-            } else if (mode === 1) { // za kwadrans
+                hint = `Wpół do ${hoursWords[targetHour]} to godzina ${targetHour - 1} i 30 minut.`;
+            } else if (mode === 1) {
                 sub = `za kwadrans ${hoursWords[targetHour]} ${period}`;
                 ans1 = (targetHour - 1 + offset).toString();
                 ans2 = "45";
                 hint = `Za kwadrans ${hoursWords[targetHour]} to godzina ${targetHour - 1} i 45 minut.`;
-            } else if (mode === 2) { // po
+            } else if (mode === 2) {
                 const m = [10, 20, 27][Math.floor(Math.random() * 3)];
                 sub = `${m} minut po ${hoursWords[targetHour-1]} ${period}`;
                 ans1 = (targetHour + offset).toString();
                 ans2 = m.toString();
                 hint = `${m} minut po ${targetHour} godzinie.`;
-            } else { // równe
+            } else {
                 sub = `${hoursWords[targetHour-1]} ${period}`;
                 ans1 = (targetHour + offset).toString();
                 ans2 = "0";
-                hint = isLate ? "Dla godzin po południu dodajemy 12." : "To rano, użyj liczb 1-12.";
+                hint = isLate ? "Po południu dodajemy 12 godzin." : "Użyj liczb 1-12.";
             }
         }
 
         setQuestionText(q); setSubQuestionText(sub); setCorrectAnswer(ans1);
-        setCorrectAnswer2(ans2); setHintText(hint); setOptions(opts);
-        setSelectedOption(null); setIsInput1Correct(null); setIsInput2Correct(null);
+        setCorrectAnswer2(ans2); setHintText(hint);
+        setIsInput1Correct(null); setIsInput2Correct(null);
         setUserInput(''); setUserInput2('');
     };
 
-    const handleCheck = (selectedVal?: string) => {
-        const val1 = (selectedVal || userInput).trim();
+    const handleCheck = () => {
+        const val1 = userInput.trim();
         const val2 = userInput2.trim();
-        if (selectedVal) setSelectedOption(selectedVal);
+
+        // Blokada pustych pól
+        if (!val1 || (correctAnswer2 !== '' && !val2)) {
+            setMessage('Wpisz wynik!');
+            return;
+        }
 
         const check1 = val1 === correctAnswer;
-        const check2 = correctAnswer2 === '' || val2 === (correctAnswer2 === "0" ? "00" : correctAnswer2) || val2 === correctAnswer2 || (correctAnswer2 === "0" && val2 === "0");
+        const check2 = correctAnswer2 === '' || val2 === (correctAnswer2 === "0" ? "0" : correctAnswer2) || val2 === (correctAnswer2 === "0" ? "00" : correctAnswer2);
 
         setIsInput1Correct(check1);
         setIsInput2Correct(check2);
@@ -187,64 +194,67 @@ const ClockTrainer = () => {
         if (check1 && check2) {
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
             setCorrectCount(prev => prev + 1);
-            setSessionCorrect(prev => prev + 1); // Licznik serii
+            setSessionCorrect(prev => prev + 1);
             setMessage('Świetnie! ✅'); setReadyForNext(true);
             setIsCorrect(true);
             InteractionManager.runAfterInteractions(() => { awardXpAndCoins(5, 1);
                 const currentUser = auth().currentUser;
                 if (currentUser) {
-                    firestore()
-                        .collection('users')
-                        .doc(currentUser.uid)
-                        .collection('exerciseStats')
-                        .doc(EXERCISE_ID)
-                        .set({
-                            totalCorrect: firestore.FieldValue.increment(1)
-                        }, { merge: true })
-                        .catch(error => console.error("Błąd zapisu do bazy:", error));
+                    firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                        .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
                 }
             });
         } else {
-            Animated.timing(backgroundColor, { toValue: -1, duration: 500, useNativeDriver: false }).start();
-            InteractionManager.runAfterInteractions(() => {
-                const currentUser = auth().currentUser;
-                if (currentUser) {
-                    firestore()
-                        .collection('users')
-                        .doc(currentUser.uid)
-                        .collection('exerciseStats')
-                        .doc(EXERCISE_ID)
-                        .set({
-                            totalWrong: firestore.FieldValue.increment(1)
-                        }, { merge: true })
-                        .catch(error => console.error("Błąd zapisu błędnych:", error));
-                }
-            });
-            setIsCorrect(false);
-            if (!check1) setUserInput('');
-            if (!check2) setUserInput2('');
+            Animated.sequence([
+                Animated.timing(backgroundColor, { toValue: -1, duration: 400, useNativeDriver: false }),
+                Animated.timing(backgroundColor, { toValue: 0, duration: 400, useNativeDriver: false }),
+            ]).start();
 
-            if (firstAttempt) { setMessage('Błąd. Spróbuj jeszcze raz.'); setFirstAttempt(false); }
-            else {
+            if (firstAttempt) {
+                setMessage('Błąd! Spróbuj jeszcze raz ✍️');
+                setFirstAttempt(false);
+                if (!check1) setUserInput('');
+                if (!check2) setUserInput2('');
+            } else {
                 const res = correctAnswer2 !== '' ? `${correctAnswer}:${correctAnswer2.padStart(2, '0')}` : correctAnswer;
-                setMessage(`Poprawny wynik: ${res}`); setReadyForNext(true);
+                setMessage(`Błąd! Poprawny wynik: ${res}`);
+                setWrongCount(prev => prev + 1);
+                setReadyForNext(true);
+                InteractionManager.runAfterInteractions(() => {
+                    const currentUser = auth().currentUser;
+                    if (currentUser) {
+                        firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
+                            .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
+                    }
+                });
             }
-            setWrongCount(prev => prev + 1);
         }
     };
 
     const nextTask = () => {
-        // Blokada raportu co 10 zadań
-        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
+        if (taskCount >= TASKS_LIMIT) {
+            setIsFinished(true);
+            return;
+        }
+
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone && taskCount < TASKS_LIMIT) {
             setShowMilestone(true);
             return;
         }
 
-        if (taskCount >= TASKS_LIMIT) { setMessage('Koniec! 🏆'); return; }
         generateProblem();
         setReadyForNext(false); setFirstAttempt(true); setShowHint(false); setTaskCount(prev => prev + 1);
         backgroundColor.setValue(0);
         setIsCorrect(null);
+    };
+
+    const handleRestart = () => {
+        setIsFinished(false);
+        setTaskCount(0);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setSessionCorrect(0);
+        nextTask();
     };
 
     const bgInterpolation = backgroundColor.interpolate({ inputRange: [-1, 0, 1], outputRange: ['rgba(255,0,0,0.2)', 'rgba(255,255,255,0)', 'rgba(0,255,0,0.2)'] });
@@ -256,47 +266,49 @@ const ClockTrainer = () => {
                 <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
                 <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: bgInterpolation }]} pointerEvents="none" />
                 <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardContainer}>
+
                     {!isKeyboardVisible && (
                         <View style={styles.topButtons}>
                             <TouchableOpacity onPress={() => setShowScratchpad(true)} style={styles.topBtnItem}><Image source={require('../../../assets/pencil.png')} style={styles.iconTop} /><Text style={styles.buttonLabel}>Brudnopis</Text></TouchableOpacity>
                             <TouchableOpacity onPress={() => setShowHint(!showHint)} style={styles.topBtnItem}><Image source={require('../../../assets/question.png')} style={styles.iconTop} /><Text style={styles.buttonLabel}>Pomoc</Text></TouchableOpacity>
                         </View>
                     )}
+
                     {showHint && !isKeyboardVisible && (
                         <View style={styles.hintBox}><Text style={styles.hintTitle}>Podpowiedź:</Text><Text style={styles.hintText}>{hintText}</Text></View>
                     )}
+
                     <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={subQuestionText} />
 
-                    {/* MODAL MILESTONE */}
+                    {/* MODAL MILESTONE (CO 10 ZADAŃ) */}
                     <Modal visible={showMilestone} transparent={true} animationType="slide">
                         <View style={styles.modalOverlay}>
                             <View style={styles.milestoneCard}>
                                 <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
                                 <View style={styles.statsRow}>
                                     <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
-                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
-                                        Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
-                                    </Text>
+                                    <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%</Text>
                                 </View>
-                                <Text style={styles.suggestionText}>
-                                    {sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}
-                                </Text>
                                 <View style={styles.milestoneButtons}>
-                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]}
-                                                      onPress={() => {
-                                                          setShowMilestone(false);
-                                                          setSessionCorrect(0);
-                                                          nextTask();
-                                                      }}>
-                                        <Text style={styles.mButtonText}>Kontynuuj</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]}
-                                                      onPress={() => {
-                                                          setShowMilestone(false);
-                                                          navigation.goBack();
-                                                      }}>
-                                        <Text style={styles.mButtonText}>Inny temat</Text>
-                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Inny temat</Text></TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    {/* MODAL FINALNY */}
+                    <Modal visible={isFinished} transparent={true} animationType="fade">
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.milestoneCard}>
+                                <Text style={styles.milestoneTitle}>Trening ukończony! 🏆</Text>
+                                <Text style={styles.suggestionText}>Rozwiązałeś wszystkie zadania.</Text>
+                                <View style={styles.statsRow}>
+                                    <Text style={styles.statsText}>Wynik: {correctCount} / {TASKS_LIMIT}</Text>
+                                </View>
+                                <View style={styles.milestoneButtons}>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={handleRestart}><Text style={styles.mButtonText}>Od nowa</Text></TouchableOpacity>
+                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#dc3545' }]} onPress={() => { setIsFinished(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Wyjdź</Text></TouchableOpacity>
                                 </View>
                             </View>
                         </View>
@@ -311,60 +323,79 @@ const ClockTrainer = () => {
                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
                                 <TextInput
                                     style={[styles.finalInput, isInput1Correct === true && styles.correctFinal, isInput1Correct === false && styles.errorFinal, correctAnswer2 !== '' && {width:100}]}
-                                    keyboardType="numeric" value={userInput} onChangeText={setUserInput} editable={!readyForNext} placeholder="H"
+                                    keyboardType="numeric"
+                                    value={userInput}
+                                    onChangeText={(t) => { setUserInput(t); if(isInput1Correct === false) setIsInput1Correct(null); }}
+                                    editable={!readyForNext}
+                                    placeholder="H"
                                 />
                                 {correctAnswer2 !== '' && <Text style={styles.timeSeparator}>:</Text>}
                                 {correctAnswer2 !== '' && (
                                     <TextInput
                                         style={[styles.finalInput, {width:100}, isInput2Correct === true && styles.correctFinal, isInput2Correct === false && styles.errorFinal]}
-                                        keyboardType="numeric" value={userInput2} onChangeText={setUserInput2} editable={!readyForNext} placeholder="M"
+                                        keyboardType="numeric"
+                                        value={userInput2}
+                                        onChangeText={(t) => { setUserInput2(t); if(isInput2Correct === false) setIsInput2Correct(null); }}
+                                        editable={!readyForNext}
+                                        placeholder="M"
                                     />
                                 )}
                             </View>
 
                             <View style={styles.buttonContainer}>
-                                <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : () => handleCheck()} color="#007AFF" />
+                                <TouchableOpacity
+                                    style={[styles.customBtn, {backgroundColor: readyForNext ? '#28a745' : '#007AFF'}]}
+                                    onPress={readyForNext ? nextTask : () => handleCheck()}
+                                >
+                                    <Text style={styles.customBtnText}>{readyForNext ? 'Dalej' : 'Sprawdź'}</Text>
+                                </TouchableOpacity>
                             </View>
 
                             <Text style={styles.counterTextSmall}>Zadanie: {taskCount} / {TASKS_LIMIT}</Text>
                             {message ? <Text style={[styles.result, message.includes('Świetnie') ? styles.correctText : styles.errorText]}>{message}</Text> : null}
                         </View>
                     </ScrollView>
+
                     {!isKeyboardVisible && (
                         <View style={styles.iconsBottom}><Image source={require('../../../assets/happy.png')} style={styles.iconSame} /><Text style={styles.counterTextIcons}>{correctCount}</Text><Image source={require('../../../assets/sad.png')} style={styles.iconSame} /><Text style={styles.counterTextIcons}>{wrongCount}</Text></View>
                     )}
+
                 </KeyboardAvoidingView>
             </View>
         </TouchableWithoutFeedback>
     );
 };
 
+
+
 const styles = StyleSheet.create({
     keyboardContainer: { flex: 1, justifyContent: 'center' },
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 20 },
     topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
-    iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
+    iconTop: { width: 70, height: 70, resizeMode: 'contain' },
     buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2 },
     hintBox: { position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
     hintText: { fontSize: 14, color: '#333', textAlign: 'center', lineHeight: 20 },
     card: { width: '95%', maxWidth: 480, borderRadius: 20, padding: 20, marginTop: 20, alignItems: 'center', alignSelf: 'center' },
     overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
-    questionMain: { fontSize: 24, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 10 },
+    questionMain: { fontSize: 22, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 10 },
     subQuestion: { fontSize: 24, color: '#0056b3', textAlign: 'center', marginBottom: 20, fontWeight: 'bold' },
     finalInput: { width: 220, height: 60, borderWidth: 2, borderColor: '#ccc', borderRadius: 15, textAlign: 'center', fontSize: 24, backgroundColor: '#fafafa', marginTop: 10, color: '#333', fontWeight: 'bold' },
     timeSeparator: { fontSize: 30, fontWeight: 'bold', marginHorizontal: 5, marginTop: 10 },
     correctFinal: { borderColor: '#28a745', backgroundColor: '#d4edda' },
     errorFinal: { borderColor: '#dc3545', backgroundColor: '#f8d7da' },
-    buttonContainer: { marginTop: 25, width: '80%', borderRadius: 10, overflow: 'hidden' },
+    buttonContainer: { marginTop: 25, width: '80%' },
+    customBtn: { paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+    customBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
     result: { fontSize: 18, fontWeight: '700', marginTop: 15, textAlign: 'center' },
     correctText: { color: '#28a745' },
     errorText: { color: '#dc3545' },
-    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
+    counterTextSmall: { fontSize: 14, color: '#555', textAlign: 'center', marginTop: 10 },
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    counterTextIcons: { fontSize: Math.max(14, combinedIconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
+    counterTextIcons: { fontSize: 22, marginHorizontal: 8, color: '#333', fontWeight: 'bold' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
     drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
     drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, backgroundColor: '#f0f0f0', borderBottomWidth: 1, borderBottomColor: '#ccc' },
@@ -375,16 +406,14 @@ const styles = StyleSheet.create({
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
     canvas: { flex: 1, backgroundColor: '#ffffff' },
-
-    // Milestone Styles
-    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center' },
     milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
     statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
     statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
-    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20 },
     milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
-    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
+    mButton: { paddingVertical: 12, borderRadius: 12, width: '48%', alignItems: 'center' },
+    mButtonText: { color: '#fff', fontWeight: 'bold' }
 });
 
 export default ClockTrainer;
