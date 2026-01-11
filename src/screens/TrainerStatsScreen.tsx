@@ -65,6 +65,21 @@ const EXERCISE_GROUPS = [
             { id: "fractionComparisonTrainer_cl4", label: "Porównywanie ułamków" },
             { id: "FractionsExpansionTrainer_cl4", label: "Rozszerzanie i skracanie ułamków" },
             { id: "ImproperFractionsTrainer_cl4", label: "Ułamki niewłaściwe" },
+            { id: "FractionDivisionTrainer_cl4", label: "Ułamek jako wynik dzielenia" },
+            {id: "FractionsAdditionTrainer_cl4", label: "Dodawanie ułamków zwykłych"},
+            {id: "FractionSubtraction_cl4", label: "Odejmowanie ułamków zwykłych"},
+        ]
+    },
+    {
+        title: "UŁAMKI DZIESIĘTNE",
+        exercises: [
+            { id: "DecimalAdditionTrainer_IV_FinalFix", label: "Dodawanie ułamków dziesiętnych" },
+            { id: "DecimalComparison_Hard_cl4", label: "Porównywanie ułamków dziesiętnych" },
+            { id: "DecimalSubtractionTrainer_IV_FinalFix", label: "Odejmowanie ułamków dziesiętnych" },
+            { id: "DecimalFractions_Class4", label: "Ułamki o mianownikach 10, 100, 1000, ..." },
+            { id: "TwoUnitExpressions_Mixed_cl4", label: "Zapisywanie wyrażeń dwumianowanych, cz. 1" },
+            { id: "UnitExpression_Part2_Mass_Final", label: "Zapisywanie wyrażeń dwumianowanych, cz. 2" },
+            { id: "DecimalConversion_cl4", label: "Różne zapisy tego samego ułamka dziesiętnego" },
         ]
     }
 ];
