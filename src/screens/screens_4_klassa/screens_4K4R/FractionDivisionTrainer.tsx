@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     View, Text, StyleSheet, TextInput, Keyboard, ImageBackground,
     Animated, StatusBar, Image, Dimensions, TouchableOpacity, Modal,
-    Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager
+    Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager,
+    useColorScheme
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -12,16 +13,25 @@ import firestore from '@react-native-firebase/firestore';
 
 const EXERCISE_ID = "FractionDivisionTrainer_cl4";
 const { width: screenWidth } = Dimensions.get('window');
-
-// LIMIT ZADAŃ
 const TASKS_LIMIT = 30;
-// TWOJE ORYGINALNE WYMIARY
 const combinedIconSize = screenWidth * 0.25;
 
 // --- MODAL BRUDNOPISU ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
+    const isDarkMode = useColorScheme() === 'dark';
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
+
+    const theme = {
+        bg: isDarkMode ? '#1E293B' : '#fff',
+        text: isDarkMode ? '#FFF' : '#333',
+        canvas: isDarkMode ? '#0F172A' : '#ffffff',
+        stroke: isDarkMode ? '#FFF' : '#000',
+        headerBg: isDarkMode ? '#334155' : '#f0f0f0',
+        border: isDarkMode ? '#475569' : '#ccc',
+        previewBg: isDarkMode ? '#1E293B' : '#f9f9f9',
+    };
+
     const handleClear = () => { setPaths([]); setCurrentPath(''); };
     const onTouchMove = (evt: any) => {
         const { locationX, locationY } = evt.nativeEvent;
@@ -29,23 +39,24 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
         else setCurrentPath(`${currentPath} L${locationX},${locationY}`);
     };
     const onTouchEnd = () => { if (currentPath) { setPaths([...paths, currentPath]); setCurrentPath(''); } };
+
     return (
         <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
             <View style={styles.modalOverlay}>
-                <View style={styles.drawingContainer}>
-                    <View style={styles.drawingHeader}>
+                <View style={[styles.drawingContainer, { backgroundColor: theme.bg }]}>
+                    <View style={[styles.drawingHeader, { backgroundColor: theme.headerBg, borderBottomColor: theme.border }]}>
                         <TouchableOpacity onPress={handleClear} style={styles.headerButton}><Text style={styles.headerButtonText}>🗑️ Wyczyść</Text></TouchableOpacity>
-                        <Text style={styles.drawingTitle}>Brudnopis</Text>
+                        <Text style={[styles.drawingTitle, { color: theme.text }]}>Brudnopis</Text>
                         <TouchableOpacity onPress={onClose} style={styles.headerButton}><Text style={styles.headerButtonText}>❌ Zamknij</Text></TouchableOpacity>
                     </View>
-                    <View style={styles.problemPreviewContainer}>
+                    <View style={[styles.problemPreviewContainer, { backgroundColor: theme.previewBg, borderBottomColor: theme.border }]}>
                         <Text style={styles.problemPreviewLabel}>Zadanie:</Text>
-                        <Text numberOfLines={2} style={styles.problemPreviewTextSmall}>{problemText}</Text>
+                        <Text numberOfLines={2} style={[styles.problemPreviewTextSmall, { color: '#007AFF' }]}>{problemText}</Text>
                     </View>
-                    <View style={styles.canvas} onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderGrant={(evt) => { const { locationX, locationY } = evt.nativeEvent; setCurrentPath(`M${locationX},${locationY}`); }} onResponderMove={onTouchMove} onResponderRelease={onTouchEnd}>
+                    <View style={[styles.canvas, { backgroundColor: theme.canvas }]} onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderGrant={(evt) => { const { locationX, locationY } = evt.nativeEvent; setCurrentPath(`M${locationX},${locationY}`); }} onResponderMove={onTouchMove} onResponderRelease={onTouchEnd}>
                         <Svg height="100%" width="100%">
-                            {paths.map((d, index) => (<Path key={index} d={d} stroke="#000" strokeWidth={3} fill="none" />))}
-                            <Path d={currentPath} stroke="#000" strokeWidth={3} fill="none" />
+                            {paths.map((d, index) => (<Path key={index} d={d} stroke={theme.stroke} strokeWidth={3} fill="none" />))}
+                            <Path d={currentPath} stroke={theme.stroke} strokeWidth={3} fill="none" />
                         </Svg>
                     </View>
                 </View>
@@ -54,9 +65,28 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
     );
 };
 
-// --- GŁÓWNY KOMPONENT ---
 const FractionDivisionTrainer = () => {
     const navigation = useNavigation();
+    const isDarkMode = useColorScheme() === 'dark';
+
+    const theme = {
+        bgImage: require('../../../assets/background.jpg'),
+        bgOverlay: isDarkMode ? 'rgba(0, 0, 0, 0.75)' : 'transparent',
+        topBtnText: isDarkMode ? '#FFFFFF' : '#007AFF',
+        textMain: isDarkMode ? '#FFFFFF' : '#333333',
+        textSub: isDarkMode ? '#CBD5E1' : '#555555',
+        cardOverlay: isDarkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255,255,255,0.94)',
+        modalContent: isDarkMode ? '#1E293B' : '#fff',
+        statsRow: isDarkMode ? '#0F172A' : '#f8f9fa',
+        inputBg: isDarkMode ? '#334155' : '#ffffff',
+        inputBorder: isDarkMode ? '#475569' : '#ccc',
+        inputText: isDarkMode ? '#FFFFFF' : '#333',
+        inputPlaceholder: isDarkMode ? '#94A3B8' : '#aaa',
+        correctBg: isDarkMode ? 'rgba(21, 87, 36, 0.5)' : '#e8f5e9',
+        correctBorder: isDarkMode ? '#4ADE80' : '#28a745',
+        errorBg: isDarkMode ? 'rgba(114, 28, 36, 0.5)' : '#fbe9eb',
+        errorBorder: isDarkMode ? '#F87171' : '#dc3545',
+    };
 
     const [task, setTask] = useState({
         type: 0, q: '', h: '', val1: 0, val2: 0,
@@ -66,17 +96,14 @@ const FractionDivisionTrainer = () => {
     const [inpWhole, setInpWhole] = useState('');
     const [inp1, setInp1] = useState('');
     const [inp2, setInp2] = useState('');
-
     const [status, setStatus] = useState<'neutral' | 'correct' | 'wrong'>('neutral');
     const [msg, setMsg] = useState('');
     const [attempts, setAttempts] = useState(0);
     const [ready, setReady] = useState(false);
-
     const [stats, setStats] = useState({ correct: 0, wrong: 0, count: 0 });
     const [showMilestone, setShowMilestone] = useState(false);
     const [isFinished, setIsFinished] = useState(false);
     const [sessionCorrect, setSessionCorrect] = useState(0);
-
     const [showScratchpad, setShowScratchpad] = useState(false);
     const [showHint, setShowHint] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
@@ -85,7 +112,6 @@ const FractionDivisionTrainer = () => {
     const wholeRef = useRef<TextInput>(null);
     const inp1Ref = useRef<TextInput>(null);
     const inp2Ref = useRef<TextInput>(null);
-
     const bgAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -136,7 +162,6 @@ const FractionDivisionTrainer = () => {
     };
 
     const handleCheck = () => {
-        // PUNKT 2: Blokada pustych pól
         if (task.type === 2) {
             if (!inpWhole || !inp1 || !inp2) { setMsg('Wypełnij wszystkie pola!'); return; }
         } else {
@@ -155,15 +180,9 @@ const FractionDivisionTrainer = () => {
             setSessionCorrect(prev => prev + 1);
             setReady(true);
             InteractionManager.runAfterInteractions(() => awardXpAndCoins(10, 2));
-            const currentUser = auth().currentUser;
-            if (currentUser) {
-                firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
-                    .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(e => console.error(e));
-            }
         } else {
             setStatus('wrong');
             if (attempts === 0) {
-                // PUNKT 1: Pierwsza pomyłka
                 setMsg('Błąd! Spróbuj jeszcze raz ✍️');
                 setAttempts(1);
                 if (!isWOk) setInpWhole('');
@@ -173,34 +192,20 @@ const FractionDivisionTrainer = () => {
                     Animated.timing(bgAnim, { toValue: -1, duration: 200, useNativeDriver: false }),
                     Animated.timing(bgAnim, { toValue: 0, duration: 200, useNativeDriver: false })
                 ]).start();
-                // PUNKT 5: Reset statusu
                 setTimeout(() => setStatus('neutral'), 1500);
             } else {
-                // PUNKT 1: Druga pomyłka
                 let correctStr = task.type === 2 ? `${task.targetWhole} i ${task.target1}/${task.target2}` : (task.type === 0 ? `${task.target1}/${task.target2}` : `${task.target1} : ${task.target2}`);
                 setMsg(`Niestety błąd. Wynik: ${correctStr}`);
                 setReady(true);
                 setStats(s => ({ ...s, wrong: s.wrong + 1 }));
                 Animated.timing(bgAnim, { toValue: -1, duration: 500, useNativeDriver: false }).start();
-                const currentUser = auth().currentUser;
-                if (currentUser) {
-                    firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
-                        .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(e => console.error(e));
-                }
             }
         }
     };
 
     const nextTask = () => {
-        // PUNKT 3 i 4: Logika Milestone i Finish
-        if (stats.count >= TASKS_LIMIT) {
-            setIsFinished(true);
-            return;
-        }
-        if (stats.count > 0 && stats.count % 10 === 0 && !showMilestone) {
-            setShowMilestone(true);
-            return;
-        }
+        if (stats.count >= TASKS_LIMIT) { setIsFinished(true); return; }
+        if (stats.count > 0 && stats.count % 10 === 0 && !showMilestone) { setShowMilestone(true); return; }
         setStats(s => ({ ...s, count: s.count + 1 }));
         generateProblem();
     };
@@ -213,17 +218,21 @@ const FractionDivisionTrainer = () => {
         generateProblem();
     };
 
-    const getInputStyle = (currentVal: string, targetVal: number | null) => {
-        if (status === 'neutral') return styles.inputNeutral;
-        if (status === 'correct') return styles.inputCorrect;
-        return (currentVal && parseInt(currentVal) === targetVal) ? styles.inputCorrect : styles.inputError;
+    const getValidationStyle = (currentVal: string, targetVal: number | null) => {
+        const baseStyle = { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.inputText };
+        if (status === 'neutral') return [styles.inputBox, baseStyle];
+        const isFieldCorrect = currentVal && parseInt(currentVal) === targetVal;
+        if (status === 'correct' || isFieldCorrect) return [styles.inputBox, { backgroundColor: theme.correctBg, borderColor: theme.correctBorder, color: isDarkMode ? '#86EFAC' : '#28a745' }];
+        return [styles.inputBox, { backgroundColor: theme.errorBg, borderColor: theme.errorBorder, color: isDarkMode ? '#FCA5A5' : '#dc3545' }];
     };
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles.container}>
-                <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-                <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                <StatusBar translucent backgroundColor="transparent" barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+                <ImageBackground source={theme.bgImage} style={StyleSheet.absoluteFillObject} resizeMode="cover">
+                    <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.bgOverlay }]} />
+                </ImageBackground>
                 <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: bgAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: ['rgba(255,0,0,0.15)', 'transparent', 'rgba(0,255,0,0.15)'] }) }]} pointerEvents="none" />
 
                 <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardContainer}>
@@ -231,21 +240,22 @@ const FractionDivisionTrainer = () => {
                         <View style={styles.topButtons}>
                             <TouchableOpacity onPress={() => setShowScratchpad(true)} style={styles.topBtnItem}>
                                 <Image source={require('../../../assets/pencil.png')} style={styles.iconTop} />
-                                <Text style={styles.buttonLabel}>Brudnopis</Text>
+                                <Text style={[styles.buttonLabel, { color: theme.topBtnText }]}>Brudnopis</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => setShowHint(!showHint)} style={styles.topBtnItem}>
                                 <Image source={require('../../../assets/question.png')} style={styles.iconTop} />
-                                <Text style={styles.buttonLabel}>Pomoc</Text>
+                                <Text style={[styles.buttonLabel, { color: theme.topBtnText }]}>Pomoc</Text>
                             </TouchableOpacity>
                         </View>
                     )}
 
+                    {/* MODALE (MILESTONE, FINISH, HINT) */}
                     <Modal visible={showMilestone} transparent={true} animationType="slide">
                         <View style={styles.modalOverlay}>
-                            <View style={styles.milestoneCard}>
-                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
-                                <View style={styles.statsRowMilestone}>
-                                    <Text style={styles.statsTextMilestone}>Poprawne: {sessionCorrect} / 10</Text>
+                            <View style={[styles.milestoneCard, { backgroundColor: theme.modalContent }]}>
+                                <Text style={[styles.milestoneTitle, { color: theme.textMain }]}>Podsumowanie serii 📊</Text>
+                                <View style={[styles.statsRowMilestone, { backgroundColor: theme.statsRow }]}>
+                                    <Text style={[styles.statsTextMilestone, { color: theme.textMain }]}>Poprawne: {sessionCorrect} / 10</Text>
                                 </View>
                                 <TouchableOpacity style={styles.mButton} onPress={() => { setShowMilestone(false); setSessionCorrect(0); setStats(s => ({ ...s, count: s.count + 1 })); generateProblem(); }}>
                                     <Text style={styles.mButtonText}>Kontynuuj</Text>
@@ -256,10 +266,10 @@ const FractionDivisionTrainer = () => {
 
                     <Modal visible={isFinished} transparent={true} animationType="fade">
                         <View style={styles.modalOverlay}>
-                            <View style={styles.milestoneCard}>
-                                <Text style={styles.milestoneTitle}>Gratulacje! 🏆</Text>
-                                <View style={styles.statsRowMilestone}>
-                                    <Text style={styles.statsTextMilestone}>Wynik końcowy: {stats.correct} / {TASKS_LIMIT}</Text>
+                            <View style={[styles.milestoneCard, { backgroundColor: theme.modalContent }]}>
+                                <Text style={[styles.milestoneTitle, { color: theme.textMain }]}>Gratulacje! 🏆</Text>
+                                <View style={[styles.statsRowMilestone, { backgroundColor: theme.statsRow }]}>
+                                    <Text style={[styles.statsTextMilestone, { color: theme.textMain }]}>Wynik końcowy: {stats.correct} / {TASKS_LIMIT}</Text>
                                 </View>
                                 <View style={styles.milestoneButtons}>
                                     <TouchableOpacity style={styles.mButton} onPress={handleRestart}><Text style={styles.mButtonText}>Od nowa</Text></TouchableOpacity>
@@ -270,54 +280,57 @@ const FractionDivisionTrainer = () => {
                     </Modal>
 
                     {showHint && !isKeyboardVisible && (
-                        <View style={styles.hintBox}><Text style={styles.hintTitle}>Podpowiedź:</Text><Text style={styles.hintText}>{task.h}</Text></View>
+                        <View style={[styles.hintBox, { backgroundColor: theme.modalContent, borderColor: '#007AFF' }]}>
+                            <Text style={styles.hintTitle}>Podpowiedź:</Text>
+                            <Text style={[styles.hintText, { color: theme.textMain }]}>{task.h}</Text>
+                        </View>
                     )}
 
                     <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={task.q} />
 
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
-                            <View style={styles.overlayBackground} />
+                            <View style={[styles.overlayBackground, { backgroundColor: theme.cardOverlay }]} />
                             <Text style={styles.headerTitle}>Ułamki i dzielenie</Text>
-                            <Text style={styles.questionText}>{task.q}</Text>
+                            <Text style={[styles.questionText, { color: theme.textMain }]}>{task.q}</Text>
 
                             <View style={styles.taskContent}>
                                 <View style={styles.equationRow}>
                                     {task.type === 0 ? (
                                         <View style={styles.rowCenter}>
-                                            <Text style={styles.bigNumber}>{task.val1}</Text>
-                                            <Text style={styles.symbol}>:</Text>
-                                            <Text style={styles.bigNumber}>{task.val2}</Text>
+                                            <Text style={[styles.bigNumber, { color: theme.textMain }]}>{task.val1}</Text>
+                                            <Text style={[styles.symbol, { color: theme.textMain }]}>:</Text>
+                                            <Text style={[styles.bigNumber, { color: theme.textMain }]}>{task.val2}</Text>
                                         </View>
                                     ) : (
                                         <View style={styles.fractionStatic}>
-                                            <Text style={styles.staticNum}>{task.val1}</Text>
-                                            <View style={styles.staticLine} />
-                                            <Text style={styles.staticDen}>{task.val2}</Text>
+                                            <Text style={[styles.staticNum, { color: theme.textMain }]}>{task.val1}</Text>
+                                            <View style={[styles.staticLine, { backgroundColor: theme.textMain }]} />
+                                            <Text style={[styles.staticDen, { color: theme.textMain }]}>{task.val2}</Text>
                                         </View>
                                     )}
 
-                                    <Text style={styles.equalSign}>=</Text>
+                                    <Text style={[styles.equalSign, { color: theme.textMain }]}>=</Text>
 
                                     {task.type === 0 ? (
                                         <View style={styles.fractionInputContainer}>
-                                            <TextInput ref={inp1Ref} style={[styles.fractionInput, getInputStyle(inp1, task.target1)]} keyboardType="numeric" value={inp1} onChangeText={(t) => {setInp1(t); setStatus('neutral');}} onSubmitEditing={() => inp2Ref.current?.focus()} blurOnSubmit={false} editable={!ready} placeholder="?" />
-                                            <View style={styles.fractionLineLarge} />
-                                            <TextInput ref={inp2Ref} style={[styles.fractionInput, getInputStyle(inp2, task.target2)]} keyboardType="numeric" value={inp2} onChangeText={(t) => {setInp2(t); setStatus('neutral');}} editable={!ready} placeholder="?" />
+                                            <TextInput ref={inp1Ref} style={getValidationStyle(inp1, task.target1)} keyboardType="numeric" value={inp1} onChangeText={setInp1} onSubmitEditing={() => inp2Ref.current?.focus()} blurOnSubmit={false} editable={!ready} placeholder="?" placeholderTextColor={theme.inputPlaceholder} />
+                                            <View style={[styles.fractionLineLarge, { backgroundColor: theme.textMain }]} />
+                                            <TextInput ref={inp2Ref} style={getValidationStyle(inp2, task.target2)} keyboardType="numeric" value={inp2} onChangeText={setInp2} editable={!ready} placeholder="?" placeholderTextColor={theme.inputPlaceholder} />
                                         </View>
                                     ) : task.type === 1 ? (
                                         <View style={styles.rowCenter}>
-                                            <TextInput ref={inp1Ref} style={[styles.fractionInput, getInputStyle(inp1, task.target1)]} keyboardType="numeric" value={inp1} onChangeText={(t) => {setInp1(t); setStatus('neutral');}} onSubmitEditing={() => inp2Ref.current?.focus()} blurOnSubmit={false} editable={!ready} placeholder="?" />
-                                            <Text style={styles.symbol}>:</Text>
-                                            <TextInput ref={inp2Ref} style={[styles.fractionInput, getInputStyle(inp2, task.target2)]} keyboardType="numeric" value={inp2} onChangeText={(t) => {setInp2(t); setStatus('neutral');}} editable={!ready} placeholder="?" />
+                                            <TextInput ref={inp1Ref} style={getValidationStyle(inp1, task.target1)} keyboardType="numeric" value={inp1} onChangeText={setInp1} onSubmitEditing={() => inp2Ref.current?.focus()} blurOnSubmit={false} editable={!ready} placeholder="?" placeholderTextColor={theme.inputPlaceholder} />
+                                            <Text style={[styles.symbol, { color: theme.textMain }]}>:</Text>
+                                            <TextInput ref={inp2Ref} style={getValidationStyle(inp2, task.target2)} keyboardType="numeric" value={inp2} onChangeText={setInp2} editable={!ready} placeholder="?" placeholderTextColor={theme.inputPlaceholder} />
                                         </View>
                                     ) : (
                                         <View style={styles.mixedContainer}>
-                                            <TextInput ref={wholeRef} style={[styles.wholeInput, getInputStyle(inpWhole, task.targetWhole)]} keyboardType="numeric" value={inpWhole} onChangeText={(t) => {setInpWhole(t); setStatus('neutral');}} onSubmitEditing={() => inp1Ref.current?.focus()} blurOnSubmit={false} editable={!ready} placeholder="?" />
+                                            <TextInput ref={wholeRef} style={[getValidationStyle(inpWhole, task.targetWhole), {width: 55, height: 75, fontSize: 28, marginRight: 8}]} keyboardType="numeric" value={inpWhole} onChangeText={setInpWhole} onSubmitEditing={() => inp1Ref.current?.focus()} blurOnSubmit={false} editable={!ready} placeholder="?" placeholderTextColor={theme.inputPlaceholder} />
                                             <View style={styles.fractionInputContainer}>
-                                                <TextInput ref={inp1Ref} style={[styles.fractionInputSmall, getInputStyle(inp1, task.target1)]} keyboardType="numeric" value={inp1} onChangeText={(t) => {setInp1(t); setStatus('neutral');}} onSubmitEditing={() => inp2Ref.current?.focus()} blurOnSubmit={false} editable={!ready} placeholder="?" />
-                                                <View style={styles.fractionLineSmall} />
-                                                <TextInput ref={inp2Ref} style={[styles.fractionInputSmall, getInputStyle(inp2, task.target2)]} keyboardType="numeric" value={inp2} onChangeText={(t) => {setInp2(t); setStatus('neutral');}} editable={!ready} placeholder="?" />
+                                                <TextInput ref={inp1Ref} style={[getValidationStyle(inp1, task.target1), {width: 50, height: 45, fontSize: 20}]} keyboardType="numeric" value={inp1} onChangeText={setInp1} onSubmitEditing={() => inp2Ref.current?.focus()} blurOnSubmit={false} editable={!ready} placeholder="?" placeholderTextColor={theme.inputPlaceholder} />
+                                                <View style={[styles.fractionLineSmall, { backgroundColor: theme.textMain }]} />
+                                                <TextInput ref={inp2Ref} style={[getValidationStyle(inp2, task.target2), {width: 50, height: 45, fontSize: 20}]} keyboardType="numeric" value={inp2} onChangeText={setInp2} editable={!ready} placeholder="?" placeholderTextColor={theme.inputPlaceholder} />
                                             </View>
                                         </View>
                                     )}
@@ -328,9 +341,9 @@ const FractionDivisionTrainer = () => {
                                 <Text style={styles.mainBtnText}>{ready ? 'Następne' : 'Sprawdź'}</Text>
                             </TouchableOpacity>
 
-                            <Text style={styles.counterTextSmall}>Zadanie: {stats.count}/{TASKS_LIMIT}</Text>
+                            <Text style={[styles.counterTextSmall, { color: theme.textSub }]}>Zadanie: {stats.count}/{TASKS_LIMIT}</Text>
                             <View style={{height: 30, marginTop: 15, justifyContent: 'center'}}>
-                                {msg ? <Text style={[styles.msg, status === 'correct' ? styles.correctText : styles.errorText]}>{msg}</Text> : null}
+                                {msg ? <Text style={[styles.msg, status === 'correct' ? {color: '#28a745'} : {color: '#dc3545'}]}>{msg}</Text> : null}
                             </View>
                         </View>
                     </ScrollView>
@@ -338,9 +351,9 @@ const FractionDivisionTrainer = () => {
                     {!isKeyboardVisible && (
                         <View style={styles.iconsBottom}>
                             <Image source={require('../../../assets/happy.png')} style={styles.iconSame} />
-                            <Text style={styles.counterTextIcons}>{stats.correct}</Text>
+                            <Text style={[styles.counterTextIcons, { color: theme.textMain }]}>{stats.correct}</Text>
                             <Image source={require('../../../assets/sad.png')} style={styles.iconSame} />
-                            <Text style={styles.counterTextIcons}>{stats.wrong}</Text>
+                            <Text style={[styles.counterTextIcons, { color: theme.textMain }]}>{stats.wrong}</Text>
                         </View>
                     )}
                 </KeyboardAvoidingView>
@@ -356,60 +369,53 @@ const styles = StyleSheet.create({
     topButtons: { position: 'absolute', top: 17, right: 20, flexDirection: 'row', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
     iconTop: { width: 70, height: 70, resizeMode: 'contain' },
-    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2 },
-    hintBox: { position: 'absolute', top: 110, right: 20, padding: 15, backgroundColor: '#fff', borderRadius: 15, width: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
+    buttonLabel: { fontSize: 14, fontWeight: 'bold', marginTop: 2 },
+    hintBox: { position: 'absolute', top: 110, right: 20, padding: 15, borderRadius: 15, width: 260, zIndex: 11, elevation: 5, borderWidth: 1 },
     hintTitle: { fontWeight: 'bold', color: '#007AFF', marginBottom: 5 },
-    hintText: { fontSize: 14, color: '#333' },
+    hintText: { fontSize: 14 },
     card: { width: '92%', maxWidth: 450, borderRadius: 25, padding: 25, alignItems: 'center', alignSelf: 'center', elevation: 4 },
-    overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.94)', borderRadius: 25 },
+    overlayBackground: { ...StyleSheet.absoluteFillObject, borderRadius: 25 },
     headerTitle: { fontSize: 20, fontWeight: '800', color: '#007AFF', marginBottom: 10, textTransform: 'uppercase' },
-    questionText: { fontSize: 18, color: '#2c3e50', textAlign: 'center', fontWeight: '500', lineHeight: 26, marginBottom: 20 },
+    questionText: { fontSize: 18, textAlign: 'center', fontWeight: '500', lineHeight: 26, marginBottom: 20 },
     taskContent: { alignItems: 'center', width: '100%', marginBottom: 10 },
     equationRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
     rowCenter: { flexDirection: 'row', alignItems: 'center' },
     mixedContainer: { flexDirection: 'row', alignItems: 'center' },
     fractionStatic: { alignItems: 'center' },
-    staticNum: { fontSize: 26, fontWeight: 'bold', color: '#2c3e50' },
-    staticLine: { width: 35, height: 3, backgroundColor: '#2c3e50', marginVertical: 2 },
-    staticDen: { fontSize: 26, fontWeight: 'bold', color: '#2c3e50' },
-    bigNumber: { fontSize: 32, fontWeight: 'bold', color: '#2c3e50' },
-    symbol: { fontSize: 32, fontWeight: 'bold', color: '#2c3e50', marginHorizontal: 5 },
-    equalSign: { fontSize: 36, fontWeight: 'bold', color: '#2c3e50', marginHorizontal: 10 },
+    staticNum: { fontSize: 26, fontWeight: 'bold' },
+    staticLine: { width: 35, height: 3, marginVertical: 2 },
+    staticDen: { fontSize: 26, fontWeight: 'bold' },
+    bigNumber: { fontSize: 32, fontWeight: 'bold' },
+    symbol: { fontSize: 32, fontWeight: 'bold', marginHorizontal: 5 },
+    equalSign: { fontSize: 36, fontWeight: 'bold', marginHorizontal: 10 },
     fractionInputContainer: { alignItems: 'center' },
-    fractionInput: { width: 65, height: 55, borderWidth: 2, borderRadius: 12, fontSize: 24, fontWeight: 'bold', textAlign: 'center' },
-    inputNeutral: { borderColor: '#ccc', backgroundColor: '#fff', color: '#333' },
-    inputCorrect: { borderColor: '#28a745', backgroundColor: '#e8f5e9', color: '#28a745' },
-    inputError: { borderColor: '#dc3545', backgroundColor: '#fbe9eb', color: '#dc3545' },
-    fractionLineLarge: { width: 75, height: 3, backgroundColor: '#333', marginVertical: 5 },
-    wholeInput: { width: 55, height: 75, borderWidth: 2, borderRadius: 12, fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginRight: 8 },
-    fractionInputSmall: { width: 50, height: 45, borderWidth: 2, borderRadius: 10, fontSize: 20, fontWeight: 'bold', textAlign: 'center' },
-    fractionLineSmall: { width: 60, height: 2, backgroundColor: '#333', marginVertical: 3 },
+    inputBox: { width: 65, height: 55, borderWidth: 2, borderRadius: 12, fontSize: 24, fontWeight: 'bold', textAlign: 'center' },
+    fractionLineLarge: { width: 75, height: 3, marginVertical: 5 },
+    fractionLineSmall: { width: 60, height: 2, marginVertical: 3 },
     mainBtn: { marginTop: 20, paddingHorizontal: 40, paddingVertical: 14, borderRadius: 15 },
     mainBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-    counterTextSmall: { fontSize: 13, color: '#555', textAlign: 'center', marginTop: 15 },
+    counterTextSmall: { fontSize: 13, textAlign: 'center', marginTop: 15 },
     msg: { fontSize: 16, fontWeight: '700', textAlign: 'center' },
-    correctText: { color: '#28a745' },
-    errorText: { color: '#dc3545' },
     iconsBottom: { position: 'absolute', bottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    counterTextIcons: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+    counterTextIcons: { fontSize: 18, fontWeight: 'bold' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center' },
-    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333' },
-    statsRowMilestone: { marginVertical: 15, alignItems: 'center' },
-    statsTextMilestone: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+    milestoneCard: { width: '90%', borderRadius: 20, padding: 25, alignItems: 'center' },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold' },
+    statsRowMilestone: { marginVertical: 15, alignItems: 'center', padding: 15, borderRadius: 15, width: '100%' },
+    statsTextMilestone: { fontSize: 18, fontWeight: 'bold' },
     milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 10 },
     mButton: { paddingVertical: 12, borderRadius: 12, width: '48%', alignItems: 'center', backgroundColor: '#28a745' },
     mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
-    drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
-    drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, backgroundColor: '#f0f0f0' },
+    drawingContainer: { width: '95%', height: '85%', borderRadius: 20, overflow: 'hidden' },
+    drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20 },
     drawingTitle: { fontSize: 18, fontWeight: 'bold' },
     headerButton: { padding: 5 },
     headerButtonText: { fontSize: 16, color: '#007AFF' },
-    problemPreviewContainer: { backgroundColor: '#f9f9f9', padding: 10, alignItems: 'center' },
+    problemPreviewContainer: { padding: 10, alignItems: 'center', borderBottomWidth: 1 },
     problemPreviewLabel: { fontSize: 12, color: '#777' },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600' },
-    canvas: { flex: 1, backgroundColor: '#ffffff' }
+    canvas: { flex: 1 }
 });
 
 export default FractionDivisionTrainer;

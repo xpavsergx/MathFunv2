@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     View, Text, StyleSheet, TextInput, Keyboard, ImageBackground,
     Animated, StatusBar, Image, Dimensions, TouchableOpacity, Modal,
-    Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager
+    Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager,
+    useColorScheme
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -13,7 +14,6 @@ import firestore from '@react-native-firebase/firestore';
 const EXERCISE_ID = "DecimalSubtractionTrainer_IV_FinalFix";
 const { width: screenWidth } = Dimensions.get('window');
 
-// LIMIT ZADAŃ
 const TASKS_LIMIT = 20;
 const combinedIconSize = screenWidth * 0.25;
 
@@ -21,6 +21,18 @@ const combinedIconSize = screenWidth * 0.25;
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
+
+    const isDarkMode = useColorScheme() === 'dark';
+    const theme = {
+        bg: isDarkMode ? '#1E293B' : '#fff',
+        text: isDarkMode ? '#FFF' : '#333',
+        canvas: isDarkMode ? '#0F172A' : '#ffffff',
+        stroke: isDarkMode ? '#FFF' : '#000',
+        headerBg: isDarkMode ? '#334155' : '#f0f0f0',
+        border: isDarkMode ? '#475569' : '#ccc',
+        previewBg: isDarkMode ? '#1E293B' : '#f9f9f9',
+    };
+
     const handleClear = () => { setPaths([]); setCurrentPath(''); };
     const onTouchMove = (evt: any) => {
         const { locationX, locationY } = evt.nativeEvent;
@@ -28,23 +40,24 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
         else setCurrentPath(`${currentPath} L${locationX},${locationY}`);
     };
     const onTouchEnd = () => { if (currentPath) { setPaths([...paths, currentPath]); setCurrentPath(''); } };
+
     return (
         <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
             <View style={styles.modalOverlay}>
-                <View style={styles.drawingContainer}>
-                    <View style={styles.drawingHeader}>
+                <View style={[styles.drawingContainer, { backgroundColor: theme.bg }]}>
+                    <View style={[styles.drawingHeader, { backgroundColor: theme.headerBg, borderBottomColor: theme.border }]}>
                         <TouchableOpacity onPress={handleClear} style={styles.headerButton}><Text style={styles.headerButtonText}>🗑️ Wyczyść</Text></TouchableOpacity>
-                        <Text style={styles.drawingTitle}>Brudnopis</Text>
+                        <Text style={[styles.drawingTitle, { color: theme.text }]}>Brudnopis</Text>
                         <TouchableOpacity onPress={onClose} style={styles.headerButton}><Text style={styles.headerButtonText}>❌ Zamknij</Text></TouchableOpacity>
                     </View>
-                    <View style={styles.problemPreviewContainer}>
+                    <View style={[styles.problemPreviewContainer, { backgroundColor: theme.previewBg, borderBottomColor: theme.border }]}>
                         <Text style={styles.problemPreviewLabel}>Zadanie:</Text>
-                        <Text style={styles.problemPreviewTextSmall}>{problemText}</Text>
+                        <Text style={[styles.problemPreviewTextSmall, { color: isDarkMode ? '#38BDF8' : '#007AFF' }]}>{problemText}</Text>
                     </View>
-                    <View style={styles.canvas} onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderGrant={(evt) => { const { locationX, locationY } = evt.nativeEvent; setCurrentPath(`M${locationX},${locationY}`); }} onResponderMove={onTouchMove} onResponderRelease={onTouchEnd}>
+                    <View style={[styles.canvas, { backgroundColor: theme.canvas }]} onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderGrant={(evt) => { const { locationX, locationY } = evt.nativeEvent; setCurrentPath(`M${locationX},${locationY}`); }} onResponderMove={onTouchMove} onResponderRelease={onTouchEnd}>
                         <Svg height="100%" width="100%">
-                            {paths.map((d, index) => (<Path key={index} d={d} stroke="#000" strokeWidth={3} fill="none" />))}
-                            <Path d={currentPath} stroke="#000" strokeWidth={3} fill="none" />
+                            {paths.map((d, index) => (<Path key={index} d={d} stroke={theme.stroke} strokeWidth={3} fill="none" />))}
+                            <Path d={currentPath} stroke={theme.stroke} strokeWidth={3} fill="none" />
                         </Svg>
                     </View>
                 </View>
@@ -56,30 +69,40 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 // --- GŁÓWNY KOMPONENT ---
 const DecimalSubtractionTrainer = () => {
     const navigation = useNavigation();
+    const isDarkMode = useColorScheme() === 'dark';
 
-    // Stan zadań
+    const theme = {
+        bgOverlay: isDarkMode ? 'rgba(0, 0, 0, 0.75)' : 'transparent',
+        cardOverlay: isDarkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255,255,255,0.94)',
+        textMain: isDarkMode ? '#FFFFFF' : '#333333',
+        textSub: isDarkMode ? '#CBD5E1' : '#555555',
+        topBtnText: isDarkMode ? '#FFFFFF' : '#007AFF',
+        inputBg: isDarkMode ? '#334155' : '#fff',
+        inputBorder: isDarkMode ? '#475569' : '#ccc',
+        inputText: isDarkMode ? '#38BDF8' : '#007AFF',
+        digitText: isDarkMode ? '#E2E8F0' : '#222',
+        lineColor: isDarkMode ? '#FFFFFF' : '#000',
+        modalContent: isDarkMode ? '#1E293B' : '#fff',
+        statsRow: isDarkMode ? '#0F172A' : '#f8f9fa',
+        correctBg: isDarkMode ? 'rgba(21, 87, 36, 0.5)' : '#e8f5e9',
+        correctBorder: isDarkMode ? '#4ADE80' : '#28a745',
+        errorBg: isDarkMode ? 'rgba(114, 28, 36, 0.5)' : '#ffeef0',
+        errorBorder: isDarkMode ? '#F87171' : '#dc3545',
+    };
+
     const [mode, setMode] = useState<'mental' | 'vertical'>('mental');
     const [num1, setNum1] = useState(0);
     const [num2, setNum2] = useState(0);
-
-    // Vertical State
     const [vNum1Str, setVNum1Str] = useState('');
     const [vNum2Str, setVNum2Str] = useState('');
     const [userDigits, setUserDigits] = useState<string[]>([]);
-    const [borrows, setBorrows] = useState<string[]>([]); // Inputy nad liczbami (pożyczki)
-
-    // Walidacja
+    const [borrows, setBorrows] = useState<string[]>([]);
     const [lockedIndices, setLockedIndices] = useState<boolean[]>([]);
     const [errorIndices, setErrorIndices] = useState<boolean[]>([]);
-
-    // Mental State
     const [mentalInput, setMentalInput] = useState('');
-
-    // Game Logic
     const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
     const [readyForNext, setReadyForNext] = useState(false);
     const [attempts, setAttempts] = useState(0);
-
     const [stats, setStats] = useState({ correct: 0, wrong: 0, count: 0 });
     const [msg, setMsg] = useState('');
     const [showScratchpad, setShowScratchpad] = useState(false);
@@ -103,373 +126,146 @@ const DecimalSubtractionTrainer = () => {
 
     const generateProblem = () => {
         setMsg(''); setIsCorrect(null); setReadyForNext(false);
-        setMentalInput('');
-        setAttempts(0);
-        setLockedIndices([]);
-        setErrorIndices([]);
-        bgAnim.setValue(0);
-        setShowHint(false);
+        setMentalInput(''); setAttempts(0); setLockedIndices([]); setErrorIndices([]);
+        bgAnim.setValue(0); setShowHint(false);
 
         const newMode = Math.random() < 0.5 ? 'mental' : 'vertical';
         setMode(newMode);
 
         if (newMode === 'mental') {
-            // Logika mentalna (pozioma)
-            // Typy: 1.9 - 0.2 | 7 - 0.4 | 12 - 9.8
             const subType = Math.floor(Math.random() * 3);
             let n1 = 0, n2 = 0;
-
             if (subType === 0) {
-                // Ułamek - Ułamek (prosty)
                 n1 = rnd(15, 55) / 10;
-                const decimalPart = Math.round((n1 % 1) * 10);
-                const subDecimal = rnd(1, decimalPart + 2);
-                n2 = subDecimal / 10;
+                n2 = rnd(1, Math.round((n1 % 1) * 10) + 2) / 10;
             } else if (subType === 1) {
-                // Całkowita - Ułamek
                 n1 = rnd(2, 9);
                 n2 = rnd(1, 9) / 10;
             } else {
-                // Całkowita - Większy ułamek
                 n1 = rnd(5, 15);
-                const diff = rnd(1, 15) / (Math.random() > 0.5 ? 10 : 100);
-                n2 = n1 - diff;
+                n2 = n1 - (rnd(1, 15) / 10);
             }
-
-            // Fix math precision
             n1 = Math.round(n1 * 100) / 100;
             n2 = Math.round(n2 * 100) / 100;
-            if (n2 >= n1) { n2 = n1 - 0.1; }
-            if (n2 < 0) n2 = 0.1;
-
+            if (n2 >= n1) n2 = n1 - 0.1;
             setNum1(n1); setNum2(n2);
-
         } else {
-            // Logika słupkowa - zawsze 2 miejsca po przecinku
-            let n1 = rnd(1000, 9999) / 100; // 10.00 - 99.99
-            let n2 = rnd(500, 8000) / 100;  // 5.00 - 80.00
-
-            n1 = Math.round(n1 * 100) / 100;
-            n2 = Math.round(n2 * 100) / 100;
-
-            if (n2 >= n1) {
-                n2 = n1 - (rnd(100, 500) / 100);
-                if (n2 < 0) n2 = 0.15;
-            }
-            // Final fix precision
-            n1 = Math.round(n1 * 100) / 100;
-            n2 = Math.round(n2 * 100) / 100;
-
-            setNum1(n1);
-            setNum2(n2);
-
+            let n1 = rnd(1000, 9999) / 100;
+            let n2 = rnd(500, 8000) / 100;
+            if (n2 >= n1) n2 = n1 - 5;
+            setNum1(n1); setNum2(n2);
             const s1 = n1.toFixed(2).replace('.', ',');
             const s2 = n2.toFixed(2).replace('.', ',');
-            const resLen = (n1 - n2).toFixed(2).length;
-            const maxLen = Math.max(s1.length, s2.length, resLen);
-
-            const frac1Pad = s1.padStart(maxLen, ' ');
-            const frac2Pad = s2.padStart(maxLen, ' ');
-
-            setVNum1Str(frac1Pad);
-            setVNum2Str(frac2Pad);
-
+            const maxLen = Math.max(s1.length, s2.length);
+            setVNum1Str(s1.padStart(maxLen, ' '));
+            setVNum2Str(s2.padStart(maxLen, ' '));
             setUserDigits(new Array(maxLen).fill(''));
             setBorrows(new Array(maxLen).fill(''));
             setLockedIndices(new Array(maxLen).fill(false));
             setErrorIndices(new Array(maxLen).fill(false));
-
-            setTimeout(() => {
-                const lastIdx = maxLen - 1;
-                inputRefs.current[lastIdx]?.focus();
-            }, 500);
+            setTimeout(() => inputRefs.current[maxLen - 1]?.focus(), 500);
         }
     };
 
     const handleVerticalInput = (val: string, index: number) => {
         if (lockedIndices[index]) return;
-
-        if (errorIndices[index]) {
-            const newErrors = [...errorIndices];
-            newErrors[index] = false;
-            setErrorIndices(newErrors);
-        }
-
         const clean = val.replace(/[^0-9]/g, '').slice(-1);
         const newDigits = [...userDigits];
         newDigits[index] = clean;
         setUserDigits(newDigits);
-
         if (clean !== '' && index > 0) {
-            let nextIndex = index - 1;
-            if (vNum1Str[nextIndex] === ',') nextIndex--;
-            // Pomijamy zablokowane pola przy cofaniu
-            while (nextIndex >= 0 && lockedIndices[nextIndex]) {
-                nextIndex--;
-            }
-            if (nextIndex >= 0 && vNum1Str[nextIndex] === ',') nextIndex--;
-            if (nextIndex >= 0) inputRefs.current[nextIndex]?.focus();
+            let next = index - 1;
+            if (vNum1Str[next] === ',') next--;
+            inputRefs.current[next]?.focus();
         }
     };
 
     const handleCheck = () => {
-        // ODEJMOWANIE
         const correctResultStr = (num1 - num2).toFixed(2).replace('.', ',');
-
-        // --- MENTAL MODE ---
         if (mode === 'mental') {
             const cleanInput = mentalInput.replace(',', '.').trim();
-            if (!cleanInput) { setMsg('Wpisz wynik!'); return; }
             const userVal = parseFloat(cleanInput);
-            const correctVal = parseFloat((num1 - num2).toFixed(4));
-
-            if (Math.abs(userVal - correctVal) < 0.0001) {
-                handleSuccess();
-            } else {
-                if (attempts === 0) {
-                    setMsg('Błąd! Spróbuj jeszcze raz ⚠️');
-                    setAttempts(1);
-                    setMentalInput('');
-                    Animated.sequence([
-                        Animated.timing(bgAnim, { toValue: -1, duration: 200, useNativeDriver: false }),
-                        Animated.timing(bgAnim, { toValue: 0, duration: 200, useNativeDriver: false })
-                    ]).start();
-                } else {
-                    handleFailure(correctResultStr);
-                }
-            }
-        }
-        // --- VERTICAL MODE ---
-        else {
+            const correctVal = parseFloat((num1 - num2).toFixed(2));
+            if (Math.abs(userVal - correctVal) < 0.01) handleSuccess();
+            else attempts === 0 ? (setAttempts(1), setMsg('Błąd! Spróbuj jeszcze raz ⚠️'), setMentalInput('')) : handleFailure(correctResultStr);
+        } else {
             const expectedArr = correctResultStr.padStart(userDigits.length, ' ').split('');
-
-            // 1. NAJPIERW SPRAWDŹ CZY SĄ PUSTE POLA (tam gdzie powinny być cyfry)
-            let hasEmptyFields = false;
-            for (let i = 0; i < userDigits.length; i++) {
-                const charAtPos = vNum1Str[i];
-                if (charAtPos === ',') continue;
-
-                const expectedVal = expectedArr[i];
-                const inputVal = userDigits[i];
-
-                // Jeśli oczekujemy cyfry (nie spacji), a pole jest puste i nie jest zablokowane
-                if (expectedVal !== ' ' && !inputVal && !lockedIndices[i]) {
-                    hasEmptyFields = true;
-                    break;
-                }
-            }
-
-            if (hasEmptyFields) {
-                setMsg('Uzupełnij wszystkie pola! ⚠️');
-                return;
-            }
-
-            // 2. WALIDACJA POPRAWNOŚCI
             let allGood = true;
-            const newLocked = [...lockedIndices];
-            const newErrors = [...errorIndices];
-            const newUserDigits = [...userDigits];
-
-            for (let i = 0; i < userDigits.length; i++) {
-                const charAtPos = vNum1Str[i];
-                if (charAtPos === ',') continue;
-
-                const inputVal = userDigits[i];
-                const expectedVal = expectedArr[i];
-
-                if (expectedVal === ' ' && !inputVal) continue; // Padding
-
-                if (inputVal === expectedVal) {
-                    // OK
-                } else {
-                    allGood = false;
-                }
-            }
-
-            if (allGood) {
-                handleSuccess();
-            } else {
-                if (attempts === 0) {
-                    // PIERWSZA PRÓBA (błędna, ale pełna)
-                    setMsg('Popraw czerwone pola ⚠️');
-                    setAttempts(1);
-
-                    for (let i = 0; i < userDigits.length; i++) {
-                        const charAtPos = vNum1Str[i];
-                        if (charAtPos === ',') continue;
-
-                        const inputVal = userDigits[i];
-                        const expectedVal = expectedArr[i];
-
-                        if (expectedVal === ' ' && !inputVal) continue;
-
-                        if (inputVal === expectedVal) {
-                            newLocked[i] = true; // Zablokuj poprawne
-                            newErrors[i] = false;
-                        } else {
-                            newErrors[i] = true; // Zaznacz błąd
-                            newUserDigits[i] = ''; // Wyczyść błędne
-                        }
+            userDigits.forEach((d, i) => {
+                if (vNum1Str[i] !== ',' && expectedArr[i] !== ' ' && d !== expectedArr[i]) allGood = false;
+            });
+            if (allGood) handleSuccess();
+            else if (attempts === 0) {
+                setAttempts(1); setMsg('Popraw czerwone pola ⚠️');
+                const newLocked = [...lockedIndices]; const newErrors = [...errorIndices]; const newUserDigits = [...userDigits];
+                userDigits.forEach((d, i) => {
+                    if (vNum1Str[i] !== ',' && expectedArr[i] !== ' ') {
+                        if (d === expectedArr[i]) { newLocked[i] = true; newErrors[i] = false; }
+                        else { newErrors[i] = true; newUserDigits[i] = ''; }
                     }
-                    setLockedIndices(newLocked);
-                    setErrorIndices(newErrors);
-                    setUserDigits(newUserDigits);
-
-                    Animated.sequence([
-                        Animated.timing(bgAnim, { toValue: -1, duration: 200, useNativeDriver: false }),
-                        Animated.timing(bgAnim, { toValue: 0, duration: 200, useNativeDriver: false })
-                    ]).start();
-
-                } else {
-                    // DRUGA PRÓBA (koniec)
-                    handleFailure(correctResultStr);
-                }
-            }
+                });
+                setLockedIndices(newLocked); setErrorIndices(newErrors); setUserDigits(newUserDigits);
+            } else handleFailure(correctResultStr);
         }
     };
 
     const handleSuccess = () => {
-        setStats(s => ({ ...s, correct: s.correct + 1 }));
-        setSessionCorrect(prev => prev + 1);
-        setMsg('Doskonale! ✅');
-        setIsCorrect(true);
-        setReadyForNext(true);
-        if (mode === 'vertical') {
-            setLockedIndices(new Array(userDigits.length).fill(true));
-            setErrorIndices(new Array(userDigits.length).fill(false));
-        }
-
+        setStats(s => ({ ...s, correct: s.correct + 1 })); setSessionCorrect(prev => prev + 1);
+        setMsg('Doskonale! ✅'); setIsCorrect(true); setReadyForNext(true);
+        if (mode === 'vertical') setLockedIndices(new Array(userDigits.length).fill(true));
         Animated.timing(bgAnim, { toValue: 1, duration: 500, useNativeDriver: false }).start();
         InteractionManager.runAfterInteractions(() => awardXpAndCoins(8, 2));
-        const currentUser = auth().currentUser;
-        if (currentUser) {
-            firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
-                .set({ totalCorrect: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-        }
     };
 
     const handleFailure = (correctRes: string) => {
-        setStats(s => ({ ...s, wrong: s.wrong + 1 }));
-        setMsg(`Koniec prób. Wynik to: ${correctRes}`);
-        setIsCorrect(false);
-        setReadyForNext(true);
-        Animated.sequence([
-            Animated.timing(bgAnim, { toValue: -1, duration: 200, useNativeDriver: false }),
-            Animated.timing(bgAnim, { toValue: 0, duration: 200, useNativeDriver: false })
-        ]).start();
-        const currentUser = auth().currentUser;
-        if (currentUser) {
-            firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
-                .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-        }
+        setStats(s => ({ ...s, wrong: s.wrong + 1 })); setMsg(`Wynik to: ${correctRes}`);
+        setIsCorrect(false); setReadyForNext(true);
+        Animated.timing(bgAnim, { toValue: -1, duration: 200, useNativeDriver: false }).start();
     };
 
     const nextTask = () => {
         if (stats.count >= TASKS_LIMIT) { setIsFinished(true); return; }
-        if (stats.count > 0 && stats.count % 10 === 0 && !showMilestone) {
-            setShowMilestone(true);
-            return;
-        }
-        setStats(s => ({ ...s, count: s.count + 1 }));
-        generateProblem();
+        if (stats.count > 0 && stats.count % 10 === 0 && !showMilestone) { setShowMilestone(true); return; }
+        setStats(s => ({ ...s, count: s.count + 1 })); generateProblem();
     };
 
-    const handleRestart = () => {
-        setIsFinished(false);
-        setStats({ correct: 0, wrong: 0, count: 1 });
-        setSessionCorrect(0);
-        generateProblem();
-    };
-
-    const getInputStyle = (isCorrectState: boolean | null) => {
-        if (isCorrectState === true) return styles.inputCorrect;
-        if (isCorrectState === false && attempts === 1) return styles.inputError;
-        return {};
-    };
-
-    // --- RENDER PISEMNY ---
     const renderVerticalProblem = () => {
-        const renderRow = (paddedStr: string, isSecond: boolean) => (
-            <View style={styles.vRow}>
-                {isSecond && <View style={styles.plusSignContainer}><Text style={styles.plusSign}>-</Text></View>}
-                {paddedStr.split('').map((char, i) => {
-                    if (char === ',') return <View key={i} style={styles.commaCell}><Text style={styles.commaText}>,</Text></View>;
-                    if (char === ' ') return <View key={i} style={styles.digitCellEmpty} />;
-                    return (
-                        <View key={i} style={styles.digitCell}>
-                            <Text style={styles.digitText}>{char}</Text>
-                        </View>
-                    );
-                })}
-            </View>
-        );
-
         return (
             <View style={styles.verticalContainer}>
-                {/* Wiersz pożyczek (Brudnopis) */}
-                <View style={[styles.vRow, { marginBottom: 8 }]}>
-                    <View style={styles.plusSignContainer} />
-                    {borrows.map((c, i) => {
-                        const charAtPos = vNum1Str[i];
-                        if (charAtPos === ',' || charAtPos === ' ') return <View key={i} style={styles.commaCellEmpty} />;
-                        return (
-                            <View key={i} style={styles.carryCellWrapper}>
-                                <TextInput
-                                    style={styles.carryInput}
-                                    keyboardType="numeric"
-                                    maxLength={2} // Pozwalamy na 2 cyfry (np. 12 po pożyczeniu)
-                                    value={c}
-                                    onChangeText={v => { const n = [...borrows]; n[i]=v; setBorrows(n); }}
-                                    editable={!readyForNext}
-                                    selectTextOnFocus={true}
-                                />
-                            </View>
-                        );
-                    })}
-                </View>
-
-                {/* Sekcja liczb z czarną linią */}
-                <View style={styles.numbersBox}>
-                    {renderRow(vNum1Str, false)}
-                    {renderRow(vNum2Str, true)}
-                </View>
-
-                {/* Wiersz wyniku */}
+                {/* Wiersz pożyczek */}
                 <View style={styles.vRow}>
                     <View style={styles.plusSignContainer} />
-                    {userDigits.map((d, i) => {
-                        const charAtPos = vNum1Str[i];
-                        if (charAtPos === ',') {
-                            return <View key={i} style={styles.commaCell}><Text style={styles.commaText}>,</Text></View>;
-                        }
-
-                        const isLocked = lockedIndices[i];
-                        const isError = errorIndices[i];
-
-                        return (
-                            <View key={`res-${i}`} style={[
-                                styles.inputCell,
-                                isLocked && styles.inputLockedCorrect,
-                                isError && styles.inputErrorRed,
-                                (isCorrect === true) && styles.inputCorrect
-                            ]}>
-                                <TextInput
-                                    ref={(el) => inputRefs.current[i] = el}
-                                    style={[
-                                        styles.mainInput,
-                                        isLocked && { color: '#155724' },
-                                        isError && { color: '#721c24' }
-                                    ]}
-                                    keyboardType="numeric"
-                                    maxLength={1}
-                                    value={d}
-                                    onChangeText={v => handleVerticalInput(v, i)}
-                                    editable={!readyForNext && !isLocked}
-                                    selectTextOnFocus={!isLocked}
-                                />
+                    {borrows.map((c, i) => (
+                        vNum1Str[i] === ',' || vNum1Str[i] === ' '
+                            ? <View key={i} style={styles.commaCellEmpty} />
+                            : <View key={i} style={styles.carryCellWrapper}>
+                                <TextInput style={[styles.carryInput, {backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textSub}]} keyboardType="numeric" maxLength={2} value={c} onChangeText={v => { const n = [...borrows]; n[i]=v; setBorrows(n); }} editable={!readyForNext} />
                             </View>
-                        );
-                    })}
+                    ))}
+                </View>
+                {/* Liczby */}
+                <View style={[styles.numbersBox, {borderBottomColor: theme.lineColor}]}>
+                    {[vNum1Str, vNum2Str].map((str, rowIdx) => (
+                        <View key={rowIdx} style={styles.vRow}>
+                            {rowIdx === 1 && <View style={styles.plusSignContainer}><Text style={[styles.plusSign, {color: theme.digitText}]}>-</Text></View>}
+                            {str.split('').map((char, i) => (
+                                char === ','
+                                    ? <View key={i} style={styles.commaCell}><Text style={[styles.commaText, {color: theme.digitText}]}>,</Text></View>
+                                    : <View key={i} style={char === ' ' ? styles.digitCellEmpty : styles.digitCell}><Text style={[styles.digitText, {color: theme.digitText}]}>{char}</Text></View>
+                            ))}
+                        </View>
+                    ))}
+                </View>
+                {/* Wynik */}
+                <View style={styles.vRow}>
+                    <View style={styles.plusSignContainer} />
+                    {userDigits.map((d, i) => (
+                        vNum1Str[i] === ','
+                            ? <View key={i} style={styles.commaCell}><Text style={[styles.commaText, {color: theme.digitText}]}>,</Text></View>
+                            : <View key={i} style={[styles.inputCell, {backgroundColor: theme.inputBg, borderColor: theme.inputBorder}, lockedIndices[i] && {backgroundColor: theme.correctBg, borderColor: theme.correctBorder}, errorIndices[i] && {backgroundColor: theme.errorBg, borderColor: theme.errorBorder}]}>
+                                <TextInput ref={el => { inputRefs.current[i] = el; }} style={[styles.mainInput, {color: theme.inputText}]} keyboardType="numeric" maxLength={1} value={d} onChangeText={v => handleVerticalInput(v, i)} editable={!readyForNext && !lockedIndices[i]} />
+                            </View>
+                    ))}
                 </View>
             </View>
         );
@@ -478,8 +274,10 @@ const DecimalSubtractionTrainer = () => {
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles.container}>
-                <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-                <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                <StatusBar translucent backgroundColor="transparent" barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+                <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover">
+                    <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.bgOverlay }]} />
+                </ImageBackground>
                 <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: bgAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: ['rgba(255,0,0,0.15)', 'transparent', 'rgba(0,255,0,0.15)'] }) }]} pointerEvents="none" />
 
                 <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardContainer}>
@@ -487,104 +285,43 @@ const DecimalSubtractionTrainer = () => {
                         <View style={styles.topButtons}>
                             <TouchableOpacity onPress={() => setShowScratchpad(true)} style={styles.topBtnItem}>
                                 <Image source={require('../../../assets/pencil.png')} style={styles.iconTop} />
-                                <Text style={styles.buttonLabel}>Brudnopis</Text>
+                                <Text style={[styles.buttonLabel, {color: theme.topBtnText}]}>Brudnopis</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => setShowHint(!showHint)} style={styles.topBtnItem}>
                                 <Image source={require('../../../assets/question.png')} style={styles.iconTop} />
-                                <Text style={styles.buttonLabel}>Pomoc</Text>
+                                <Text style={[styles.buttonLabel, {color: theme.topBtnText}]}>Pomoc</Text>
                             </TouchableOpacity>
                         </View>
                     )}
 
-                    {showHint && !isKeyboardVisible && (
-                        <View style={styles.hintBox}>
-                            <Text style={styles.hintTitle}>Wskazówka:</Text>
-                            <Text style={styles.hintText}>
-                                {mode === 'mental'
-                                    ? "Przy odejmowaniu ułamka od całości, pamiętaj o dopisaniu zer po przecinku (np. 7,0 - 0,4)."
-                                    : "Jeśli górna cyfra jest mniejsza, „pożycz” od sąsiada z lewej. Zapisz to w okienkach nad liczbą."}
-                            </Text>
-                        </View>
-                    )}
+                    <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={`${num1} - ${num2}`} />
 
-                    <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={`${num1.toString().replace('.', ',')} - ${num2.toString().replace('.', ',')}`} />
-
-                    <Modal visible={showMilestone} transparent={true} animationType="slide">
-                        <View style={styles.modalOverlay}>
-                            <View style={styles.milestoneCard}>
-                                <Text style={styles.milestoneTitle}>Statystyki 📊</Text>
-                                <View style={styles.statsRowMilestone}>
-                                    <Text style={styles.statsTextMilestone}>Poprawne: {sessionCorrect} / 10</Text>
-                                </View>
-                                <View style={styles.milestoneButtons}>
-                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}><Text style={styles.mButtonText}>Dalej</Text></TouchableOpacity>
-                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Wyjdź</Text></TouchableOpacity>
-                                </View>
-                            </View>
-                        </View>
-                    </Modal>
-
-                    <Modal visible={isFinished} transparent={true} animationType="fade">
-                        <View style={styles.modalOverlay}>
-                            <View style={styles.milestoneCard}>
-                                <Text style={styles.milestoneTitle}>Koniec gry! 🏆</Text>
-                                <Text style={styles.statsTextMilestone}>Wynik: {stats.correct} / {TASKS_LIMIT}</Text>
-                                <View style={styles.milestoneButtons}>
-                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={handleRestart}><Text style={styles.mButtonText}>Jeszcze raz</Text></TouchableOpacity>
-                                    <TouchableOpacity style={[styles.mButton, { backgroundColor: '#dc3545' }]} onPress={() => navigation.goBack()}><Text style={styles.mButtonText}>Menu</Text></TouchableOpacity>
-                                </View>
-                            </View>
-                        </View>
-                    </Modal>
-
-                    <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
+                    <ScrollView contentContainerStyle={styles.centerContent}>
                         <View style={styles.card}>
-                            <View style={styles.overlayBackground} />
-                            <Text style={styles.headerTitle}>
-                                {mode === 'mental' ? "Oblicz w pamięci" : "Oblicz pisemnie"}
-                            </Text>
+                            <View style={[styles.overlayBackground, {backgroundColor: theme.cardOverlay}]} />
+                            <Text style={[styles.headerTitle, {color: theme.textMain}]}>{mode === 'mental' ? "W pamięci" : "Pisemnie"}</Text>
 
                             <View style={styles.taskContent}>
                                 {mode === 'mental' ? (
                                     <View style={styles.mentalContainer}>
-                                        <Text style={styles.equationText}>{num1.toString().replace('.', ',')} - {num2.toString().replace('.', ',')} =</Text>
-                                        <TextInput
-                                            style={[
-                                                styles.mentalInput,
-                                                attempts === 1 && status !== 'correct' && {borderColor: '#dc3545', backgroundColor: '#ffeef0'},
-                                                getInputStyle(isCorrect)
-                                            ]}
-                                            keyboardType="numeric"
-                                            placeholder="?"
-                                            placeholderTextColor="#ccc"
-                                            value={mentalInput}
-                                            onChangeText={(t) => {
-                                                setMentalInput(t);
-                                                if(attempts === 1) setIsCorrect(null); // Reset stylu błędu przy pisaniu
-                                            }}
-                                            editable={!readyForNext}
-                                        />
+                                        <Text style={[styles.equationText, {color: theme.textMain}]}>{num1.toString().replace('.', ',')} - {num2.toString().replace('.', ',')} =</Text>
+                                        <TextInput style={[styles.mentalInput, {backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.inputText}, attempts === 1 && isCorrect === false && {borderColor: theme.errorBorder, backgroundColor: theme.errorBg}]} keyboardType="numeric" value={mentalInput} onChangeText={setMentalInput} editable={!readyForNext} />
                                     </View>
                                 ) : renderVerticalProblem()}
                             </View>
 
                             <TouchableOpacity style={styles.mainBtn} onPress={readyForNext ? nextTask : handleCheck}>
-                                <Text style={styles.mainBtnText}>
-                                    {readyForNext ? 'Następne' : (attempts === 0 ? 'Sprawdź' : 'Spróbuj ponownie')}
-                                </Text>
+                                <Text style={styles.mainBtnText}>{readyForNext ? 'Następne' : 'Sprawdź'}</Text>
                             </TouchableOpacity>
-
-                            <Text style={styles.counterTextSmall}>Zadanie: {stats.count}/{TASKS_LIMIT}</Text>
-                            <View style={{height: 30, marginTop: 15, justifyContent: 'center'}}>
-                                {msg ? <Text style={[styles.msg, msg.includes('Doskonale') ? styles.correctText : styles.errorText]}>{msg}</Text> : null}
-                            </View>
+                            <Text style={[styles.counterTextSmall, {color: theme.textSub}]}>Zadanie: {stats.count}/{TASKS_LIMIT}</Text>
+                            <Text style={[styles.msg, isCorrect ? {color: '#28a745'} : {color: '#dc3545'}]}>{msg}</Text>
                         </View>
                     </ScrollView>
 
                     {!isKeyboardVisible && (
                         <View style={styles.iconsBottom}>
-                            <Image source={require('../../../assets/happy.png')} style={styles.iconSame} /><Text style={styles.counterTextIcons}>{stats.correct}</Text>
-                            <Image source={require('../../../assets/sad.png')} style={styles.iconSame} /><Text style={styles.counterTextIcons}>{stats.wrong}</Text>
+                            <Image source={require('../../../assets/happy.png')} style={styles.iconSame} /><Text style={[styles.counterTextIcons, {color: theme.textMain}]}>{stats.correct}</Text>
+                            <Image source={require('../../../assets/sad.png')} style={styles.iconSame} /><Text style={[styles.counterTextIcons, {color: theme.textMain}]}>{stats.wrong}</Text>
                         </View>
                     )}
                 </KeyboardAvoidingView>
@@ -593,95 +330,61 @@ const DecimalSubtractionTrainer = () => {
     );
 };
 
+
+
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    keyboardContainer: { flex: 1, justifyContent: 'center' },
+    keyboardContainer: { flex: 1 },
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 20 },
-    topButtons: { position: 'absolute', top: 25, right: 20, flexDirection: 'row', zIndex: 10 },
+    topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
-    iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
-    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255,255,255,0.8)', textShadowRadius: 3 },
-    hintBox: { position: 'absolute', top: 100, right: 20, padding: 15, backgroundColor: '#fff', borderRadius: 15, width: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
-    hintTitle: { fontWeight: 'bold', color: '#007AFF', marginBottom: 5 },
-    hintText: { fontSize: 14, color: '#333' },
-
-    card: { width: '96%', maxWidth: 550, borderRadius: 25, padding: 20, alignItems: 'center', alignSelf: 'center', elevation: 4, shadowColor: "#000", shadowOpacity: 0.1, shadowRadius: 10 },
-    overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.94)', borderRadius: 25 },
-    headerTitle: { fontSize: 26, fontWeight: 'bold', color: '#333', marginBottom: 25 },
-
-    taskContent: { alignItems: 'center', width: '100%', marginBottom: 10, minHeight: 180, justifyContent: 'center' },
-
-    mentalContainer: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' },
-    equationText: { fontSize: 40, fontWeight: '800', color: '#2c3e50', marginRight: 15, letterSpacing: 1 },
-    mentalInput: { width: 120, height: 75, borderWidth: 3, borderColor: '#ccc', borderRadius: 16, backgroundColor: '#fff', fontSize: 36, fontWeight: 'bold', textAlign: 'center', color: '#007AFF', padding: 0, shadowColor: "#000", shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, elevation: 2 },
-
-    verticalContainer: { alignItems: 'flex-end', marginTop: 5 },
-    vRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'flex-end', marginBottom: 4 },
-
-    // LINIA ODDZIELAJĄCA
-    numbersBox: {
-        borderBottomWidth: 4,
-        borderBottomColor: '#000',
-        paddingBottom: 8,
-        marginBottom: 8,
-        paddingHorizontal: 10,
-        alignItems: 'flex-end'
-    },
-
-    digitCell: { width: 54, height: 64, justifyContent: 'center', alignItems: 'center' },
-    digitCellEmpty: { width: 54, height: 64 },
-    digitText: { fontSize: 40, fontWeight: '800', color: '#222', fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', includeFontPadding: false, textAlignVertical: 'center' },
-
-    commaCell: { width: 18, height: 64, justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 8 },
-    commaCellEmpty: { width: 18 },
-    commaText: { fontSize: 40, fontWeight: 'bold', color: '#222' },
-
-    carryCellWrapper: { width: 54, height: 40, justifyContent: 'center', alignItems: 'center', marginBottom: 5 },
-    carryInput: { width: 44, height: 38, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, backgroundColor: '#fcfcfc', fontSize: 22, fontWeight: 'bold', textAlign: 'center', color: '#888', padding: 0 },
-
-    inputCell: { width: 54, height: 64, borderWidth: 3, borderColor: '#ccc', borderRadius: 12, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', marginHorizontal: 1, shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
-
-    // NOWE STYLE DLA WALIDACJI
-    inputLockedCorrect: { borderColor: '#28a745', backgroundColor: '#d4edda' }, // Zielony
-    inputErrorRed: { borderColor: '#dc3545', backgroundColor: '#ffeef0' }, // Czerwony
-
-    mainInput: { fontSize: 34, fontWeight: 'bold', textAlign: 'center', color: '#007AFF', width: '100%', height: '100%', padding: 0, includeFontPadding: false, textAlignVertical: 'center' },
-
-    plusSignContainer: { width: 40, height: 64, alignItems: 'center', justifyContent: 'center', marginRight: 5 },
-    plusSign: { fontSize: 40, fontWeight: 'bold', color: '#333' },
-
-    inputCorrect: { borderColor: '#28a745', backgroundColor: '#e8f5e9', color: '#28a745' },
-    inputError: { borderColor: '#dc3545', backgroundColor: '#fbe9eb', color: '#dc3545' },
-
-    mainBtn: { marginTop: 30, backgroundColor: '#007AFF', paddingHorizontal: 50, paddingVertical: 16, borderRadius: 18, elevation: 3, shadowColor: "#007AFF", shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.3, shadowRadius: 5 },
-    mainBtnText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
-    counterTextSmall: { fontSize: 14, color: '#555', textAlign: 'center', marginTop: 15 },
-    msg: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
-    correctText: { color: '#28a745' },
-    errorText: { color: '#dc3545' },
-
-    iconsBottom: { position: 'absolute', bottom: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
-    iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    counterTextIcons: { fontSize: 22, marginHorizontal: 8, color: '#333', fontWeight: 'bold' },
-
+    iconTop: { width: 60, height: 60, resizeMode: 'contain' },
+    buttonLabel: { fontSize: 12, fontWeight: 'bold', marginTop: 2 },
+    card: { width: '94%', borderRadius: 25, padding: 20, alignItems: 'center', elevation: 4 },
+    overlayBackground: { ...StyleSheet.absoluteFillObject, borderRadius: 25 },
+    headerTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 20 },
+    taskContent: { minHeight: 180, justifyContent: 'center', alignItems: 'center', width: '100%' },
+    mentalContainer: { flexDirection: 'row', alignItems: 'center' },
+    equationText: { fontSize: 32, fontWeight: '800' },
+    mentalInput: { width: 100, height: 60, borderWidth: 2, borderRadius: 12, fontSize: 28, textAlign: 'center', marginLeft: 10 },
+    verticalContainer: { alignItems: 'flex-end' },
+    vRow: { flexDirection: 'row', alignItems: 'flex-end' },
+    numbersBox: { borderBottomWidth: 3, paddingBottom: 5, marginBottom: 5 },
+    digitCell: { width: 45, height: 55, justifyContent: 'center', alignItems: 'center' },
+    digitCellEmpty: { width: 45 },
+    digitText: { fontSize: 32, fontWeight: '800' },
+    commaCell: { width: 15, justifyContent: 'flex-end', alignItems: 'center' },
+    commaCellEmpty: { width: 15 },
+    commaText: { fontSize: 32, fontWeight: 'bold' },
+    carryCellWrapper: { width: 45, height: 35, justifyContent: 'center', alignItems: 'center' },
+    carryInput: { width: 35, height: 30, borderWidth: 1, borderRadius: 6, fontSize: 18, textAlign: 'center' },
+    inputCell: { width: 45, height: 55, borderWidth: 2, borderRadius: 10, marginHorizontal: 1 },
+    mainInput: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', flex: 1 },
+    plusSignContainer: { width: 30, alignItems: 'center' },
+    plusSign: { fontSize: 32, fontWeight: 'bold' },
+    mainBtn: { marginTop: 20, backgroundColor: '#007AFF', paddingHorizontal: 40, paddingVertical: 12, borderRadius: 15 },
+    mainBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+    counterTextSmall: { fontSize: 12, marginTop: 10 },
+    msg: { fontSize: 16, fontWeight: '700', marginTop: 10 },
+    iconsBottom: { position: 'absolute', bottom: 20, flexDirection: 'row', width: '100%', justifyContent: 'center', alignItems: 'center' },
+    iconSame: { width: combinedIconSize * 0.8, height: combinedIconSize * 0.8, resizeMode: 'contain' },
+    counterTextIcons: { fontSize: 20, fontWeight: 'bold', marginHorizontal: 5 },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-    drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
-    drawingHeader: { height: 55, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, backgroundColor: '#f0f0f0' },
-    drawingTitle: { fontSize: 18, fontWeight: 'bold' },
-    headerButton: { padding: 10 },
-    headerButtonText: { fontSize: 16, color: '#007AFF', fontWeight: '600' },
-    problemPreviewContainer: { backgroundColor: '#f9f9f9', padding: 12, alignItems: 'center' },
-    problemPreviewLabel: { fontSize: 13, color: '#666' },
-    problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', textAlign: 'center' },
-    canvas: { flex: 1, backgroundColor: '#ffffff' },
-
-    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
-    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
-    statsRowMilestone: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
-    statsTextMilestone: { fontSize: 18, color: '#333', fontWeight: 'bold' },
-    milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 20 },
-    mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
-    mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
+    drawingContainer: { width: '96%', height: '80%', borderRadius: 20, overflow: 'hidden' },
+    drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, borderBottomWidth: 1 },
+    drawingTitle: { fontSize: 16, fontWeight: 'bold' },
+    headerButton: { padding: 5 },
+    headerButtonText: { fontSize: 14, color: '#007AFF' },
+    problemPreviewContainer: { padding: 10, alignItems: 'center', borderBottomWidth: 1 },
+    problemPreviewLabel: { fontSize: 12, color: '#666' },
+    problemPreviewTextSmall: { fontSize: 16, fontWeight: '600' },
+    canvas: { flex: 1 },
+    milestoneCard: { width: '85%', borderRadius: 20, padding: 20, alignItems: 'center' },
+    milestoneTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
+    statsRow: { padding: 10, borderRadius: 10, width: '100%', alignItems: 'center' },
+    statsTextMilestone: { fontSize: 16, fontWeight: 'bold' },
+    milestoneButtons: { flexDirection: 'row', marginTop: 15 },
+    mButton: { padding: 10, borderRadius: 10, marginHorizontal: 5 }
 });
 
 export default DecimalSubtractionTrainer;

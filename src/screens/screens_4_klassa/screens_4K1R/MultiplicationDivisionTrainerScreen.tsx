@@ -19,7 +19,8 @@ import {
     ScrollView,
     InteractionManager,
     NativeSyntheticEvent,
-    TextInputKeyPressEventData
+    TextInputKeyPressEventData,
+    useColorScheme // Dodano hook
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -36,10 +37,22 @@ const isSmallDevice = screenWidth < 380;
 const combinedIconSize = screenWidth * 0.25;
 const combinedInputSize = isSmallDevice ? 70 : 90;
 
-// --- BRUDNOPIS ---
+// --- BRUDNOPIS Z OBSŁUGĄ MOTYWU ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
+
+    // Obsługa motywu
+    const isDarkMode = useColorScheme() === 'dark';
+    const theme = {
+        bg: isDarkMode ? '#1E293B' : '#fff',
+        text: isDarkMode ? '#FFF' : '#333',
+        canvas: isDarkMode ? '#0F172A' : '#ffffff',
+        stroke: isDarkMode ? '#FFF' : '#000',
+        headerBg: isDarkMode ? '#334155' : '#f0f0f0',
+        border: isDarkMode ? '#475569' : '#ccc',
+        previewBg: isDarkMode ? '#1E293B' : '#f9f9f9',
+    };
 
     const handleClear = () => { setPaths([]); setCurrentPath(''); };
 
@@ -56,22 +69,22 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
     return (
         <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
             <View style={styles.modalOverlay}>
-                <View style={styles.drawingContainer}>
-                    <View style={styles.drawingHeader}>
+                <View style={[styles.drawingContainer, { backgroundColor: theme.bg }]}>
+                    <View style={[styles.drawingHeader, { backgroundColor: theme.headerBg, borderBottomColor: theme.border }]}>
                         <TouchableOpacity onPress={handleClear} style={styles.headerButton}>
                             <Text style={styles.headerButtonText}>🗑️ Wyczyść</Text>
                         </TouchableOpacity>
-                        <Text style={styles.drawingTitle}>Brudnopis</Text>
+                        <Text style={[styles.drawingTitle, { color: theme.text }]}>Brudnopis</Text>
                         <TouchableOpacity onPress={onClose} style={styles.headerButton}>
                             <Text style={styles.headerButtonText}>❌ Zamknij</Text>
                         </TouchableOpacity>
                     </View>
-                    <View style={styles.problemPreviewContainer}>
+                    <View style={[styles.problemPreviewContainer, { backgroundColor: theme.previewBg, borderBottomColor: theme.border }]}>
                         <Text style={styles.problemPreviewLabel}>Zadanie:</Text>
                         <Text style={styles.problemPreviewTextSmall}>{problemText}</Text>
                     </View>
                     <View
-                        style={styles.canvas}
+                        style={[styles.canvas, { backgroundColor: theme.canvas }]}
                         onStartShouldSetResponder={() => true}
                         onMoveShouldSetResponder={() => true}
                         onResponderGrant={(evt) => {
@@ -82,8 +95,8 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
                         onResponderRelease={onTouchEnd}
                     >
                         <Svg height="100%" width="100%">
-                            {paths.map((d, index) => (<Path key={index} d={d} stroke="#000" strokeWidth={3} fill="none" />))}
-                            <Path d={currentPath} stroke="#000" strokeWidth={3} fill="none" />
+                            {paths.map((d, index) => (<Path key={index} d={d} stroke={theme.stroke} strokeWidth={3} fill="none" />))}
+                            <Path d={currentPath} stroke={theme.stroke} strokeWidth={3} fill="none" />
                         </Svg>
                     </View>
                 </View>
@@ -94,6 +107,39 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 
 const CombinedDecompositionTrainer = () => {
     const navigation = useNavigation();
+
+    // --- MOTYW ---
+    const isDarkMode = useColorScheme() === 'dark';
+    const theme = {
+        bgImage: require('../../../assets/background.jpg'),
+        bgOverlay: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'transparent',
+
+        topBtnText: isDarkMode ? '#FFFFFF' : '#007AFF',
+
+        textMain: isDarkMode ? '#FFFFFF' : '#333333',
+        textSub: isDarkMode ? '#CBD5E1' : '#555555',
+        labelColor: isDarkMode ? '#94A3B8' : '#888888', // Używane dla stepLabel
+
+        cardOverlay: isDarkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255,255,255,0.85)',
+        modalContent: isDarkMode ? '#1E293B' : '#fff',
+        statsRow: isDarkMode ? '#0F172A' : '#f8f9fa',
+
+        inputBg: isDarkMode ? '#334155' : '#fafafa',
+        inputBorder: isDarkMode ? '#475569' : '#ccc',
+        inputText: isDarkMode ? '#FFFFFF' : '#333',
+        inputPlaceholder: isDarkMode ? '#94A3B8' : '#aaa',
+
+        correctBg: isDarkMode ? 'rgba(21, 87, 36, 0.5)' : '#d4edda',
+        correctBorder: isDarkMode ? '#4ADE80' : '#28a745',
+        correctText: isDarkMode ? '#86EFAC' : '#155724',
+
+        errorBg: isDarkMode ? 'rgba(114, 28, 36, 0.5)' : '#f8d7da',
+        errorBorder: isDarkMode ? '#F87171' : '#dc3545',
+        errorText: isDarkMode ? '#FCA5A5' : '#721c24',
+
+        arrowColor: isDarkMode ? '#60A5FA' : '#007AFF', // Kolor strzałek
+        signColor: isDarkMode ? '#E2E8F0' : '#555', // Plusy i znaki
+    };
 
     // --- REFS ---
     const decomp1Ref = useRef<TextInput>(null);
@@ -127,7 +173,6 @@ const CombinedDecompositionTrainer = () => {
     const [wrongCount, setWrongCount] = useState<number>(0);
     const [taskCount, setTaskCount] = useState<number>(0);
 
-    // ZAMIAST firstAttempt, MAMY LICZNIK PRÓB (0 = pierwsza, 1 = druga/ostatnia)
     const [attemptsUsed, setAttemptsUsed] = useState<number>(0);
 
     // --- RAPORTY ---
@@ -174,7 +219,6 @@ const CombinedDecompositionTrainer = () => {
         setOperand(o);
         setHintText(hint);
 
-        // Reset pól
         setDecomp1(''); setDecomp2('');
         setPartial1(''); setPartial2('');
         setFinal('');
@@ -182,7 +226,7 @@ const CombinedDecompositionTrainer = () => {
         setValidation({ decomp1: null, decomp2: null, partial1: null, partial2: null, final: null });
         setMessage('');
         setReadyForNext(false);
-        setAttemptsUsed(0); // Reset prób
+        setAttemptsUsed(0);
         setShowHint(false);
         setTaskCount(prev => prev + 1);
         backgroundColor.setValue(0);
@@ -221,16 +265,11 @@ const CombinedDecompositionTrainer = () => {
 
     const handleCheck = () => {
         Keyboard.dismiss();
-
-        // 1. BLOKADA PUSTEGO POLA - naprawa błędu
-        // Sprawdzamy, czy wypełniono chociaż wynik końcowy LUB (w trybie dzielenia) pola rozkładu jeśli są używane
         const isFinalEmpty = final.trim() === '';
 
-        // Możemy być bardziej rygorystyczni: jeśli którekolwiek aktywne pole jest puste
-        // Ale dla uproszczenia sprawdźmy kluczowe:
         if (isFinalEmpty) {
             setMessage('Uzupełnij brakujące pola!');
-            return; // PRZERYWAMY - nie liczymy tego jako próby
+            return;
         }
 
         requestAnimationFrame(() => {
@@ -240,7 +279,6 @@ const CombinedDecompositionTrainer = () => {
             const p2 = Number(partial2);
             const fin = Number(final);
 
-            // Obiekt walidacji
             let valState = {
                 decomp1: null as boolean | null,
                 decomp2: null as boolean | null,
@@ -251,7 +289,6 @@ const CombinedDecompositionTrainer = () => {
 
             let isFinalCorrect = false;
 
-            // LOGIKA SPRAWDZANIA
             if (mode === 'multiplication') {
                 const correctTens = Math.floor(mainNumber / 10) * 10;
                 const correctOnes = mainNumber % 10;
@@ -266,7 +303,6 @@ const CombinedDecompositionTrainer = () => {
                 if (partial2.trim() !== '') valState.partial2 = (p2 === correctOnes * operand);
 
             } else {
-                // Division
                 const correctFinal = mainNumber / operand;
                 valState.final = (fin === correctFinal);
                 isFinalCorrect = valState.final;
@@ -284,7 +320,6 @@ const CombinedDecompositionTrainer = () => {
                         if (partial2.trim() !== '') valState.partial2 = false;
                     }
                 } else if (decomp1.trim() !== '' || decomp2.trim() !== '') {
-                    // Częściowo wypełnione - błąd
                     if (decomp1.trim() !== '') valState.decomp1 = false;
                     if (decomp2.trim() !== '') valState.decomp2 = false;
                 }
@@ -293,10 +328,8 @@ const CombinedDecompositionTrainer = () => {
             const hasErrors = Object.values(valState).includes(false);
             const isSuccess = isFinalCorrect && !hasErrors;
 
-            // 2. LOGIKA PRÓB (ATTEMPTS)
             if (isSuccess) {
-                // SUKCES
-                setValidation(valState); // Pokaż zielone
+                setValidation(valState);
                 Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
                 setCorrectCount(prev => prev + 1);
                 setSessionCorrect(prev => prev + 1);
@@ -304,7 +337,6 @@ const CombinedDecompositionTrainer = () => {
                 setReadyForNext(true);
                 setShowHint(false);
 
-                // Zapis
                 InteractionManager.runAfterInteractions(() => {
                     awardXpAndCoins(5, 1);
                     const currentUser = auth().currentUser;
@@ -315,18 +347,10 @@ const CombinedDecompositionTrainer = () => {
                 });
 
             } else {
-                // BŁĄD
                 if (attemptsUsed === 0) {
-                    // --- PIERWSZA PRÓBA ---
-                    setAttemptsUsed(1); // Zużywamy pierwszą próbę
+                    setAttemptsUsed(1);
                     setMessage('Błąd! Popraw czerwone pola.');
-
-                    // Ustawiamy walidację, żeby pokazać co jest źle
                     setValidation(valState);
-
-                    // CZYŚCIMY BŁĘDNE POLA (zostawiając poprawne)
-                    // Opóźniamy minimalnie wyczyszczenie, żeby logika walidacji (kolory) zadziałała
-                    // Ale w React State update jest asynchroniczny, więc robimy to w jednym cyklu
 
                     if (valState.decomp1 === false) setDecomp1('');
                     if (valState.decomp2 === false) setDecomp2('');
@@ -334,23 +358,18 @@ const CombinedDecompositionTrainer = () => {
                     if (valState.partial2 === false) setPartial2('');
                     if (valState.final === false) setFinal('');
 
-                    // Animacja błędu
                     Animated.sequence([
                         Animated.timing(backgroundColor, { toValue: -1, duration: 700, useNativeDriver: false }),
                         Animated.timing(backgroundColor, { toValue: 0, duration: 500, useNativeDriver: false }),
                     ]).start();
 
                 } else {
-                    // --- DRUGA PRÓBA (OSTATNIA) ---
-                    setValidation(valState); // Pokazujemy co źle
-
+                    setValidation(valState);
                     const correctAns = mode === 'multiplication' ? mainNumber * operand : mainNumber / operand;
                     setMessage(`Koniec prób. Wynik: ${correctAns}`);
-                    setReadyForNext(true); // Pozwalamy iść dalej
+                    setReadyForNext(true);
 
                     setWrongCount(prev => prev + 1);
-
-                    // Zapis błędu
                     InteractionManager.runAfterInteractions(() => {
                         const currentUser = auth().currentUser;
                         if (currentUser) {
@@ -382,18 +401,31 @@ const CombinedDecompositionTrainer = () => {
         }
     };
 
+    // --- Dynamiczne Style Inputów z Motywem ---
     const getFieldStyle = (field: keyof typeof validation) => {
-        // Jeśli pole jest puste, a mamy informację o błędzie, to znaczy że zostało wyczyszczone po błędzie
-        // Chcemy, żeby nadal świeciło na czerwono, żeby użytkownik wiedział, że tu był błąd
-        if (validation[field] === false) return styles.errorInput;
-        if (validation[field] === true) return styles.correctInput;
-        return styles.input;
+        const status = validation[field];
+
+        const baseStyle = {
+            backgroundColor: theme.inputBg,
+            borderColor: theme.inputBorder,
+            color: theme.inputText
+        };
+
+        if (status === false) return [styles.errorInput, { backgroundColor: theme.errorBg, borderColor: theme.errorBorder, color: theme.errorText }];
+        if (status === true) return [styles.correctInput, { backgroundColor: theme.correctBg, borderColor: theme.correctBorder, color: theme.correctText }];
+        return [styles.input, baseStyle];
     };
 
     const getFinalStyle = () => {
-        if (validation.final === false) return styles.errorFinal;
-        if (validation.final === true) return styles.correctFinal;
-        return styles.finalInput;
+        const baseStyle = {
+            backgroundColor: theme.inputBg,
+            borderColor: theme.inputBorder,
+            color: theme.inputText
+        };
+
+        if (validation.final === false) return [styles.errorFinal, { backgroundColor: theme.errorBg, borderColor: theme.errorBorder, color: theme.errorText }];
+        if (validation.final === true) return [styles.correctFinal, { backgroundColor: theme.correctBg, borderColor: theme.correctBorder, color: theme.correctText }];
+        return [styles.finalInput, baseStyle];
     };
 
     const bgInterpolation = backgroundColor.interpolate({
@@ -408,8 +440,12 @@ const CombinedDecompositionTrainer = () => {
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={{ flex: 1 }}>
-                <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-                <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                <StatusBar translucent backgroundColor="transparent" barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+
+                <ImageBackground source={theme.bgImage} style={StyleSheet.absoluteFillObject} resizeMode="cover">
+                    <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.bgOverlay }]} pointerEvents="none" />
+                </ImageBackground>
+
                 <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: bgInterpolation }]} pointerEvents="none" />
 
                 <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardContainer}>
@@ -418,22 +454,22 @@ const CombinedDecompositionTrainer = () => {
                         <View style={styles.topButtons}>
                             <TouchableOpacity onPress={toggleScratchpad} style={styles.topBtnItem}>
                                 <Image source={require('../../../assets/pencil.png')} style={styles.iconTop} />
-                                <Text style={styles.buttonLabel}>Brudnopis</Text>
+                                <Text style={[styles.buttonLabel, { color: theme.topBtnText }]}>Brudnopis</Text>
                             </TouchableOpacity>
 
                             <View style={styles.topBtnItem}>
                                 <TouchableOpacity onPress={toggleHint}>
                                     <Image source={require('../../../assets/question.png')} style={styles.iconTop} />
                                 </TouchableOpacity>
-                                <Text style={styles.buttonLabel}>Pomoc</Text>
+                                <Text style={[styles.buttonLabel, { color: theme.topBtnText }]}>Pomoc</Text>
                             </View>
                         </View>
                     )}
 
                     {showHint && !isKeyboardVisible && (
-                        <View style={styles.hintBox}>
+                        <View style={[styles.hintBox, { backgroundColor: theme.modalContent, borderColor: '#007AFF' }]}>
                             <Text style={styles.hintTitle}>Podpowiedź:</Text>
-                            <Text style={styles.hintText}>{hintText}</Text>
+                            <Text style={[styles.hintText, { color: theme.textMain }]}>{hintText}</Text>
                         </View>
                     )}
 
@@ -441,10 +477,10 @@ const CombinedDecompositionTrainer = () => {
 
                     <Modal visible={showMilestone} transparent={true} animationType="slide">
                         <View style={styles.modalOverlay}>
-                            <View style={styles.milestoneCard}>
-                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
-                                <View style={styles.statsRow}>
-                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                            <View style={[styles.milestoneCard, { backgroundColor: theme.modalContent }]}>
+                                <Text style={[styles.milestoneTitle, { color: theme.textMain }]}>Podsumowanie serii 📊</Text>
+                                <View style={[styles.statsRow, { backgroundColor: theme.statsRow }]}>
+                                    <Text style={[styles.statsText, { color: theme.textMain }]}>Poprawne: {sessionCorrect} / 10</Text>
                                     <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>
                                         Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%
                                     </Text>
@@ -463,11 +499,11 @@ const CombinedDecompositionTrainer = () => {
 
                     <Modal visible={isFinished} transparent={true} animationType="fade">
                         <View style={styles.modalOverlay}>
-                            <View style={styles.milestoneCard}>
-                                <Text style={styles.milestoneTitle}>Gratulacje! 🏆</Text>
-                                <Text style={styles.suggestionText}>Ukończyłeś wszystkie zadania!</Text>
-                                <View style={styles.statsRow}>
-                                    <Text style={styles.statsText}>Wynik końcowy:</Text>
+                            <View style={[styles.milestoneCard, { backgroundColor: theme.modalContent }]}>
+                                <Text style={[styles.milestoneTitle, { color: theme.textMain }]}>Gratulacje! 🏆</Text>
+                                <Text style={[styles.suggestionText, { color: theme.textSub }]}>Ukończyłeś wszystkie zadania!</Text>
+                                <View style={[styles.statsRow, { backgroundColor: theme.statsRow }]}>
+                                    <Text style={[styles.statsText, { color: theme.textMain }]}>Wynik końcowy:</Text>
                                     <Text style={[styles.statsText, { fontSize: 24, color: '#28a745', marginTop: 5 }]}>
                                         {correctCount} / {TASKS_LIMIT}
                                     </Text>
@@ -486,18 +522,18 @@ const CombinedDecompositionTrainer = () => {
 
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
-                            <View style={styles.overlayBackground} />
+                            <View style={[styles.overlayBackground, { backgroundColor: theme.cardOverlay }]} />
 
                             <Text style={styles.taskLabel}>TRENER: ROZKŁADANIE</Text>
-                            <Text style={styles.taskTextMain}>{problemString} = ?</Text>
+                            <Text style={[styles.taskTextMain, { color: theme.textMain }]}>{problemString} = ?</Text>
 
-                            <Text style={styles.subTitle}>
+                            <Text style={[styles.subTitle, { color: theme.textSub }]}>
                                 {mode === 'multiplication' ? 'Rozłóż liczbę i pomnóż (opcjonalnie)' : 'Rozłóż liczbę i podziel (opcjonalnie)'}
                             </Text>
 
                             <View style={styles.row}>
                                 <View style={styles.col}>
-                                    <Text style={styles.stepLabel}>Rozkład</Text>
+                                    <Text style={[styles.stepLabel, { color: theme.labelColor }]}>Rozkład</Text>
                                     <TextInput
                                         ref={decomp1Ref}
                                         style={getFieldStyle('decomp1')}
@@ -505,7 +541,7 @@ const CombinedDecompositionTrainer = () => {
                                         value={decomp1}
                                         onChangeText={setDecomp1}
                                         placeholder="?"
-                                        placeholderTextColor="#aaa"
+                                        placeholderTextColor={theme.inputPlaceholder}
                                         editable={!readyForNext && (attemptsUsed === 0 || validation.decomp1 !== true)}
                                         blurOnSubmit={false}
                                         returnKeyType="next"
@@ -513,9 +549,9 @@ const CombinedDecompositionTrainer = () => {
                                         onKeyPress={(e) => handleKeyPress(e, 'decomp1')}
                                     />
                                 </View>
-                                <Text style={styles.plusSign}>+</Text>
+                                <Text style={[styles.plusSign, { color: theme.signColor }]}>+</Text>
                                 <View style={styles.col}>
-                                    <Text style={styles.stepLabel}>Rozkład</Text>
+                                    <Text style={[styles.stepLabel, { color: theme.labelColor }]}>Rozkład</Text>
                                     <TextInput
                                         ref={decomp2Ref}
                                         style={getFieldStyle('decomp2')}
@@ -523,7 +559,7 @@ const CombinedDecompositionTrainer = () => {
                                         value={decomp2}
                                         onChangeText={setDecomp2}
                                         placeholder="?"
-                                        placeholderTextColor="#aaa"
+                                        placeholderTextColor={theme.inputPlaceholder}
                                         editable={!readyForNext && (attemptsUsed === 0 || validation.decomp2 !== true)}
                                         blurOnSubmit={false}
                                         returnKeyType="next"
@@ -534,8 +570,8 @@ const CombinedDecompositionTrainer = () => {
                             </View>
 
                             <View style={styles.arrowRow}>
-                                <Text style={styles.arrowText}>↓ {step2Op} {operand}</Text>
-                                <Text style={styles.arrowText}>↓ {step2Op} {operand}</Text>
+                                <Text style={[styles.arrowText, { color: theme.arrowColor }]}>↓ {step2Op} {operand}</Text>
+                                <Text style={[styles.arrowText, { color: theme.arrowColor }]}>↓ {step2Op} {operand}</Text>
                             </View>
 
                             <View style={styles.row}>
@@ -546,14 +582,14 @@ const CombinedDecompositionTrainer = () => {
                                     value={partial1}
                                     onChangeText={setPartial1}
                                     placeholder="wynik"
-                                    placeholderTextColor="#aaa"
+                                    placeholderTextColor={theme.inputPlaceholder}
                                     editable={!readyForNext && (attemptsUsed === 0 || validation.partial1 !== true)}
                                     blurOnSubmit={false}
                                     returnKeyType="next"
                                     onSubmitEditing={() => partial2Ref.current?.focus()}
                                     onKeyPress={(e) => handleKeyPress(e, 'partial1')}
                                 />
-                                <Text style={styles.plusSign}>+</Text>
+                                <Text style={[styles.plusSign, { color: theme.signColor }]}>+</Text>
                                 <TextInput
                                     ref={partial2Ref}
                                     style={getFieldStyle('partial2')}
@@ -561,7 +597,7 @@ const CombinedDecompositionTrainer = () => {
                                     value={partial2}
                                     onChangeText={setPartial2}
                                     placeholder="wynik"
-                                    placeholderTextColor="#aaa"
+                                    placeholderTextColor={theme.inputPlaceholder}
                                     editable={!readyForNext && (attemptsUsed === 0 || validation.partial2 !== true)}
                                     blurOnSubmit={false}
                                     returnKeyType="next"
@@ -571,8 +607,8 @@ const CombinedDecompositionTrainer = () => {
                             </View>
 
                             <View style={styles.arrowRow}>
-                                <Text style={styles.arrowText}>↘</Text>
-                                <Text style={styles.arrowText}>↙</Text>
+                                <Text style={[styles.arrowText, { color: theme.arrowColor }]}>↘</Text>
+                                <Text style={[styles.arrowText, { color: theme.arrowColor }]}>↙</Text>
                             </View>
 
                             <TextInput
@@ -582,7 +618,7 @@ const CombinedDecompositionTrainer = () => {
                                 value={final}
                                 onChangeText={setFinal}
                                 placeholder="Wynik końcowy"
-                                placeholderTextColor="#aaa"
+                                placeholderTextColor={theme.inputPlaceholder}
                                 editable={!readyForNext && (attemptsUsed === 0 || validation.final !== true)}
                                 blurOnSubmit={true}
                                 returnKeyType="done"
@@ -594,20 +630,27 @@ const CombinedDecompositionTrainer = () => {
                                 <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
                             </View>
 
-                            <Text style={styles.counterTextSmall}>
+                            <Text style={[styles.counterTextSmall, { color: theme.textSub }]}>
                                 Zadanie: {taskCount > TASKS_LIMIT ? TASKS_LIMIT : taskCount} / {TASKS_LIMIT}
                             </Text>
 
-                            {message ? <Text style={[styles.result, message.includes('Świetnie') ? styles.correctText : styles.errorText]}>{message}</Text> : null}
+                            {message ? (
+                                <Text style={[
+                                    styles.result,
+                                    message.includes('Świetnie') ? { color: theme.correctText } : { color: theme.errorText }
+                                ]}>
+                                    {message}
+                                </Text>
+                            ) : null}
                         </View>
                     </ScrollView>
 
                     {!isKeyboardVisible && (
                         <View style={styles.iconsBottom}>
                             <Image source={require('../../../assets/happy.png')} style={styles.iconSame} />
-                            <Text style={styles.counterTextIcons}>{correctCount}</Text>
+                            <Text style={[styles.counterTextIcons, { color: theme.textMain }]}>{correctCount}</Text>
                             <Image source={require('../../../assets/sad.png')} style={styles.iconSame} />
-                            <Text style={styles.counterTextIcons}>{wrongCount}</Text>
+                            <Text style={[styles.counterTextIcons, { color: theme.textMain }]}>{wrongCount}</Text>
                         </View>
                     )}
 
@@ -625,52 +668,60 @@ const styles = StyleSheet.create({
     topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
     iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
-    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2, textShadowColor: 'rgba(255, 255, 255, 0.8)', textShadowRadius: 3 },
-    hintBox: { position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
+
+    // Bez cienia, kolor obsługiwany dynamicznie
+    buttonLabel: { fontSize: 14, fontWeight: 'bold', marginTop: 2 },
+
+    hintBox: { position: 'absolute', top: 120, right: 20, padding: 15, borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
-    hintText: { fontSize: 14, color: '#333', lineHeight: 20, textAlign: 'center' },
+    hintText: { fontSize: 14, lineHeight: 20, textAlign: 'center' },
+
     card: { width: '95%', maxWidth: 480, borderRadius: 20, padding: 20, alignItems: 'center', marginTop: 20, alignSelf: 'center' },
-    overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
+    overlayBackground: { ...StyleSheet.absoluteFillObject, borderRadius: 20 },
+
     taskLabel: { fontSize: 18, fontWeight: '700', marginBottom: 5, color: '#007AFF', textAlign: 'center', textTransform: 'uppercase' },
-    taskTextMain: { fontSize: isSmallDevice ? 28 : 36, fontWeight: 'bold', marginBottom: 5, color: '#333', textAlign: 'center' },
-    subTitle: { fontSize: 16, marginBottom: 20, color: '#555', textAlign: 'center' },
+    taskTextMain: { fontSize: isSmallDevice ? 28 : 36, fontWeight: 'bold', marginBottom: 5, textAlign: 'center' },
+    subTitle: { fontSize: 16, marginBottom: 20, textAlign: 'center' },
+
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 5 },
     col: { alignItems: 'center' },
-    stepLabel: { fontSize: 12, color: '#777', marginBottom: 4 },
-    plusSign: { fontSize: 24, fontWeight: 'bold', color: '#555', marginHorizontal: 10, marginTop: 15 },
+    stepLabel: { fontSize: 12, marginBottom: 4 },
+    plusSign: { fontSize: 24, fontWeight: 'bold', marginHorizontal: 10, marginTop: 15 },
     arrowRow: { flexDirection: 'row', justifyContent: 'space-around', width: '60%', marginBottom: 10 },
-    arrowText: { fontSize: 16, fontWeight: 'bold', color: '#007AFF' },
-    input: { width: combinedInputSize, height: 50, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: fontSizeInput, backgroundColor: '#fafafa', color: '#333' },
-    correctInput: { width: combinedInputSize, height: 50, borderWidth: 2, borderColor: '#28a745', borderRadius: 10, textAlign: 'center', fontSize: fontSizeInput, backgroundColor: '#d4edda', color: '#155724' },
-    errorInput: { width: combinedInputSize, height: 50, borderWidth: 2, borderColor: '#dc3545', borderRadius: 10, textAlign: 'center', fontSize: fontSizeInput, backgroundColor: '#f8d7da', color: '#721c24' },
-    finalInput: { width: 180, height: 56, borderWidth: 2, borderColor: '#ccc', borderRadius: 10, textAlign: 'center', fontSize: 24, backgroundColor: '#fafafa', marginTop: 10, color: '#333' },
-    correctFinal: { width: 180, height: 56, borderWidth: 2, borderColor: '#28a745', borderRadius: 10, textAlign: 'center', fontSize: 24, backgroundColor: '#d4edda', marginTop: 10, color: '#155724' },
-    errorFinal: { width: 180, height: 56, borderWidth: 2, borderColor: '#dc3545', borderRadius: 10, textAlign: 'center', fontSize: 24, backgroundColor: '#f8d7da', marginTop: 10, color: '#721c24' },
+    arrowText: { fontSize: 16, fontWeight: 'bold' },
+
+    input: { width: combinedInputSize, height: 50, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: fontSizeInput },
+    correctInput: { width: combinedInputSize, height: 50, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: fontSizeInput },
+    errorInput: { width: combinedInputSize, height: 50, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: fontSizeInput },
+
+    finalInput: { width: 180, height: 56, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 24, marginTop: 10 },
+    correctFinal: { width: 180, height: 56, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 24, marginTop: 10 },
+    errorFinal: { width: 180, height: 56, borderWidth: 2, borderRadius: 10, textAlign: 'center', fontSize: 24, marginTop: 10 },
+
     buttonContainer: { marginTop: 20, width: '80%', borderRadius: 10, overflow: 'hidden' },
     result: { fontSize: 18, fontWeight: '700', marginTop: 15, textAlign: 'center' },
-    correctText: { color: '#28a745' },
-    errorText: { color: '#dc3545' },
-    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
+
+    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', textAlign: 'center', marginTop: 10 },
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    counterTextIcons: { fontSize: Math.max(14, combinedIconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
+    counterTextIcons: { fontSize: Math.max(14, combinedIconSize * 0.28), marginHorizontal: 8, textAlign: 'center' },
+
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-    drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
-    drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, backgroundColor: '#f0f0f0', borderBottomWidth: 1, borderBottomColor: '#ccc' },
-    drawingTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+    drawingContainer: { width: '95%', height: '85%', borderRadius: 20, overflow: 'hidden' },
+    drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, borderBottomWidth: 1 },
+    drawingTitle: { fontSize: 18, fontWeight: 'bold' },
     headerButton: { padding: 5 },
     headerButtonText: { fontSize: 16, color: '#007AFF' },
-    problemPreviewContainer: { backgroundColor: '#f9f9f9', padding: 10, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#eee', width: '100%' },
+    problemPreviewContainer: { padding: 10, alignItems: 'center', borderBottomWidth: 1, width: '100%' },
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
-    canvas: { flex: 1, backgroundColor: '#ffffff' },
+    canvas: { flex: 1 },
 
-    // MILESTONE STYLES
-    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
-    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
-    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
-    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
-    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    milestoneCard: { width: '90%', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, textAlign: 'center', marginVertical: 20, lineHeight: 22 },
     milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
     mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
     mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }

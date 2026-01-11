@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     View, Text, StyleSheet, TextInput, Button, Keyboard, ImageBackground,
     Animated, StatusBar, Image, Dimensions, TouchableOpacity, Modal,
-    Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager
+    Platform, KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, InteractionManager,
+    useColorScheme
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native'; // Dodane dla nawigacji
+import { useNavigation } from '@react-navigation/native';
 import { awardXpAndCoins } from '../../../services/xpService';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -16,9 +17,22 @@ const { width: screenWidth } = Dimensions.get('window');
 const TASKS_LIMIT = 50;
 const combinedIconSize = screenWidth * 0.25;
 
+// --- BRUDNOPIS (SCRATCHPAD) ---
 const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onClose: () => void, problemText: string }) => {
     const [paths, setPaths] = useState<string[]>([]);
     const [currentPath, setCurrentPath] = useState('');
+    const isDarkMode = useColorScheme() === 'dark';
+
+    const theme = {
+        bg: isDarkMode ? '#1E293B' : '#fff',
+        text: isDarkMode ? '#FFF' : '#333',
+        canvas: isDarkMode ? '#0F172A' : '#ffffff',
+        stroke: isDarkMode ? '#FFF' : '#000',
+        headerBg: isDarkMode ? '#334155' : '#f0f0f0',
+        border: isDarkMode ? '#475569' : '#ccc',
+        previewBg: isDarkMode ? '#1E293B' : '#f9f9f9',
+    };
+
     const handleClear = () => { setPaths([]); setCurrentPath(''); };
     const onTouchMove = (evt: any) => {
         const { locationX, locationY } = evt.nativeEvent;
@@ -26,20 +40,24 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
         else setCurrentPath(`${currentPath} L${locationX},${locationY}`);
     };
     const onTouchEnd = () => { if (currentPath) { setPaths([...paths, currentPath]); setCurrentPath(''); } };
+
     return (
         <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
             <View style={styles.modalOverlay}>
-                <View style={styles.drawingContainer}>
-                    <View style={styles.drawingHeader}>
+                <View style={[styles.drawingContainer, { backgroundColor: theme.bg }]}>
+                    <View style={[styles.drawingHeader, { backgroundColor: theme.headerBg, borderBottomColor: theme.border }]}>
                         <TouchableOpacity onPress={handleClear} style={styles.headerButton}><Text style={styles.headerButtonText}>🗑️ Wyczyść</Text></TouchableOpacity>
-                        <Text style={styles.drawingTitle}>Brudnopis</Text>
+                        <Text style={[styles.drawingTitle, { color: theme.text }]}>Brudnopis</Text>
                         <TouchableOpacity onPress={onClose} style={styles.headerButton}><Text style={styles.headerButtonText}>❌ Zamknij</Text></TouchableOpacity>
                     </View>
-                    <View style={styles.problemPreviewContainer}><Text style={styles.problemPreviewLabel}>Zadanie:</Text><Text style={styles.problemPreviewTextSmall}>{problemText}</Text></View>
-                    <View style={styles.canvas} onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderGrant={(evt) => { const { locationX, locationY } = evt.nativeEvent; setCurrentPath(`M${locationX},${locationY}`); }} onResponderMove={onTouchMove} onResponderRelease={onTouchEnd}>
+                    <View style={[styles.problemPreviewContainer, { backgroundColor: theme.previewBg, borderBottomColor: theme.border }]}>
+                        <Text style={styles.problemPreviewLabel}>Zadanie:</Text>
+                        <Text style={styles.problemPreviewTextSmall}>{problemText}</Text>
+                    </View>
+                    <View style={[styles.canvas, { backgroundColor: theme.canvas }]} onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderGrant={(evt) => { const { locationX, locationY } = evt.nativeEvent; setCurrentPath(`M${locationX},${locationY}`); }} onResponderMove={onTouchMove} onResponderRelease={onTouchEnd}>
                         <Svg height="100%" width="100%">
-                            {paths.map((d, index) => (<Path key={index} d={d} stroke="#000" strokeWidth={3} fill="none" />))}
-                            <Path d={currentPath} stroke="#000" strokeWidth={3} fill="none" />
+                            {paths.map((d, index) => (<Path key={index} d={d} stroke={theme.stroke} strokeWidth={3} fill="none" />))}
+                            <Path d={currentPath} stroke={theme.stroke} strokeWidth={3} fill="none" />
                         </Svg>
                     </View>
                 </View>
@@ -49,13 +67,37 @@ const DrawingModal = ({ visible, onClose, problemText }: { visible: boolean; onC
 };
 
 const WrittenSubtractionTrainer = () => {
-    const navigation = useNavigation(); // Hook nawigacji
+    const navigation = useNavigation();
+    const isDarkMode = useColorScheme() === 'dark';
+
+    const theme = {
+        bgImage: require('../../../assets/background.jpg'),
+        bgOverlay: isDarkMode ? 'rgba(0, 0, 0, 0.75)' : 'transparent',
+        topBtnText: isDarkMode ? '#FFFFFF' : '#007AFF',
+        textMain: isDarkMode ? '#FFFFFF' : '#333333',
+        textSub: isDarkMode ? '#CBD5E1' : '#555555',
+        cardOverlay: isDarkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255,255,255,0.85)',
+        modalContent: isDarkMode ? '#1E293B' : '#fff',
+        statsRow: isDarkMode ? '#0F172A' : '#f8f9fa',
+
+        inputBg: isDarkMode ? '#334155' : '#ffffff',
+        inputBorder: isDarkMode ? '#475569' : '#ccc',
+        inputText: isDarkMode ? '#FFFFFF' : '#007AFF',
+
+        carryBg: isDarkMode ? '#0F172A' : '#f9f9f9',
+        carryText: isDarkMode ? '#94A3B8' : '#888',
+
+        correctBg: isDarkMode ? 'rgba(21, 87, 36, 0.5)' : '#d4edda',
+        correctBorder: isDarkMode ? '#4ADE80' : '#28a745',
+        errorBg: isDarkMode ? 'rgba(114, 28, 36, 0.5)' : '#f8d7da',
+        errorBorder: isDarkMode ? '#F87171' : '#dc3545',
+    };
+
     const [num1, setNum1] = useState<string>('');
     const [num2, setNum2] = useState<string>('');
     const [fullResult, setFullResult] = useState<number>(0);
     const [userDigits, setUserDigits] = useState<string[]>([]);
     const [carries, setCarries] = useState<string[]>([]);
-
     const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
     const [readyForNext, setReadyForNext] = useState<boolean>(false);
     const [correctCount, setCorrectCount] = useState<number>(0);
@@ -66,8 +108,6 @@ const WrittenSubtractionTrainer = () => {
     const [showScratchpad, setShowScratchpad] = useState(false);
     const [showHint, setShowHint] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-
-    // Nowe stany raportu co 10 zadań
     const [showMilestone, setShowMilestone] = useState(false);
     const [sessionCorrect, setSessionCorrect] = useState(0);
 
@@ -82,35 +122,19 @@ const WrittenSubtractionTrainer = () => {
     }, []);
 
     const generateProblem = () => {
-        setMessage('');
-        setIsCorrect(null);
-        setReadyForNext(false);
-        setFirstAttempt(true);
-        setShowHint(false);
+        setMessage(''); setIsCorrect(null); setReadyForNext(false); setFirstAttempt(true); setShowHint(false);
         backgroundColor.setValue(0);
-
         const types = [[3, 2], [3, 3], [4, 3], [2, 2]];
         const [l1, l2] = types[Math.floor(Math.random() * types.length)];
-
         let n1 = Math.floor(Math.pow(10, l1-1) + Math.random() * (Math.pow(10, l1) - Math.pow(10, l1-1)));
         let n2 = Math.floor(Math.pow(10, l2-1) + Math.random() * (Math.pow(10, l2) - Math.pow(10, l2-1)));
-
         if (n2 > n1) [n1, n2] = [n2, n1];
-
         const diff = n1 - n2;
-        setNum1(n1.toString());
-        setNum2(n2.toString());
-        setFullResult(diff);
-
+        setNum1(n1.toString()); setNum2(n2.toString()); setFullResult(diff);
         const displayLen = n1.toString().length;
         setUserDigits(new Array(displayLen).fill(''));
         setCarries(new Array(displayLen).fill(''));
-
-        setTimeout(() => {
-            if (inputRefs.current[displayLen - 1]) {
-                inputRefs.current[displayLen - 1]?.focus();
-            }
-        }, 500);
+        setTimeout(() => inputRefs.current[displayLen - 1]?.focus(), 500);
     };
 
     const handleDigitChange = (val: string, index: number) => {
@@ -118,28 +142,19 @@ const WrittenSubtractionTrainer = () => {
         const newDigits = [...userDigits];
         newDigits[index] = cleanVal;
         setUserDigits(newDigits);
-
-        if (cleanVal !== '' && index > 0) {
-            inputRefs.current[index - 1]?.focus();
-        }
+        if (cleanVal !== '' && index > 0) inputRefs.current[index - 1]?.focus();
     };
 
     const handleCheck = () => {
         const userResStr = userDigits.join('').trim();
         const userRes = parseInt(userResStr, 10);
-
         if (userResStr === "" || isNaN(userRes)) {
-            setMessage('Wpisz wynik!');
-            return;
+            setMessage('Wpisz wynik!'); return;
         }
-
         if (userRes === fullResult) {
             Animated.timing(backgroundColor, { toValue: 1, duration: 500, useNativeDriver: false }).start();
-            setCorrectCount(c => c + 1);
-            setSessionCorrect(s => s + 1); // Licznik serii
-            setMessage('Świetnie! ✅');
-            setReadyForNext(true);
-            setIsCorrect(true);
+            setCorrectCount(c => c + 1); setSessionCorrect(s => s + 1);
+            setMessage('Świetnie! ✅'); setReadyForNext(true); setIsCorrect(true);
             InteractionManager.runAfterInteractions(() => awardXpAndCoins(5, 1));
             const currentUser = auth().currentUser;
             if (currentUser) {
@@ -148,36 +163,20 @@ const WrittenSubtractionTrainer = () => {
             }
         } else {
             Animated.timing(backgroundColor, { toValue: -1, duration: 500, useNativeDriver: false }).start();
-            InteractionManager.runAfterInteractions(() => {
-                const currentUser = auth().currentUser;
-                if (currentUser) {
-                    firestore().collection('users').doc(currentUser.uid).collection('exerciseStats').doc(EXERCISE_ID)
-                        .set({ totalWrong: firestore.FieldValue.increment(1) }, { merge: true }).catch(console.error);
-                }
-            });
             if (firstAttempt) {
-                setMessage('Błąd. Spróbuj jeszcze raz.');
-                setFirstAttempt(false);
-                setIsCorrect(false);
+                setMessage('Błąd. Spróbuj jeszcze raz.'); setFirstAttempt(false); setIsCorrect(false);
                 setUserDigits(new Array(userDigits.length).fill(''));
                 setTimeout(() => inputRefs.current[userDigits.length - 1]?.focus(), 100);
             } else {
-                setMessage(`Poprawny wynik: ${fullResult}`);
-                setWrongCount(w => w + 1);
-                setReadyForNext(true);
-                setIsCorrect(false);
+                setMessage(`Poprawny wynik: ${fullResult}`); setWrongCount(w => w + 1); setReadyForNext(true); setIsCorrect(false);
             }
         }
     };
 
     const nextTask = () => {
-        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) {
-            setShowMilestone(true);
-            return;
-        }
+        if (taskCount > 0 && taskCount % 10 === 0 && !showMilestone) { setShowMilestone(true); return; }
         if (taskCount >= TASKS_LIMIT) { setMessage('Koniec! 🏆'); return; }
-        setTaskCount(t => t + 1);
-        generateProblem();
+        setTaskCount(t => t + 1); generateProblem();
     };
 
     const bgInterpolation = backgroundColor.interpolate({
@@ -192,8 +191,10 @@ const WrittenSubtractionTrainer = () => {
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles.container}>
-                <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-                <ImageBackground source={require('../../../assets/background.jpg')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                <StatusBar translucent backgroundColor="transparent" barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+                <ImageBackground source={theme.bgImage} style={StyleSheet.absoluteFillObject} resizeMode="cover">
+                    <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.bgOverlay }]} />
+                </ImageBackground>
                 <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: bgInterpolation }]} pointerEvents="none" />
 
                 <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardContainer}>
@@ -201,34 +202,33 @@ const WrittenSubtractionTrainer = () => {
                         <View style={styles.topButtons}>
                             <TouchableOpacity onPress={() => setShowScratchpad(true)} style={styles.topBtnItem}>
                                 <Image source={require('../../../assets/pencil.png')} style={styles.iconTop} />
-                                <Text style={styles.buttonLabel}>Brudnopis</Text>
+                                <Text style={[styles.buttonLabel, { color: theme.topBtnText }]}>Brudnopis</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => setShowHint(!showHint)} style={styles.topBtnItem}>
                                 <Image source={require('../../../assets/question.png')} style={styles.iconTop} />
-                                <Text style={styles.buttonLabel}>Pomoc</Text>
+                                <Text style={[styles.buttonLabel, { color: theme.topBtnText }]}>Pomoc</Text>
                             </TouchableOpacity>
                         </View>
                     )}
 
                     {showHint && !isKeyboardVisible && (
-                        <View style={styles.hintBox}>
+                        <View style={[styles.hintBox, { backgroundColor: theme.modalContent, borderColor: '#007AFF' }]}>
                             <Text style={styles.hintTitle}>Podpowiedź:</Text>
-                            <Text style={styles.hintText}>Odejmujemy od prawej. Jeśli cyfra na górze jest mniejsza, "pożycz" dziesiątkę od sąsiada z lewej.</Text>
+                            <Text style={[styles.hintText, { color: theme.textMain }]}>Odejmujemy od prawej. Jeśli cyfra na górze jest mniejsza, "pożycz" dziesiątkę od sąsiada z lewej.</Text>
                         </View>
                     )}
 
                     <DrawingModal visible={showScratchpad} onClose={() => setShowScratchpad(false)} problemText={`${num1} - ${num2}`} />
 
-                    {/* MODAL MILESTONE */}
                     <Modal visible={showMilestone} transparent={true} animationType="slide">
                         <View style={styles.modalOverlay}>
-                            <View style={styles.milestoneCard}>
-                                <Text style={styles.milestoneTitle}>Podsumowanie serii 📊</Text>
-                                <View style={styles.statsRow}>
-                                    <Text style={styles.statsText}>Poprawne: {sessionCorrect} / 10</Text>
+                            <View style={[styles.milestoneCard, { backgroundColor: theme.modalContent }]}>
+                                <Text style={[styles.milestoneTitle, { color: theme.textMain }]}>Podsumowanie serii 📊</Text>
+                                <View style={[styles.statsRow, { backgroundColor: theme.statsRow }]}>
+                                    <Text style={[styles.statsText, { color: theme.textMain }]}>Poprawne: {sessionCorrect} / 10</Text>
                                     <Text style={[styles.statsText, { color: '#28a745', marginTop: 5 }]}>Skuteczność: {(sessionCorrect / 10 * 100).toFixed(0)}%</Text>
                                 </View>
-                                <Text style={styles.suggestionText}>{sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być jeszcze lepszym."}</Text>
+                                <Text style={[styles.suggestionText, { color: theme.textSub }]}>{sessionCorrect >= 8 ? "Rewelacyjnie! Jesteś mistrzem!" : "Trenuj dalej, aby być encore lepszym."}</Text>
                                 <View style={styles.milestoneButtons}>
                                     <TouchableOpacity style={[styles.mButton, { backgroundColor: '#28a745' }]} onPress={() => { setShowMilestone(false); setSessionCorrect(0); nextTask(); }}><Text style={styles.mButtonText}>Kontynuuj</Text></TouchableOpacity>
                                     <TouchableOpacity style={[styles.mButton, { backgroundColor: '#007AFF' }]} onPress={() => { setShowMilestone(false); navigation.goBack(); }}><Text style={styles.mButtonText}>Inny temat</Text></TouchableOpacity>
@@ -239,19 +239,17 @@ const WrittenSubtractionTrainer = () => {
 
                     <ScrollView contentContainerStyle={styles.centerContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.card}>
-                            <View style={styles.overlayBackground} />
-                            <Text style={styles.questionMain}>Odejmowanie pisemne</Text>
+                            <View style={[styles.overlayBackground, { backgroundColor: theme.cardOverlay }]} />
+                            <Text style={[styles.questionMain, { color: theme.textMain }]}>Odejmowanie pisemne</Text>
 
                             <View style={styles.columnContainer}>
                                 <View style={[styles.row, { marginBottom: 5 }]}>
                                     <View style={styles.opSpace} />
                                     {carries.map((c, i) => (
-                                        <View key={`c-wrap-${i}`} style={styles.carryCell}>
+                                        <View key={`c-wrap-${i}`} style={[styles.carryCell, { backgroundColor: theme.carryBg, borderColor: theme.inputBorder }]}>
                                             <TextInput
-                                                style={styles.carryInput}
-                                                keyboardType="numeric"
-                                                maxLength={1}
-                                                value={c}
+                                                style={[styles.carryInput, { color: theme.carryText }]}
+                                                keyboardType="numeric" maxLength={1} value={c}
                                                 onChangeText={v => { const n = [...carries]; n[i]=v; setCarries(n); }}
                                                 editable={!readyForNext}
                                             />
@@ -259,36 +257,36 @@ const WrittenSubtractionTrainer = () => {
                                     ))}
                                 </View>
 
-                                <View style={styles.numbersBox}>
+                                <View style={[styles.numbersBox, { borderBottomColor: theme.textMain }]}>
                                     <View style={styles.row}>
                                         <View style={styles.opSpace} />
-                                        {n1Padded.split('').map((d, i) => <Text key={`n1-${i}`} style={styles.digit}>{d}</Text>)}
+                                        {n1Padded.split('').map((d, i) => <Text key={`n1-${i}`} style={[styles.digit, { color: theme.textMain }]}>{d}</Text>)}
                                     </View>
                                     <View style={styles.row}>
-                                        <View style={styles.opSpace}><Text style={styles.digit}>-</Text></View>
-                                        {n2Padded.split('').map((d, i) => <Text key={`n2-${i}`} style={styles.digit}>{d}</Text>)}
+                                        <View style={styles.opSpace}><Text style={[styles.digit, { color: theme.textMain }]}>-</Text></View>
+                                        {n2Padded.split('').map((d, i) => <Text key={`n2-${i}`} style={[styles.digit, { color: theme.textMain }]}>{d}</Text>)}
                                     </View>
                                 </View>
 
                                 <View style={styles.row}>
                                     <View style={styles.opSpace} />
-                                    {userDigits.map((d, i) => (
-                                        <View key={`u-wrap-${i}`} style={[
-                                            styles.inputCell,
-                                            isCorrect === false && styles.errorFinalCell,
-                                            isCorrect === true && styles.correctFinalCell
-                                        ]}>
-                                            <TextInput
-                                                ref={(el) => { inputRefs.current[i] = el; }}
-                                                style={styles.mainInput}
-                                                keyboardType="numeric"
-                                                maxLength={1}
-                                                value={d}
-                                                onChangeText={v => handleDigitChange(v, i)}
-                                                editable={!readyForNext}
-                                            />
-                                        </View>
-                                    ))}
+                                    {userDigits.map((d, i) => {
+                                        let cellStyle = [styles.inputCell, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder }];
+                                        if (isCorrect === true) cellStyle.push({ backgroundColor: theme.correctBg, borderColor: theme.correctBorder });
+                                        if (isCorrect === false) cellStyle.push({ backgroundColor: theme.errorBg, borderColor: theme.errorBorder });
+
+                                        return (
+                                            <View key={`u-wrap-${i}`} style={cellStyle}>
+                                                <TextInput
+                                                    ref={(el) => { inputRefs.current[i] = el; }}
+                                                    style={[styles.mainInput, { color: isDarkMode ? '#FFF' : '#007AFF' }]}
+                                                    keyboardType="numeric" maxLength={1} value={d}
+                                                    onChangeText={v => handleDigitChange(v, i)}
+                                                    editable={!readyForNext}
+                                                />
+                                            </View>
+                                        );
+                                    })}
                                 </View>
                             </View>
 
@@ -296,17 +294,17 @@ const WrittenSubtractionTrainer = () => {
                                 <Button title={readyForNext ? 'Dalej' : 'Sprawdź'} onPress={readyForNext ? nextTask : handleCheck} color="#007AFF" />
                             </View>
 
-                            <Text style={styles.counterTextSmall}>Zadanie: {taskCount} / {TASKS_LIMIT}</Text>
-                            {message ? <Text style={[styles.result, message.includes('Świetnie') ? styles.correctText : styles.errorText]}>{message}</Text> : null}
+                            <Text style={[styles.counterTextSmall, { color: theme.textSub }]}>Zadanie: {taskCount} / {TASKS_LIMIT}</Text>
+                            {message ? <Text style={[styles.result, message.includes('Świetnie') ? { color: '#28a745' } : { color: '#dc3545' }]}>{message}</Text> : null}
                         </View>
                     </ScrollView>
 
                     {!isKeyboardVisible && (
                         <View style={styles.iconsBottom}>
                             <Image source={require('../../../assets/happy.png')} style={styles.iconSame} />
-                            <Text style={styles.counterTextIcons}>{correctCount}</Text>
+                            <Text style={[styles.counterTextIcons, { color: theme.textMain }]}>{correctCount}</Text>
                             <Image source={require('../../../assets/sad.png')} style={styles.iconSame} />
-                            <Text style={styles.counterTextIcons}>{wrongCount}</Text>
+                            <Text style={[styles.counterTextIcons, { color: theme.textMain }]}>{wrongCount}</Text>
                         </View>
                     )}
                 </KeyboardAvoidingView>
@@ -321,50 +319,44 @@ const styles = StyleSheet.create({
     centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 20 },
     topButtons: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
     topBtnItem: { alignItems: 'center', marginLeft: 15 },
-    iconTop: { width: 70, height: 70, resizeMode: 'contain', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
-    buttonLabel: { fontSize: 14, fontWeight: 'bold', color: '#007AFF', marginTop: 2 },
-    hintBox: { position: 'absolute', top: 120, right: 20, padding: 15, backgroundColor: 'rgba(255,255,255,0.98)', borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1, borderColor: '#007AFF' },
+    iconTop: { width: 70, height: 70, resizeMode: 'contain' },
+    buttonLabel: { fontSize: 14, fontWeight: 'bold', marginTop: 2 },
+    hintBox: { position: 'absolute', top: 120, right: 20, padding: 15, borderRadius: 15, maxWidth: 260, zIndex: 11, elevation: 5, borderWidth: 1 },
     hintTitle: { fontSize: 16, fontWeight: 'bold', color: '#007AFF', marginBottom: 5, textAlign: 'center' },
-    hintText: { fontSize: 14, color: '#333', textAlign: 'center', lineHeight: 20 },
+    hintText: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
     card: { width: '95%', maxWidth: 480, borderRadius: 20, padding: 20, marginTop: 20, alignItems: 'center', alignSelf: 'center' },
-    overlayBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20 },
-    questionMain: { fontSize: 24, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 20 },
+    overlayBackground: { ...StyleSheet.absoluteFillObject, borderRadius: 20 },
+    questionMain: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 },
     columnContainer: { alignItems: 'center', marginBottom: 10 },
-    numbersBox: { borderBottomWidth: 3, borderBottomColor: '#333', paddingBottom: 5, marginBottom: 10 },
+    numbersBox: { borderBottomWidth: 3, paddingBottom: 5, marginBottom: 10 },
     row: { flexDirection: 'row', alignItems: 'center' },
     opSpace: { width: 40, alignItems: 'center' },
-    carryCell: { width: 46, height: 35, justifyContent: 'center', alignItems: 'center', marginHorizontal: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, backgroundColor: '#f9f9f9' },
-    carryInput: { width: '100%', height: '100%', fontSize: 18, textAlign: 'center', color: '#888', padding: 0 },
-    digit: { fontSize: 34, fontWeight: 'bold', width: 46, textAlign: 'center', fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', color: '#222' },
-    inputCell: { width: 46, height: 55, borderWidth: 2, borderColor: '#ccc', borderRadius: 8, marginHorizontal: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
-    mainInput: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', color: '#007AFF', width: '100%', height: '100%', padding: 0 },
-    correctFinalCell: { borderColor: '#28a745', backgroundColor: '#d4edda' },
-    errorFinalCell: { borderColor: '#dc3545', backgroundColor: '#f8d7da' },
+    carryCell: { width: 46, height: 35, justifyContent: 'center', alignItems: 'center', marginHorizontal: 1, borderWidth: 1, borderRadius: 4 },
+    carryInput: { width: '100%', height: '100%', fontSize: 18, textAlign: 'center', padding: 0 },
+    digit: { fontSize: 34, fontWeight: 'bold', width: 46, textAlign: 'center', fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' },
+    inputCell: { width: 46, height: 55, borderWidth: 2, borderRadius: 8, marginHorizontal: 1, justifyContent: 'center', alignItems: 'center' },
+    mainInput: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', width: '100%', height: '100%', padding: 0 },
     buttonContainer: { marginTop: 25, width: '80%', borderRadius: 10, overflow: 'hidden' },
     result: { fontSize: 18, fontWeight: '700', marginTop: 15, textAlign: 'center' },
-    correctText: { color: '#28a745' },
-    errorText: { color: '#dc3545' },
-    counterTextSmall: { fontSize: Math.max(12, screenWidth * 0.035), fontWeight: '400', color: '#555', textAlign: 'center', marginTop: 10 },
+    counterTextSmall: { fontSize: 13, fontWeight: '400', textAlign: 'center', marginTop: 10 },
     iconsBottom: { position: 'absolute', bottom: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
     iconSame: { width: combinedIconSize, height: combinedIconSize, resizeMode: 'contain', marginHorizontal: 10 },
-    counterTextIcons: { fontSize: Math.max(14, combinedIconSize * 0.28), marginHorizontal: 8, textAlign: 'center', color: '#333' },
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-    drawingContainer: { width: '95%', height: '85%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
-    drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, backgroundColor: '#f0f0f0', borderBottomWidth: 1, borderBottomColor: '#ccc' },
-    drawingTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+    counterTextIcons: { fontSize: 22, marginHorizontal: 8, fontWeight: 'bold' },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' },
+    drawingContainer: { width: '95%', height: '85%', borderRadius: 20, overflow: 'hidden' },
+    drawingHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, borderBottomWidth: 1 },
+    drawingTitle: { fontSize: 18, fontWeight: 'bold' },
     headerButton: { padding: 5 },
     headerButtonText: { fontSize: 16, color: '#007AFF' },
-    problemPreviewContainer: { backgroundColor: '#f9f9f9', padding: 10, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#eee', width: '100%' },
+    problemPreviewContainer: { padding: 10, alignItems: 'center', borderBottomWidth: 1, width: '100%' },
     problemPreviewLabel: { fontSize: 12, color: '#777', textTransform: 'uppercase', marginBottom: 4 },
     problemPreviewTextSmall: { fontSize: 16, fontWeight: '600', color: '#007AFF', textAlign: 'center' },
-    canvas: { flex: 1, backgroundColor: '#ffffff' },
-
-    // MILESTONE STYLES
-    milestoneCard: { width: '90%', backgroundColor: '#fff', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
-    milestoneTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 15 },
-    statsRow: { marginVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', padding: 15, borderRadius: 15, width: '100%' },
-    statsText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
-    suggestionText: { fontSize: 15, color: '#666', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+    canvas: { flex: 1 },
+    milestoneCard: { width: '90%', borderRadius: 20, padding: 25, alignItems: 'center', elevation: 10 },
+    milestoneTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 15 },
+    statsRow: { marginVertical: 10, alignItems: 'center', padding: 15, borderRadius: 15, width: '100%' },
+    statsText: { fontSize: 18, fontWeight: 'bold' },
+    suggestionText: { fontSize: 15, textAlign: 'center', marginVertical: 20, lineHeight: 22 },
     milestoneButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
     mButton: { paddingVertical: 12, paddingHorizontal: 15, borderRadius: 12, width: '48%', alignItems: 'center' },
     mButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 }
